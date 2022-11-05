@@ -1,0 +1,227 @@
+/* Reset CSS */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd,
+menu {
+    margin: 0;
+}
+
+ul[role='list'],
+ol[role='list'] {
+    list-style: none;
+}
+
+html:focus-within {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    text-rendering: optimizeSpeed;
+    line-height: 1.5;
+    font-family: sans-serif;
+}
+
+a:not([class]) {
+    text-decoration-skip-ink: auto;
+}
+
+img,
+picture {
+    max-width: 100%;
+    display: block;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Base template styling */
+
+:root {
+    --color-input-border: #000;
+    --color-input-border-active: #444b5d;
+    --color-button-main: #444b5d;
+    --color-button-main-hover: #515d7c;
+    --color-bg1: #191b22;
+    --color-bg2: #282c37;
+    --color-bg3: #444b5d;
+    --color-text-duller: #5f6983;
+    --color-text-dull: #99a;
+    --color-text-error: rgb(155, 111, 111);
+    --color-text-main: #DDDDDD;
+}
+
+body {
+    background-color: var(--color-bg1);
+    color: white;
+}
+
+header {
+    width: 750px;
+    margin: 0 auto;
+    display: flex;
+    padding: 0 0 20px 0;
+}
+
+header h1 {
+    background: var(--color-fg2);
+    padding: 10px 7px 7px 7px;
+    font-size: 130%;
+    height: 2.2em;
+    color: var(--color-fg1);
+}
+
+header a {
+    color: inherit;
+    text-decoration: none;
+}
+
+header menu {
+    flex-grow: 1;
+    display: flex;
+    list-style-type: none;
+    justify-content: flex-end;
+}
+
+header menu li {
+    padding: 20px 10px 7px 10px;
+    color: #eee;
+}
+
+main {
+    width: 750px;
+    margin: 20px auto;
+}
+
+/* "Modal" boxes */
+
+.modal {
+    background: var(--color-bg2);
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+.modal h1 {
+    color: var(--color-fg1);
+    background: var(--color-bg3);
+    font-family: "Raleway";
+    position: relative;
+    padding: 5px 8px 4px 10px;
+    font-size: 100%;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 5px 5px 0 0;
+}
+
+.modal .option {
+    display: block;
+    padding: 20px 30px;
+    color: var(--color-text-main);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+
+.modal a.option:hover {
+    border-left: 3px solid var(--color-text-dull);
+}
+
+.modal .option.empty {
+    text-align: center;
+    color: var(--color-text-dull);
+}
+
+.modal form {
+    padding: 10px 10px 1px 10px;
+}
+
+/* Forms */
+
+form .control-group {
+    margin: 0 0 15px 0;
+}
+
+form .asteriskField {
+    display: none;
+}
+
+form label {
+    text-transform: uppercase;
+    font-size: 110%;
+    color: var(--color-text-dull);
+    letter-spacing: 0.05em;
+}
+
+form label.requiredField::after {
+    content: " (required)";
+    font-size: 80%;
+    color: var(--color-text-duller);
+}
+
+form .help-block {
+    color: var(--color-text-error);
+    padding: 4px 0 0 0;
+}
+
+form input {
+    width: 100%;
+    padding: 4px 6px;
+    background: var(--color-bg1);
+    border: 1px solid var(--color-input-border);
+    border-radius: 3px;
+    color: var(--color-text-main);
+}
+
+form input:focus {
+    outline: none;
+    border: 1px solid var(--color-input-border-active);
+}
+
+form input[type=submit] {
+    width: 100%;
+    padding: 4px 6px;
+    margin: 0 0 10px;
+    background: var(--color-button-main);
+    border: 0;
+    border-radius: 3px;
+    color: var(--color-text-main);
+    cursor: pointer;
+}
+
+form input[type=submit]:hover {
+    background: var(--color-button-main-hover);
+}

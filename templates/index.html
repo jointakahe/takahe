@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+    {% for identity in identities %}
+        <a href="{{ identity.urls.view }}">{{ identity }}</a>
+    {% endfor %}
+{% endblock %}

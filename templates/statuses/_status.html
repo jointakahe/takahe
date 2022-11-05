@@ -1,0 +1,10 @@
+<div class="status">
+    <h3 class="author">
+        <a href="{{ status.identity.urls.view }}">
+            {{ status.identity }}
+            <small>{{ status.identity.short_handle }}</small>
+        </a>
+    </h3>
+    <time>{{ status.created | timesince }} ago</time>
+    {{ status.text | linebreaks }}
+</div>

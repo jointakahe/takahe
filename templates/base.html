@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %} - {{ config.site_name }}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% load static %}
+    <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
+    <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
+    <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+    <header>
+        <h1><a href="/">{{ config.site_name }}</a></h1>
+        <menu>
+            <li>
+                {% if user.is_authenticated %}
+                    {{ user.email }}
+                {% else %}
+                    <a href="/auth/login/">Login</a>
+                {% endif %}
+            </li>
+        </menu>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Select Identity{% endblock %}
+
+{% block content %}
+    <section class="modal identities">
+        <h1>Select Identity</h1>
+        {% for identity in identities %}
+            <a class="option" href="{{ identity.urls.activate }}">{{ identity }}</a>
+        {% empty %}
+            <p class="option empty">You have no identities.</p>
+        {% endfor %}
+        <a href="/identity/create/" class="option new">
+            <i class="fa-solid fa-plus"></i> Create a new identity
+        </a>
+    </section>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+    <section class="modal identities">
+        <h1>Login</h1>
+        {% crispy form form.helper %}
+    </section>
+{% endblock %}

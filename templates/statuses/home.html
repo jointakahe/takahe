@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+    {% crispy form form.helper %}
+
+    {% for status in statuses %}
+        {% include "statuses/_status.html" %}
+    {% empty %}
+        No statuses yet.
+    {% endfor %}
+{% endblock %}
