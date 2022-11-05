@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, View
 
 from core.forms import FormHelper
@@ -88,7 +89,7 @@ class Actor(View):
                 ],
                 "id": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.actor}",
                 "type": "Person",
-                "preferredUsername": "alice",
+                "preferredUsername": identity.short_handle,
                 "inbox": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.inbox}",
                 "publicKey": {
                     "id": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.actor}#main-key",
@@ -97,6 +98,19 @@ class Actor(View):
                 },
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class Inbox(View):
+    """
+    AP Inbox endpoint
+    """
+
+    def post(self, request, handle):
+        # Validate the signature
+        signature = request.META.get("HTTP_SIGNATURE")
+        print(signature)
+        print(request.body)
 
 
 class Webfinger(View):

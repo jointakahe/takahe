@@ -1,3 +1,4 @@
+import urlman
 from django.db import models
 
 
@@ -33,3 +34,6 @@ class Status(models.Model):
             text=text,
             local=True,
         )
+
+    class urls(urlman.Urls):
+        view = "{self.identity.urls.view}{self.id}/"

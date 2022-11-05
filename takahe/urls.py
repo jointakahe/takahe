@@ -12,11 +12,12 @@ urlpatterns = [
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/actor/", identity.Actor.as_view()),
+    path("@<handle>/actor/inbox/", identity.Inbox.as_view()),
     # Identity selection
     path("identity/select/", identity.SelectIdentity.as_view()),
     path("identity/create/", identity.CreateIdentity.as_view()),
     # Well-known endpoints
-    path(".well-known/webfinger/", identity.Webfinger.as_view()),
+    path(".well-known/webfinger", identity.Webfinger.as_view()),
     # Django admin
     path("djadmin/", admin.site.urls),
 ]

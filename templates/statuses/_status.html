@@ -5,6 +5,8 @@
             <small>{{ status.identity.short_handle }}</small>
         </a>
     </h3>
-    <time>{{ status.created | timesince }} ago</time>
+    <time>
+        <a href="{{ status.urls.view }}">{{ status.created | timesince }} ago</a>
+    </time>
     {{ status.text | linebreaks }}
 </div>

@@ -4,3 +4,4 @@ pillow~=9.3.0
 urlman~=2.0.1
 django-crispy-forms~=1.14
 cryptography~=38.0
+httpx~=0.23
