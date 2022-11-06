@@ -14,10 +14,16 @@
     </h1>
 
     {% if not identity.local %}
-        <p class="system-note">
-            This user is a member of another server.
-            <a href="{{ identity.profile_uri }}">See their original profile</a>
-        </p>
+        {% if not identity.actor_uri %}
+            <p class="system-note">
+                The system is still fetching this profile. Refresh to see updates.
+            </p>
+        {% else %}
+            <p class="system-note">
+                This is a member of another server.
+                <a href="{{ identity.profile_uri }}">See their original profile</a>
+            </p>
+        {% endif %}
     {% endif %}
 
     {% for status in statuses %}

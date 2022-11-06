@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, View
 
 from core.forms import FormHelper
+from miniq.models import Task
 from users.models import Identity
 from users.shortcuts import by_handle_or_404
 
@@ -19,8 +20,10 @@ class ViewIdentity(TemplateView):
     template_name = "identity/view.html"
 
     def get_context_data(self, handle):
-        identity = by_handle_or_404(self.request, handle, local=False)
+        identity = Identity.by_handle(handle=handle)
         statuses = identity.statuses.all()[:100]
+        if identity.data_age > settings.IDENTITY_MAX_AGE:
+            Task.submit("identity_fetch", identity.handle)
         return {
             "identity": identity,
             "statuses": statuses,

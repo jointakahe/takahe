@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "core",
     "statuses",
     "users",
+    "miniq",
 ]
 
 MIDDLEWARE = [
@@ -113,3 +114,4 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 SITE_NAME = "takahē"
 DEFAULT_DOMAIN = "feditest.aeracode.org"
 ALLOWED_DOMAINS = ["feditest.aeracode.org"]
+IDENTITY_MAX_AGE = 24 * 60 * 60

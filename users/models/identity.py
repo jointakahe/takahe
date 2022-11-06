@@ -59,6 +59,19 @@ class Identity(models.Model):
     fetched = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
 
+    @classmethod
+    def by_handle(cls, handle, create=True):
+        if handle.startswith("@"):
+            raise ValueError("Handle must not start with @")
+        if "@" not in handle:
+            raise ValueError("Handle must contain domain")
+        try:
+            return cls.objects.filter(handle=handle).get()
+        except cls.DoesNotExist:
+            if create:
+                return cls.objects.create(handle=handle, local=False)
+            return None
+
     @property
     def short_handle(self):
         if self.handle.endswith("@" + settings.DEFAULT_DOMAIN):
@@ -68,6 +81,17 @@ class Identity(models.Model):
     @property
     def domain(self):
         return self.handle.split("@", 1)[1]
+
+    @property
+    def data_age(self) -> float:
+        """
+        How old our copy of this data is, in seconds
+        """
+        if self.local:
+            return 0
+        if self.fetched is None:
+            return 10000000000
+        return (timezone.now() - self.fetched).total_seconds()
 
     def generate_keypair(self):
         private_key = rsa.generate_private_key(
@@ -104,6 +128,7 @@ class Identity(models.Model):
             response = await client.get(
                 f"https://{self.domain}/.well-known/webfinger?resource=acct:{self.handle}",
                 headers={"Accept": "application/json"},
+                follow_redirects=True,
             )
         if response.status_code >= 400:
             return False
@@ -126,6 +151,7 @@ class Identity(models.Model):
             response = await client.get(
                 self.actor_uri,
                 headers={"Accept": "application/json"},
+                follow_redirects=True,
             )
             if response.status_code >= 400:
                 return False
