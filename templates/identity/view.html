@@ -3,7 +3,19 @@
 {% block title %}{{ identity }}{% endblock %}
 
 {% block content %}
-    <h1>{{ identity }} <small>{{ identity.handle }}</small></h1>
+    <h1 class="identity">
+        {% if identity.icon_uri %}
+            <img src="{{identity.icon_uri}}" class="icon">
+        {% endif %}
+        {{ identity }} <small>{{ identity.handle }}</small>
+    </h1>
+
+    {% if not identity.local %}
+        <p class="system-note">
+            This user is a member of another server.
+            <a href="{{ identity.profile_uri }}">See their original profile</a>
+        </p>
+    {% endif %}
 
     {% for status in statuses %}
         {% include "statuses/_status.html" %}

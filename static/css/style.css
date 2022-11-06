@@ -225,3 +225,35 @@ form input[type=submit] {
 form input[type=submit]:hover {
     background: var(--color-button-main-hover);
 }
+
+/* Identities */
+
+h1.identity {
+    margin: 0 0 20px 0;
+}
+
+h1.identity .icon {
+    width: 80px;
+    height: 80px;
+    float: left;
+    margin: 0 20px 0 0;
+}
+
+h1.identity small {
+    display: block;
+    font-size: 80%;
+    font-weight: normal;
+    color: var(--color-text-dull);
+    margin: -10px 0 0 0;
+}
+
+.system-note {
+    background: var(--color-bg2);
+    color: var(--color-text-dull);
+    border-radius: 3px;
+    padding: 5px 8px;
+}
+
+.system-note a {
+    color: inherit;
+}
