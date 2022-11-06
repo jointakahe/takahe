@@ -1,4 +1,4 @@
-# takahē
+![takahē](static/img/logo-128.png)
 
 A *very experimental* Fediverse server for microblogging/"toots".
 
