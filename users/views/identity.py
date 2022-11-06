@@ -133,7 +133,7 @@ class Actor(View):
             "inbox": identity.urls.inbox.full(),
             "preferredUsername": identity.username,
             "publicKey": {
-                "id": identity.urls.actor.full() + "#main-key",
+                "id": identity.urls.key.full(),
                 "owner": identity.urls.actor.full(),
                 "publicKeyPem": identity.public_key,
             },
@@ -181,7 +181,7 @@ class Inbox(View):
         print(headers_string)
         print(document)
         # Find the Identity by the actor on the incoming item
-        identity = Identity.by_actor_uri(document["actor"], create=True)
+        identity = Identity.by_actor_uri_with_create(document["actor"])
         if not identity.public_key:
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()

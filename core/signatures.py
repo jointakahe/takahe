@@ -1,5 +1,5 @@
 import base64
-from typing import Any, Dict, List
+from typing import List, TypedDict
 
 from cryptography.hazmat.primitives import hashes
 from django.http import HttpRequest
@@ -38,11 +38,23 @@ class HttpSignature:
         return "\n".join(f"{name.lower()}: {value}" for name, value in headers.items())
 
     @classmethod
-    def parse_signature(cls, signature) -> Dict[str, Any]:
-        signature_details = {}
+    def parse_signature(cls, signature) -> "SignatureDetails":
+        bits = {}
         for item in signature.split(","):
             name, value = item.split("=", 1)
             value = value.strip('"')
-            signature_details[name.lower()] = value
-        signature_details["headers"] = signature_details["headers"].split()
+            bits[name.lower()] = value
+        signature_details: SignatureDetails = {
+            "headers": bits["headers"].split(),
+            "signature": base64.b64decode(bits["signature"]),
+            "algorithm": bits["algorithm"],
+            "keyid": bits["keyid"],
+        }
         return signature_details
+
+
+class SignatureDetails(TypedDict):
+    algorithm: str
+    headers: List[str]
+    signature: bytes
+    keyid: str

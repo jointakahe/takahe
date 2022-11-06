@@ -7,13 +7,12 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import sync_to_async
-from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.http import http_date
+from OpenSSL import crypto
 
 from core.ld import canonicalise
 from users.models.domain import Domain
@@ -96,13 +95,18 @@ class Identity(models.Model):
             return None
 
     @classmethod
-    def by_actor_uri(cls, uri, create=False):
+    def by_actor_uri(cls, uri) -> Optional["Identity"]:
         try:
             return cls.objects.get(actor_uri=uri)
         except cls.DoesNotExist:
-            if create:
-                return cls.objects.create(actor_uri=uri, local=False)
             return None
+
+    @classmethod
+    def by_actor_uri_with_create(cls, uri) -> "Identity":
+        try:
+            return cls.objects.get(actor_uri=uri)
+        except cls.DoesNotExist:
+            return cls.objects.create(actor_uri=uri, local=False)
 
     @property
     def handle(self):
@@ -219,7 +223,7 @@ class Identity(models.Model):
         )
         return base64.b64encode(
             private_key.sign(
-                cleartext.encode("utf8"),
+                cleartext.encode("ascii"),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH,
@@ -228,22 +232,19 @@ class Identity(models.Model):
             )
         ).decode("ascii")
 
-    def verify_signature(self, crypttext: str, cleartext: str) -> bool:
+    def verify_signature(self, signature: bytes, cleartext: str) -> bool:
         if not self.public_key:
             raise ValueError("Cannot verify - no public key")
-        public_key = serialization.load_pem_public_key(self.public_key.encode("ascii"))
-        print("sig??", crypttext, cleartext)
-        try:
-            public_key.verify(
-                crypttext.encode("utf8"),
-                cleartext.encode("utf8"),
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
-                ),
-                hashes.SHA256(),
+        x509 = crypto.X509()
+        x509.set_pubkey(
+            crypto.load_publickey(
+                crypto.FILETYPE_PEM,
+                self.public_key.encode("ascii"),
             )
-        except InvalidSignature:
+        )
+        try:
+            crypto.verify(x509, signature, cleartext.encode("ascii"), "sha256")
+        except crypto.Error:
             return False
         return True
 
@@ -264,7 +265,7 @@ class Identity(models.Model):
         del headers["(request-target)"]
         headers[
             "Signature"
-        ] = f'keyId="https://{settings.DEFAULT_DOMAIN}{self.urls.actor}",headers="{headers_string}",signature="{signature}"'
+        ] = f'keyId="{self.urls.key.full()}",headers="{headers_string}",signature="{signature}"'
         async with httpx.AsyncClient() as client:
             return await client.request(
                 method,
@@ -288,6 +289,7 @@ class Identity(models.Model):
         view = "/@{self.username}@{self.domain_id}/"
         view_short = "/@{self.username}/"
         actor = "{view}actor/"
+        key = "{actor}#main-key"
         inbox = "{actor}inbox/"
         outbox = "{actor}outbox/"
         activate = "{view}activate/"
