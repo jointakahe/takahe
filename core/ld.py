@@ -6,7 +6,7 @@ from pyld.jsonld import JsonLdError
 schemas = {
     "www.w3.org/ns/activitystreams": {
         "contentType": "application/ld+json",
-        "documentUrl": "https://www.w3.org/ns/activitystreams",
+        "documentUrl": "http://www.w3.org/ns/activitystreams",
         "contextUrl": None,
         "document": {
             "@context": {
@@ -177,7 +177,7 @@ schemas = {
     },
     "w3id.org/security/v1": {
         "contentType": "application/ld+json",
-        "documentUrl": "https://w3id.org/security/v1",
+        "documentUrl": "http://w3id.org/security/v1",
         "contextUrl": None,
         "document": {
             "@context": {
@@ -252,51 +252,17 @@ def builtin_document_loader(url: str, options={}):
         )
 
 
-class LDDocument:
+def canonicalise(json_data):
     """
-    Utility class for dealing with a document a bit more easily
+    Given an ActivityPub JSON-LD document, round-trips it through the LD
+    systems to end up in a canonicalised, compacted format.
+
+    For most well-structured incoming data this won't actually do anything,
+    but it's probably good to abide by the spec.
     """
-
-    def __init__(self, json_data):
-        self.items = {}
-        for entry in jsonld.flatten(jsonld.expand(json_data)):
-            item = LDItem(self, entry)
-            self.items[item.id] = item
-
-    def by_type(self, type):
-        for item in self.items.values():
-            if item.type == type:
-                yield item
-
-
-class LDItem:
-    """
-    Represents a single item in an LDDocument
-    """
-
-    def __init__(self, document, data):
-        self.data = data
-        self.document = document
-        self.id = self.data["@id"]
-        if "@type" in self.data:
-            self.type = self.data["@type"][0]
-        else:
-            self.type = None
-
-    def get(self, key):
-        """
-        Gets the first value of the given key, or None if it's not present.
-        If it's an ID reference, returns the other Item if possible, or the raw
-        ID if it's not supplied.
-        """
-        contents = self.data.get(key)
-        if not contents:
-            return None
-        id = contents[0].get("@id")
-        value = contents[0].get("@value")
-        if value is not None:
-            return value
-        if id in self.document.items:
-            return self.document.items[id]
-        else:
-            return id
+    if not isinstance(json_data, (dict, list)):
+        raise ValueError("Pass decoded JSON data into LDDocument")
+    return jsonld.compact(
+        jsonld.expand(json_data),
+        ["https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"],
+    )

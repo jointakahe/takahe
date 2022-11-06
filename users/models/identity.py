@@ -5,6 +5,7 @@ from functools import partial
 import httpx
 import urlman
 from asgiref.sync import sync_to_async
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from django.conf import settings
@@ -12,7 +13,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.http import http_date
 
-from core.ld import LDDocument
+from core.ld import canonicalise
 
 
 def upload_namer(prefix, instance, filename):
@@ -34,7 +35,7 @@ class Identity(models.Model):
     name = models.CharField(max_length=500, blank=True, null=True)
     summary = models.TextField(blank=True, null=True)
 
-    actor_uri = models.CharField(max_length=500, blank=True, null=True)
+    actor_uri = models.CharField(max_length=500, blank=True, null=True, db_index=True)
     profile_uri = models.CharField(max_length=500, blank=True, null=True)
     inbox_uri = models.CharField(max_length=500, blank=True, null=True)
     outbox_uri = models.CharField(max_length=500, blank=True, null=True)
@@ -59,6 +60,9 @@ class Identity(models.Model):
     fetched = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = "identities"
+
     @classmethod
     def by_handle(cls, handle, create=True):
         if handle.startswith("@"):
@@ -70,6 +74,13 @@ class Identity(models.Model):
         except cls.DoesNotExist:
             if create:
                 return cls.objects.create(handle=handle, local=False)
+            return None
+
+    @classmethod
+    def by_actor_uri(cls, uri):
+        try:
+            cls.objects.filter(actor_uri=uri)
+        except cls.DoesNotExist:
             return None
 
     @property
@@ -155,35 +166,53 @@ class Identity(models.Model):
             )
             if response.status_code >= 400:
                 return False
-            data = response.json()
-            document = LDDocument(data)
-            for person in document.by_type(
-                "https://www.w3.org/ns/activitystreams#Person"
-            ):
-                self.name = person.get("https://www.w3.org/ns/activitystreams#name")
-                self.summary = person.get(
-                    "https://www.w3.org/ns/activitystreams#summary"
-                )
-                self.inbox_uri = person.get("http://www.w3.org/ns/ldp#inbox")
-                self.outbox_uri = person.get(
-                    "https://www.w3.org/ns/activitystreams#outbox"
-                )
-                self.manually_approves_followers = person.get(
-                    "https://www.w3.org/ns/activitystreams#manuallyApprovesFollowers'"
-                )
-                self.private_key = person.get(
-                    "https://w3id.org/security#publicKey"
-                ).get("https://w3id.org/security#publicKeyPem")
-                icon = person.get("https://www.w3.org/ns/activitystreams#icon")
-                if icon:
-                    self.icon_uri = icon.get(
-                        "https://www.w3.org/ns/activitystreams#url"
-                    )
-                image = person.get("https://www.w3.org/ns/activitystreams#image")
-                if image:
-                    self.image_uri = image.get(
-                        "https://www.w3.org/ns/activitystreams#url"
-                    )
+            document = canonicalise(response.json())
+            self.name = document.get("name")
+            self.inbox_uri = document.get("inbox")
+            self.outbox_uri = document.get("outbox")
+            self.summary = document.get("summary")
+            self.manually_approves_followers = document.get(
+                "as:manuallyApprovesFollowers"
+            )
+            self.public_key = document.get("publicKey", {}).get("publicKeyPem")
+            self.icon_uri = document.get("icon", {}).get("url")
+            self.image_uri = document.get("image", {}).get("url")
+        return True
+
+    def sign(self, cleartext: str) -> str:
+        if not self.private_key:
+            raise ValueError("Cannot sign - no private key")
+        private_key = serialization.load_pem_private_key(
+            self.private_key,
+            password=None,
+        )
+        return base64.b64encode(
+            private_key.sign(
+                cleartext,
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH,
+                ),
+                hashes.SHA256(),
+            )
+        ).decode("ascii")
+
+    def verify_signature(self, crypttext: str, cleartext: str) -> bool:
+        if not self.public_key:
+            raise ValueError("Cannot verify - no private key")
+        public_key = serialization.load_pem_public_key(self.public_key)
+        try:
+            public_key.verify(
+                crypttext,
+                cleartext,
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH,
+                ),
+                hashes.SHA256(),
+            )
+        except InvalidSignature:
+            return False
         return True
 
     async def signed_request(self, host, method, path, document):
@@ -191,10 +220,6 @@ class Identity(models.Model):
         Delivers the document to the specified host, method, path and signed
         as this user.
         """
-        private_key = serialization.load_pem_private_key(
-            self.private_key,
-            password=None,
-        )
         date_string = http_date(timezone.now().timestamp())
         headers = {
             "(request-target)": f"{method} {path}",
@@ -203,16 +228,7 @@ class Identity(models.Model):
         }
         headers_string = " ".join(headers.keys())
         signed_string = "\n".join(f"{name}: {value}" for name, value in headers.items())
-        signature = base64.b64encode(
-            private_key.sign(
-                signed_string,
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
-                ),
-                hashes.SHA256(),
-            )
-        )
+        signature = self.sign(signed_string)
         del headers["(request-target)"]
         headers[
             "Signature"

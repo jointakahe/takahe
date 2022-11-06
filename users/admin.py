@@ -15,4 +15,5 @@ class UserEventAdmin(admin.ModelAdmin):
 
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = ["id", "handle", "name", "local"]

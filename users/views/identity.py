@@ -1,15 +1,19 @@
+import base64
+import json
 import string
 
+from cryptography.hazmat.primitives import hashes
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, View
 
 from core.forms import FormHelper
+from core.ld import canonicalise
 from miniq.models import Task
 from users.models import Identity
 from users.shortcuts import by_handle_or_404
@@ -132,10 +136,49 @@ class Inbox(View):
     """
 
     def post(self, request, handle):
-        # Validate the signature
-        signature = request.META.get("HTTP_SIGNATURE")
-        print(signature)
-        print(request.body)
+        if "HTTP_SIGNATURE" not in request.META:
+            print("No signature")
+            return HttpResponseBadRequest()
+        # Split apart signature
+        signature_details = {}
+        for item in request.META["HTTP_SIGNATURE"].split(","):
+            name, value = item.split("=", 1)
+            value = value.strip('"')
+            signature_details[name] = value
+        # Reject unknown algorithms
+        if signature_details["algorithm"] != "rsa-sha256":
+            print("Unknown algorithm")
+            return HttpResponseBadRequest()
+        # Calculate body digest
+        if "HTTP_DIGEST" in request.META:
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(request.body)
+            digest_header = "SHA-256=" + base64.b64encode(digest.finalize()).decode(
+                "ascii"
+            )
+            if request.META["HTTP_DIGEST"] != digest_header:
+                print("Bad digest")
+                return HttpResponseBadRequest()
+        # Create the signature payload
+        headers = {}
+        for header_name in signature_details["headers"].split():
+            if header_name == "(request-target)":
+                value = f"post {request.path}"
+            elif header_name == "content-type":
+                value = request.META["CONTENT_TYPE"]
+            else:
+                value = request.META[f"HTTP_{header_name.upper()}"]
+            headers[header_name] = value
+        signed_string = "\n".join(f"{name}: {value}" for name, value in headers.items())
+        # Load the LD
+        document = canonicalise(json.loads(request.body))
+        print(document)
+        # Find the Identity by the actor on the incoming item
+        identity = Identity.by_actor_uri(document["actor"])
+        if not identity.verify_signature(signature_details["signature"], signed_string):
+            print("Bad signature")
+            return HttpResponseBadRequest()
+        return JsonResponse({"status": "OK"})
 
 
 class Webfinger(View):
