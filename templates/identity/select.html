@@ -14,7 +14,7 @@
                     <img src="{% static "img/unknown-icon-128.png" %}" width="32">
                 {% endif %}
                 {{ identity }}
-                <small>@{{ identity.short_handle }}</small>
+                <small>@{{ identity.handle }}</small>
             </a>
         {% empty %}
             <p class="option empty">You have no identities.</p>

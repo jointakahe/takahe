@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from users.models import Identity, User, UserEvent
+from users.models import Domain, Identity, User, UserEvent
+
+
+@admin.register(Domain)
+class DomainAdmin(admin.ModelAdmin):
+    list_display = ["domain", "service_domain", "local", "blocked", "public"]
 
 
 @admin.register(User)

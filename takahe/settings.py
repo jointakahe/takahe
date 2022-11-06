@@ -10,7 +10,7 @@ SECRET_KEY = "insecure_secret"
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
-
+CSRF_TRUSTED_ORIGINS = ["http://*", "https://*"]
 
 # Application definition
 
@@ -36,6 +36,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "users.middleware.IdentityMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"

@@ -3,7 +3,7 @@ from django.db import models
 
 class Follow(models.Model):
     """
-    Tracks major events that happen to users
+    When one user (the source) follows other (the target)
     """
 
     source = models.ForeignKey(

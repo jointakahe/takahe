@@ -10,7 +10,7 @@
         {% else %}
             <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
         {% endif %}
-        {{ identity }} <small>{{ identity.handle }}</small>
+        {{ identity }} <small>@{{ identity.handle }}</small>
     </h1>
 
     {% if not identity.local %}

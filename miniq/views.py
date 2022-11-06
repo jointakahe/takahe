@@ -64,5 +64,8 @@ class QueueProcessor(View):
             await task.fail(f"{e}\n\n" + traceback.format_exc())
 
     async def handle_identity_fetch(self, subject, payload):
-        identity = await sync_to_async(Identity.by_handle)(subject)
-        await identity.fetch_details()
+        # Get the actor URI via webfinger
+        actor_uri, handle = await Identity.fetch_webfinger(subject)
+        # Get or create the identity, then fetch
+        identity = await sync_to_async(Identity.by_actor_uri)(actor_uri, create=True)
+        await identity.fetch_actor()

@@ -229,7 +229,8 @@ form .help-block {
     padding: 4px 0 0 0;
 }
 
-form input {
+form input,
+form select {
     width: 100%;
     padding: 4px 6px;
     background: var(--color-bg1);

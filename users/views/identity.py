@@ -1,8 +1,7 @@
-import base64
 import json
 import string
 
-from cryptography.hazmat.primitives import hashes
+from asgiref.sync import async_to_sync
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -14,8 +13,9 @@ from django.views.generic import FormView, TemplateView, View
 
 from core.forms import FormHelper
 from core.ld import canonicalise
+from core.signatures import HttpSignature
 from miniq.models import Task
-from users.models import Identity
+from users.models import Domain, Identity
 from users.shortcuts import by_handle_or_404
 
 
@@ -24,7 +24,7 @@ class ViewIdentity(TemplateView):
     template_name = "identity/view.html"
 
     def get_context_data(self, handle):
-        identity = Identity.by_handle(handle=handle)
+        identity = by_handle_or_404(self.request, handle, local=False)
         statuses = identity.statuses.all()[:100]
         if identity.data_age > settings.IDENTITY_MAX_AGE:
             Task.submit("identity_fetch", identity.handle)
@@ -65,36 +65,49 @@ class CreateIdentity(FormView):
     template_name = "identity/create.html"
 
     class form_class(forms.Form):
-        handle = forms.CharField()
+        username = forms.CharField()
         name = forms.CharField()
 
         helper = FormHelper(submit_text="Create")
 
-        def clean_handle(self):
+        def __init__(self, user, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields["domain"] = forms.ChoiceField(
+                choices=[
+                    (domain.domain, domain.domain)
+                    for domain in Domain.available_for_user(user)
+                ]
+            )
+
+        def clean_username(self):
             # Remove any leading @
-            value = self.cleaned_data["handle"].lstrip("@")
+            value = self.cleaned_data["username"].lstrip("@")
             # Validate it's all ascii characters
             for character in value:
                 if character not in string.ascii_letters + string.digits + "_-":
                     raise forms.ValidationError(
                         "Only the letters a-z, numbers 0-9, dashes and underscores are allowed."
                     )
-            # Don't allow custom domains here quite yet
-            if "@" in value:
-                raise forms.ValidationError(
-                    "You are not allowed an @ sign in your handle."
-                )
-            # Ensure there is a domain on the end
-            if "@" not in value:
-                value += "@" + settings.DEFAULT_DOMAIN
-            # Check for existing users
-            if Identity.objects.filter(handle=value).exists():
-                raise forms.ValidationError("This handle is already taken")
             return value
 
+        def clean(self):
+            # Check for existing users
+            username = self.cleaned_data["username"]
+            domain = self.cleaned_data["domain"]
+            if Identity.objects.filter(username=username, domain=domain).exists():
+                raise forms.ValidationError(f"{username}@{domain} is already taken")
+
+    def get_form(self):
+        form_class = self.get_form_class()
+        return form_class(user=self.request.user, **self.get_form_kwargs())
+
     def form_valid(self, form):
+        username = form.cleaned_data["username"]
+        domain = form.cleaned_data["domain"]
         new_identity = Identity.objects.create(
-            handle=form.cleaned_data["handle"],
+            actor_uri=f"https://{domain}/@{username}/actor/",
+            username=username,
+            domain_id=domain,
             name=form.cleaned_data["name"],
             local=True,
         )
@@ -110,23 +123,28 @@ class Actor(View):
 
     def get(self, request, handle):
         identity = by_handle_or_404(self.request, handle)
-        return JsonResponse(
-            {
-                "@context": [
-                    "https://www.w3.org/ns/activitystreams",
-                    "https://w3id.org/security/v1",
-                ],
-                "id": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.actor}",
-                "type": "Person",
-                "preferredUsername": identity.short_handle,
-                "inbox": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.inbox}",
-                "publicKey": {
-                    "id": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.actor}#main-key",
-                    "owner": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.actor}",
-                    "publicKeyPem": identity.public_key,
-                },
-            }
-        )
+        response = {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://w3id.org/security/v1",
+            ],
+            "id": identity.urls.actor.full(),
+            "type": "Person",
+            "inbox": identity.urls.inbox.full(),
+            "preferredUsername": identity.username,
+            "publicKey": {
+                "id": identity.urls.actor.full() + "#main-key",
+                "owner": identity.urls.actor.full(),
+                "publicKeyPem": identity.public_key,
+            },
+            "published": identity.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "url": identity.urls.view_short.full(),
+        }
+        if identity.name:
+            response["name"] = identity.name
+        if identity.summary:
+            response["summary"] = identity.summary
+        return JsonResponse(canonicalise(response, include_security=True))
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -136,48 +154,45 @@ class Inbox(View):
     """
 
     def post(self, request, handle):
+        # Verify body digest
+        if "HTTP_DIGEST" in request.META:
+            expected_digest = HttpSignature.calculate_digest(request.body)
+            if request.META["HTTP_DIGEST"] != expected_digest:
+                print("Bad digest")
+                return HttpResponseBadRequest()
+        # Get the signature details
         if "HTTP_SIGNATURE" not in request.META:
             print("No signature")
             return HttpResponseBadRequest()
-        # Split apart signature
-        signature_details = {}
-        for item in request.META["HTTP_SIGNATURE"].split(","):
-            name, value = item.split("=", 1)
-            value = value.strip('"')
-            signature_details[name] = value
+        signature_details = HttpSignature.parse_signature(
+            request.META["HTTP_SIGNATURE"]
+        )
         # Reject unknown algorithms
         if signature_details["algorithm"] != "rsa-sha256":
             print("Unknown algorithm")
             return HttpResponseBadRequest()
-        # Calculate body digest
-        if "HTTP_DIGEST" in request.META:
-            digest = hashes.Hash(hashes.SHA256())
-            digest.update(request.body)
-            digest_header = "SHA-256=" + base64.b64encode(digest.finalize()).decode(
-                "ascii"
-            )
-            if request.META["HTTP_DIGEST"] != digest_header:
-                print("Bad digest")
-                return HttpResponseBadRequest()
         # Create the signature payload
-        headers = {}
-        for header_name in signature_details["headers"].split():
-            if header_name == "(request-target)":
-                value = f"post {request.path}"
-            elif header_name == "content-type":
-                value = request.META["CONTENT_TYPE"]
-            else:
-                value = request.META[f"HTTP_{header_name.upper()}"]
-            headers[header_name] = value
-        signed_string = "\n".join(f"{name}: {value}" for name, value in headers.items())
+        headers_string = HttpSignature.headers_from_request(
+            request, signature_details["headers"]
+        )
         # Load the LD
         document = canonicalise(json.loads(request.body))
+        print(signature_details)
+        print(headers_string)
         print(document)
         # Find the Identity by the actor on the incoming item
-        identity = Identity.by_actor_uri(document["actor"])
-        if not identity.verify_signature(signature_details["signature"], signed_string):
+        identity = Identity.by_actor_uri(document["actor"], create=True)
+        if not identity.public_key:
+            # See if we can fetch it right now
+            async_to_sync(identity.fetch_actor)()
+        if not identity.public_key:
+            print("Cannot retrieve actor")
+            return HttpResponseBadRequest("Cannot retrieve actor")
+        if not identity.verify_signature(
+            signature_details["signature"], headers_string
+        ):
             print("Bad signature")
-            return HttpResponseBadRequest()
+            # return HttpResponseBadRequest("Bad signature")
         return JsonResponse({"status": "OK"})
 
 
@@ -190,24 +205,24 @@ class Webfinger(View):
         resource = request.GET.get("resource")
         if not resource.startswith("acct:"):
             raise Http404("Not an account resource")
-        handle = resource[5:]
+        handle = resource[5:].replace("testfedi", "feditest")
         identity = by_handle_or_404(request, handle)
         return JsonResponse(
             {
                 "subject": f"acct:{identity.handle}",
                 "aliases": [
-                    f"https://{settings.DEFAULT_DOMAIN}/@{identity.short_handle}",
+                    identity.urls.view_short.full(),
                 ],
                 "links": [
                     {
                         "rel": "http://webfinger.net/rel/profile-page",
                         "type": "text/html",
-                        "href": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.view}",
+                        "href": identity.urls.view_short.full(),
                     },
                     {
                         "rel": "self",
                         "type": "application/activity+json",
-                        "href": f"https://{settings.DEFAULT_DOMAIN}{identity.urls.actor}",
+                        "href": identity.urls.actor.full(),
                     },
                 ],
             }

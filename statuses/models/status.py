@@ -36,4 +36,4 @@ class Status(models.Model):
         )
 
     class urls(urlman.Urls):
-        view = "{self.identity.urls.view}{self.id}/"
+        view = "{self.identity.urls.view}statuses/{self.id}/"

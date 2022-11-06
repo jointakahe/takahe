@@ -252,7 +252,7 @@ def builtin_document_loader(url: str, options={}):
         )
 
 
-def canonicalise(json_data):
+def canonicalise(json_data, include_security=False):
     """
     Given an ActivityPub JSON-LD document, round-trips it through the LD
     systems to end up in a canonicalised, compacted format.
@@ -264,5 +264,12 @@ def canonicalise(json_data):
         raise ValueError("Pass decoded JSON data into LDDocument")
     return jsonld.compact(
         jsonld.expand(json_data),
-        ["https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"],
+        (
+            [
+                "https://www.w3.org/ns/activitystreams",
+                "https://w3id.org/security/v1",
+            ]
+            if include_security
+            else "https://www.w3.org/ns/activitystreams"
+        ),
     )

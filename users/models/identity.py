@@ -1,6 +1,8 @@
 import base64
 import uuid
 from functools import partial
+from typing import Optional, Tuple
+from urllib.parse import urlparse
 
 import httpx
 import urlman
@@ -14,6 +16,7 @@ from django.utils import timezone
 from django.utils.http import http_date
 
 from core.ld import canonicalise
+from users.models.domain import Domain
 
 
 def upload_namer(prefix, instance, filename):
@@ -30,12 +33,26 @@ class Identity(models.Model):
     Represents both local and remote Fediverse identities (actors)
     """
 
-    # The handle includes the domain!
-    handle = models.CharField(max_length=500, unique=True)
+    # The Actor URI is essentially also a PK - we keep the default numeric
+    # one around as well for making nice URLs etc.
+    actor_uri = models.CharField(max_length=500, blank=True, null=True, unique=True)
+
+    local = models.BooleanField()
+    users = models.ManyToManyField("users.User", related_name="identities")
+
+    username = models.CharField(max_length=500, blank=True, null=True)
+    # Must be a display domain if present
+    domain = models.ForeignKey(
+        "users.Domain",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
+
     name = models.CharField(max_length=500, blank=True, null=True)
     summary = models.TextField(blank=True, null=True)
+    manually_approves_followers = models.BooleanField(blank=True, null=True)
 
-    actor_uri = models.CharField(max_length=500, blank=True, null=True, db_index=True)
     profile_uri = models.CharField(max_length=500, blank=True, null=True)
     inbox_uri = models.CharField(max_length=500, blank=True, null=True)
     outbox_uri = models.CharField(max_length=500, blank=True, null=True)
@@ -49,9 +66,6 @@ class Identity(models.Model):
         upload_to=partial(upload_namer, "background_images"), blank=True, null=True
     )
 
-    local = models.BooleanField()
-    users = models.ManyToManyField("users.User", related_name="identities")
-    manually_approves_followers = models.BooleanField(blank=True, null=True)
     private_key = models.TextField(null=True, blank=True)
     public_key = models.TextField(null=True, blank=True)
 
@@ -62,36 +76,37 @@ class Identity(models.Model):
 
     class Meta:
         verbose_name_plural = "identities"
+        unique_together = [("username", "domain")]
 
     @classmethod
-    def by_handle(cls, handle, create=True):
+    def by_handle(cls, handle, fetch=False, local=False):
         if handle.startswith("@"):
             raise ValueError("Handle must not start with @")
         if "@" not in handle:
             raise ValueError("Handle must contain domain")
+        username, domain = handle.split("@")
         try:
-            return cls.objects.filter(handle=handle).get()
+            if local:
+                return cls.objects.get(username=username, domain_id=domain, local=True)
+            else:
+                return cls.objects.get(username=username, domain_id=domain)
         except cls.DoesNotExist:
-            if create:
+            if fetch and not local:
                 return cls.objects.create(handle=handle, local=False)
             return None
 
     @classmethod
-    def by_actor_uri(cls, uri):
+    def by_actor_uri(cls, uri, create=False):
         try:
-            cls.objects.filter(actor_uri=uri)
+            return cls.objects.get(actor_uri=uri)
         except cls.DoesNotExist:
+            if create:
+                return cls.objects.create(actor_uri=uri, local=False)
             return None
 
     @property
-    def short_handle(self):
-        if self.handle.endswith("@" + settings.DEFAULT_DOMAIN):
-            return self.handle.split("@", 1)[0]
-        return self.handle
-
-    @property
-    def domain(self):
-        return self.handle.split("@", 1)[1]
+    def handle(self):
+        return f"{self.username}@{self.domain_id}"
 
     @property
     def data_age(self) -> float:
@@ -105,6 +120,8 @@ class Identity(models.Model):
         return (timezone.now() - self.fetched).total_seconds()
 
     def generate_keypair(self):
+        if not self.local:
+            raise ValueError("Cannot generate keypair for remote user")
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
@@ -120,44 +137,39 @@ class Identity(models.Model):
         )
         self.save()
 
-    async def fetch_details(self):
-        if self.local:
-            raise ValueError("Cannot fetch local identities")
-        self.actor_uri = None
-        self.inbox_uri = None
-        self.profile_uri = None
-        # Go knock on webfinger and see what their address is
-        await self.fetch_webfinger()
-        # Fetch actor JSON
-        if self.actor_uri:
-            await self.fetch_actor()
-        self.fetched = timezone.now()
-        await sync_to_async(self.save)()
-
-    async def fetch_webfinger(self) -> bool:
+    @classmethod
+    async def fetch_webfinger(cls, handle: str) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Given a username@domain handle, returns a tuple of
+        (actor uri, canonical handle) or None, None if it does not resolve.
+        """
+        domain = handle.split("@")[1]
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"https://{self.domain}/.well-known/webfinger?resource=acct:{self.handle}",
+                f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
                 headers={"Accept": "application/json"},
                 follow_redirects=True,
             )
         if response.status_code >= 400:
-            return False
+            return None, None
         data = response.json()
+        if data["subject"].startswith("acct:"):
+            data["subject"] = data["subject"][5:]
         for link in data["links"]:
             if (
                 link.get("type") == "application/activity+json"
                 and link.get("rel") == "self"
             ):
-                self.actor_uri = link["href"]
-            elif (
-                link.get("type") == "text/html"
-                and link.get("rel") == "http://webfinger.net/rel/profile-page"
-            ):
-                self.profile_uri = link["href"]
-        return True
+                return link["href"], data["subject"]
+        return None, None
 
     async def fetch_actor(self) -> bool:
+        """
+        Fetches the user's actor information, as well as their domain from
+        webfinger if it's available.
+        """
+        if self.local:
+            raise ValueError("Cannot fetch local identities")
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 self.actor_uri,
@@ -166,29 +178,48 @@ class Identity(models.Model):
             )
             if response.status_code >= 400:
                 return False
-            document = canonicalise(response.json())
+            document = canonicalise(response.json(), include_security=True)
             self.name = document.get("name")
+            self.profile_uri = document.get("url")
             self.inbox_uri = document.get("inbox")
             self.outbox_uri = document.get("outbox")
             self.summary = document.get("summary")
+            self.username = document.get("preferredUsername")
             self.manually_approves_followers = document.get(
                 "as:manuallyApprovesFollowers"
             )
             self.public_key = document.get("publicKey", {}).get("publicKeyPem")
             self.icon_uri = document.get("icon", {}).get("url")
             self.image_uri = document.get("image", {}).get("url")
+        # Now go do webfinger with that info to see if we can get a canonical domain
+        actor_url_parts = urlparse(self.actor_uri)
+        get_domain = sync_to_async(Domain.get_remote_domain)
+        if self.username:
+            webfinger_actor, webfinger_handle = await self.fetch_webfinger(
+                f"{self.username}@{actor_url_parts.hostname}"
+            )
+            if webfinger_handle:
+                webfinger_username, webfinger_domain = webfinger_handle.split("@")
+                self.username = webfinger_username
+                self.domain = await get_domain(webfinger_domain)
+            else:
+                self.domain = await get_domain(actor_url_parts.hostname)
+        else:
+            self.domain = await get_domain(actor_url_parts.hostname)
+        self.fetched = timezone.now()
+        await sync_to_async(self.save)()
         return True
 
     def sign(self, cleartext: str) -> str:
         if not self.private_key:
             raise ValueError("Cannot sign - no private key")
         private_key = serialization.load_pem_private_key(
-            self.private_key,
+            self.private_key.encode("ascii"),
             password=None,
         )
         return base64.b64encode(
             private_key.sign(
-                cleartext,
+                cleartext.encode("utf8"),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH,
@@ -199,12 +230,13 @@ class Identity(models.Model):
 
     def verify_signature(self, crypttext: str, cleartext: str) -> bool:
         if not self.public_key:
-            raise ValueError("Cannot verify - no private key")
-        public_key = serialization.load_pem_public_key(self.public_key)
+            raise ValueError("Cannot verify - no public key")
+        public_key = serialization.load_pem_public_key(self.public_key.encode("ascii"))
+        print("sig??", crypttext, cleartext)
         try:
             public_key.verify(
-                crypttext,
-                cleartext,
+                crypttext.encode("utf8"),
+                cleartext.encode("utf8"),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH,
@@ -250,10 +282,18 @@ class Identity(models.Model):
         pass
 
     def __str__(self):
-        return self.name or self.handle
+        return self.handle or self.actor_uri
 
     class urls(urlman.Urls):
-        view = "/@{self.short_handle}/"
+        view = "/@{self.username}@{self.domain_id}/"
+        view_short = "/@{self.username}/"
         actor = "{view}actor/"
         inbox = "{actor}inbox/"
+        outbox = "{actor}outbox/"
         activate = "{view}activate/"
+
+        def get_scheme(self, url):
+            return "https"
+
+        def get_hostname(self, url):
+            return self.instance.domain.uri_domain
