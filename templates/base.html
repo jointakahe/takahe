@@ -13,11 +13,25 @@
 <body class="{% block body_class %}{% endblock %}">
 
     <header>
-        <h1><a href="/">{{ config.site_name }}</a></h1>
+        <h1>
+            <a href="/">
+                <img src="{% static "img/icon-128.png" %}" width="32">
+                {{ config.site_name }}
+            </a>
+        </h1>
         <menu>
             <li>
+                <a href="#"><i class="fa-solid fa-gear"></i></a>
+            </li>
+            <li>
                 {% if user.is_authenticated %}
-                    Logout
+                    <a href="/identity/select/">
+                        {% if user.icon_uri %}
+                            <img src="{{ user.icon_uri }}" width="32">
+                        {% else %}
+                            <img src="{% static "img/unknown-icon-128.png" %}" width="32">
+                        {% endif %}
+                    </a>
                 {% else %}
                     <a href="/auth/login/">Login</a>
                 {% endif %}

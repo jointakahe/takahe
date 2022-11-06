@@ -97,11 +97,19 @@ header {
 }
 
 header h1 {
+    font-family: "Raleway";
+    font-weight: normal;
     background: var(--color-fg2);
     padding: 10px 7px 7px 7px;
     font-size: 130%;
     height: 2.2em;
     color: var(--color-fg1);
+}
+
+header h1 img {
+    display: inline;
+    vertical-align: top;
+    margin: 0 3px 0 0;
 }
 
 header a {
@@ -117,8 +125,9 @@ header menu {
 }
 
 header menu li {
-    padding: 20px 10px 7px 10px;
+    padding: 10px 10px 7px 10px;
     color: #eee;
+    line-height: 32px;
 }
 
 main {
@@ -150,10 +159,28 @@ main {
 
 .modal .option {
     display: block;
-    padding: 20px 30px;
+    padding: 15px 20px;
     color: var(--color-text-main);
     text-decoration: none;
     border-left: 3px solid transparent;
+    line-height: 32px;
+}
+
+.modal .option img {
+    display: inline;
+    vertical-align: middle;
+    margin: 0 10px 3px 0;
+}
+
+.modal .option i {
+    display: inline-block;
+    vertical-align: middle;
+    width: 32px;
+    height: 32px;
+    text-align: center;
+    line-height: 32px;
+    font-size: 150%;
+    margin: 0 10px 3px 0;
 }
 
 .modal a.option:hover {
@@ -162,6 +189,11 @@ main {
 
 .modal .option.empty {
     text-align: center;
+    color: var(--color-text-dull);
+}
+
+.modal .option small {
+    margin: 0 0 0 5px;
     color: var(--color-text-dull);
 }
 

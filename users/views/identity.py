@@ -1,3 +1,5 @@
+import string
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -37,6 +39,20 @@ class SelectIdentity(TemplateView):
 
 
 @method_decorator(login_required, name="dispatch")
+class ActivateIdentity(View):
+    def get(self, request, handle):
+        identity = by_handle_or_404(request, handle)
+        if not identity.users.filter(pk=request.user.pk).exists():
+            raise Http404()
+        request.session["identity_id"] = identity.id
+        # Get next URL, not allowing offsite links
+        next = request.GET.get("next") or "/"
+        if ":" in next:
+            next = "/"
+        return redirect("/")
+
+
+@method_decorator(login_required, name="dispatch")
 class CreateIdentity(FormView):
 
     template_name = "identity/create.html"
@@ -50,10 +66,16 @@ class CreateIdentity(FormView):
         def clean_handle(self):
             # Remove any leading @
             value = self.cleaned_data["handle"].lstrip("@")
+            # Validate it's all ascii characters
+            for character in value:
+                if character not in string.ascii_letters + string.digits + "_-":
+                    raise forms.ValidationError(
+                        "Only the letters a-z, numbers 0-9, dashes and underscores are allowed."
+                    )
             # Don't allow custom domains here quite yet
             if "@" in value:
                 raise forms.ValidationError(
-                    "You are not allowed an @ sign in your handle"
+                    "You are not allowed an @ sign in your handle."
                 )
             # Ensure there is a domain on the end
             if "@" not in value:

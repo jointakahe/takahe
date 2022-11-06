@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Select Identity{% endblock %}
 
@@ -6,12 +7,23 @@
     <section class="modal identities">
         <h1>Select Identity</h1>
         {% for identity in identities %}
-            <a class="option" href="{{ identity.urls.activate }}">{{ identity }}</a>
+            <a class="option" href="{{ identity.urls.activate }}">
+                {% if identity.icon_uri %}
+                    <img src="{{ identity.icon_uri }}" width="32">
+                {% else %}
+                    <img src="{% static "img/unknown-icon-128.png" %}" width="32">
+                {% endif %}
+                {{ identity }}
+                <small>@{{ identity.short_handle }}</small>
+            </a>
         {% empty %}
             <p class="option empty">You have no identities.</p>
         {% endfor %}
         <a href="/identity/create/" class="option new">
             <i class="fa-solid fa-plus"></i> Create a new identity
+        </a>
+        <a href="/auth/logout/" class="option new">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
         </a>
     </section>
 {% endblock %}
