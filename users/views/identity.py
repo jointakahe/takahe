@@ -130,8 +130,9 @@ class CreateIdentity(FormView):
     def form_valid(self, form):
         username = form.cleaned_data["username"]
         domain = form.cleaned_data["domain"]
+        domain_instance = Domain.get_local_domain(domain)
         new_identity = Identity.objects.create(
-            actor_uri=f"https://{domain}/@{username}/actor/",
+            actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/actor/",
             username=username,
             domain_id=domain,
             name=form.cleaned_data["name"],
@@ -154,13 +155,13 @@ class Actor(View):
                 "https://www.w3.org/ns/activitystreams",
                 "https://w3id.org/security/v1",
             ],
-            "id": identity.urls.actor.full(),
+            "id": identity.actor_uri,
             "type": "Person",
-            "inbox": identity.urls.inbox.full(),
+            "inbox": identity.actor_uri + "inbox/",
             "preferredUsername": identity.username,
             "publicKey": {
-                "id": identity.urls.key.full(),
-                "owner": identity.urls.actor.full(),
+                "id": identity.key_id,
+                "owner": identity.actor_uri,
                 "publicKeyPem": identity.public_key,
             },
             "published": identity.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -249,7 +250,7 @@ class Webfinger(View):
                     {
                         "rel": "self",
                         "type": "application/activity+json",
-                        "href": identity.urls.actor.full(),
+                        "href": identity.actor_uri,
                     },
                 ],
             }

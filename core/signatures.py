@@ -96,7 +96,7 @@ class HttpSignature:
         )
         headers["Signature"] = self.compile_signature(
             {
-                "keyid": identity.urls.key.full(),  # type:ignore
+                "keyid": identity.key_id,
                 "headers": list(headers.keys()),
                 "signature": identity.sign(signed_string),
                 "algorithm": "rsa-sha256",

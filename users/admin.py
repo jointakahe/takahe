@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from users.models import Domain, Identity, User, UserEvent
+from users.models import Domain, Follow, Identity, User, UserEvent
 
 
 @admin.register(Domain)
@@ -20,5 +20,9 @@ class UserEventAdmin(admin.ModelAdmin):
 
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
-
     list_display = ["id", "handle", "actor_uri", "name", "local"]
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ["id", "source", "target", "requested", "accepted"]

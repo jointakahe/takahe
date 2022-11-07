@@ -24,5 +24,6 @@ async def handle_follow_request(task_handler):
     response = await HttpSignature.signed_request(
         follow.target.inbox_uri, request, follow.source
     )
-    print(response)
-    print(response.content)
+    if response.status_code >= 400:
+        raise ValueError(f"Request error: {response.status_code} {response.content}")
+    await Follow.objects.filter(pk=follow.pk).aupdate(requested=True)

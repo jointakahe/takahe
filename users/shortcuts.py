@@ -18,7 +18,14 @@ def by_handle_or_404(request, handle, local=True, fetch=False):
         domain = domain_instance.domain
     else:
         username, domain = handle.split("@", 1)
-    identity = Identity.by_handle(handle, local=local, fetch=fetch)
+        # Resolve the domain to the display domain
+        domain = Domain.get_local_domain(request.META["HTTP_HOST"]).domain
+    identity = Identity.by_username_and_domain(
+        username,
+        domain,
+        local=local,
+        fetch=fetch,
+    )
     if identity is None:
         raise Http404(f"No identity for handle {handle}")
     return identity

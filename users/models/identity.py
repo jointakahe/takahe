@@ -82,11 +82,7 @@ class Identity(models.Model):
         view = "/@{self.username}@{self.domain_id}/"
         view_short = "/@{self.username}/"
         action = "{view}action/"
-        actor = "{view}actor/"
         activate = "{view}activate/"
-        key = "{actor}#main-key"
-        inbox = "{actor}inbox/"
-        outbox = "{actor}outbox/"
 
         def get_scheme(self, url):
             return "https"
@@ -102,12 +98,9 @@ class Identity(models.Model):
     ### Alternate constructors/fetchers ###
 
     @classmethod
-    def by_handle(cls, handle, fetch=False, local=False):
-        if handle.startswith("@"):
-            raise ValueError("Handle must not start with @")
-        if "@" not in handle:
-            raise ValueError("Handle must contain domain")
-        username, domain = handle.split("@")
+    def by_username_and_domain(cls, username, domain, fetch=False, local=False):
+        if username.startswith("@"):
+            raise ValueError("Username must not start with @")
         try:
             if local:
                 return cls.objects.get(username=username, domain_id=domain, local=True)
@@ -115,7 +108,9 @@ class Identity(models.Model):
                 return cls.objects.get(username=username, domain_id=domain)
         except cls.DoesNotExist:
             if fetch and not local:
-                actor_uri, handle = async_to_sync(cls.fetch_webfinger)(handle)
+                actor_uri, handle = async_to_sync(cls.fetch_webfinger)(
+                    f"{username}@{domain}"
+                )
                 username, domain = handle.split("@")
                 domain = Domain.get_remote_domain(domain)
                 return cls.objects.create(
@@ -167,6 +162,10 @@ class Identity(models.Model):
     def outdated(self) -> bool:
         # TODO: Setting
         return self.data_age > 60 * 24 * 24
+
+    @property
+    def key_id(self):
+        return self.actor_uri + "#main-key"
 
     ### Actor/Webfinger fetching ###
 
