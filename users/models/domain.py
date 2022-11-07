@@ -48,14 +48,14 @@ class Domain(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     @classmethod
-    def get_remote_domain(cls, domain) -> "Domain":
+    def get_remote_domain(cls, domain: str) -> "Domain":
         try:
             return cls.objects.get(domain=domain, local=False)
         except cls.DoesNotExist:
             return cls.objects.create(domain=domain, local=False)
 
     @classmethod
-    def get_local_domain(cls, domain) -> Optional["Domain"]:
+    def get_local_domain(cls, domain: str) -> Optional["Domain"]:
         try:
             return cls.objects.get(
                 models.Q(domain=domain) | models.Q(service_domain=domain)

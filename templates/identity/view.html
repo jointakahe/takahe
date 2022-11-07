@@ -10,11 +10,11 @@
         {% else %}
             <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
         {% endif %}
-        {{ identity }} <small>@{{ identity.handle }}</small>
+        {{ identity.name_or_handle }} <small>@{{ identity.handle }}</small>
     </h1>
 
     {% if not identity.local %}
-        {% if not identity.actor_uri %}
+        {% if identity.outdated and not identity.name %}
             <p class="system-note">
                 The system is still fetching this profile. Refresh to see updates.
             </p>
@@ -24,6 +24,19 @@
                 <a href="{{ identity.profile_uri }}">See their original profile</a>
             </p>
         {% endif %}
+    {% endif %}
+
+    {% if request.identity %}
+        <form action="{{ identity.urls.action }}" method="POST">
+            {% csrf_token %}
+            {% if follow %}
+                <input type="hidden" name="action" value="unfollow">
+                <button>Unfollow</button>
+            {% else %}
+                <input type="hidden" name="action" value="follow">
+                <button>Follow</button>
+            {% endif %}
+        </form>
     {% endif %}
 
     {% for status in statuses %}

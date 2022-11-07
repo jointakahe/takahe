@@ -1,10 +1,9 @@
 from django.http import Http404
-from django.shortcuts import get_object_or_404
 
 from users.models import Domain, Identity
 
 
-def by_handle_or_404(request, handle, local=True):
+def by_handle_or_404(request, handle, local=True, fetch=False):
     """
     Retrieves an Identity by its long or short handle.
     Domain-sensitive, so it will understand short handles on alternate domains.
@@ -19,15 +18,7 @@ def by_handle_or_404(request, handle, local=True):
         domain = domain_instance.domain
     else:
         username, domain = handle.split("@", 1)
-    if local:
-        return get_object_or_404(
-            Identity.objects.filter(local=True),
-            username=username,
-            domain_id=domain,
-        )
-    else:
-        return get_object_or_404(
-            Identity,
-            username=username,
-            domain_id=domain,
-        )
+    identity = Identity.by_handle(handle, local=local, fetch=fetch)
+    if identity is None:
+        raise Http404(f"No identity for handle {handle}")
+    return identity

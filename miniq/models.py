@@ -11,6 +11,9 @@ class Task(models.Model):
 
     class TypeChoices(models.TextChoices):
         identity_fetch = "identity_fetch"
+        inbox_item = "inbox_item"
+        follow_request = "follow_request"
+        follow_acknowledge = "follow_acknowledge"
 
     type = models.CharField(max_length=500, choices=TypeChoices.choices)
     priority = models.IntegerField(default=0)
@@ -42,7 +45,7 @@ class Task(models.Model):
             return next_task
 
     @classmethod
-    def submit(cls, type, subject, payload=None, deduplicate=True):
+    def submit(cls, type, subject: str, payload=None, deduplicate=True):
         # Deduplication is done against tasks that have not started yet only,
         # and only on tasks without payloads
         if deduplicate and not payload:

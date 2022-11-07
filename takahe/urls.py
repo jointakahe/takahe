@@ -14,6 +14,7 @@ urlpatterns = [
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/actor/", identity.Actor.as_view()),
     path("@<handle>/actor/inbox/", identity.Inbox.as_view()),
+    path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Identity selection
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
     path("identity/select/", identity.SelectIdentity.as_view()),

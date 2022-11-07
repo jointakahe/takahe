@@ -227,6 +227,49 @@ schemas = {
             }
         },
     },
+    "*/schemas/litepub-0.1.jsonld": {
+        "contentType": "application/ld+json",
+        "documentUrl": "http://w3id.org/security/v1",
+        "contextUrl": None,
+        "document": {
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+                "https://w3id.org/security/v1",
+                {
+                    "Emoji": "toot:Emoji",
+                    "Hashtag": "as:Hashtag",
+                    "PropertyValue": "schema:PropertyValue",
+                    "atomUri": "ostatus:atomUri",
+                    "conversation": {"@id": "ostatus:conversation", "@type": "@id"},
+                    "discoverable": "toot:discoverable",
+                    "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+                    "capabilities": "litepub:capabilities",
+                    "ostatus": "http://ostatus.org#",
+                    "schema": "http://schema.org#",
+                    "toot": "http://joinmastodon.org/ns#",
+                    "misskey": "https://misskey-hub.net/ns#",
+                    "fedibird": "http://fedibird.com/ns#",
+                    "value": "schema:value",
+                    "sensitive": "as:sensitive",
+                    "litepub": "http://litepub.social/ns#",
+                    "invisible": "litepub:invisible",
+                    "directMessage": "litepub:directMessage",
+                    "listMessage": {"@id": "litepub:listMessage", "@type": "@id"},
+                    "quoteUrl": "as:quoteUrl",
+                    "quoteUri": "fedibird:quoteUri",
+                    "oauthRegistrationEndpoint": {
+                        "@id": "litepub:oauthRegistrationEndpoint",
+                        "@type": "@id",
+                    },
+                    "EmojiReact": "litepub:EmojiReact",
+                    "ChatMessage": "litepub:ChatMessage",
+                    "alsoKnownAs": {"@id": "as:alsoKnownAs", "@type": "@id"},
+                    "vcard": "http://www.w3.org/2006/vcard/ns#",
+                    "formerRepresentations": "litepub:formerRepresentations",
+                },
+            ]
+        },
+    },
 }
 
 
@@ -244,12 +287,16 @@ def builtin_document_loader(url: str, options={}):
     try:
         return schemas[key]
     except KeyError:
-        raise JsonLdError(
-            f"No schema built-in for {key!r}",
-            "jsonld.LoadDocumentError",
-            code="loading document failed",
-            cause="KeyError",
-        )
+        try:
+            key = "*" + pieces.path.rstrip("/")
+            return schemas[key]
+        except KeyError:
+            raise JsonLdError(
+                f"No schema built-in for {key!r}",
+                "jsonld.LoadDocumentError",
+                code="loading document failed",
+                cause="KeyError",
+            )
 
 
 def canonicalise(json_data, include_security=False):

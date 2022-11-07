@@ -5,9 +5,11 @@ from asgiref.sync import async_to_sync
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
+from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.http import parse_http_date
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, View
 
@@ -15,7 +17,8 @@ from core.forms import FormHelper
 from core.ld import canonicalise
 from core.signatures import HttpSignature
 from miniq.models import Task
-from users.models import Domain, Identity
+from users.decorators import identity_required
+from users.models import Domain, Follow, Identity
 from users.shortcuts import by_handle_or_404
 
 
@@ -24,14 +27,37 @@ class ViewIdentity(TemplateView):
     template_name = "identity/view.html"
 
     def get_context_data(self, handle):
-        identity = by_handle_or_404(self.request, handle, local=False)
+        identity = by_handle_or_404(
+            self.request,
+            handle,
+            local=False,
+            fetch=True,
+        )
         statuses = identity.statuses.all()[:100]
         if identity.data_age > settings.IDENTITY_MAX_AGE:
             Task.submit("identity_fetch", identity.handle)
         return {
             "identity": identity,
             "statuses": statuses,
+            "follow": Follow.maybe_get(self.request.identity, identity)
+            if self.request.identity
+            else None,
         }
+
+
+@method_decorator(identity_required, name="dispatch")
+class ActionIdentity(View):
+    def post(self, request, handle):
+        identity = by_handle_or_404(self.request, handle, local=False)
+        # See what action we should perform
+        action = self.request.POST["action"]
+        if action == "follow":
+            existing_follow = Follow.maybe_get(self.request.identity, identity)
+            if not existing_follow:
+                Follow.create_local(self.request.identity, identity)
+        else:
+            raise ValueError(f"Cannot handle identity action {action}")
+        return redirect(identity.urls.view)
 
 
 @method_decorator(login_required, name="dispatch")
@@ -158,42 +184,43 @@ class Inbox(View):
         if "HTTP_DIGEST" in request.META:
             expected_digest = HttpSignature.calculate_digest(request.body)
             if request.META["HTTP_DIGEST"] != expected_digest:
-                print("Bad digest")
-                return HttpResponseBadRequest()
+                return HttpResponseBadRequest("Digest is incorrect")
+        # Verify date header
+        if "HTTP_DATE" in request.META:
+            header_date = parse_http_date(request.META["HTTP_DATE"])
+            if abs(timezone.now().timestamp() - header_date) > 60:
+                return HttpResponseBadRequest("Date is too far away")
         # Get the signature details
         if "HTTP_SIGNATURE" not in request.META:
-            print("No signature")
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest("No signature present")
         signature_details = HttpSignature.parse_signature(
             request.META["HTTP_SIGNATURE"]
         )
         # Reject unknown algorithms
         if signature_details["algorithm"] != "rsa-sha256":
-            print("Unknown algorithm")
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest("Unknown signature algorithm")
         # Create the signature payload
         headers_string = HttpSignature.headers_from_request(
             request, signature_details["headers"]
         )
         # Load the LD
         document = canonicalise(json.loads(request.body))
-        print(signature_details)
-        print(headers_string)
-        print(document)
         # Find the Identity by the actor on the incoming item
+        # This ensures that the signature used for the headers matches the actor
+        # described in the payload.
         identity = Identity.by_actor_uri_with_create(document["actor"])
         if not identity.public_key:
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()
         if not identity.public_key:
-            print("Cannot retrieve actor")
             return HttpResponseBadRequest("Cannot retrieve actor")
         if not identity.verify_signature(
             signature_details["signature"], headers_string
         ):
-            print("Bad signature")
-            # return HttpResponseBadRequest("Bad signature")
-        return JsonResponse({"status": "OK"})
+            return HttpResponseBadRequest("Bad signature")
+        # Hand off the item to be processed by the queue
+        Task.submit("inbox_item", subject=identity.actor_uri, payload=document)
+        return HttpResponse(status=202)
 
 
 class Webfinger(View):
