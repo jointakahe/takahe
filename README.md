@@ -6,3 +6,5 @@ Goals:
 
 * Can run on serverless hosting
 * Multiple account domains possible per server
+* Mastodon client API compatible
+* Async evented core for fan-out/delivery
