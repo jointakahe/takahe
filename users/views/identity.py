@@ -16,7 +16,6 @@ from django.views.generic import FormView, TemplateView, View
 from core.forms import FormHelper
 from core.ld import canonicalise
 from core.signatures import HttpSignature
-from miniq.models import Task
 from users.decorators import identity_required
 from users.models import Domain, Follow, Identity
 from users.shortcuts import by_handle_or_404

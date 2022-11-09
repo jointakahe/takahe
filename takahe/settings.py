@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     "core",
     "statuses",
     "users",
-    "miniq",
+    "stator",
 ]
 
 MIDDLEWARE = [

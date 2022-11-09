@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 
 from core import views as core
-from miniq import views as miniq
+from stator import views as stator
 from users.views import auth, identity
 
 urlpatterns = [
@@ -22,7 +22,7 @@ urlpatterns = [
     # Well-known endpoints
     path(".well-known/webfinger", identity.Webfinger.as_view()),
     # Task runner
-    path(".queue/process/", miniq.QueueProcessor.as_view()),
+    path(".stator/runner/", stator.RequestRunner.as_view()),
     # Django admin
     path("djadmin/", admin.site.urls),
 ]

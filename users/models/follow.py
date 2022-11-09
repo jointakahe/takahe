@@ -2,10 +2,23 @@ from typing import Optional
 
 from django.db import models
 
-from miniq.models import Task
+from stator.models import State, StateField, StateGraph, StatorModel
 
 
-class Follow(models.Model):
+class FollowStates(StateGraph):
+    pending = State(try_interval=3600)
+    requested = State()
+    accepted = State()
+
+    @pending.add_transition(requested)
+    async def try_request(cls, instance):
+        print("Would have tried to follow")
+        return False
+
+    requested.add_manual_transition(accepted)
+
+
+class Follow(StatorModel):
     """
     When one user (the source) follows other (the target)
     """
@@ -24,8 +37,7 @@ class Follow(models.Model):
     uri = models.CharField(blank=True, null=True, max_length=500)
     note = models.TextField(blank=True, null=True)
 
-    requested = models.BooleanField(default=False)
-    accepted = models.BooleanField(default=False)
+    state = StateField(FollowStates)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -50,17 +62,15 @@ class Follow(models.Model):
         (which can be local or remote).
         """
         if not source.local:
-            raise ValueError("You cannot initiate follows on a remote Identity")
+            raise ValueError("You cannot initiate follows from a remote Identity")
         try:
             follow = Follow.objects.get(source=source, target=target)
         except Follow.DoesNotExist:
             follow = Follow.objects.create(source=source, target=target, uri="")
             follow.uri = source.actor_uri + f"follow/{follow.pk}/"
+            # TODO: Local follow approvals
             if target.local:
-                follow.requested = True
-                follow.accepted = True
-            else:
-                Task.submit("follow_request", str(follow.pk))
+                follow.state = FollowStates.accepted
             follow.save()
         return follow
 

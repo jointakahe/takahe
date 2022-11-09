@@ -25,4 +25,4 @@ class IdentityAdmin(admin.ModelAdmin):
 
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
-    list_display = ["id", "source", "target", "requested", "accepted"]
+    list_display = ["id", "source", "target", "state"]
