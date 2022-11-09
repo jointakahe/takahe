@@ -1,0 +1,42 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:15-alpine
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - internal_network
+    restart: always
+    environment:
+      - "POSTGRES_DB=tahake"
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=insecure_password"
+
+  web:
+    build: .
+    image: tahake:latest
+    environment:
+      - "DJANGO_SETTINGS_MODULE=takahe.settings"
+      - "SECRET_KEY=insecure_secret"
+      - "POSTGRES_HOST=db"
+      - "POSTGRES_DB=tahake"
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=insecure_password"
+    networks:
+      - external_network
+      - internal_network
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+networks:
+  internal_network:
+  external_network:
+
+volumes:
+  dbdata:
