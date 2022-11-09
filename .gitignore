@@ -1,3 +1,4 @@
 *.psql
 *.sqlite3
+.venv
 notes.md

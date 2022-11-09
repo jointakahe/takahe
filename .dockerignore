@@ -1,0 +1,5 @@
+*.psql
+*.sqlite3
+notes.md
+.venv
+.pre-commit-config.yaml
