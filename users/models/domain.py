@@ -55,7 +55,7 @@ class Domain(models.Model):
             return cls.objects.create(domain=domain, local=False)
 
     @classmethod
-    def get_local_domain(cls, domain: str) -> Optional["Domain"]:
+    def get_domain(cls, domain: str) -> Optional["Domain"]:
         try:
             return cls.objects.get(
                 models.Q(domain=domain) | models.Q(service_domain=domain)

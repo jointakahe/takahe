@@ -51,14 +51,14 @@ def test_bad_declarations():
     # More than one initial state
     with pytest.raises(ValueError):
 
-        class TestGraph(StateGraph):
+        class TestGraph2(StateGraph):
             initial = State()
             initial2 = State()
 
     # No initial states
     with pytest.raises(ValueError):
 
-        class TestGraph(StateGraph):
+        class TestGraph3(StateGraph):
             loop = State()
             loop2 = State()
 

@@ -6,13 +6,13 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class FollowStates(StateGraph):
-    pending = State(try_interval=3600)
+    pending = State(try_interval=30)
     requested = State()
     accepted = State()
 
     @pending.add_transition(requested)
-    async def try_request(cls, instance):
-        print("Would have tried to follow")
+    async def try_request(instance: "Follow"):  # type:ignore
+        print("Would have tried to follow on", instance)
         return False
 
     requested.add_manual_transition(accepted)
@@ -73,11 +73,3 @@ class Follow(StatorModel):
                 follow.state = FollowStates.accepted
             follow.save()
         return follow
-
-    def undo(self):
-        """
-        Undoes this follow
-        """
-        if not self.target.local:
-            Task.submit("follow_undo", str(self.pk))
-        self.delete()

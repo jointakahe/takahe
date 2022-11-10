@@ -1,8 +1,17 @@
 from django.contrib import admin
 
-from stator.models import StatorTask
+from stator.models import StatorError
 
 
-@admin.register(StatorTask)
+@admin.register(StatorError)
 class DomainAdmin(admin.ModelAdmin):
-    list_display = ["id", "model_label", "instance_pk", "locked_until"]
+    list_display = [
+        "id",
+        "date",
+        "model_label",
+        "instance_pk",
+        "from_state",
+        "to_state",
+        "error",
+    ]
+    ordering = ["-date"]

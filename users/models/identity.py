@@ -14,7 +14,19 @@ from django.utils import timezone
 from OpenSSL import crypto
 
 from core.ld import canonicalise
+from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
+
+
+class IdentityStates(StateGraph):
+    outdated = State(try_interval=3600)
+    updated = State()
+
+    @outdated.add_transition(updated)
+    async def fetch_identity(identity: "Identity"):  # type:ignore
+        if identity.local:
+            return True
+        return await identity.fetch_actor()
 
 
 def upload_namer(prefix, instance, filename):
@@ -26,7 +38,7 @@ def upload_namer(prefix, instance, filename):
     return f"{prefix}/{now.year}/{now.month}/{now.day}/{filename}"
 
 
-class Identity(models.Model):
+class Identity(StatorModel):
     """
     Represents both local and remote Fediverse identities (actors)
     """
@@ -34,6 +46,8 @@ class Identity(models.Model):
     # The Actor URI is essentially also a PK - we keep the default numeric
     # one around as well for making nice URLs etc.
     actor_uri = models.CharField(max_length=500, unique=True)
+
+    state = StateField(IdentityStates)
 
     local = models.BooleanField()
     users = models.ManyToManyField("users.User", related_name="identities")

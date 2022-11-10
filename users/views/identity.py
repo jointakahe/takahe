@@ -17,7 +17,7 @@ from core.forms import FormHelper
 from core.ld import canonicalise
 from core.signatures import HttpSignature
 from users.decorators import identity_required
-from users.models import Domain, Follow, Identity
+from users.models import Domain, Follow, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
 
 
@@ -34,7 +34,7 @@ class ViewIdentity(TemplateView):
         )
         statuses = identity.statuses.all()[:100]
         if identity.data_age > settings.IDENTITY_MAX_AGE:
-            Task.submit("identity_fetch", identity.handle)
+            identity.transition_perform(IdentityStates.outdated)
         return {
             "identity": identity,
             "statuses": statuses,
@@ -129,7 +129,7 @@ class CreateIdentity(FormView):
     def form_valid(self, form):
         username = form.cleaned_data["username"]
         domain = form.cleaned_data["domain"]
-        domain_instance = Domain.get_local_domain(domain)
+        domain_instance = Domain.get_domain(domain)
         new_identity = Identity.objects.create(
             actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/actor/",
             username=username,
