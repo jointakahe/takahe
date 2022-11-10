@@ -20,7 +20,7 @@ class UserEventAdmin(admin.ModelAdmin):
 
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
-    list_display = ["id", "handle", "actor_uri", "name", "local"]
+    list_display = ["id", "handle", "actor_uri", "state", "local"]
 
 
 @admin.register(Follow)

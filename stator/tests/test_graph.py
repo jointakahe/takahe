@@ -9,39 +9,29 @@ def test_declare():
     lookups.
     """
 
-    fake_handler = lambda: True
-
     class TestGraph(StateGraph):
-        initial = State()
-        second = State()
+        initial = State(try_interval=3600)
+        second = State(try_interval=1)
         third = State()
-        fourth = State()
-        final = State()
 
-        initial.add_transition(second, 60, handler=fake_handler)
-        second.add_transition(third, 60, handler="check_third")
+        initial.transitions_to(second)
+        second.transitions_to(third)
 
-        def check_third(cls):
-            return True
+        @classmethod
+        def handle_initial(cls):
+            pass
 
-        @third.add_transition(fourth, 60)
-        def check_fourth(cls):
-            return True
-
-        fourth.add_manual_transition(final)
+        @classmethod
+        def handle_second(cls):
+            pass
 
     assert TestGraph.initial_state == TestGraph.initial
-    assert TestGraph.terminal_states == {TestGraph.final}
+    assert TestGraph.terminal_states == {TestGraph.third}
 
-    assert TestGraph.initial.children[TestGraph.second].get_handler() == fake_handler
-    assert (
-        TestGraph.second.children[TestGraph.third].get_handler()
-        == TestGraph.check_third
-    )
-    assert (
-        TestGraph.third.children[TestGraph.fourth].get_handler().__name__
-        == "check_fourth"
-    )
+    assert TestGraph.initial.handler == TestGraph.handle_initial
+    assert TestGraph.initial.try_interval == 3600
+    assert TestGraph.second.handler == TestGraph.handle_second
+    assert TestGraph.second.try_interval == 1
 
 
 def test_bad_declarations():
@@ -62,5 +52,18 @@ def test_bad_declarations():
             loop = State()
             loop2 = State()
 
-            loop.add_transition(loop2, 1, handler="fake")
-            loop2.add_transition(loop, 1, handler="fake")
+            loop.transitions_to(loop2)
+            loop2.transitions_to(loop)
+
+
+def test_state():
+    """
+    Tests basic values of the State class
+    """
+
+    class TestGraph(StateGraph):
+        initial = State()
+
+    assert "initial" == TestGraph.initial
+    assert TestGraph.initial == "initial"
+    assert TestGraph.initial == TestGraph.initial

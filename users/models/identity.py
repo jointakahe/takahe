@@ -22,11 +22,16 @@ class IdentityStates(StateGraph):
     outdated = State(try_interval=3600)
     updated = State()
 
-    @outdated.add_transition(updated)
-    async def fetch_identity(identity: "Identity"):  # type:ignore
+    outdated.transitions_to(updated)
+
+    @classmethod
+    async def handle_outdated(cls, identity: "Identity"):
+        # Local identities never need fetching
         if identity.local:
-            return True
-        return await identity.fetch_actor()
+            return "updated"
+        # Run the actor fetch and progress to updated if it succeeds
+        if await identity.fetch_actor():
+            return "updated"
 
 
 def upload_namer(prefix, instance, filename):

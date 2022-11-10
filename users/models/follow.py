@@ -6,16 +6,20 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class FollowStates(StateGraph):
-    pending = State(try_interval=30)
-    requested = State()
+    unrequested = State(try_interval=30)
+    requested = State(try_interval=24 * 60 * 60)
     accepted = State()
 
-    @pending.add_transition(requested)
-    async def try_request(instance: "Follow"):  # type:ignore
-        print("Would have tried to follow on", instance)
-        return False
+    unrequested.transitions_to(requested)
+    requested.transitions_to(accepted)
 
-    requested.add_manual_transition(accepted)
+    @classmethod
+    async def handle_unrequested(cls, instance: "Follow"):
+        print("Would have tried to follow on", instance)
+
+    @classmethod
+    async def handle_requested(cls, instance: "Follow"):
+        print("Would have tried to requested on", instance)
 
 
 class Follow(StatorModel):
@@ -73,3 +77,17 @@ class Follow(StatorModel):
                 follow.state = FollowStates.accepted
             follow.save()
         return follow
+
+    @classmethod
+    def remote_created(cls, source, target, uri):
+        follow = cls.maybe_get(source=source, target=target)
+        if follow is None:
+            follow = Follow.objects.create(source=source, target=target, uri=uri)
+        if follow.state == FollowStates.fresh:
+            follow.transition_perform(FollowStates.requested)
+
+    @classmethod
+    def remote_accepted(cls, source, target):
+        follow = cls.maybe_get(source=source, target=target)
+        if follow and follow.state == FollowStates.requested:
+            follow.transition_perform(FollowStates.accepted)

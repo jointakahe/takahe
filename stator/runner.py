@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import time
+import traceback
 import uuid
 from typing import List, Type
 
@@ -53,7 +54,7 @@ class StatorRunner:
                             f"Attempting transition on {instance._meta.label_lower}#{instance.pk}"
                         )
                         self.tasks.append(
-                            asyncio.create_task(instance.atransition_attempt())
+                            asyncio.create_task(self.run_transition(instance))
                         )
                         self.handled += 1
                         space_remaining -= 1
@@ -70,5 +71,17 @@ class StatorRunner:
         print("Complete")
         return self.handled
 
+    async def run_transition(self, instance: StatorModel):
+        """
+        Wrapper for atransition_attempt with fallback error handling
+        """
+        try:
+            await instance.atransition_attempt()
+        except BaseException:
+            traceback.print_exc()
+
     def remove_completed_tasks(self):
+        """
+        Removes all completed asyncio.Tasks from our local in-progress list
+        """
         self.tasks = [t for t in self.tasks if not t.done()]

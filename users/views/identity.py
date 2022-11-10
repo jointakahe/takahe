@@ -17,7 +17,7 @@ from core.forms import FormHelper
 from core.ld import canonicalise
 from core.signatures import HttpSignature
 from users.decorators import identity_required
-from users.models import Domain, Follow, Identity, IdentityStates
+from users.models import Domain, Follow, Identity, IdentityStates, InboxMessage
 from users.shortcuts import by_handle_or_404
 
 
@@ -117,9 +117,13 @@ class CreateIdentity(FormView):
 
         def clean(self):
             # Check for existing users
-            username = self.cleaned_data["username"]
-            domain = self.cleaned_data["domain"]
-            if Identity.objects.filter(username=username, domain=domain).exists():
+            username = self.cleaned_data.get("username")
+            domain = self.cleaned_data.get("domain")
+            if (
+                username
+                and domain
+                and Identity.objects.filter(username=username, domain=domain).exists()
+            ):
                 raise forms.ValidationError(f"{username}@{domain} is already taken")
 
     def get_form(self):
@@ -219,7 +223,7 @@ class Inbox(View):
         ):
             return HttpResponseBadRequest("Bad signature")
         # Hand off the item to be processed by the queue
-        Task.submit("inbox_item", subject=identity.actor_uri, payload=document)
+        InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)
 
 

@@ -10,8 +10,7 @@ class DomainAdmin(admin.ModelAdmin):
         "date",
         "model_label",
         "instance_pk",
-        "from_state",
-        "to_state",
+        "state",
         "error",
     ]
     ordering = ["-date"]

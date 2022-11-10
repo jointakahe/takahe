@@ -1,16 +1,4 @@
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Set, Tuple, Type
 
 
 class StateGraph:
@@ -44,20 +32,43 @@ class StateGraph:
         terminal_states = set()
         initial_state = None
         for state in cls.states.values():
+            # Check for multiple initial states
             if state.initial:
                 if initial_state:
                     raise ValueError(
                         f"The graph has more than one initial state: {initial_state} and {state}"
                     )
                 initial_state = state
+            # Collect terminal states
             if state.terminal:
                 terminal_states.add(state)
+                # Ensure they do NOT have a handler
+                try:
+                    state.handler
+                except AttributeError:
+                    pass
+                else:
+                    raise ValueError(
+                        f"Terminal state '{state}' should not have a handler method ({state.handler_name})"
+                    )
+            else:
+                # Ensure non-terminal states have a try interval and a handler
+                if not state.try_interval:
+                    raise ValueError(
+                        f"State '{state}' has no try_interval and is not terminal"
+                    )
+                try:
+                    state.handler
+                except AttributeError:
+                    raise ValueError(
+                        f"State '{state}' does not have a handler method ({state.handler_name})"
+                    )
         if initial_state is None:
             raise ValueError("The graph has no initial state")
         cls.initial_state = initial_state
         cls.terminal_states = terminal_states
         # Generate choices
-        cls.choices = [(state, name) for name, state in cls.states.items()]
+        cls.choices = [(name, name) for name in cls.states.keys()]
 
 
 class State:
@@ -65,49 +76,37 @@ class State:
     Represents an individual state
     """
 
-    def __init__(self, try_interval: float = 300):
+    def __init__(
+        self,
+        try_interval: Optional[float] = None,
+        handler_name: Optional[str] = None,
+    ):
         self.try_interval = try_interval
+        self.handler_name = handler_name
         self.parents: Set["State"] = set()
-        self.children: Dict["State", "Transition"] = {}
+        self.children: Set["State"] = set()
 
     def _add_to_graph(self, graph: Type[StateGraph], name: str):
         self.graph = graph
         self.name = name
         self.graph.states[name] = self
+        if self.handler_name is None:
+            self.handler_name = f"handle_{self.name}"
 
     def __repr__(self):
         return f"<State {self.name}>"
 
-    def __str__(self):
-        return self.name
+    def __eq__(self, other):
+        if isinstance(other, State):
+            return self is other
+        return self.name == other
 
-    def __len__(self):
-        return len(self.name)
+    def __hash__(self):
+        return hash(id(self))
 
-    def add_transition(
-        self,
-        other: "State",
-        handler: Optional[Callable] = None,
-        priority: int = 0,
-    ) -> Callable:
-        def decorator(handler: Callable[[Any], bool]):
-            self.children[other] = Transition(
-                self,
-                other,
-                handler,
-                priority=priority,
-            )
-            other.parents.add(self)
-            return handler
-
-        # If we're not being called as a decorator, invoke it immediately
-        if handler is not None:
-            decorator(handler)
-        return decorator
-
-    def add_manual_transition(self, other: "State"):
-        self.children[other] = ManualTransition(self, other)
-        other.parents.add(self)
+    def transitions_to(self, other: "State"):
+        self.children.add(other)
+        other.parents.add(other)
 
     @property
     def initial(self):
@@ -117,59 +116,8 @@ class State:
     def terminal(self):
         return not self.children
 
-    def transitions(self, automatic_only=False) -> List["Transition"]:
-        """
-        Returns all transitions from this State in priority order
-        """
-        if automatic_only:
-            transitions = [t for t in self.children.values() if t.automatic]
-        else:
-            transitions = list(self.children.values())
-        return sorted(transitions, key=lambda t: t.priority, reverse=True)
-
-
-class Transition:
-    """
-    A possible transition from one state to another
-    """
-
-    def __init__(
-        self,
-        from_state: State,
-        to_state: State,
-        handler: Union[str, Callable],
-        priority: int = 0,
-    ):
-        self.from_state = from_state
-        self.to_state = to_state
-        self.handler = handler
-        self.priority = priority
-        self.automatic = True
-
-    def get_handler(self) -> Callable:
-        """
-        Returns the handler (it might need resolving from a string)
-        """
-        if isinstance(self.handler, str):
-            self.handler = getattr(self.from_state.graph, self.handler)
-        return cast(Callable, self.handler)
-
-    def __repr__(self):
-        return f"<Transition {self.from_state} -> {self.to_state}>"
-
-
-class ManualTransition(Transition):
-    """
-    A possible transition from one state to another that cannot be done by
-    the stator task runner, and must come from an external source.
-    """
-
-    def __init__(
-        self,
-        from_state: State,
-        to_state: State,
-    ):
-        self.from_state = from_state
-        self.to_state = to_state
-        self.priority = 0
-        self.automatic = False
+    @property
+    def handler(self) -> Callable[[Any], Optional[str]]:
+        if self.handler_name is None:
+            raise AttributeError("No handler defined")
+        return getattr(self.graph, self.handler_name)
