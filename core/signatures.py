@@ -1,6 +1,6 @@
 import base64
 import json
-from typing import Dict, List, Literal, TypedDict
+from typing import TYPE_CHECKING, Dict, List, Literal, TypedDict
 from urllib.parse import urlparse
 
 import httpx
@@ -8,7 +8,9 @@ from cryptography.hazmat.primitives import hashes
 from django.http import HttpRequest
 from django.utils.http import http_date
 
-from users.models import Identity
+# Prevent a circular import
+if TYPE_CHECKING:
+    from users.models import Identity
 
 
 class HttpSignature:
@@ -73,7 +75,7 @@ class HttpSignature:
         self,
         uri: str,
         body: Dict,
-        identity: Identity,
+        identity: "Identity",
         content_type: str = "application/json",
         method: Literal["post"] = "post",
     ):
@@ -105,13 +107,17 @@ class HttpSignature:
         del headers["(request-target)"]
         async with httpx.AsyncClient() as client:
             print(f"Calling {method} {uri}")
-            print(body)
-            return await client.request(
+            response = await client.request(
                 method,
                 uri,
                 headers=headers,
                 content=body_bytes,
             )
+            if response.status_code >= 400:
+                raise ValueError(
+                    f"Request error: {response.status_code} {response.content}"
+                )
+            return response
 
 
 class SignatureDetails(TypedDict):

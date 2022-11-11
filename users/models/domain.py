@@ -81,3 +81,15 @@ class Domain(models.Model):
 
     def __str__(self):
         return self.domain
+
+    def save(self, *args, **kwargs):
+        # Ensure that we are not conflicting with other domains
+        if Domain.objects.filter(service_domain=self.domain).exists():
+            raise ValueError(
+                f"Domain {self.domain} is already a service domain elsewhere!"
+            )
+        if self.service_domain:
+            if Domain.objects.filter(domain=self.service_domain).exists():
+                raise ValueError(
+                    f"Service domain {self.service_domain} is already a domain elsewhere!"
+                )

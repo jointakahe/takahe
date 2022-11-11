@@ -50,9 +50,6 @@ class StatorRunner:
                         min(space_remaining, self.MAX_TASKS_PER_MODEL),
                         timezone.now() + datetime.timedelta(seconds=self.LOCK_TIMEOUT),
                     ):
-                        print(
-                            f"Attempting transition on {instance._meta.label_lower}#{instance.pk}"
-                        )
                         self.tasks.append(
                             asyncio.create_task(self.run_transition(instance))
                         )
@@ -76,6 +73,9 @@ class StatorRunner:
         Wrapper for atransition_attempt with fallback error handling
         """
         try:
+            print(
+                f"Attempting transition on {instance._meta.label_lower}#{instance.pk} from state {instance.state}"
+            )
             await instance.atransition_attempt()
         except BaseException:
             traceback.print_exc()

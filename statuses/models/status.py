@@ -27,6 +27,9 @@ class Status(models.Model):
     updated = models.DateTimeField(auto_now=True)
     deleted = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = "statuses"
+
     @classmethod
     def create_local(cls, identity, text: str):
         return cls.objects.create(

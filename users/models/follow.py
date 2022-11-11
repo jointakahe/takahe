@@ -2,24 +2,110 @@ from typing import Optional
 
 from django.db import models
 
+from core.ld import canonicalise
+from core.signatures import HttpSignature
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class FollowStates(StateGraph):
     unrequested = State(try_interval=30)
-    requested = State(try_interval=24 * 60 * 60)
-    accepted = State()
+    local_requested = State(try_interval=24 * 60 * 60)
+    remote_requested = State(try_interval=24 * 60 * 60)
+    accepted = State(externally_progressed=True)
+    undone_locally = State(try_interval=60 * 60)
+    undone_remotely = State()
 
-    unrequested.transitions_to(requested)
-    requested.transitions_to(accepted)
+    unrequested.transitions_to(local_requested)
+    unrequested.transitions_to(remote_requested)
+    local_requested.transitions_to(accepted)
+    remote_requested.transitions_to(accepted)
+    accepted.transitions_to(undone_locally)
+    undone_locally.transitions_to(undone_remotely)
 
     @classmethod
     async def handle_unrequested(cls, instance: "Follow"):
-        print("Would have tried to follow on", instance)
+        # Re-retrieve the follow with more things linked
+        follow = await Follow.objects.select_related(
+            "source", "source__domain", "target"
+        ).aget(pk=instance.pk)
+        # Remote follows should not be here
+        if not follow.source.local:
+            return cls.remote_requested
+        # Construct the request
+        request = canonicalise(
+            {
+                "@context": "https://www.w3.org/ns/activitystreams",
+                "id": follow.uri,
+                "type": "Follow",
+                "actor": follow.source.actor_uri,
+                "object": follow.target.actor_uri,
+            }
+        )
+        # Sign it and send it
+        await HttpSignature.signed_request(
+            follow.target.inbox_uri, request, follow.source
+        )
+        return cls.local_requested
 
     @classmethod
-    async def handle_requested(cls, instance: "Follow"):
-        print("Would have tried to requested on", instance)
+    async def handle_local_requested(cls, instance: "Follow"):
+        # TODO: Resend follow requests occasionally
+        pass
+
+    @classmethod
+    async def handle_remote_requested(cls, instance: "Follow"):
+        # Re-retrieve the follow with more things linked
+        follow = await Follow.objects.select_related(
+            "source", "source__domain", "target"
+        ).aget(pk=instance.pk)
+        # Send an accept
+        request = canonicalise(
+            {
+                "@context": "https://www.w3.org/ns/activitystreams",
+                "id": follow.target.actor_uri + f"follow/{follow.pk}/#accept",
+                "type": "Follow",
+                "actor": follow.source.actor_uri,
+                "object": {
+                    "id": follow.uri,
+                    "type": "Follow",
+                    "actor": follow.source.actor_uri,
+                    "object": follow.target.actor_uri,
+                },
+            }
+        )
+        # Sign it and send it
+        await HttpSignature.signed_request(
+            follow.source.inbox_uri,
+            request,
+            identity=follow.target,
+        )
+        return cls.accepted
+
+    @classmethod
+    async def handle_undone_locally(cls, instance: "Follow"):
+        follow = Follow.objects.select_related(
+            "source", "source__domain", "target"
+        ).get(pk=instance.pk)
+        # Construct the request
+        request = canonicalise(
+            {
+                "@context": "https://www.w3.org/ns/activitystreams",
+                "id": follow.uri + "#undo",
+                "type": "Undo",
+                "actor": follow.source.actor_uri,
+                "object": {
+                    "id": follow.uri,
+                    "type": "Follow",
+                    "actor": follow.source.actor_uri,
+                    "object": follow.target.actor_uri,
+                },
+            }
+        )
+        # Sign it and send it
+        await HttpSignature.signed_request(
+            follow.target.inbox_uri, request, follow.source
+        )
+        return cls.undone_remotely
 
 
 class Follow(StatorModel):
@@ -83,11 +169,17 @@ class Follow(StatorModel):
         follow = cls.maybe_get(source=source, target=target)
         if follow is None:
             follow = Follow.objects.create(source=source, target=target, uri=uri)
-        if follow.state == FollowStates.fresh:
-            follow.transition_perform(FollowStates.requested)
+        if follow.state == FollowStates.unrequested:
+            follow.transition_perform(FollowStates.remote_requested)
 
     @classmethod
     def remote_accepted(cls, source, target):
+        print(f"accepted follow source {source} target {target}")
         follow = cls.maybe_get(source=source, target=target)
-        if follow and follow.state == FollowStates.requested:
+        print(f"accepting follow {follow}")
+        if follow and follow.state in [
+            FollowStates.unrequested,
+            FollowStates.local_requested,
+        ]:
             follow.transition_perform(FollowStates.accepted)
+            print("accepted")

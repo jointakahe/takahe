@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from users.models import Domain, Follow, Identity, User, UserEvent
+from users.models import Domain, Follow, Identity, InboxMessage, User, UserEvent
 
 
 @admin.register(Domain)
@@ -26,3 +26,14 @@ class IdentityAdmin(admin.ModelAdmin):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
+
+
+@admin.register(InboxMessage)
+class InboxMessageAdmin(admin.ModelAdmin):
+    list_display = ["id", "state", "message_type"]
+    actions = ["reset_state"]
+
+    @admin.action(description="Reset State")
+    def reset_state(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("received")

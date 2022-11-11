@@ -21,6 +21,10 @@ from users.models import Domain, Follow, Identity, IdentityStates, InboxMessage
 from users.shortcuts import by_handle_or_404
 
 
+class HttpResponseUnauthorized(HttpResponse):
+    status_code = 401
+
+
 class ViewIdentity(TemplateView):
 
     template_name = "identity/view.html"
@@ -188,20 +192,26 @@ class Inbox(View):
         if "HTTP_DIGEST" in request.META:
             expected_digest = HttpSignature.calculate_digest(request.body)
             if request.META["HTTP_DIGEST"] != expected_digest:
+                print("Wrong digest")
                 return HttpResponseBadRequest("Digest is incorrect")
         # Verify date header
         if "HTTP_DATE" in request.META:
             header_date = parse_http_date(request.META["HTTP_DATE"])
             if abs(timezone.now().timestamp() - header_date) > 60:
+                print(
+                    f"Date mismatch - they sent {header_date}, now is {timezone.now().timestamp()}"
+                )
                 return HttpResponseBadRequest("Date is too far away")
         # Get the signature details
         if "HTTP_SIGNATURE" not in request.META:
+            print("No signature")
             return HttpResponseBadRequest("No signature present")
         signature_details = HttpSignature.parse_signature(
             request.META["HTTP_SIGNATURE"]
         )
         # Reject unknown algorithms
         if signature_details["algorithm"] != "rsa-sha256":
+            print("Unknown sig algo")
             return HttpResponseBadRequest("Unknown signature algorithm")
         # Create the signature payload
         headers_string = HttpSignature.headers_from_request(
@@ -217,13 +227,14 @@ class Inbox(View):
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()
         if not identity.public_key:
+            print("Cannot get actor")
             return HttpResponseBadRequest("Cannot retrieve actor")
         if not identity.verify_signature(
             signature_details["signature"], headers_string
         ):
-            return HttpResponseBadRequest("Bad signature")
+            return HttpResponseUnauthorized("Bad signature")
         # Hand off the item to be processed by the queue
-        InboxMessage.objects.create(message=document)
+        InboxMessage.objects.create(message=document, state_ready=True)
         return HttpResponse(status=202)
 
 

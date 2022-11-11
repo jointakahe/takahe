@@ -80,7 +80,7 @@ class StatorModel(models.Model):
         q = models.Q()
         for state in cls.state_graph.states.values():
             state = cast(State, state)
-            if not state.terminal:
+            if not state.externally_progressed:
                 q = q | models.Q(
                     (
                         models.Q(
@@ -135,17 +135,31 @@ class StatorModel(models.Model):
         self.state_ready = True
         self.save()
 
-    async def atransition_attempt(self) -> Optional[str]:
+    async def atransition_attempt(self) -> Optional[State]:
         """
         Attempts to transition the current state by running its handler(s).
         """
+        current_state = self.state_graph.states[self.state]
+        # If it's a manual progression state don't even try
+        # We shouldn't really be here in this case, but it could be a race condition
+        if current_state.externally_progressed:
+            print("Externally progressed state!")
+            return None
         try:
-            next_state = await self.state_graph.states[self.state].handler(self)
+            next_state = await current_state.handler(self)
         except BaseException as e:
             await StatorError.acreate_from_instance(self, e)
             traceback.print_exc()
         else:
             if next_state:
+                # Ensure it's a State object
+                if isinstance(next_state, str):
+                    next_state = self.state_graph.states[next_state]
+                # Ensure it's a child
+                if next_state not in current_state.children:
+                    raise ValueError(
+                        f"Cannot transition from {current_state} to {next_state} - not a declared transition"
+                    )
                 await self.atransition_perform(next_state)
                 return next_state
         await self.__class__.objects.filter(pk=self.pk).aupdate(

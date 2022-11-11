@@ -19,7 +19,10 @@ def by_handle_or_404(request, handle, local=True, fetch=False) -> Identity:
     else:
         username, domain = handle.split("@", 1)
         # Resolve the domain to the display domain
-        domain = Domain.get_remote_domain(domain).domain
+        domain_instance = Domain.get_domain(domain)
+        if domain_instance is None:
+            domain_instance = Domain.get_remote_domain(domain)
+        domain = domain_instance.domain
     identity = Identity.by_username_and_domain(
         username,
         domain,

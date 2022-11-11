@@ -41,6 +41,7 @@ class StateGraph:
                 initial_state = state
             # Collect terminal states
             if state.terminal:
+                state.externally_progressed = True
                 terminal_states.add(state)
                 # Ensure they do NOT have a handler
                 try:
@@ -52,17 +53,18 @@ class StateGraph:
                         f"Terminal state '{state}' should not have a handler method ({state.handler_name})"
                     )
             else:
-                # Ensure non-terminal states have a try interval and a handler
-                if not state.try_interval:
-                    raise ValueError(
-                        f"State '{state}' has no try_interval and is not terminal"
-                    )
-                try:
-                    state.handler
-                except AttributeError:
-                    raise ValueError(
-                        f"State '{state}' does not have a handler method ({state.handler_name})"
-                    )
+                # Ensure non-terminal/manual states have a try interval and a handler
+                if not state.externally_progressed:
+                    if not state.try_interval:
+                        raise ValueError(
+                            f"State '{state}' has no try_interval and is not terminal or manual"
+                        )
+                    try:
+                        state.handler
+                    except AttributeError:
+                        raise ValueError(
+                            f"State '{state}' does not have a handler method ({state.handler_name})"
+                        )
         if initial_state is None:
             raise ValueError("The graph has no initial state")
         cls.initial_state = initial_state
@@ -80,9 +82,11 @@ class State:
         self,
         try_interval: Optional[float] = None,
         handler_name: Optional[str] = None,
+        externally_progressed: bool = False,
     ):
         self.try_interval = try_interval
         self.handler_name = handler_name
+        self.externally_progressed = externally_progressed
         self.parents: Set["State"] = set()
         self.children: Set["State"] = set()
 
@@ -118,6 +122,7 @@ class State:
 
     @property
     def handler(self) -> Callable[[Any], Optional[str]]:
+        # Retrieve it by name off the graph
         if self.handler_name is None:
             raise AttributeError("No handler defined")
         return getattr(self.graph, self.handler_name)

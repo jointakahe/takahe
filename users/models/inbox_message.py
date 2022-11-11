@@ -13,7 +13,7 @@ class InboxMessageStates(StateGraph):
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
-        type = instance.message["type"].lower()
+        type = instance.message_type
         if type == "follow":
             await instance.follow_request()
         elif type == "accept":
@@ -30,6 +30,7 @@ class InboxMessageStates(StateGraph):
                 raise ValueError(f"Cannot handle activity of type undo.{inner_type}")
         else:
             raise ValueError(f"Cannot handle activity of type {type}")
+        return cls.processed
 
 
 class InboxMessage(StatorModel):
@@ -60,10 +61,17 @@ class InboxMessage(StatorModel):
         """
         Handles an incoming acceptance of one of our follow requests
         """
-        Follow.remote_accepted(
-            source=Identity.by_actor_uri_with_create(self.message["actor"]),
-            target=Identity.by_actor_uri(self.message["object"]),
-        )
+        target = Identity.by_actor_uri_with_create(self.message["actor"])
+        source = Identity.by_actor_uri(self.message["object"]["actor"])
+        if source is None:
+            raise ValueError(
+                f"Follow-Accept has invalid source {self.message['object']['actor']}"
+            )
+        Follow.remote_accepted(source=source, target=target)
+
+    @property
+    def message_type(self):
+        return self.message["type"].lower()
 
     async def follow_undo(self):
         """
