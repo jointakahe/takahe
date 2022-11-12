@@ -2,7 +2,6 @@ from asgiref.sync import sync_to_async
 from django.db import models
 
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models import Follow, Identity
 
 
 class InboxMessageStates(StateGraph):
@@ -13,23 +12,38 @@ class InboxMessageStates(StateGraph):
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
-        type = instance.message_type
-        if type == "follow":
-            await instance.follow_request()
-        elif type == "accept":
-            inner_type = instance.message["object"]["type"].lower()
-            if inner_type == "follow":
-                await instance.follow_accepted()
-            else:
-                raise ValueError(f"Cannot handle activity of type accept.{inner_type}")
-        elif type == "undo":
-            inner_type = instance.message["object"]["type"].lower()
-            if inner_type == "follow":
-                await instance.follow_undo()
-            else:
-                raise ValueError(f"Cannot handle activity of type undo.{inner_type}")
-        else:
-            raise ValueError(f"Cannot handle activity of type {type}")
+        from activities.models import Post
+        from users.models import Follow
+
+        match instance.message_type:
+            case "follow":
+                await sync_to_async(Follow.handle_request_ap)(instance.message)
+            case "create":
+                match instance.message_object_type:
+                    case "note":
+                        await sync_to_async(Post.handle_create_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type create.{unknown}"
+                        )
+            case "accept":
+                match instance.message_object_type:
+                    case "follow":
+                        await sync_to_async(Follow.handle_accept_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type accept.{unknown}"
+                        )
+            case "undo":
+                match instance.message_object_type:
+                    case "follow":
+                        await sync_to_async(Follow.handle_undo_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type undo.{unknown}"
+                        )
+            case unknown:
+                raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed
 
 
@@ -45,35 +59,10 @@ class InboxMessage(StatorModel):
 
     state = StateField(InboxMessageStates)
 
-    @sync_to_async
-    def follow_request(self):
-        """
-        Handles an incoming follow request
-        """
-        Follow.remote_created(
-            source=Identity.by_actor_uri_with_create(self.message["actor"]),
-            target=Identity.by_actor_uri(self.message["object"]),
-            uri=self.message["id"],
-        )
-
-    @sync_to_async
-    def follow_accepted(self):
-        """
-        Handles an incoming acceptance of one of our follow requests
-        """
-        target = Identity.by_actor_uri_with_create(self.message["actor"])
-        source = Identity.by_actor_uri(self.message["object"]["actor"])
-        if source is None:
-            raise ValueError(
-                f"Follow-Accept has invalid source {self.message['object']['actor']}"
-            )
-        Follow.remote_accepted(source=source, target=target)
-
     @property
     def message_type(self):
         return self.message["type"].lower()
 
-    async def follow_undo(self):
-        """
-        Handles an incoming follow undo
-        """
+    @property
+    def message_object_type(self):
+        return self.message["object"]["type"].lower()

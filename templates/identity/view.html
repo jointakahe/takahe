@@ -39,9 +39,9 @@
         </form>
     {% endif %}
 
-    {% for status in statuses %}
-        {% include "statuses/_status.html" %}
+    {% for post in posts %}
+        {% include "activities/_post.html" %}
     {% empty %}
-        No statuses yet.
+        No posts yet.
     {% endfor %}
 {% endblock %}

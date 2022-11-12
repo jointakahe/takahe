@@ -1,4 +1,5 @@
 import datetime
+import pprint
 import traceback
 from typing import ClassVar, List, Optional, Type, Union, cast
 
@@ -218,10 +219,16 @@ class StatorError(models.Model):
         instance: StatorModel,
         exception: Optional[BaseException] = None,
     ):
+        detail = traceback.format_exc()
+        if exception and len(exception.args) > 1:
+            detail += "\n\n" + "\n\n".join(
+                pprint.pformat(arg) for arg in exception.args
+            )
+
         return await cls.objects.acreate(
             model_label=instance._meta.label_lower,
             instance_pk=str(instance.pk),
             state=instance.state,
             error=str(exception),
-            error_details=traceback.format_exc(),
+            error_details=detail,
         )

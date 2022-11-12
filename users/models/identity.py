@@ -55,7 +55,11 @@ class Identity(StatorModel):
     state = StateField(IdentityStates)
 
     local = models.BooleanField()
-    users = models.ManyToManyField("users.User", related_name="identities")
+    users = models.ManyToManyField(
+        "users.User",
+        related_name="identities",
+        blank=True,
+    )
 
     username = models.CharField(max_length=500, blank=True, null=True)
     # Must be a display domain if present
@@ -141,18 +145,14 @@ class Identity(StatorModel):
             return None
 
     @classmethod
-    def by_actor_uri(cls, uri) -> Optional["Identity"]:
+    def by_actor_uri(cls, uri, create=False) -> "Identity":
         try:
             return cls.objects.get(actor_uri=uri)
         except cls.DoesNotExist:
-            return None
-
-    @classmethod
-    def by_actor_uri_with_create(cls, uri) -> "Identity":
-        try:
-            return cls.objects.get(actor_uri=uri)
-        except cls.DoesNotExist:
-            return cls.objects.create(actor_uri=uri, local=False)
+            if create:
+                return cls.objects.create(actor_uri=uri, local=False)
+            else:
+                raise KeyError(f"No identity found matching {uri}")
 
     ### Dynamic properties ###
 
@@ -236,7 +236,7 @@ class Identity(StatorModel):
             self.outbox_uri = document.get("outbox")
             self.summary = document.get("summary")
             self.username = document.get("preferredUsername")
-            if "@value" in self.username:
+            if self.username and "@value" in self.username:
                 self.username = self.username["@value"]
             self.manually_approves_followers = document.get(
                 "as:manuallyApprovesFollowers"

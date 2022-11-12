@@ -21,16 +21,18 @@ class UserEventAdmin(admin.ModelAdmin):
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
     list_display = ["id", "handle", "actor_uri", "state", "local"]
+    raw_id_fields = ["users"]
 
 
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
+    raw_id_fields = ["source", "target"]
 
 
 @admin.register(InboxMessage)
 class InboxMessageAdmin(admin.ModelAdmin):
-    list_display = ["id", "state", "message_type"]
+    list_display = ["id", "state", "state_attempted", "message_type"]
     actions = ["reset_state"]
 
     @admin.action(description="Reset State")

@@ -5,10 +5,11 @@ from django.db import models
 from core.ld import canonicalise
 from core.signatures import HttpSignature
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models.identity import Identity
 
 
 class FollowStates(StateGraph):
-    unrequested = State(try_interval=30)
+    unrequested = State(try_interval=300)
     local_requested = State(try_interval=24 * 60 * 60)
     remote_requested = State(try_interval=24 * 60 * 60)
     accepted = State(externally_progressed=True)
@@ -24,26 +25,19 @@ class FollowStates(StateGraph):
 
     @classmethod
     async def handle_unrequested(cls, instance: "Follow"):
-        # Re-retrieve the follow with more things linked
-        follow = await Follow.objects.select_related(
-            "source", "source__domain", "target"
-        ).aget(pk=instance.pk)
+        """
+        Follows that are unrequested need us to deliver the Follow object
+        to the target server.
+        """
+        follow = await instance.afetch_full()
         # Remote follows should not be here
         if not follow.source.local:
             return cls.remote_requested
-        # Construct the request
-        request = canonicalise(
-            {
-                "@context": "https://www.w3.org/ns/activitystreams",
-                "id": follow.uri,
-                "type": "Follow",
-                "actor": follow.source.actor_uri,
-                "object": follow.target.actor_uri,
-            }
-        )
         # Sign it and send it
         await HttpSignature.signed_request(
-            follow.target.inbox_uri, request, follow.source
+            uri=follow.target.inbox_uri,
+            body=canonicalise(follow.to_ap()),
+            identity=follow.source,
         )
         return cls.local_requested
 
@@ -54,56 +48,28 @@ class FollowStates(StateGraph):
 
     @classmethod
     async def handle_remote_requested(cls, instance: "Follow"):
-        # Re-retrieve the follow with more things linked
-        follow = await Follow.objects.select_related(
-            "source", "source__domain", "target"
-        ).aget(pk=instance.pk)
-        # Send an accept
-        request = canonicalise(
-            {
-                "@context": "https://www.w3.org/ns/activitystreams",
-                "id": follow.target.actor_uri + f"follow/{follow.pk}/#accept",
-                "type": "Follow",
-                "actor": follow.source.actor_uri,
-                "object": {
-                    "id": follow.uri,
-                    "type": "Follow",
-                    "actor": follow.source.actor_uri,
-                    "object": follow.target.actor_uri,
-                },
-            }
-        )
-        # Sign it and send it
+        """
+        Items in remote_requested need us to send an Accept object to the
+        source server.
+        """
+        follow = await instance.afetch_full()
         await HttpSignature.signed_request(
-            follow.source.inbox_uri,
-            request,
+            uri=follow.source.inbox_uri,
+            body=canonicalise(follow.to_accept_ap()),
             identity=follow.target,
         )
         return cls.accepted
 
     @classmethod
     async def handle_undone_locally(cls, instance: "Follow"):
-        follow = Follow.objects.select_related(
-            "source", "source__domain", "target"
-        ).get(pk=instance.pk)
-        # Construct the request
-        request = canonicalise(
-            {
-                "@context": "https://www.w3.org/ns/activitystreams",
-                "id": follow.uri + "#undo",
-                "type": "Undo",
-                "actor": follow.source.actor_uri,
-                "object": {
-                    "id": follow.uri,
-                    "type": "Follow",
-                    "actor": follow.source.actor_uri,
-                    "object": follow.target.actor_uri,
-                },
-            }
-        )
-        # Sign it and send it
+        """
+        Delivers the Undo object to the target server
+        """
+        follow = await instance.afetch_full()
         await HttpSignature.signed_request(
-            follow.target.inbox_uri, request, follow.source
+            uri=follow.target.inbox_uri,
+            body=canonicalise(follow.to_undo_ap()),
+            identity=follow.source,
         )
         return cls.undone_remotely
 
@@ -135,6 +101,11 @@ class Follow(StatorModel):
     class Meta:
         unique_together = [("source", "target")]
 
+    def __str__(self):
+        return f"#{self.id}: {self.source} → {self.target}"
+
+    ### Alternate fetchers/constructors ###
+
     @classmethod
     def maybe_get(cls, source, target) -> Optional["Follow"]:
         """
@@ -164,22 +135,122 @@ class Follow(StatorModel):
             follow.save()
         return follow
 
-    @classmethod
-    def remote_created(cls, source, target, uri):
-        follow = cls.maybe_get(source=source, target=target)
-        if follow is None:
-            follow = Follow.objects.create(source=source, target=target, uri=uri)
-        if follow.state == FollowStates.unrequested:
-            follow.transition_perform(FollowStates.remote_requested)
+    ### Async helpers ###
+
+    async def afetch_full(self):
+        """
+        Returns a version of the object with all relations pre-loaded
+        """
+        return await Follow.objects.select_related(
+            "source", "source__domain", "target"
+        ).aget(pk=self.pk)
+
+    ### ActivityPub (outbound) ###
+
+    def to_ap(self):
+        """
+        Returns the AP JSON for this object
+        """
+        return {
+            "type": "Follow",
+            "id": self.uri,
+            "actor": self.source.actor_uri,
+            "object": self.target.actor_uri,
+        }
+
+    def to_accept_ap(self):
+        """
+        Returns the AP JSON for this objects' accept.
+        """
+        return {
+            "type": "Accept",
+            "id": self.uri + "#accept",
+            "actor": self.target.actor_uri,
+            "object": self.to_ap(),
+        }
+
+    def to_undo_ap(self):
+        """
+        Returns the AP JSON for this objects' undo.
+        """
+        return {
+            "type": "Undo",
+            "id": self.uri + "#undo",
+            "actor": self.source.actor_uri,
+            "object": self.to_ap(),
+        }
+
+    ### ActivityPub (inbound) ###
 
     @classmethod
-    def remote_accepted(cls, source, target):
-        print(f"accepted follow source {source} target {target}")
+    def by_ap(cls, data, create=False) -> "Follow":
+        """
+        Retrieves a Follow instance by its ActivityPub JSON object.
+
+        Optionally creates one if it's not present.
+        Raises KeyError if it's not found and create is False.
+        """
+        # Resolve source and target and see if a Follow exists
+        source = Identity.by_actor_uri(data["actor"], create=create)
+        target = Identity.by_actor_uri(data["object"])
         follow = cls.maybe_get(source=source, target=target)
-        print(f"accepting follow {follow}")
+        # If it doesn't exist, create one in the remote_requested state
+        if follow is None:
+            if create:
+                return cls.objects.create(
+                    source=source,
+                    target=target,
+                    uri=data["id"],
+                    state=FollowStates.remote_requested,
+                )
+            else:
+                raise KeyError(
+                    f"No follow with source {source} and target {target}", data
+                )
+        else:
+            return follow
+
+    @classmethod
+    def handle_request_ap(cls, data):
+        """
+        Handles an incoming follow request
+        """
+        follow = cls.by_ap(data, create=True)
+        # Force it into remote_requested so we send an accept
+        follow.transition_perform(FollowStates.remote_requested)
+
+    @classmethod
+    def handle_accept_ap(cls, data):
+        """
+        Handles an incoming Follow Accept for one of our follows
+        """
+        # Ensure the Accept actor is the Follow's object
+        if data["actor"] != data["object"]["object"]:
+            raise ValueError("Accept actor does not match its Follow object", data)
+        # Resolve source and target and see if a Follow exists (it really should)
+        try:
+            follow = cls.by_ap(data["object"])
+        except KeyError:
+            raise ValueError("No Follow locally for incoming Accept", data)
+        # If the follow was waiting to be accepted, transition it
         if follow and follow.state in [
             FollowStates.unrequested,
             FollowStates.local_requested,
         ]:
             follow.transition_perform(FollowStates.accepted)
-            print("accepted")
+
+    @classmethod
+    def handle_undo_ap(cls, data):
+        """
+        Handles an incoming Follow Undo for one of our follows
+        """
+        # Ensure the Undo actor is the Follow's actor
+        if data["actor"] != data["object"]["actor"]:
+            raise ValueError("Undo actor does not match its Follow object", data)
+        # Resolve source and target and see if a Follow exists (it hopefully does)
+        try:
+            follow = cls.by_ap(data["object"])
+        except KeyError:
+            raise ValueError("No Follow locally for incoming Undo", data)
+        # Delete the follow
+        follow.delete()

@@ -1,4 +1,5 @@
 import urllib.parse as urllib_parse
+from typing import Dict, List, Union
 
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
@@ -299,24 +300,27 @@ def builtin_document_loader(url: str, options={}):
             )
 
 
-def canonicalise(json_data, include_security=False):
+def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
     """
     Given an ActivityPub JSON-LD document, round-trips it through the LD
     systems to end up in a canonicalised, compacted format.
 
+    If no context is provided, supplies one automatically.
+
     For most well-structured incoming data this won't actually do anything,
     but it's probably good to abide by the spec.
     """
-    if not isinstance(json_data, (dict, list)):
+    if not isinstance(json_data, dict):
         raise ValueError("Pass decoded JSON data into LDDocument")
-    return jsonld.compact(
-        jsonld.expand(json_data),
-        (
-            [
-                "https://www.w3.org/ns/activitystreams",
-                "https://w3id.org/security/v1",
-            ]
-            if include_security
-            else "https://www.w3.org/ns/activitystreams"
-        ),
-    )
+    context: Union[str, List[str]]
+    if include_security:
+        context = [
+            "https://www.w3.org/ns/activitystreams",
+            "https://w3id.org/security/v1",
+        ]
+    else:
+        context = "https://www.w3.org/ns/activitystreams"
+    if "@context" not in json_data:
+        json_data["@context"] = context
+
+    return jsonld.compact(jsonld.expand(json_data), context)

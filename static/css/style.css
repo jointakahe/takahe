@@ -290,3 +290,41 @@ h1.identity small {
 .system-note a {
     color: inherit;
 }
+
+/* Posts */
+
+.post {
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.post .icon {
+    height: 48px;
+    width: auto;
+    float: left;
+}
+
+.post .author {
+    padding-left: 64px;
+}
+
+.post .author a,
+.post time a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.post .author small {
+    font-weight: normal;
+    color: var(--color-text-dull);
+}
+
+.post time {
+    display: block;
+    padding-left: 64px;
+    color: var(--color-text-duller);
+}
+
+.post .content {
+    padding-left: 64px;
+}

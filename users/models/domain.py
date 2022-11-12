@@ -49,10 +49,7 @@ class Domain(models.Model):
 
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":
-        try:
-            return cls.objects.get(domain=domain, local=False)
-        except cls.DoesNotExist:
-            return cls.objects.create(domain=domain, local=False)
+        return cls.objects.get_or_create(domain=domain, local=False)[0]
 
     @classmethod
     def get_domain(cls, domain: str) -> Optional["Domain"]:
@@ -93,3 +90,4 @@ class Domain(models.Model):
                 raise ValueError(
                     f"Service domain {self.service_domain} is already a domain elsewhere!"
                 )
+        super().save(*args, **kwargs)

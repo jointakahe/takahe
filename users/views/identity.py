@@ -222,7 +222,7 @@ class Inbox(View):
         # Find the Identity by the actor on the incoming item
         # This ensures that the signature used for the headers matches the actor
         # described in the payload.
-        identity = Identity.by_actor_uri_with_create(document["actor"])
+        identity = Identity.by_actor_uri(document["actor"], create=True)
         if not identity.public_key:
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()

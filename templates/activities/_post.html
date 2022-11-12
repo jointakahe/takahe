@@ -1,0 +1,19 @@
+{% load static %}
+<div class="post">
+
+    {% if post.author.icon_uri %}
+        <img src="{{post.author.icon_uri}}" class="icon">
+    {% else %}
+        <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
+    {% endif %}
+
+    <h3 class="author">
+        {{ post.author.name_or_handle }} <small>@{{ post.author.handle }}</small>
+    </h3>
+    <time>
+        <a href="{{ post.urls.view }}">{{ post.created | timesince }} ago</a>
+    </time>
+    <div class="content">
+        {{ post.safe_content }}
+    </div>
+</div>
