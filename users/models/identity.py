@@ -11,7 +11,6 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.db import models
 from django.utils import timezone
-from OpenSSL import crypto
 
 from core.ld import canonicalise
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -89,6 +88,7 @@ class Identity(StatorModel):
 
     private_key = models.TextField(null=True, blank=True)
     public_key = models.TextField(null=True, blank=True)
+    public_key_id = models.TextField(null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -182,10 +182,6 @@ class Identity(StatorModel):
         # TODO: Setting
         return self.data_age > 60 * 24 * 24
 
-    @property
-    def key_id(self):
-        return self.actor_uri + "#main-key"
-
     ### Actor/Webfinger fetching ###
 
     @classmethod
@@ -242,6 +238,7 @@ class Identity(StatorModel):
                 "as:manuallyApprovesFollowers"
             )
             self.public_key = document.get("publicKey", {}).get("publicKeyPem")
+            self.public_key_id = document.get("publicKey", {}).get("id")
             self.icon_uri = document.get("icon", {}).get("url")
             self.image_uri = document.get("image", {}).get("url")
         # Now go do webfinger with that info to see if we can get a canonical domain
@@ -286,32 +283,3 @@ class Identity(StatorModel):
             .decode("ascii")
         )
         self.save()
-
-    def sign(self, cleartext: str) -> bytes:
-        if not self.private_key:
-            raise ValueError("Cannot sign - no private key")
-        pkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
-            self.private_key.encode("ascii"),
-        )
-        return crypto.sign(
-            pkey,
-            cleartext.encode("ascii"),
-            "sha256",
-        )
-
-    def verify_signature(self, signature: bytes, cleartext: str) -> bool:
-        if not self.public_key:
-            raise ValueError("Cannot verify - no public key")
-        x509 = crypto.X509()
-        x509.set_pubkey(
-            crypto.load_publickey(
-                crypto.FILETYPE_PEM,
-                self.public_key.encode("ascii"),
-            )
-        )
-        try:
-            crypto.verify(x509, signature, cleartext.encode("ascii"), "sha256")
-        except crypto.Error:
-            return False
-        return True

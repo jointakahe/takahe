@@ -10,3 +10,5 @@ uvicorn~=0.19
 gunicorn~=20.1.0
 psycopg2~=2.9.5
 bleach~=5.0.1
+pytest-django~=4.5.2
+pytest-httpx~=0.21

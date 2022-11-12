@@ -7,15 +7,18 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
-from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.utils.http import parse_http_date
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, TemplateView, View
 
 from core.forms import FormHelper
 from core.ld import canonicalise
-from core.signatures import HttpSignature
+from core.signatures import (
+    HttpSignature,
+    LDSignature,
+    VerificationError,
+    VerificationFormatError,
+)
 from users.decorators import identity_required
 from users.models import Domain, Follow, Identity, IdentityStates, InboxMessage
 from users.shortcuts import by_handle_or_404
@@ -167,7 +170,7 @@ class Actor(View):
             "inbox": identity.actor_uri + "inbox/",
             "preferredUsername": identity.username,
             "publicKey": {
-                "id": identity.key_id,
+                "id": identity.public_key_id,
                 "owner": identity.actor_uri,
                 "publicKeyPem": identity.public_key,
             },
@@ -188,37 +191,8 @@ class Inbox(View):
     """
 
     def post(self, request, handle):
-        # Verify body digest
-        if "HTTP_DIGEST" in request.META:
-            expected_digest = HttpSignature.calculate_digest(request.body)
-            if request.META["HTTP_DIGEST"] != expected_digest:
-                print("Wrong digest")
-                return HttpResponseBadRequest("Digest is incorrect")
-        # Verify date header
-        if "HTTP_DATE" in request.META:
-            header_date = parse_http_date(request.META["HTTP_DATE"])
-            if abs(timezone.now().timestamp() - header_date) > 60:
-                print(
-                    f"Date mismatch - they sent {header_date}, now is {timezone.now().timestamp()}"
-                )
-                return HttpResponseBadRequest("Date is too far away")
-        # Get the signature details
-        if "HTTP_SIGNATURE" not in request.META:
-            print("No signature")
-            return HttpResponseBadRequest("No signature present")
-        signature_details = HttpSignature.parse_signature(
-            request.META["HTTP_SIGNATURE"]
-        )
-        # Reject unknown algorithms
-        if signature_details["algorithm"] != "rsa-sha256":
-            print("Unknown sig algo")
-            return HttpResponseBadRequest("Unknown signature algorithm")
-        # Create the signature payload
-        headers_string = HttpSignature.headers_from_request(
-            request, signature_details["headers"]
-        )
         # Load the LD
-        document = canonicalise(json.loads(request.body))
+        document = canonicalise(json.loads(request.body), include_security=True)
         # Find the Identity by the actor on the incoming item
         # This ensures that the signature used for the headers matches the actor
         # described in the payload.
@@ -229,12 +203,29 @@ class Inbox(View):
         if not identity.public_key:
             print("Cannot get actor")
             return HttpResponseBadRequest("Cannot retrieve actor")
-        if not identity.verify_signature(
-            signature_details["signature"], headers_string
-        ):
-            print("Bad signature!")
-            print(document)
-            return HttpResponseUnauthorized("Bad signature")
+        # If there's a "signature" payload, verify against that
+        if "signature" in document:
+            try:
+                LDSignature.verify_signature(document, identity.public_key)
+            except VerificationFormatError as e:
+                print("Bad LD signature format:", e.args[0])
+                return HttpResponseBadRequest(e.args[0])
+            except VerificationError:
+                print("Bad LD signature")
+                return HttpResponseUnauthorized("Bad signature")
+        # Otherwise, verify against the header (assuming it's the same actor)
+        else:
+            try:
+                HttpSignature.verify_request(
+                    request,
+                    identity.public_key,
+                )
+            except VerificationFormatError as e:
+                print("Bad HTTP signature format:", e.args[0])
+                return HttpResponseBadRequest(e.args[0])
+            except VerificationError:
+                print("Bad HTTP signature")
+                return HttpResponseUnauthorized("Bad signature")
         # Hand off the item to be processed by the queue
         InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)

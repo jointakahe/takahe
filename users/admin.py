@@ -22,6 +22,12 @@ class UserEventAdmin(admin.ModelAdmin):
 class IdentityAdmin(admin.ModelAdmin):
     list_display = ["id", "handle", "actor_uri", "state", "local"]
     raw_id_fields = ["users"]
+    actions = ["force_update"]
+
+    @admin.action(description="Force Update")
+    def force_update(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("outdated")
 
 
 @admin.register(Follow)
