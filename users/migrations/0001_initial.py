@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("state_ready", models.BooleanField(default=False)),
+                ("state_ready", models.BooleanField(default=True)),
                 ("state_changed", models.DateTimeField(auto_now_add=True)),
                 ("state_attempted", models.DateTimeField(blank=True, null=True)),
                 ("state_locked_until", models.DateTimeField(blank=True, null=True)),
@@ -158,7 +158,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("state_ready", models.BooleanField(default=False)),
+                ("state_ready", models.BooleanField(default=True)),
                 ("state_changed", models.DateTimeField(auto_now_add=True)),
                 ("state_attempted", models.DateTimeField(blank=True, null=True)),
                 ("state_locked_until", models.DateTimeField(blank=True, null=True)),
@@ -230,7 +230,9 @@ class Migration(migrations.Migration):
                 (
                     "users",
                     models.ManyToManyField(
-                        related_name="identities", to=settings.AUTH_USER_MODEL
+                        blank=True,
+                        related_name="identities",
+                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
@@ -286,7 +288,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("state_ready", models.BooleanField(default=False)),
+                ("state_ready", models.BooleanField(default=True)),
                 ("state_changed", models.DateTimeField(auto_now_add=True)),
                 ("state_attempted", models.DateTimeField(blank=True, null=True)),
                 ("state_locked_until", models.DateTimeField(blank=True, null=True)),

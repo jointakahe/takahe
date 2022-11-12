@@ -1,3 +1,4 @@
+import datetime
 import urllib.parse as urllib_parse
 from typing import Dict, List, Union
 
@@ -273,6 +274,8 @@ schemas = {
     },
 }
 
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
 
 def builtin_document_loader(url: str, options={}):
     # Get URL without scheme
@@ -324,3 +327,7 @@ def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
         json_data["@context"] = context
 
     return jsonld.compact(jsonld.expand(json_data), context)
+
+
+def format_date(value: datetime.datetime) -> str:
+    return value.strftime(DATETIME_FORMAT)

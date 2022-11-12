@@ -1,8 +1,13 @@
+from typing import Dict
+
 import urlman
 from django.db import models
+from django.utils import timezone
 
+from activities.models.fan_out import FanOut
 from activities.models.timeline_event import TimelineEvent
 from core.html import sanitize_post
+from core.ld import format_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
 from users.models.identity import Identity
@@ -19,7 +24,8 @@ class PostStates(StateGraph):
         """
         Creates all needed fan-out objects for a new Post.
         """
-        pass
+        await instance.afan_out()
+        return cls.fanned_out
 
 
 class Post(StatorModel):
@@ -84,11 +90,21 @@ class Post(StatorModel):
         blank=True,
     )
 
+    # When the post was originally created (as opposed to when we received it)
+    authored = models.DateTimeField(default=timezone.now)
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     class urls(urlman.Urls):
-        view = "{self.identity.urls.view}posts/{self.id}/"
+        view = "{self.author.urls.view}posts/{self.id}/"
+        object_uri = "{self.author.urls.actor}posts/{self.id}/"
+
+        def get_scheme(self, url):
+            return "https"
+
+        def get_hostname(self, url):
+            return self.instance.author.domain.uri_domain
 
     def __str__(self):
         return f"{self.author} #{self.id}"
@@ -96,6 +112,16 @@ class Post(StatorModel):
     @property
     def safe_content(self):
         return sanitize_post(self.content)
+
+    ### Async helpers ###
+
+    async def afetch_full(self):
+        """
+        Returns a version of the object with all relations pre-loaded
+        """
+        return await Post.objects.select_related("author", "author__domain").aget(
+            pk=self.pk
+        )
 
     ### Local creation ###
 
@@ -111,9 +137,57 @@ class Post(StatorModel):
         post.save()
         return post
 
-    ### ActivityPub (outgoing) ###
+    ### ActivityPub (outbound) ###
 
-    ### ActivityPub (incoming) ###
+    async def afan_out(self):
+        """
+        Creates FanOuts for a new post
+        """
+        # Send a copy to all people who follow this user
+        post = await self.afetch_full()
+        async for follow in post.author.inbound_follows.all():
+            await FanOut.objects.acreate(
+                identity_id=follow.source_id,
+                type=FanOut.Types.post,
+                subject_post=post,
+            )
+        # And one for themselves
+        await FanOut.objects.acreate(
+            identity_id=post.author_id,
+            type=FanOut.Types.post,
+            subject_post=post,
+        )
+
+    def to_ap(self) -> Dict:
+        """
+        Returns the AP JSON for this object
+        """
+        value = {
+            "type": "Note",
+            "id": self.object_uri,
+            "published": format_date(self.created),
+            "attributedTo": self.author.actor_uri,
+            "content": self.safe_content,
+            "to": "as:Public",
+            "as:sensitive": self.sensitive,
+            "url": self.urls.view.full(),  # type: ignore
+        }
+        if self.summary:
+            value["summary"] = self.summary
+        return value
+
+    def to_create_ap(self):
+        """
+        Returns the AP JSON to create this object
+        """
+        return {
+            "type": "Create",
+            "id": self.object_uri + "#create",
+            "actor": self.author.actor_uri,
+            "object": self.to_ap(),
+        }
+
+    ### ActivityPub (inbound) ###
 
     @classmethod
     def by_ap(cls, data, create=False) -> "Post":

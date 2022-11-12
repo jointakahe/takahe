@@ -8,7 +8,9 @@
     {% endif %}
 
     <h3 class="author">
-        {{ post.author.name_or_handle }} <small>@{{ post.author.handle }}</small>
+        <a href="{{ post.author.urls.view }}">
+            {{ post.author.name_or_handle }} <small>@{{ post.author.handle }}</small>
+        </a>
     </h3>
     <time>
         <a href="{{ post.urls.view }}">{{ post.created | timesince }} ago</a>

@@ -36,12 +36,12 @@ class ViewIdentity(TemplateView):
             local=False,
             fetch=True,
         )
-        statuses = identity.statuses.all()[:100]
+        posts = identity.posts.all()[:100]
         if identity.data_age > settings.IDENTITY_MAX_AGE:
             identity.transition_perform(IdentityStates.outdated)
         return {
             "identity": identity,
-            "statuses": statuses,
+            "posts": posts,
             "follow": Follow.maybe_get(self.request.identity, identity)
             if self.request.identity
             else None,
@@ -232,9 +232,11 @@ class Inbox(View):
         if not identity.verify_signature(
             signature_details["signature"], headers_string
         ):
+            print("Bad signature!")
+            print(document)
             return HttpResponseUnauthorized("Bad signature")
         # Hand off the item to be processed by the queue
-        InboxMessage.objects.create(message=document, state_ready=True)
+        InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)
 
 

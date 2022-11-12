@@ -45,8 +45,8 @@ class StatorModel(models.Model):
     concrete model yourself.
     """
 
-    # If this row is up for transition attempts
-    state_ready = models.BooleanField(default=False)
+    # If this row is up for transition attempts (which it always is on creation!)
+    state_ready = models.BooleanField(default=True)
 
     # When the state last actually changed, or the date of instance creation
     state_changed = models.DateTimeField(auto_now_add=True)
