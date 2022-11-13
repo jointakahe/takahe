@@ -7,7 +7,7 @@ from django.utils import timezone
 from activities.models.fan_out import FanOut
 from activities.models.timeline_event import TimelineEvent
 from core.html import sanitize_post
-from core.ld import format_date
+from core.ld import format_ld_date, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
 from users.models.identity import Identity
@@ -53,7 +53,7 @@ class Post(StatorModel):
     local = models.BooleanField()
 
     # The canonical object ID
-    object_uri = models.CharField(max_length=500, blank=True, null=True)
+    object_uri = models.CharField(max_length=500, blank=True, null=True, unique=True)
 
     # Who should be able to see this Post
     visibility = models.IntegerField(
@@ -145,18 +145,22 @@ class Post(StatorModel):
         """
         # Send a copy to all people who follow this user
         post = await self.afetch_full()
-        async for follow in post.author.inbound_follows.all():
+        async for follow in post.author.inbound_follows.select_related(
+            "source", "target"
+        ):
+            if follow.source.local or follow.target.local:
+                await FanOut.objects.acreate(
+                    identity_id=follow.source_id,
+                    type=FanOut.Types.post,
+                    subject_post=post,
+                )
+        # And one for themselves if they're local
+        if post.author.local:
             await FanOut.objects.acreate(
-                identity_id=follow.source_id,
+                identity_id=post.author_id,
                 type=FanOut.Types.post,
                 subject_post=post,
             )
-        # And one for themselves
-        await FanOut.objects.acreate(
-            identity_id=post.author_id,
-            type=FanOut.Types.post,
-            subject_post=post,
-        )
 
     def to_ap(self) -> Dict:
         """
@@ -165,7 +169,7 @@ class Post(StatorModel):
         value = {
             "type": "Note",
             "id": self.object_uri,
-            "published": format_date(self.created),
+            "published": format_ld_date(self.created),
             "attributedTo": self.author.actor_uri,
             "content": self.safe_content,
             "to": "as:Public",
@@ -190,7 +194,7 @@ class Post(StatorModel):
     ### ActivityPub (inbound) ###
 
     @classmethod
-    def by_ap(cls, data, create=False) -> "Post":
+    def by_ap(cls, data, create=False, update=False) -> "Post":
         """
         Retrieves a Post instance by its ActivityPub JSON object.
 
@@ -198,25 +202,33 @@ class Post(StatorModel):
         Raises KeyError if it's not found and create is False.
         """
         # Do we have one with the right ID?
+        created = False
         try:
-            return cls.objects.get(object_uri=data["id"])
+            post = cls.objects.get(object_uri=data["id"])
         except cls.DoesNotExist:
             if create:
                 # Resolve the author
                 author = Identity.by_actor_uri(data["attributedTo"], create=create)
-                return cls.objects.create(
+                post = cls.objects.create(
+                    object_uri=data["id"],
                     author=author,
                     content=sanitize_post(data["content"]),
-                    summary=data.get("summary", None),
-                    sensitive=data.get("as:sensitive", False),
-                    url=data.get("url", None),
                     local=False,
-                    # TODO: to
-                    # TODO: mentions
-                    # TODO: visibility
                 )
+                created = True
             else:
                 raise KeyError(f"No post with ID {data['id']}", data)
+        if update or created:
+            post.content = sanitize_post(data["content"])
+            post.summary = data.get("summary", None)
+            post.sensitive = data.get("as:sensitive", False)
+            post.url = data.get("url", None)
+            post.authored = parse_ld_date(data.get("published", None))
+            # TODO: to
+            # TODO: mentions
+            # TODO: visibility
+            post.save()
+        return post
 
     @classmethod
     def handle_create_ap(cls, data):
@@ -227,7 +239,7 @@ class Post(StatorModel):
         if data["actor"] != data["object"]["attributedTo"]:
             raise ValueError("Create actor does not match its Post object", data)
         # Create it
-        post = cls.by_ap(data["object"], create=True)
+        post = cls.by_ap(data["object"], create=True, update=True)
         # Make timeline events as appropriate
         for follow in Follow.objects.filter(target=post.author, source__local=True):
             TimelineEvent.add_post(follow.source, post)

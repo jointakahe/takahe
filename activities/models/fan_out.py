@@ -32,7 +32,7 @@ class FanOutStates(StateGraph):
             await HttpSignature.signed_request(
                 uri=fan_out.identity.inbox_uri,
                 body=canonicalise(post.to_create_ap()),
-                private_key=post.author.public_key,
+                private_key=post.author.private_key,
                 key_id=post.author.public_key_id,
             )
         return cls.sent

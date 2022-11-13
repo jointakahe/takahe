@@ -13,7 +13,13 @@
         </a>
     </h3>
     <time>
-        <a href="{{ post.urls.view }}">{{ post.created | timesince }} ago</a>
+        <a href="{{ post.urls.view }}">
+            {% if post.authored %}
+                {{ post.authored | timesince }} ago
+            {% else %}
+                {{ post.created | timesince }} ago
+            {% endif %}
+        </a>
     </time>
     <div class="content">
         {{ post.safe_content }}

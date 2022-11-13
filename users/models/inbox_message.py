@@ -66,3 +66,7 @@ class InboxMessage(StatorModel):
     @property
     def message_object_type(self):
         return self.message["object"]["type"].lower()
+
+    @property
+    def message_actor(self):
+        return self.message.get("actor")

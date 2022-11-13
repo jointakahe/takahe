@@ -11,7 +11,7 @@ from django.utils.http import http_date, parse_http_date
 from OpenSSL import crypto
 from pyld import jsonld
 
-from core.ld import format_date
+from core.ld import format_ld_date
 
 
 class VerificationError(BaseException):
@@ -261,7 +261,7 @@ class LDSignature:
         options: Dict[str, str] = {
             "@context": "https://w3id.org/identity/v1",
             "creator": key_id,
-            "created": format_date(timezone.now()),
+            "created": format_ld_date(timezone.now()),
         }
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)

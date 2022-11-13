@@ -37,7 +37,7 @@ class FollowStates(StateGraph):
         await HttpSignature.signed_request(
             uri=follow.target.inbox_uri,
             body=canonicalise(follow.to_ap()),
-            private_key=follow.source.public_key,
+            private_key=follow.source.private_key,
             key_id=follow.source.public_key_id,
         )
         return cls.local_requested
@@ -57,7 +57,7 @@ class FollowStates(StateGraph):
         await HttpSignature.signed_request(
             uri=follow.source.inbox_uri,
             body=canonicalise(follow.to_accept_ap()),
-            private_key=follow.target.public_key,
+            private_key=follow.target.private_key,
             key_id=follow.target.public_key_id,
         )
         return cls.accepted
@@ -71,7 +71,7 @@ class FollowStates(StateGraph):
         await HttpSignature.signed_request(
             uri=follow.target.inbox_uri,
             body=canonicalise(follow.to_undo_ap()),
-            private_key=follow.source.public_key,
+            private_key=follow.source.private_key,
             key_id=follow.source.public_key_id,
         )
         return cls.undone_remotely

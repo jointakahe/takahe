@@ -1,6 +1,6 @@
 import datetime
 import urllib.parse as urllib_parse
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
@@ -414,5 +414,13 @@ def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
     return jsonld.compact(jsonld.expand(json_data), context)
 
 
-def format_date(value: datetime.datetime) -> str:
+def format_ld_date(value: datetime.datetime) -> str:
     return value.strftime(DATETIME_FORMAT)
+
+
+def parse_ld_date(value: Optional[str]) -> Optional[datetime.datetime]:
+    if value is None:
+        return None
+    return datetime.datetime.strptime(value, DATETIME_FORMAT).replace(
+        tzinfo=datetime.timezone.utc
+    )
