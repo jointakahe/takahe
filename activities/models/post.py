@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import urlman
 from django.db import models
@@ -126,10 +126,14 @@ class Post(StatorModel):
     ### Local creation ###
 
     @classmethod
-    def create_local(cls, author: Identity, content: str) -> "Post":
+    def create_local(
+        cls, author: Identity, content: str, summary: Optional[str] = None
+    ) -> "Post":
         post = cls.objects.create(
             author=author,
             content=content,
+            summary=summary or None,
+            sensitive=bool(summary),
             local=True,
         )
         post.object_uri = post.author.actor_uri + f"posts/{post.id}/"

@@ -11,7 +11,6 @@ except KeyError:
 
 # Ensure debug features are off
 DEBUG = False
-CRISPY_FAIL_SILENTLY = True
 
 # TODO: Allow better setting of allowed_hosts, if we need to
 ALLOWED_HOSTS = ["*"]

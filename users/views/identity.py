@@ -8,7 +8,6 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
 from core.config import Config
-from core.forms import FormHelper
 from users.decorators import identity_required
 from users.models import Domain, Follow, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
@@ -83,28 +82,31 @@ class CreateIdentity(FormView):
     template_name = "identity/create.html"
 
     class form_class(forms.Form):
-        username = forms.CharField()
-        name = forms.CharField()
-
-        helper = FormHelper(submit_text="Create")
+        username = forms.CharField(
+            help_text="Must be unique on your domain. Cannot be changed easily. Use only: a-z 0-9 _ -"
+        )
+        domain = forms.ChoiceField(
+            help_text="Pick the domain to make this identity on. Cannot be changed later."
+        )
+        name = forms.CharField(
+            help_text="The display name other users see. You can change this easily."
+        )
 
         def __init__(self, user, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.fields["domain"] = forms.ChoiceField(
-                choices=[
-                    (domain.domain, domain.domain)
-                    for domain in Domain.available_for_user(user)
-                ]
-            )
+            self.fields["domain"].choices = [
+                (domain.domain, domain.domain)
+                for domain in Domain.available_for_user(user)
+            ]
 
         def clean_username(self):
-            # Remove any leading @
-            value = self.cleaned_data["username"].lstrip("@")
+            # Remove any leading @ and force it lowercase
+            value = self.cleaned_data["username"].lstrip("@").lower()
             # Validate it's all ascii characters
             for character in value:
                 if character not in string.ascii_letters + string.digits + "_-":
                     raise forms.ValidationError(
-                        "Only the letters a-z, numbers 0-9, dashes and underscores are allowed."
+                        "Only the letters a-z, numbers 0-9, dashes, and underscores are allowed."
                     )
             return value
 

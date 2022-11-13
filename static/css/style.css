@@ -79,6 +79,7 @@ a {
     --color-bg-main: #26323c;
     --color-bg-menu: #2e3e4c;
     --color-bg-box: #1a2631;
+    --color-bg-error: rgb(87, 32, 32);
     --color-highlight: #449c8c;
 
     --color-text-duller: #5f6983;
@@ -90,13 +91,13 @@ a {
     --color-button-main: #444b5d;
     --color-button-main-hover: #515d7c;
     --color-bg3: #444b5d;
-    --color-text-error: rgb(155, 111, 111);
 }
 
 body {
     background-color: var(--color-bg-main);
     color: var(--color-text-main);
     font-family: "Raleway", sans-serif;
+    font-size: 16px;
 }
 
 main {
@@ -123,7 +124,7 @@ header .logo {
 }
 
 header .logo:hover {
-    border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 header .logo img {
@@ -201,6 +202,33 @@ nav a:hover {
     color: var(--color-text-main);
 }
 
+/* Left-right columns */
+
+.columns {
+    display: flex;
+}
+
+.left-column {
+    flex-grow: 1;
+    width: 300px;
+    padding: 15px;
+}
+
+.right-column {
+    width: 250px;
+    background: var(--color-bg-menu);
+}
+
+.right-column h2 {
+    background: var(--color-highlight);
+    padding: 8px 10px;
+    font-weight: bold;
+    font-size: 90%;
+    text-transform: uppercase;
+}
+
+/* Icon menus */
+
 .icon-menu {
     display: flex;
     flex-wrap: wrap;
@@ -255,43 +283,111 @@ nav a:hover {
 
 /* Forms */
 
-form .control-group {
-    margin: 0 0 15px 0;
+form {
+    padding: 20px 40px 20px 30px;
 }
 
-form .asteriskField {
-    display: none;
+.right-column form {
+    padding: 0;
+}
+
+form h1 {
+    margin: 0 0 10px 0;
+}
+
+form p {
+    color: var(--color-text-main);
+    margin: 10px 0 15px 0;
+}
+
+form .field {
+    margin: 25px 0 25px 0;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px 10px;
+}
+
+.right-column form .field {
+    margin: 0;
+    background: none;
+    box-shadow: none;
+    padding: 0;
 }
 
 form label {
+    display: block;
     text-transform: uppercase;
-    font-size: 110%;
-    color: var(--color-text-dull);
-    letter-spacing: 0.05em;
+    font-size: 100%;
+    font-weight: bold;
 }
 
-form label.requiredField::after {
-    content: " (required)";
+form label small {
     font-size: 80%;
-    color: var(--color-text-duller);
+    margin-left: 5px;
+    color: var(--color-text-dull);
 }
 
-form .help-block {
-    color: var(--color-text-error);
-    padding: 4px 0 0 0;
+.right-column form label {
+    margin: 5px 10px 5px 10px;
+}
+
+form .help {
+    color: var(--color-text-dull);
+    font-size: 90%;
+    margin: 2px 0 6px 0;
+}
+
+form .errorlist {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+form .errorlist li {
+    color: var(--color-text-main);
+    background: var(--color-bg-error);
+    border-radius: 3px;
+    margin: 5px 0 8px 0;
+    padding: 3px 7px;
+}
+
+form .errorlist li::before {
+    content: "\f071";
+    font: var(--fa-font-solid);
+    margin-right: 7px;
+}
+
+form .hidden {
+    display: none;
 }
 
 form input,
-form select {
+form select,
+form textarea {
     width: 100%;
-    padding: 4px 6px;
+    padding: 5px 7px;
     background: var(--color-bg-main);
     border: 1px solid var(--color-input-border);
     border-radius: 3px;
     color: var(--color-text-main);
 }
 
-form input:focus {
+.right-column form.compose input,
+.right-column form.compose textarea {
+    margin: 0 0 10px 0;
+    border: 0;
+    font-size: 95%;
+    border-radius: 0;
+    background-color: var(--color-bg-box);
+}
+
+.right-column form.compose textarea {
+    height: 150px;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
     outline: none;
     border: 1px solid var(--color-input-border-active);
 }
@@ -309,6 +405,48 @@ form input[type=submit] {
 
 form input[type=submit]:hover {
     background: var(--color-button-main-hover);
+}
+
+form .buttons {
+    text-align: right;
+    margin: 25px 0 15px 0;
+}
+
+.right-column form .buttons {
+    margin: 5px 10px 5px 0;
+}
+
+form button,
+form .button {
+    padding: 5px 10px;
+    margin: 0 0 0 5px;
+    border-radius: 5px;
+    border: 3px solid rgba(255, 255, 255, 0);
+    cursor: pointer;
+    font-weight: bold;
+    background-color: var(--color-highlight);
+    color: var(--color-text-main);
+    display: inline-block;
+}
+
+form button.toggle,
+form .button.toggle {
+    background: var(--color-bg-main);
+}
+
+form button.toggle.enabled,
+form .button.toggle.enabled {
+    background: var(--color-highlight);
+}
+
+form button:hover,
+form .button:hover {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.right-column form button,
+.right-column form .button {
+    padding: 2px 6px;
 }
 
 /* Identities */
@@ -350,29 +488,26 @@ h1.identity small {
     overflow: hidden;
 }
 
+.left-column .post {
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+}
+
 .post .icon {
     height: 48px;
     width: auto;
     float: left;
 }
 
-.post .author {
-    padding-left: 64px;
-}
-
-.post .author a,
-.post time a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.post .author small {
-    font-weight: normal;
-    color: var(--color-text-dull);
+.post .handle {
+    display: block;
+    padding: 7px 0 10px 64px;
 }
 
 .post time {
     display: block;
+    float: right;
     padding-left: 64px;
     color: var(--color-text-duller);
 }

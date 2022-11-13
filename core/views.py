@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView
 
-from activities.views.home import Home
+from activities.views.timelines import Home
 from users.models import Identity
 
 

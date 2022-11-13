@@ -3,6 +3,10 @@
 {% block title %}Welcome{% endblock %}
 
 {% block content %}
+    <nav>
+        <a href="/" class="selected">Home</a>
+    </nav>
+
     {% for identity in identities %}
         <a href="{{ identity.urls.view }}">{{ identity }}</a>
     {% endfor %}

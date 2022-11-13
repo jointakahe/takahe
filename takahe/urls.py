@@ -1,12 +1,15 @@
 from django.contrib import admin
 from django.urls import path
 
+from activities.views import timelines
 from core import views as core
 from stator import views as stator
 from users.views import activitypub, auth, identity
 
 urlpatterns = [
     path("", core.homepage),
+    # Activity views
+    path("federated/", timelines.Federated.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view()),
     path("auth/logout/", auth.Logout.as_view()),
