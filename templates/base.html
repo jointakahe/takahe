@@ -12,36 +12,34 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
 
-    <header>
-        <h1>
-            <a href="/">
+    <main>
+        <header>
+            <a class="logo" href="/">
                 <img src="{% static "img/icon-128.png" %}" width="32">
                 {{ config.site_name }}
             </a>
-        </h1>
-        <menu>
-            <li>
-                <a href="#"><i class="fa-solid fa-gear"></i></a>
-            </li>
-            <li>
+            <menu>
                 {% if user.is_authenticated %}
-                    <a href="/identity/select/">
+                    <a href="#"><i class="fa-solid fa-gear"></i> Settings</a>
+                    <div class="gap"></div>
+                    <a href="/identity/select/" class="identity">
                         {% if not request.identity %}
-                            <img src="{% static "img/unknown-icon-128.png" %}" width="32" title="No identity selected">
+                            No Identity
+                            <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
                         {% elif request.identity.icon_uri %}
-                            <img src="{{ request.identity.icon_uri }}" width="32" title="{{ request.identity.handle }}">
+                            {{ request.identity.username }} <small>@{{ request.identity.domain_id }}</small>
+                            <img src="{{ request.identity.icon_uri }}" title="{{ request.identity.handle }}">
                         {% else %}
-                            <img src="{% static "img/unknown-icon-128.png" %}" width="32" title="{{ request.identity.handle }}">
+                            {{ request.identity.username }} <small>@{{ request.identity.domain_id }}</small>
+                            <img src="{% static "img/unknown-icon-128.png" %}" title="{{ request.identity.handle }}">
                         {% endif %}
                     </a>
                 {% else %}
-                    <a href="/auth/login/">Login</a>
+                    <a href="/auth/login/"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
                 {% endif %}
-            </li>
-        </menu>
-    </header>
+            </menu>
+        </header>
 
-    <main>
         {% block content %}
         {% endblock %}
     </main>

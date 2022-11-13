@@ -5,6 +5,7 @@
 {% block title %}Create Identity{% endblock %}
 
 {% block content %}
+    {% include "identity/_identity_menu.html" %}
     <section class="modal identities">
         <h1>Create Identity</h1>
         {% crispy form form.helper %}

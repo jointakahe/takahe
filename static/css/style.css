@@ -18,6 +18,7 @@ dl,
 dd,
 menu {
     margin: 0;
+    padding: 0;
 }
 
 ul[role='list'],
@@ -42,8 +43,7 @@ a:not([class]) {
 
 img,
 picture {
-    max-width: 100%;
-    display: block;
+    display: inline-block;
 }
 
 input,
@@ -51,6 +51,11 @@ button,
 textarea,
 select {
     font: inherit;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -71,135 +76,182 @@ select {
 /* Base template styling */
 
 :root {
+    --color-bg-main: #26323c;
+    --color-bg-menu: #2e3e4c;
+    --color-bg-box: #1a2631;
+    --color-highlight: #449c8c;
+
+    --color-text-duller: #5f6983;
+    --color-text-dull: #99a;
+    --color-text-main: #fff;
+
     --color-input-border: #000;
     --color-input-border-active: #444b5d;
     --color-button-main: #444b5d;
     --color-button-main-hover: #515d7c;
-    --color-bg1: #191b22;
-    --color-bg2: #282c37;
     --color-bg3: #444b5d;
-    --color-text-duller: #5f6983;
-    --color-text-dull: #99a;
     --color-text-error: rgb(155, 111, 111);
-    --color-text-main: #DDDDDD;
 }
 
 body {
-    background-color: var(--color-bg1);
-    color: white;
+    background-color: var(--color-bg-main);
+    color: var(--color-text-main);
+    font-family: "Raleway", sans-serif;
+}
+
+main {
+    width: 850px;
+    margin: 20px auto;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+    border-radius: 5px;
 }
 
 header {
-    width: 750px;
-    margin: 0 auto;
     display: flex;
-    padding: 0 0 20px 0;
 }
 
-header h1 {
+header .logo {
     font-family: "Raleway";
-    font-weight: normal;
-    background: var(--color-fg2);
-    padding: 10px 7px 7px 0;
+    font-weight: bold;
+    background: var(--color-highlight);
+    border-radius: 5px 0 0 0;
+    padding: 10px 11px 9px 10px;
+    height: 50px;
     font-size: 130%;
-    height: 2.2em;
-    color: var(--color-fg1);
+    color: var(--color-text-main);
+    border-bottom: 3px solid rgba(0, 0, 0, 0);
 }
 
-header h1 img {
+header .logo:hover {
+    border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+header .logo img {
     display: inline;
     vertical-align: top;
     margin: 0 3px 0 0;
-}
-
-header a {
-    color: inherit;
-    text-decoration: none;
 }
 
 header menu {
     flex-grow: 1;
     display: flex;
     list-style-type: none;
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
-header menu li {
-    padding: 10px 10px 7px 10px;
+header menu a {
+    padding: 10px 20px 4px 20px;
     color: #eee;
-    line-height: 32px;
+    line-height: 30px;
+    border-bottom: 3px solid rgba(0, 0, 0, 0);
+    border-right: 1px solid var(--color-bg-menu);
 }
 
-main {
-    width: 750px;
-    margin: 20px auto;
+header menu a:hover {
+    border-bottom: 3px solid var(--color-highlight);
 }
 
-/* "Modal" boxes */
-
-.modal {
-    background: var(--color-bg2);
-    max-width: 500px;
-    margin: 0 auto;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-    border-radius: 5px;
+header menu .gap {
+    flex-grow: 1;
 }
 
-.modal h1 {
-    color: var(--color-fg1);
-    background: var(--color-bg3);
-    font-family: "Raleway";
-    position: relative;
-    padding: 5px 8px 4px 10px;
-    font-size: 100%;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border-radius: 5px 5px 0 0;
+header menu a.identity {
+    border-right: 0;
+    text-align: right;
+    padding-right: 10px;
 }
 
-.modal .option {
-    display: block;
-    padding: 15px 20px;
-    color: var(--color-text-main);
-    text-decoration: none;
-    border-left: 3px solid transparent;
-    line-height: 32px;
+header menu a i {
+    margin-right: 10px;
 }
 
-.modal .option img {
-    display: inline;
-    vertical-align: middle;
-    margin: 0 10px 3px 0;
-}
-
-.modal .option i {
+header menu a img {
     display: inline-block;
     vertical-align: middle;
-    width: 32px;
-    height: 32px;
-    text-align: center;
-    line-height: 32px;
-    font-size: 150%;
+    margin: 0 0 2px 8px;
+    height: 30px;
+    width: auto;
+}
+
+header menu a small {
+    color: var(--color-text-dull);
+    font-size: 70%;
+}
+
+nav {
+    display: flex;
+    height: 40px;
+    background: var(--color-bg-menu);
+}
+
+nav a {
+    display: block;
+    color: var(--color-text-dull);
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 9px 18px 9px 18px;
+}
+
+nav a.selected {
+    color: var(--color-text-main);
+    border-bottom: 3px solid var(--color-highlight);
+}
+
+nav a:hover {
+    color: var(--color-text-main);
+}
+
+.icon-menu {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 30px 0 0 30px;
+}
+
+.icon-menu>a {
+    margin: 0px 40px 40px 0;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    width: 370px;
+    height: 100px;
+    line-height: 100px;
+    color: inherit;
+    text-decoration: none;
+    padding: 0 20px;
+    border: 2px solid rgba(255, 255, 255, 0);
+    border-radius: 3px;
+}
+
+.icon-menu>a:hover {
+    border: 2px solid var(--color-highlight);
+}
+
+.icon-menu>a img,
+.icon-menu>a i {
+    vertical-align: middle;
     margin: 0 10px 3px 0;
+    height: 50px;
+    width: auto;
 }
 
-.modal a.option:hover {
-    border-left: 3px solid var(--color-text-dull);
-}
-
-.modal .option.empty {
+.icon-menu>a i {
+    display: inline-block;
     text-align: center;
+    width: 50px;
+    line-height: 50px;
+    font-size: 200%;
+}
+
+.handle {
+    vertical-align: middle;
+    display: inline-block;
+    line-height: normal;
+}
+
+.handle small {
+    display: block;
     color: var(--color-text-dull);
 }
 
-.modal .option small {
-    margin: 0 0 0 5px;
-    color: var(--color-text-dull);
-}
-
-.modal form {
-    padding: 10px 10px 1px 10px;
-}
 
 /* Forms */
 
@@ -233,7 +285,7 @@ form input,
 form select {
     width: 100%;
     padding: 4px 6px;
-    background: var(--color-bg1);
+    background: var(--color-bg-main);
     border: 1px solid var(--color-input-border);
     border-radius: 3px;
     color: var(--color-text-main);
@@ -281,7 +333,7 @@ h1.identity small {
 }
 
 .system-note {
-    background: var(--color-bg2);
+    background: var(--color-bg-menu);
     color: var(--color-text-dull);
     border-radius: 3px;
     padding: 5px 8px;
