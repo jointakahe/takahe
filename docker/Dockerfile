@@ -1,4 +1,6 @@
-FROM python:3.9-bullseye as builder
+# Build stage
+
+FROM python:3.11.0-buster as builder
 
 RUN mkdir -p /takahe
 RUN python -m venv /takahe/.venv
@@ -12,8 +14,9 @@ RUN . /takahe/.venv/bin/activate \
     && pip install --upgrade pip \
     && pip install --upgrade -r requirements.txt
 
+# Final image stage
 
-FROM python:3.9-slim-bullseye
+FROM python:3.11.0-slim-buster
 
 RUN apt-get update && apt-get install -y libpq5
 
@@ -23,4 +26,4 @@ COPY . /takahe
 WORKDIR /takahe
 EXPOSE 8000
 
-CMD ["/takahe/scripts/start.sh"]
+CMD ["/takahe/docker/start.sh"]

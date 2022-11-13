@@ -1,17 +1,7 @@
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "insecure_secret")
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["http://*", "https://*"]
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
 
@@ -30,7 +20,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "core.middleware.AlwaysSecureMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -115,9 +104,4 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-CRISPY_FAIL_SILENTLY = not DEBUG
-
-SITE_NAME = "takahē"
-DEFAULT_DOMAIN = "feditest.aeracode.org"
-ALLOWED_DOMAINS = ["feditest.aeracode.org"]
-IDENTITY_MAX_AGE = 24 * 60 * 60
+ALLOWED_HOSTS = ["*"]

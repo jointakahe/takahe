@@ -19,7 +19,7 @@ services:
     build: .
     image: tahake:latest
     environment:
-      - "DJANGO_SETTINGS_MODULE=takahe.settings"
+      - "DJANGO_SETTINGS_MODULE=takahe.settings.production"
       - "SECRET_KEY=insecure_secret"
       - "POSTGRES_HOST=db"
       - "POSTGRES_DB=tahake"

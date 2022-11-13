@@ -1,13 +1,13 @@
 import string
 
 from django import forms
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
+from core.config import Config
 from core.forms import FormHelper
 from users.decorators import identity_required
 from users.models import Domain, Follow, Identity, IdentityStates
@@ -26,7 +26,7 @@ class ViewIdentity(TemplateView):
             fetch=True,
         )
         posts = identity.posts.all()[:100]
-        if identity.data_age > settings.IDENTITY_MAX_AGE:
+        if identity.data_age > Config.load().IDENTITY_MAX_AGE:
             identity.transition_perform(IdentityStates.outdated)
         return {
             "identity": identity,

@@ -1,7 +1,7 @@
-from django.conf import settings
+from core.config import Config
 
 
 def config_context(request):
     return {
-        "config": {"site_name": settings.SITE_NAME},
+        "config": Config.load(),
     }
