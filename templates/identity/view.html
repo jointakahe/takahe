@@ -4,12 +4,30 @@
 {% block title %}{{ identity }}{% endblock %}
 
 {% block content %}
+    <nav>
+        <a href="." class="selected">Profile</a>
+    </nav>
+
     <h1 class="identity">
         {% if identity.icon_uri %}
             <img src="{{identity.icon_uri}}" class="icon">
         {% else %}
             <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
         {% endif %}
+
+        {% if request.identity %}
+            <form action="{{ identity.urls.action }}" method="POST" class="inline follow">
+                {% csrf_token %}
+                {% if follow %}
+                    <input type="hidden" name="action" value="unfollow">
+                    <button>Unfollow</button>
+                {% else %}
+                    <input type="hidden" name="action" value="follow">
+                    <button>Follow</button>
+                {% endif %}
+            </form>
+        {% endif %}
+
         {{ identity.name_or_handle }} <small>@{{ identity.handle }}</small>
     </h1>
 
@@ -21,27 +39,18 @@
         {% else %}
             <p class="system-note">
                 This is a member of another server.
-                <a href="{{ identity.profile_uri }}">See their original profile</a>
+                <a href="{{ identity.profile_uri }}">See their original profile ➔</a>
             </p>
         {% endif %}
     {% endif %}
 
-    {% if request.identity %}
-        <form action="{{ identity.urls.action }}" method="POST">
-            {% csrf_token %}
-            {% if follow %}
-                <input type="hidden" name="action" value="unfollow">
-                <button>Unfollow</button>
-            {% else %}
-                <input type="hidden" name="action" value="follow">
-                <button>Follow</button>
-            {% endif %}
-        </form>
-    {% endif %}
-
-    {% for post in posts %}
-        {% include "activities/_post.html" %}
-    {% empty %}
-        No posts yet.
-    {% endfor %}
+    <section class="columns">
+        <div class="left-column">
+            {% for post in posts %}
+                {% include "activities/_post.html" %}
+            {% empty %}
+                No posts yet.
+            {% endfor %}
+        </div>
+    </section>
 {% endblock %}
