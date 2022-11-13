@@ -9,7 +9,7 @@
     {% endif %}
 
     <time>
-        <a href="{{ post.urls.view }}">
+        <a href="{{ post.url }}">
             {% if post.authored %}
                 {{ post.authored | timedeltashort }}
             {% else %}

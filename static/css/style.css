@@ -502,7 +502,7 @@ h1.identity small {
 
 .post .handle {
     display: block;
-    padding: 7px 0 10px 64px;
+    padding: 7px 0 0 64px;
 }
 
 .post time {
@@ -514,4 +514,8 @@ h1.identity small {
 
 .post .content {
     padding-left: 64px;
+}
+
+.post .content p {
+    margin: 12px 0 4px 0;
 }
