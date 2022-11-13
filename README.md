@@ -8,3 +8,16 @@ Goals:
 * Multiple account domains possible per server
 * Mastodon client API compatible
 * Async evented core for fan-out/delivery
+
+
+## Deployment
+
+### Requirements:
+
+- **Python** 3.11
+- **Postgresql** 14+
+- **Lots of patience** This is *very experimental*
+
+## Contributing
+
+If you'd like to contribute, please read [CONTRIBUTING.md](./CONTRIBUTING.md).

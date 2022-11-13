@@ -26,7 +26,7 @@ class ViewIdentity(TemplateView):
             fetch=True,
         )
         posts = identity.posts.all()[:100]
-        if identity.data_age > Config.load().IDENTITY_MAX_AGE:
+        if identity.data_age > Config.load().identity_max_age:
             identity.transition_perform(IdentityStates.outdated)
         return {
             "identity": identity,

@@ -11,3 +11,9 @@ MIDDLEWARE.insert(0, "core.middleware.AlwaysSecureMiddleware")
 # Ensure debug features are on
 DEBUG = True
 CRISPY_FAIL_SILENTLY = False
+
+ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "https://127.0.0.1:8000",
+]

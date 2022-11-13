@@ -1,0 +1,8 @@
+pre-commit~=2.20.0
+-r requirements.txt
+black==22.10.0
+flake8==5.0.4
+isort==5.10.1
+pre-commit~=2.20.0
+pytest-django~=4.5.2
+pytest-httpx~=0.21
