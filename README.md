@@ -34,7 +34,9 @@ the less sure I am about it.
 ### Alpha
 
 - [x] Create posts
+- [ ] Set post visibility
 - [x] Receive posts
+- [ ] Handle received post visibility
 - [ ] Receive post deletions
 - [x] Set content warnings on posts
 - [ ] Show content warnings on posts
