@@ -1,6 +1,6 @@
 {% load static %}
 {% load activity_tags %}
-<div class="post">
+<div class="post" data-takahe-id="{{ post.id }}">
 
     {% if post.author.icon_uri %}
         <img src="{{post.author.icon_uri}}" class="icon">

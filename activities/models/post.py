@@ -274,3 +274,18 @@ class Post(StatorModel):
             TimelineEvent.add_post(follow.source, post)
         # Force it into fanned_out as it's not ours
         post.transition_perform(PostStates.fanned_out)
+
+    def debug_fetch(self):
+        """
+        Fetches the Post from its original URL again and updates us with it
+        """
+        response = httpx.get(
+            self.object_uri,
+            headers={"Accept": "application/json"},
+            follow_redirects=True,
+        )
+        if 200 <= response.status_code < 300:
+            return self.by_ap(
+                canonicalise(response.json(), include_security=True),
+                update=True,
+            )

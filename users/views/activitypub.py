@@ -118,7 +118,7 @@ class Inbox(View):
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()
         if not identity.public_key:
-            print("Cannot get actor")
+            print("Cannot get actor", document["actor"])
             return HttpResponseBadRequest("Cannot retrieve actor")
         # If there's a "signature" payload, verify against that
         if "signature" in document:

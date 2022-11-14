@@ -7,6 +7,12 @@ from activities.models import FanOut, Post, PostInteraction, TimelineEvent
 class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "author", "created"]
     raw_id_fields = ["to", "mentions"]
+    actions = ["force_fetch"]
+
+    @admin.action(description="Force Fetch")
+    def force_fetch(self, request, queryset):
+        for instance in queryset:
+            instance.debug_fetch()
 
 
 @admin.register(TimelineEvent)
