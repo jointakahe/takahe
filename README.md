@@ -45,9 +45,9 @@ the less sure I am about it.
 - [ ] Create likes
 - [x] Receive likes
 - [x] Create follows
+- [ ] Undo follows
 - [x] Receive and accept follows
 - [x] Receive follow undos
-- [ ] Undo follows
 - [x] Home timeline (posts and boosts from follows)
 - [ ] Notifications page (followed, boosted, liked)
 - [x] Local timeline
@@ -70,6 +70,10 @@ the less sure I am about it.
 ### Beta
 
 - [ ] Delete posts
+- [ ] Reply threading on post creation
+- [ ] Display posts with reply threads
+- [ ] Create polls on posts
+- [ ] Receive polls on posts
 - [ ] Emoji fetching and display
 - [ ] Emoji creation
 - [ ] Image descriptions
@@ -77,17 +81,13 @@ the less sure I am about it.
 - [ ] Moderation queue
 - [ ] User management page
 - [ ] Server defederation
-- [ ] IP banning
-- [ ] Trends subsystem and moderation
 - [ ] Filters for posts/boosts
-- [ ] Reply threading on post creation
-- [ ] Display posts with reply threads
-- [ ] Create polls on posts
-- [ ] Receive polls on posts
 - [ ] OAuth subsystem
 
 ### 1.0
 
+- [ ] IP banning
+- [ ] Trends subsystem and moderation
 - [ ] Server announcements
 - [ ] Automated post deletion
 - [ ] Post popularity system (for long gaps between timeline views)
