@@ -1,6 +1,8 @@
 ![takahē](static/img/logo-128.png)
 
-A *very experimental* Fediverse server for microblogging/"toots". Not fully functional yet - I'm still working on making all the basic bits work!
+A *very experimental* Fediverse server for microblogging/"toots". Not fully functional yet -
+I'm still working on making all the basic bits work! For more background and information,
+see [my blog posts about it](https://aeracode.org/category/takahe/).
 
 Indended features:
 
