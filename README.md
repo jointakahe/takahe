@@ -35,6 +35,7 @@ the less sure I am about it.
 
 - [x] Create posts
 - [x] Receive posts
+- [ ] Receive post deletions
 - [x] Set content warnings on posts
 - [ ] Show content warnings on posts
 - [ ] Attach images to posts
@@ -45,6 +46,7 @@ the less sure I am about it.
 - [x] Receive likes
 - [x] Create follows
 - [x] Receive and accept follows
+- [x] Receive follow undos
 - [ ] Undo follows
 - [x] Home timeline (posts and boosts from follows)
 - [ ] Notifications page (followed, boosted, liked)
@@ -67,6 +69,7 @@ the less sure I am about it.
 
 ### Beta
 
+- [ ] Delete posts
 - [ ] Emoji fetching and display
 - [ ] Emoji creation
 - [ ] Image descriptions
