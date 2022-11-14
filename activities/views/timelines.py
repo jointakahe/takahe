@@ -33,15 +33,15 @@ class Home(FormView):
 
     def get_context_data(self):
         context = super().get_context_data()
-        context["timeline_posts"] = [
-            te.subject_post
-            for te in TimelineEvent.objects.filter(
+        context["events"] = (
+            TimelineEvent.objects.filter(
                 identity=self.request.identity,
-                type=TimelineEvent.Types.post,
+                type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
             )
             .select_related("subject_post", "subject_post__author")
             .order_by("-created")[:100]
-        ]
+        )
+
         context["current_page"] = "home"
         return context
 
@@ -55,16 +55,50 @@ class Home(FormView):
 
 
 @method_decorator(identity_required, name="dispatch")
+class Local(TemplateView):
+
+    template_name = "activities/local.html"
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["posts"] = (
+            Post.objects.filter(visibility=Post.Visibilities.public, author__local=True)
+            .select_related("author")
+            .order_by("-created")[:100]
+        )
+        context["current_page"] = "local"
+        return context
+
+
+@method_decorator(identity_required, name="dispatch")
 class Federated(TemplateView):
 
     template_name = "activities/federated.html"
 
     def get_context_data(self):
         context = super().get_context_data()
-        context["timeline_posts"] = (
+        context["posts"] = (
             Post.objects.filter(visibility=Post.Visibilities.public)
             .select_related("author")
             .order_by("-created")[:100]
         )
         context["current_page"] = "federated"
+        return context
+
+
+@method_decorator(identity_required, name="dispatch")
+class Notifications(TemplateView):
+
+    template_name = "activities/notifications.html"
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["events"] = (
+            TimelineEvent.objects.filter(
+                identity=self.request.identity,
+            )
+            .exclude(type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost])
+            .select_related("subject_post", "subject_post__author", "subject_identity")
+        )
+        context["current_page"] = "notifications"
         return context

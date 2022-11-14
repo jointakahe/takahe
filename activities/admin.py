@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from activities.models import FanOut, Post, TimelineEvent
+from activities.models import FanOut, Post, PostInteraction, TimelineEvent
 
 
 @admin.register(Post)
@@ -19,3 +19,9 @@ class TimelineEventAdmin(admin.ModelAdmin):
 class FanOutAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "type", "identity"]
     raw_id_fields = ["identity", "subject_post"]
+
+
+@admin.register(PostInteraction)
+class PostInteractionAdmin(admin.ModelAdmin):
+    list_display = ["id", "state", "state_attempted", "type", "identity", "post"]
+    raw_id_fields = ["identity", "post"]

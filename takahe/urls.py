@@ -9,6 +9,8 @@ from users.views import activitypub, auth, identity
 urlpatterns = [
     path("", core.homepage),
     # Activity views
+    path("notifications/", timelines.Notifications.as_view()),
+    path("local/", timelines.Local.as_view()),
     path("federated/", timelines.Federated.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view()),

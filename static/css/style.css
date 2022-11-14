@@ -459,7 +459,7 @@ form .button:hover {
 /* Identities */
 
 h1.identity {
-    margin: 20px 0 20px 20px;
+    margin: 15px 0 20px 15px;
 }
 
 h1.identity .icon {
@@ -482,7 +482,7 @@ h1.identity small {
     color: var(--color-text-dull);
     border-radius: 3px;
     padding: 5px 8px;
-    margin: 20px;
+    margin: 15px;
 }
 
 .system-note a {
@@ -526,4 +526,18 @@ h1.identity small {
 
 .post .content p {
     margin: 12px 0 4px 0;
+}
+
+.boost-banner {
+    padding: 0 0 3px 5px;
+}
+
+.boost-banner::before {
+    content: "\f079";
+    font: var(--fa-font-solid);
+    margin-right: 4px;
+}
+
+.boost-banner a {
+    font-weight: bold;
 }

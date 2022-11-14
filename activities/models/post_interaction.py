@@ -1,0 +1,191 @@
+from typing import Dict
+
+from django.db import models
+from django.utils import timezone
+
+from activities.models.fan_out import FanOut
+from activities.models.post import Post
+from activities.models.timeline_event import TimelineEvent
+from core.ld import format_ld_date, parse_ld_date
+from stator.models import State, StateField, StateGraph, StatorModel
+from users.models.follow import Follow
+from users.models.identity import Identity
+
+
+class PostInteractionStates(StateGraph):
+    new = State(try_interval=300)
+    fanned_out = State()
+
+    new.transitions_to(fanned_out)
+
+    @classmethod
+    async def handle_new(cls, instance: "PostInteraction"):
+        """
+        Creates all needed fan-out objects for a new PostInteraction.
+        """
+        interaction = await instance.afetch_full()
+        # Boost: send a copy to all people who follow this user
+        if interaction.type == interaction.Types.boost:
+            async for follow in interaction.identity.inbound_follows.select_related(
+                "source", "target"
+            ):
+                if follow.source.local or follow.target.local:
+                    await FanOut.objects.acreate(
+                        identity_id=follow.source_id,
+                        type=FanOut.Types.interaction,
+                        subject_post=interaction,
+                    )
+        # Like: send a copy to the original post author only
+        elif interaction.type == interaction.Types.like:
+            await FanOut.objects.acreate(
+                identity_id=interaction.post.author_id,
+                type=FanOut.Types.interaction,
+                subject_post=interaction,
+            )
+        else:
+            raise ValueError("Cannot fan out unknown type")
+        # And one for themselves if they're local
+        if interaction.identity.local:
+            await FanOut.objects.acreate(
+                identity_id=interaction.identity_id,
+                type=FanOut.Types.interaction,
+                subject_post=interaction,
+            )
+
+
+class PostInteraction(StatorModel):
+    """
+    Handles both boosts and likes
+    """
+
+    class Types(models.TextChoices):
+        like = "like"
+        boost = "boost"
+
+    # The state the boost is in
+    state = StateField(PostInteractionStates)
+
+    # The canonical object ID
+    object_uri = models.CharField(max_length=500, blank=True, null=True, unique=True)
+
+    # What type of interaction it is
+    type = models.CharField(max_length=100, choices=Types.choices)
+
+    # The user who boosted/liked/etc.
+    identity = models.ForeignKey(
+        "users.Identity",
+        on_delete=models.CASCADE,
+        related_name="interactions",
+    )
+
+    # The post that was boosted/liked/etc
+    post = models.ForeignKey(
+        "activities.Post",
+        on_delete=models.CASCADE,
+        related_name="interactions",
+    )
+
+    # When the activity was originally created (as opposed to when we received it)
+    # Mastodon only seems to send this for boosts, not likes
+    published = models.DateTimeField(default=timezone.now)
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        index_together = [["type", "identity", "post"]]
+
+    ### Async helpers ###
+
+    async def afetch_full(self):
+        """
+        Returns a version of the object with all relations pre-loaded
+        """
+        return await PostInteraction.objects.select_related("identity", "post").aget(
+            pk=self.pk
+        )
+
+    ### ActivityPub (outbound) ###
+
+    def to_ap(self) -> Dict:
+        """
+        Returns the AP JSON for this object
+        """
+        if self.type == self.Types.boost:
+            value = {
+                "type": "Announce",
+                "id": self.object_uri,
+                "published": format_ld_date(self.published),
+                "actor": self.identity.actor_uri,
+                "object": self.post.object_uri,
+                "to": "as:Public",
+            }
+        elif self.type == self.Types.like:
+            value = {
+                "type": "Like",
+                "id": self.object_uri,
+                "published": format_ld_date(self.published),
+                "actor": self.identity.actor_uri,
+                "object": self.post.object_uri,
+            }
+        else:
+            raise ValueError("Cannot turn into AP")
+        return value
+
+    ### ActivityPub (inbound) ###
+
+    @classmethod
+    def by_ap(cls, data, create=False) -> "PostInteraction":
+        """
+        Retrieves a PostInteraction instance by its ActivityPub JSON object.
+
+        Optionally creates one if it's not present.
+        Raises KeyError if it's not found and create is False.
+        """
+        # Do we have one with the right ID?
+        try:
+            boost = cls.objects.get(object_uri=data["id"])
+        except cls.DoesNotExist:
+            if create:
+                # Resolve the author
+                identity = Identity.by_actor_uri(data["actor"], create=True)
+                # Resolve the post
+                post = Post.by_object_uri(data["object"], fetch=True)
+                # Get the right type
+                if data["type"].lower() == "like":
+                    type = cls.Types.like
+                elif data["type"].lower() == "announce":
+                    type = cls.Types.boost
+                else:
+                    raise ValueError(f"Cannot handle AP type {data['type']}")
+                # Make the actual interaction
+                boost = cls.objects.create(
+                    object_uri=data["id"],
+                    identity=identity,
+                    post=post,
+                    published=parse_ld_date(data.get("published", None))
+                    or timezone.now(),
+                    type=type,
+                )
+            else:
+                raise KeyError(f"No post with ID {data['id']}", data)
+        return boost
+
+    @classmethod
+    def handle_ap(cls, data):
+        """
+        Handles an incoming announce/like
+        """
+        # Create it
+        interaction = cls.by_ap(data, create=True)
+        # Boosts (announces) go to everyone who follows locally
+        if interaction.type == cls.Types.boost:
+            for follow in Follow.objects.filter(
+                target=interaction.identity, source__local=True
+            ):
+                TimelineEvent.add_post_interaction(follow.source, interaction)
+        # Likes go to just the author of the post
+        elif interaction.type == cls.Types.like:
+            TimelineEvent.add_post_interaction(interaction.post.author, interaction)
+        # Force it into fanned_out as it's not ours
+        interaction.transition_perform(PostInteractionStates.fanned_out)

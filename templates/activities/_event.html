@@ -1,0 +1,20 @@
+{% load static %}
+{% load activity_tags %}
+<div class="post">
+
+    <time>
+        {% if event.published %}
+            {{ event.published | timedeltashort }}
+        {% else %}
+            {{ event.created | timedeltashort }}
+        {% endif %}
+    </time>
+
+    {% if event.type == "follow" %}
+        {{ event.subject_identity.name_or_handle }} followed you
+    {% elif event.type == "like" %}
+        {{ event.subject_identity.name_or_handle }} liked {{ event.subject_post }}
+    {% else %}
+        Unknown event type {{event.type}}
+    {% endif %}
+</div>

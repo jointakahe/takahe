@@ -1,6 +1,6 @@
 <nav>
     <a href="/" {% if current_page == "home" %}class="selected"{% endif %}>Home</a>
-    <a href="/" {% if current_page == "mentions" %}class="selected"{% endif %}>Mentions</a>
-    <a href="/" {% if current_page == "public" %}class="selected"{% endif %}>Public</a>
+    <a href="/notifications/" {% if current_page == "notifications" %}class="selected"{% endif %}>Notifications</a>
+    <a href="/local/" {% if current_page == "local" %}class="selected"{% endif %}>Local</a>
     <a href="/federated/" {% if current_page == "federated" %}class="selected"{% endif %}>Federated</a>
 </nav>

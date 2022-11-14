@@ -9,10 +9,11 @@ class TimelineEvent(models.Model):
 
     class Types(models.TextChoices):
         post = "post"
-        mention = "mention"
-        like = "like"
-        follow = "follow"
-        boost = "boost"
+        boost = "boost"  # A boost from someone (post substitude)
+        mentioned = "mentioned"
+        liked = "liked"  # Someone liking one of our posts
+        followed = "followed"
+        boosted = "boosted"  # Someone boosting one of our posts
 
     # The user this event is for
     identity = models.ForeignKey(
@@ -30,7 +31,14 @@ class TimelineEvent(models.Model):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name="timeline_events_about_us",
+        related_name="timeline_events",
+    )
+    subject_post_interaction = models.ForeignKey(
+        "activities.PostInteraction",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="timeline_events",
     )
     subject_identity = models.ForeignKey(
         "users.Identity",
@@ -74,12 +82,35 @@ class TimelineEvent(models.Model):
         )[0]
 
     @classmethod
-    def add_like(cls, identity, post):
+    def add_post_interaction(cls, identity, interaction):
         """
-        Adds a like to the timeline if it's not there already
+        Adds a boost/like to the timeline if it's not there already.
+
+        For boosts, may make two objects - one "boost" and one "boosted".
+        It'll return the "boost" in that case.
         """
-        return cls.objects.get_or_create(
-            identity=identity,
-            type=cls.Types.like,
-            subject_post=post,
-        )[0]
+        if interaction.type == interaction.Types.like:
+            return cls.objects.get_or_create(
+                identity=identity,
+                type=cls.Types.liked,
+                subject_post_id=interaction.post_id,
+                subject_identity_id=interaction.identity_id,
+                subject_post_interaction=interaction,
+            )[0]
+        elif interaction.type == interaction.Types.boost:
+            # If the boost is on one of our posts, then that's a boosted too
+            if interaction.post.author_id == identity.id:
+                return cls.objects.get_or_create(
+                    identity=identity,
+                    type=cls.Types.boosted,
+                    subject_post_id=interaction.post_id,
+                    subject_identity_id=interaction.identity_id,
+                    subject_post_interaction=interaction,
+                )[0]
+            return cls.objects.get_or_create(
+                identity=identity,
+                type=cls.Types.boost,
+                subject_post_id=interaction.post_id,
+                subject_identity_id=interaction.identity_id,
+                subject_post_interaction=interaction,
+            )[0]

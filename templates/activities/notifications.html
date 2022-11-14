@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Federated Timeline{% endblock %}
+{% block title %}Notifications{% endblock %}
 
 {% block content %}
     {% include "activities/_home_menu.html" %}
 
     <section class="columns">
         <div class="left-column">
-            {% for post in posts %}
-                {% include "activities/_post.html" %}
+            {% for event in events %}
+                {% include "activities/_event.html" %}
             {% empty %}
-                No posts yet.
+                No events yet.
             {% endfor %}
         </div>
+
         <div class="right-column">
             <h2>?</h2>
         </div>

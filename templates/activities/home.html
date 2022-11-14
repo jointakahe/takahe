@@ -8,10 +8,19 @@
     <section class="columns">
 
         <div class="left-column">
-            {% for post in timeline_posts %}
-                {% include "activities/_post.html" %}
+            {% for event in events %}
+                {% if event.type == "post" %}
+                    {% include "activities/_post.html" with post=event.subject_post %}
+                {% elif event.type == "boost" %}
+                    <div class="boost-banner">
+                        <a href="{{ event.subject_identity.urls.view }}">
+                            {{ event.subject_identity.name_or_handle }}
+                        </a> boosted
+                    </div>
+                    {% include "activities/_post.html" with post=event.subject_post %}
+                {% endif %}
             {% empty %}
-                No posts yet.
+                Nothing to show yet.
             {% endfor %}
         </div>
 

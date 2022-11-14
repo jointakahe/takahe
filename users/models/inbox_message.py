@@ -12,12 +12,16 @@ class InboxMessageStates(StateGraph):
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
-        from activities.models import Post
+        from activities.models import Post, PostInteraction
         from users.models import Follow
 
         match instance.message_type:
             case "follow":
                 await sync_to_async(Follow.handle_request_ap)(instance.message)
+            case "announce":
+                await sync_to_async(PostInteraction.handle_ap)(instance.message)
+            case "like":
+                await sync_to_async(PostInteraction.handle_ap)(instance.message)
             case "create":
                 match instance.message_object_type:
                     case "note":

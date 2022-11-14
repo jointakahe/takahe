@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+import httpx
 import urlman
 from django.db import models
 from django.utils import timezone
@@ -7,7 +8,7 @@ from django.utils import timezone
 from activities.models.fan_out import FanOut
 from activities.models.timeline_event import TimelineEvent
 from core.html import sanitize_post
-from core.ld import format_ld_date, parse_ld_date
+from core.ld import canonicalise, format_ld_date, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
 from users.models.identity import Identity
@@ -91,7 +92,7 @@ class Post(StatorModel):
     )
 
     # When the post was originally created (as opposed to when we received it)
-    authored = models.DateTimeField(default=timezone.now)
+    published = models.DateTimeField(default=timezone.now)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -173,7 +174,7 @@ class Post(StatorModel):
         value = {
             "type": "Note",
             "id": self.object_uri,
-            "published": format_ld_date(self.created),
+            "published": format_ld_date(self.published),
             "attributedTo": self.author.actor_uri,
             "content": self.safe_content,
             "to": "as:Public",
@@ -227,12 +228,36 @@ class Post(StatorModel):
             post.summary = data.get("summary", None)
             post.sensitive = data.get("as:sensitive", False)
             post.url = data.get("url", None)
-            post.authored = parse_ld_date(data.get("published", None))
+            post.published = parse_ld_date(data.get("published", None))
             # TODO: to
             # TODO: mentions
             # TODO: visibility
             post.save()
         return post
+
+    @classmethod
+    def by_object_uri(cls, object_uri, fetch=False):
+        """
+        Gets the post by URI - either looking up locally, or fetching
+        from the other end if it's not here.
+        """
+        try:
+            return cls.objects.get(object_uri=object_uri)
+        except cls.DoesNotExist:
+            if fetch:
+                # Go grab the data from the URI
+                response = httpx.get(
+                    object_uri,
+                    headers={"Accept": "application/json"},
+                    follow_redirects=True,
+                )
+                if 200 <= response.status_code < 300:
+                    return cls.by_ap(
+                        canonicalise(response.json(), include_security=True),
+                        create=True,
+                        update=True,
+                    )
+            raise ValueError(f"Cannot find Post with URI {object_uri}")
 
     @classmethod
     def handle_create_ap(cls, data):

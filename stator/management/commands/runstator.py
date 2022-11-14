@@ -12,9 +12,16 @@ class Command(BaseCommand):
     help = "Runs a Stator runner for a short period"
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--concurrency",
+            "-c",
+            type=int,
+            default=30,
+            help="How many tasks to run at once",
+        )
         parser.add_argument("model_labels", nargs="*", type=str)
 
-    def handle(self, model_labels: List[str], *args, **options):
+    def handle(self, model_labels: List[str], concurrency: int, *args, **options):
         # Resolve the models list into names
         models = cast(
             List[Type[StatorModel]],
@@ -24,5 +31,5 @@ class Command(BaseCommand):
             models = StatorModel.subclasses
         print("Running for models: " + " ".join(m._meta.label_lower for m in models))
         # Run a runner
-        runner = StatorRunner(models)
+        runner = StatorRunner(models, concurrency=concurrency)
         async_to_sync(runner.run)()
