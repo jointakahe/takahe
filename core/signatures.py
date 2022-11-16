@@ -115,15 +115,11 @@ class HttpSignature:
         if "HTTP_DIGEST" in request.META:
             expected_digest = HttpSignature.calculate_digest(request.body)
             if request.META["HTTP_DIGEST"] != expected_digest:
-                print("Wrong digest")
                 raise VerificationFormatError("Digest is incorrect")
         # Verify date header
         if "HTTP_DATE" in request.META and not skip_date:
             header_date = parse_http_date(request.META["HTTP_DATE"])
             if abs(timezone.now().timestamp() - header_date) > 60:
-                print(
-                    f"Date mismatch - they sent {header_date}, now is {timezone.now().timestamp()}"
-                )
                 raise VerificationFormatError("Date is too far away")
         # Get the signature details
         if "HTTP_SIGNATURE" not in request.META:
@@ -186,7 +182,6 @@ class HttpSignature:
         )
         del headers["(request-target)"]
         async with httpx.AsyncClient() as client:
-            print(f"Calling {method} {uri}")
             response = await client.request(
                 method,
                 uri,

@@ -14,9 +14,13 @@ from users.models.identity import Identity
 
 class PostInteractionStates(StateGraph):
     new = State(try_interval=300)
-    fanned_out = State()
+    fanned_out = State(externally_progressed=True)
+    undone = State(try_interval=300)
+    undone_fanned_out = State()
 
     new.transitions_to(fanned_out)
+    fanned_out.transitions_to(undone)
+    undone.transitions_to(undone_fanned_out)
 
     @classmethod
     async def handle_new(cls, instance: "PostInteraction"):
@@ -31,26 +35,74 @@ class PostInteractionStates(StateGraph):
             ):
                 if follow.source.local or follow.target.local:
                     await FanOut.objects.acreate(
-                        identity_id=follow.source_id,
                         type=FanOut.Types.interaction,
-                        subject_post=interaction,
+                        identity_id=follow.source_id,
+                        subject_post=interaction.post,
+                        subject_post_interaction=interaction,
                     )
         # Like: send a copy to the original post author only
         elif interaction.type == interaction.Types.like:
             await FanOut.objects.acreate(
-                identity_id=interaction.post.author_id,
                 type=FanOut.Types.interaction,
-                subject_post=interaction,
+                identity_id=interaction.post.author_id,
+                subject_post=interaction.post,
+                subject_post_interaction=interaction,
             )
         else:
             raise ValueError("Cannot fan out unknown type")
-        # And one for themselves if they're local
-        if interaction.identity.local:
+        # And one for themselves if they're local and it's a boost
+        if (
+            interaction.type == PostInteraction.Types.boost
+            and interaction.identity.local
+        ):
             await FanOut.objects.acreate(
                 identity_id=interaction.identity_id,
                 type=FanOut.Types.interaction,
-                subject_post=interaction,
+                subject_post=interaction.post,
+                subject_post_interaction=interaction,
             )
+        return cls.fanned_out
+
+    @classmethod
+    async def handle_undone(cls, instance: "PostInteraction"):
+        """
+        Creates all needed fan-out objects to undo a PostInteraction.
+        """
+        interaction = await instance.afetch_full()
+        # Undo Boost: send a copy to all people who follow this user
+        if interaction.type == interaction.Types.boost:
+            async for follow in interaction.identity.inbound_follows.select_related(
+                "source", "target"
+            ):
+                if follow.source.local or follow.target.local:
+                    await FanOut.objects.acreate(
+                        type=FanOut.Types.undo_interaction,
+                        identity_id=follow.source_id,
+                        subject_post=interaction.post,
+                        subject_post_interaction=interaction,
+                    )
+        # Undo Like: send a copy to the original post author only
+        elif interaction.type == interaction.Types.like:
+            await FanOut.objects.acreate(
+                type=FanOut.Types.undo_interaction,
+                identity_id=interaction.post.author_id,
+                subject_post=interaction.post,
+                subject_post_interaction=interaction,
+            )
+        else:
+            raise ValueError("Cannot fan out unknown type")
+        # And one for themselves if they're local and it's a boost
+        if (
+            interaction.type == PostInteraction.Types.boost
+            and interaction.identity.local
+        ):
+            await FanOut.objects.acreate(
+                identity_id=interaction.identity_id,
+                type=FanOut.Types.undo_interaction,
+                subject_post=interaction.post,
+                subject_post_interaction=interaction,
+            )
+        return cls.undone_fanned_out
 
 
 class PostInteraction(StatorModel):
@@ -95,6 +147,35 @@ class PostInteraction(StatorModel):
     class Meta:
         index_together = [["type", "identity", "post"]]
 
+    ### Display helpers ###
+
+    @classmethod
+    def get_post_interactions(cls, posts, identity):
+        """
+        Returns a dict of {interaction_type: set(post_ids)} for all the posts
+        and the given identity, for use in templates.
+        """
+        # Bulk-fetch any interactions
+        ids_with_interaction_type = cls.objects.filter(
+            identity=identity,
+            post_id__in=[post.pk for post in posts],
+            type__in=[cls.Types.like, cls.Types.boost],
+            state__in=[PostInteractionStates.new, PostInteractionStates.fanned_out],
+        ).values_list("post_id", "type")
+        # Make it into the return dict
+        result = {}
+        for post_id, interaction_type in ids_with_interaction_type:
+            result.setdefault(interaction_type, set()).add(post_id)
+        return result
+
+    @classmethod
+    def get_event_interactions(cls, events, identity):
+        """
+        Returns a dict of {interaction_type: set(post_ids)} for all the posts
+        within the events and the given identity, for use in templates.
+        """
+        return cls.get_post_interactions([e.subject_post for e in events], identity)
+
     ### Async helpers ###
 
     async def afetch_full(self):
@@ -111,6 +192,9 @@ class PostInteraction(StatorModel):
         """
         Returns the AP JSON for this object
         """
+        # Create an object URI if we don't have one
+        if self.object_uri is None:
+            self.object_uri = self.identity.actor_uri + f"#{self.type}/{self.id}"
         if self.type == self.Types.boost:
             value = {
                 "type": "Announce",
@@ -131,6 +215,18 @@ class PostInteraction(StatorModel):
         else:
             raise ValueError("Cannot turn into AP")
         return value
+
+    def to_undo_ap(self) -> Dict:
+        """
+        Returns the AP JSON to undo this object
+        """
+        object = self.to_ap()
+        return {
+            "id": object["id"] + "/undo",
+            "type": "Undo",
+            "actor": self.identity.actor_uri,
+            "object": object,
+        }
 
     ### ActivityPub (inbound) ###
 

@@ -25,4 +25,11 @@
     <div class="content">
         {{ post.safe_content }}
     </div>
+
+    {% if request.identity %}
+    <div class="actions">
+        {% include "activities/_like.html" %}
+        {% include "activities/_boost.html" %}
+    </div>
+    {% endif %}
 </div>

@@ -1,0 +1,9 @@
+{% if post.pk in interactions.like %}
+    <a title="Unlike" class="active" hx-post="{{ post.urls.action_unlike }}" hx-swap="outerHTML">
+        <i class="fa-solid fa-star"></i>
+    </a>
+{% else %}
+    <a title="Like" hx-post="{{ post.urls.action_like }}" hx-swap="outerHTML">
+        <i class="fa-solid fa-star"></i>
+    </a>
+{% endif %}

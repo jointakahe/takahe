@@ -1,28 +1,9 @@
-{% load static %}
-{% load activity_tags %}
-<div class="post">
-
-    {% if post.author.icon_uri %}
-        <img src="{{post.author.icon_uri}}" class="icon">
-    {% else %}
-        <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
-    {% endif %}
-
-    <time>
-        <a href="{{ post.url }}">
-            {% if post.published %}
-                {{ post.published | timedeltashort }}
-            {% else %}
-                {{ post.created | timedeltashort }}
-            {% endif %}
-        </a>
-    </time>
-
-    <a href="{{ post.author.urls.view }}" class="handle">
-        {{ post.author.name_or_handle }} <small>@{{ post.author.handle }}</small>
+{% if post.pk in interactions.boost %}
+    <a title="Unboost" class="active" hx-post="{{ post.urls.action_unboost }}" hx-swap="outerHTML">
+        <i class="fa-solid fa-retweet"></i>
     </a>
-
-    <div class="content">
-        {{ post.safe_content }}
-    </div>
-</div>
+{% else %}
+    <a title="Boost" hx-post="{{ post.urls.action_boost }}" hx-swap="outerHTML">
+        <i class="fa-solid fa-retweet"></i>
+    </a>
+{% endif %}

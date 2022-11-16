@@ -114,3 +114,20 @@ class TimelineEvent(models.Model):
                 subject_identity_id=interaction.identity_id,
                 subject_post_interaction=interaction,
             )[0]
+
+    @classmethod
+    def delete_post_interaction(cls, identity, interaction):
+        if interaction.type == interaction.Types.like:
+            cls.objects.filter(
+                identity=identity,
+                type=cls.Types.liked,
+                subject_post_id=interaction.post_id,
+                subject_identity_id=interaction.identity_id,
+            ).delete()
+        elif interaction.type == interaction.Types.boost:
+            cls.objects.filter(
+                identity=identity,
+                type__in=[cls.Types.boosted, cls.Types.boost],
+                subject_post_id=interaction.post_id,
+                subject_identity_id=interaction.identity_id,
+            ).delete()

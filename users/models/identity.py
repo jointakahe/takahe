@@ -102,8 +102,8 @@ class Identity(StatorModel):
         unique_together = [("username", "domain")]
 
     class urls(urlman.Urls):
+        view_nice = "{self._nice_view_url}"
         view = "/@{self.username}@{self.domain_id}/"
-        view_short = "/@{self.username}/"
         action = "{view}action/"
         activate = "{view}activate/"
 
@@ -117,6 +117,15 @@ class Identity(StatorModel):
         if self.username and self.domain_id:
             return self.handle
         return self.actor_uri
+
+    def _nice_view_url(self):
+        """
+        Returns the "nice" user URL if they're local, otherwise our general one
+        """
+        if self.local:
+            return f"https://{self.domain.uri_domain}/@{self.username}/"
+        else:
+            return f"/@{self.username}@{self.domain_id}/"
 
     ### Alternate constructors/fetchers ###
 
@@ -181,6 +190,28 @@ class Identity(StatorModel):
     def outdated(self) -> bool:
         # TODO: Setting
         return self.data_age > 60 * 24 * 24
+
+    ### ActivityPub (boutbound) ###
+
+    def to_ap(self):
+        response = {
+            "id": self.actor_uri,
+            "type": "Person",
+            "inbox": self.actor_uri + "inbox/",
+            "preferredUsername": self.username,
+            "publicKey": {
+                "id": self.public_key_id,
+                "owner": self.actor_uri,
+                "publicKeyPem": self.public_key,
+            },
+            "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "url": self.urls.view_nice,
+        }
+        if self.name:
+            response["name"] = self.name
+        if self.summary:
+            response["summary"] = self.summary
+        return response
 
     ### Actor/Webfinger fetching ###
 

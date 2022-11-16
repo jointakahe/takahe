@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 import httpx
 import urlman
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from activities.models.fan_out import FanOut
@@ -99,7 +99,12 @@ class Post(StatorModel):
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"
-        object_uri = "{self.author.urls.actor}posts/{self.id}/"
+        view_nice = "{self.author.urls.view_nice}posts/{self.id}/"
+        object_uri = "{self.author.actor_uri}posts/{self.id}/"
+        action_like = "{view}like/"
+        action_unlike = "{view}unlike/"
+        action_boost = "{view}boost/"
+        action_unboost = "{view}unboost/"
 
         def get_scheme(self, url):
             return "https"
@@ -130,16 +135,17 @@ class Post(StatorModel):
     def create_local(
         cls, author: Identity, content: str, summary: Optional[str] = None
     ) -> "Post":
-        post = cls.objects.create(
-            author=author,
-            content=content,
-            summary=summary or None,
-            sensitive=bool(summary),
-            local=True,
-        )
-        post.object_uri = post.author.actor_uri + f"posts/{post.id}/"
-        post.url = post.object_uri
-        post.save()
+        with transaction.atomic():
+            post = cls.objects.create(
+                author=author,
+                content=content,
+                summary=summary or None,
+                sensitive=bool(summary),
+                local=True,
+            )
+            post.object_uri = post.urls.object_uri
+            post.url = post.urls.view_nice
+            post.save()
         return post
 
     ### ActivityPub (outbound) ###
@@ -179,7 +185,7 @@ class Post(StatorModel):
             "content": self.safe_content,
             "to": "as:Public",
             "as:sensitive": self.sensitive,
-            "url": self.urls.view.full(),  # type: ignore
+            "url": self.urls.view_nice if self.local else self.url,
         }
         if self.summary:
             value["summary"] = self.summary
@@ -257,7 +263,7 @@ class Post(StatorModel):
                         create=True,
                         update=True,
                     )
-            raise ValueError(f"Cannot find Post with URI {object_uri}")
+            raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
 
     @classmethod
     def handle_create_ap(cls, data):
@@ -274,6 +280,22 @@ class Post(StatorModel):
             TimelineEvent.add_post(follow.source, post)
         # Force it into fanned_out as it's not ours
         post.transition_perform(PostStates.fanned_out)
+
+    @classmethod
+    def handle_delete_ap(cls, data):
+        """
+        Handles an incoming create request
+        """
+        # Find our post by ID if we have one
+        try:
+            post = cls.by_object_uri(data["object"]["id"])
+        except cls.DoesNotExist:
+            # It's already been deleted
+            return
+        # Ensure the actor on the request authored the post
+        if not post.author.actor_uri == data["actor"]:
+            raise ValueError("Actor on delete does not match object")
+        post.delete()
 
     def debug_fetch(self):
         """

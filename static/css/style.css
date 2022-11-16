@@ -528,6 +528,23 @@ h1.identity small {
     margin: 12px 0 4px 0;
 }
 
+.post .actions {
+    padding-left: 64px;
+}
+
+.post .actions a {
+    cursor: pointer;
+    color: var(--color-text-dull);
+}
+
+.post .actions a:hover {
+    color: var(--color-text-main);
+}
+
+.post .actions a.active {
+    color: var(--color-highlight);
+}
+
 .boost-banner {
     padding: 0 0 3px 5px;
 }

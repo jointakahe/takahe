@@ -4,7 +4,7 @@ from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 
-from activities.models import Post, TimelineEvent
+from activities.models import Post, PostInteraction, TimelineEvent
 from users.decorators import identity_required
 
 
@@ -33,7 +33,7 @@ class Home(FormView):
 
     def get_context_data(self):
         context = super().get_context_data()
-        context["events"] = (
+        context["events"] = list(
             TimelineEvent.objects.filter(
                 identity=self.request.identity,
                 type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
@@ -41,7 +41,9 @@ class Home(FormView):
             .select_related("subject_post", "subject_post__author")
             .order_by("-created")[:100]
         )
-
+        context["interactions"] = PostInteraction.get_event_interactions(
+            context["events"], self.request.identity
+        )
         context["current_page"] = "home"
         return context
 

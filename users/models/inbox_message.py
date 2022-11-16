@@ -46,6 +46,14 @@ class InboxMessageStates(StateGraph):
                         raise ValueError(
                             f"Cannot handle activity of type undo.{unknown}"
                         )
+            case "delete":
+                match instance.message_object_type:
+                    case "tombstone":
+                        await sync_to_async(Post.handle_delete_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type delete.{unknown}"
+                        )
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed

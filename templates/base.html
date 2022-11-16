@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
     <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
     <script src="{% static "js/hyperscript.min.js" %}"></script>
+    <script src="{% static "js/htmx.min.js" %}"></script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
     <main>
         <header>

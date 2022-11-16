@@ -11,6 +11,7 @@ class StateGraph:
     choices: ClassVar[List[Tuple[object, str]]]
     initial_state: ClassVar["State"]
     terminal_states: ClassVar[Set["State"]]
+    automatic_states: ClassVar[Set["State"]]
 
     def __init_subclass__(cls) -> None:
         # Collect state memebers
@@ -30,6 +31,7 @@ class StateGraph:
                 )
         # Check the graph layout
         terminal_states = set()
+        automatic_states = set()
         initial_state = None
         for state in cls.states.values():
             # Check for multiple initial states
@@ -65,10 +67,12 @@ class StateGraph:
                         raise ValueError(
                             f"State '{state}' does not have a handler method ({state.handler_name})"
                         )
+                    automatic_states.add(state)
         if initial_state is None:
             raise ValueError("The graph has no initial state")
         cls.initial_state = initial_state
         cls.terminal_states = terminal_states
+        cls.automatic_states = automatic_states
         # Generate choices
         cls.choices = [(name, name) for name in cls.states.keys()]
 

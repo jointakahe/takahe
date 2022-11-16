@@ -39,14 +39,14 @@ the less sure I am about it.
 - [ ] Set post visibility
 - [x] Receive posts
 - [ ] Handle received post visibility
-- [ ] Receive post deletions
+- [x] Receive post deletions
 - [x] Set content warnings on posts
 - [ ] Show content warnings on posts
 - [ ] Attach images to posts
 - [ ] Receive images on posts
-- [ ] Create boosts
+- [x] Create boosts
 - [x] Receive boosts
-- [ ] Create likes
+- [x] Create likes
 - [x] Receive likes
 - [x] Create follows
 - [ ] Undo follows

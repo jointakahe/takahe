@@ -52,13 +52,13 @@ class Webfinger(View):
             {
                 "subject": f"acct:{identity.handle}",
                 "aliases": [
-                    identity.urls.view_short.full(),
+                    identity.view_url,
                 ],
                 "links": [
                     {
                         "rel": "http://webfinger.net/rel/profile-page",
                         "type": "text/html",
-                        "href": identity.urls.view_short.full(),
+                        "href": identity.view_url,
                     },
                     {
                         "rel": "self",
@@ -77,28 +77,7 @@ class Actor(View):
 
     def get(self, request, handle):
         identity = by_handle_or_404(self.request, handle)
-        response = {
-            "@context": [
-                "https://www.w3.org/ns/activitystreams",
-                "https://w3id.org/security/v1",
-            ],
-            "id": identity.actor_uri,
-            "type": "Person",
-            "inbox": identity.actor_uri + "inbox/",
-            "preferredUsername": identity.username,
-            "publicKey": {
-                "id": identity.public_key_id,
-                "owner": identity.actor_uri,
-                "publicKeyPem": identity.public_key,
-            },
-            "published": identity.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "url": identity.urls.view_short.full(),
-        }
-        if identity.name:
-            response["name"] = identity.name
-        if identity.summary:
-            response["summary"] = identity.summary
-        return JsonResponse(canonicalise(response, include_security=True))
+        return JsonResponse(canonicalise(identity.to_ap(), include_security=True))
 
 
 @method_decorator(csrf_exempt, name="dispatch")

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 
-from activities.views import timelines
+from activities.views import posts, timelines
 from core import views as core
 from stator import views as stator
 from users.views import activitypub, auth, identity
@@ -12,14 +12,20 @@ urlpatterns = [
     path("notifications/", timelines.Notifications.as_view()),
     path("local/", timelines.Local.as_view()),
     path("federated/", timelines.Federated.as_view()),
-    # Authentication
-    path("auth/login/", auth.Login.as_view()),
-    path("auth/logout/", auth.Logout.as_view()),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/actor/", activitypub.Actor.as_view()),
     path("@<handle>/actor/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
+    # Posts
+    path("@<handle>/posts/<int:post_id>/", posts.Post.as_view()),
+    path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
+    path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
+    path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
+    path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
+    # Authentication
+    path("auth/login/", auth.Login.as_view()),
+    path("auth/logout/", auth.Logout.as_view()),
     # Identity selection
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
     path("identity/select/", identity.SelectIdentity.as_view()),

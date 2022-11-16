@@ -105,9 +105,11 @@ class StatorModel(models.Model):
         """
         with transaction.atomic():
             selected = list(
-                cls.objects.filter(state_locked_until__isnull=True, state_ready=True)[
-                    :number
-                ].select_for_update()
+                cls.objects.filter(
+                    state_locked_until__isnull=True,
+                    state_ready=True,
+                    state__in=cls.state_graph.automatic_states,
+                )[:number].select_for_update()
             )
             cls.objects.filter(pk__in=[i.pk for i in selected]).update(
                 state_locked_until=lock_expiry
@@ -144,7 +146,9 @@ class StatorModel(models.Model):
         # If it's a manual progression state don't even try
         # We shouldn't really be here in this case, but it could be a race condition
         if current_state.externally_progressed:
-            print("Externally progressed state!")
+            print(
+                f"Warning: trying to progress externally progressed state {self.state}!"
+            )
             return None
         try:
             next_state = await current_state.handler(self)
@@ -183,7 +187,7 @@ class StatorModel(models.Model):
             state_changed=timezone.now(),
             state_attempted=None,
             state_locked_until=None,
-            state_ready=False,
+            state_ready=True,
         )
 
     atransition_perform = sync_to_async(transition_perform)

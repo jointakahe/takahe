@@ -38,6 +38,40 @@ class FanOutStates(StateGraph):
                     key_id=post.author.public_key_id,
                 )
             return cls.sent
+        # Handle boosts/likes
+        elif fan_out.type == FanOut.Types.interaction:
+            interaction = await fan_out.subject_post_interaction.afetch_full()
+            if fan_out.identity.local:
+                # Make a timeline event directly
+                await sync_to_async(TimelineEvent.add_post_interaction)(
+                    identity=fan_out.identity,
+                    interaction=interaction,
+                )
+            else:
+                # Send it to the remote inbox
+                await HttpSignature.signed_request(
+                    uri=fan_out.identity.inbox_uri,
+                    body=canonicalise(interaction.to_ap()),
+                    private_key=interaction.identity.private_key,
+                    key_id=interaction.identity.public_key_id,
+                )
+        # Handle undoing boosts/likes
+        elif fan_out.type == FanOut.Types.undo_interaction:
+            interaction = await fan_out.subject_post_interaction.afetch_full()
+            if fan_out.identity.local:
+                # Delete any local timeline events
+                await sync_to_async(TimelineEvent.delete_post_interaction)(
+                    identity=fan_out.identity,
+                    interaction=interaction,
+                )
+            else:
+                # Send an undo to the remote inbox
+                await HttpSignature.signed_request(
+                    uri=fan_out.identity.inbox_uri,
+                    body=canonicalise(interaction.to_undo_ap()),
+                    private_key=interaction.identity.private_key,
+                    key_id=interaction.identity.public_key_id,
+                )
         else:
             raise ValueError(f"Cannot fan out with type {fan_out.type}")
 
@@ -50,6 +84,7 @@ class FanOut(StatorModel):
     class Types(models.TextChoices):
         post = "post"
         interaction = "interaction"
+        undo_interaction = "undo_interaction"
 
     state = StateField(FanOutStates)
 

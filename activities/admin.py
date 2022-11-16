@@ -6,25 +6,42 @@ from activities.models import FanOut, Post, PostInteraction, TimelineEvent
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "author", "created"]
-    raw_id_fields = ["to", "mentions"]
+    raw_id_fields = ["to", "mentions", "author"]
     actions = ["force_fetch"]
+    readonly_fields = ["created", "updated", "object_json"]
 
     @admin.action(description="Force Fetch")
     def force_fetch(self, request, queryset):
         for instance in queryset:
             instance.debug_fetch()
 
+    @admin.display(description="ActivityPub JSON")
+    def object_json(self, instance):
+        return instance.to_ap()
+
 
 @admin.register(TimelineEvent)
 class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ["id", "identity", "created", "type"]
-    raw_id_fields = ["identity", "subject_post", "subject_identity"]
+    raw_id_fields = [
+        "identity",
+        "subject_post",
+        "subject_identity",
+        "subject_post_interaction",
+    ]
 
 
 @admin.register(FanOut)
 class FanOutAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "type", "identity"]
-    raw_id_fields = ["identity", "subject_post"]
+    raw_id_fields = ["identity", "subject_post", "subject_post_interaction"]
+    readonly_fields = ["created", "updated"]
+    actions = ["force_execution"]
+
+    @admin.action(description="Force Execution")
+    def force_execution(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("new")
 
 
 @admin.register(PostInteraction)
