@@ -8,6 +8,7 @@ from users.views import activitypub, auth, identity
 
 urlpatterns = [
     path("", core.homepage),
+    path("manifest.json", core.AppManifest.as_view()),
     # Activity views
     path("notifications/", timelines.Notifications.as_view()),
     path("local/", timelines.Local.as_view()),
@@ -18,7 +19,8 @@ urlpatterns = [
     path("@<handle>/actor/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Posts
-    path("@<handle>/posts/<int:post_id>/", posts.Post.as_view()),
+    path("compose/", posts.Compose.as_view()),
+    path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
     path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),

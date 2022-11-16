@@ -26,7 +26,7 @@
 
         <div class="right-column">
             <h2>Compose</h2>
-            <form action="." method="POST" class="compose">
+            <form action="/compose/" method="POST" class="compose">
                 {% csrf_token %}
                 {{ form.text }}
                 {{ form.content_warning }}

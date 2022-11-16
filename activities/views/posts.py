@@ -1,13 +1,15 @@
+from django import forms
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView, View
+from django.views.generic import FormView, TemplateView, View
 
-from activities.models import PostInteraction, PostInteractionStates
+from activities.models import Post, PostInteraction, PostInteractionStates
 from users.decorators import identity_required
 from users.shortcuts import by_handle_or_404
 
 
-class Post(TemplateView):
+class Individual(TemplateView):
 
     template_name = "activities/post.html"
 
@@ -100,3 +102,44 @@ class Boost(View):
                 },
             )
         return redirect(post.urls.view)
+
+
+@method_decorator(identity_required, name="dispatch")
+class Compose(FormView):
+
+    template_name = "activities/compose.html"
+
+    class form_class(forms.Form):
+        text = forms.CharField(
+            widget=forms.Textarea(
+                attrs={
+                    "placeholder": "What's on your mind?",
+                },
+            )
+        )
+        visibility = forms.ChoiceField(
+            choices=[
+                (Post.Visibilities.public, "Public"),
+                (Post.Visibilities.unlisted, "Unlisted"),
+                (Post.Visibilities.followers, "Followers & Mentioned Only"),
+                (Post.Visibilities.mentioned, "Mentioned Only"),
+            ],
+        )
+        content_warning = forms.CharField(
+            required=False,
+            widget=forms.TextInput(
+                attrs={
+                    "placeholder": "Content Warning",
+                },
+            ),
+            help_text="Optional - Post will be hidden behind this text until clicked",
+        )
+
+    def form_valid(self, form):
+        Post.create_local(
+            author=self.request.identity,
+            content=linebreaks_filter(form.cleaned_data["text"]),
+            summary=form.cleaned_data.get("content_warning"),
+            visibility=form.cleaned_data["visibility"],
+        )
+        return redirect("/")

@@ -44,6 +44,7 @@ class FollowAdmin(admin.ModelAdmin):
 @admin.register(InboxMessage)
 class InboxMessageAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "message_type", "message_actor"]
+    search_fields = ["message"]
     actions = ["reset_state"]
 
     @admin.action(description="Reset State")

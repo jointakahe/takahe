@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
     <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
     <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
+    <link rel="manifest" href="/manifest.json" />
     <script src="{% static "js/hyperscript.min.js" %}"></script>
     <script src="{% static "js/htmx.min.js" %}"></script>
     {% block extra_head %}{% endblock %}
@@ -22,7 +23,8 @@
             </a>
             <menu>
                 {% if user.is_authenticated %}
-                    <a href="#"><i class="fa-solid fa-gear"></i> Settings</a>
+                    <a href="/compose/"><i class="fa-solid fa-feather"></i> Compose</a>
+                    <a href="/settings/"><i class="fa-solid fa-gear"></i> Settings</a>
                     <div class="gap"></div>
                     <a href="/identity/select/" class="identity">
                         {% if not request.identity %}

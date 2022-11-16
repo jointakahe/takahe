@@ -9,6 +9,15 @@
     {% endif %}
 
     <time>
+        {% if post.visibility == 0 %}
+            <i class="visibility fa-solid fa-earth-oceania" title="Public"></i>
+        {% elif post.visibility == 1 %}
+            <i class="visibility fa-solid fa-lock-open" title="Unlisted"></i>
+        {% elif post.visibility == 2 %}
+            <i class="visibility fa-solid fa-lock" title="Followers Only"></i>
+        {% elif post.visibility == 3 %}
+            <i class="visibility fa-solid fa-at" title="Mentioned Only"></i>
+        {% endif %}
         <a href="{{ post.url }}">
             {% if post.published %}
                 {{ post.published | timedeltashort }}
@@ -36,6 +45,11 @@
     <div class="actions">
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
+        {% if request.user.admin %}
+            <a title="Admin" href="/djadmin/activities/post/{{ post.pk }}/change/">
+                <i class="fa-solid fa-file-code"></i>
+            </a>
+        {% endif %}
     </div>
     {% endif %}
 </div>

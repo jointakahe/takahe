@@ -414,6 +414,18 @@ def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
     return jsonld.compact(jsonld.expand(json_data), context)
 
 
+def get_list(container, key) -> List:
+    """
+    Given a JSON-LD value (that can be either a list, or a dict if it's just
+    one item), always returns a list"""
+    if key not in container:
+        return []
+    value = container[key]
+    if not isinstance(value, list):
+        return [value]
+    return value
+
+
 def format_ld_date(value: datetime.datetime) -> str:
     return value.strftime(DATETIME_FORMAT)
 

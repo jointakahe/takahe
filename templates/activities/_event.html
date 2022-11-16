@@ -14,6 +14,10 @@
         {{ event.subject_identity.name_or_handle }} followed you
     {% elif event.type == "like" %}
         {{ event.subject_identity.name_or_handle }} liked {{ event.subject_post }}
+    {% elif event.type == "mentioned" %}
+        {{ event.subject_post.author.name_or_handle }} mentioned you in {{ event.subject_post }}
+    {% elif event.type == "boosted" %}
+        {{ event.subject_identity.name_or_handle }} boosted your post {{ event.subject_post }}
     {% else %}
         Unknown event type {{event.type}}
     {% endif %}

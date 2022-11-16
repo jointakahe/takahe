@@ -36,12 +36,13 @@ the less sure I am about it.
 ### Alpha
 
 - [x] Create posts
-- [ ] Set post visibility
+- [x] Set post visibility
 - [x] Receive posts
-- [ ] Handle received post visibility
+- [x] Handle received post visibility (unlisted vs public only)
 - [x] Receive post deletions
+- [ ] Receive post edits
 - [x] Set content warnings on posts
-- [ ] Show content warnings on posts
+- [x] Show content warnings on posts
 - [ ] Attach images to posts
 - [ ] Receive images on posts
 - [x] Create boosts
@@ -52,6 +53,7 @@ the less sure I am about it.
 - [ ] Undo follows
 - [x] Receive and accept follows
 - [x] Receive follow undos
+- [ ] Do mentions properly
 - [x] Home timeline (posts and boosts from follows)
 - [ ] Notifications page (followed, boosted, liked)
 - [x] Local timeline

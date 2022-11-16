@@ -101,7 +101,7 @@ body {
 }
 
 main {
-    width: 850px;
+    width: 900px;
     margin: 20px auto;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     border-radius: 5px;
@@ -520,6 +520,10 @@ h1.identity small {
     color: var(--color-text-duller);
 }
 
+.post time i {
+    margin-right: 3px;
+}
+
 .post .summary {
     margin: 12px 0 4px 64px;
     padding: 3px 6px;
@@ -582,4 +586,21 @@ h1.identity small {
 
 .boost-banner a {
     font-weight: bold;
+}
+
+
+
+@media (max-width: 920px) or (display-mode: standalone) {
+
+    main {
+        width: 100%;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    header .logo {
+        border-radius: 0;
+    }
+
 }

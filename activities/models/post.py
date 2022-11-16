@@ -8,7 +8,7 @@ from django.utils import timezone
 from activities.models.fan_out import FanOut
 from activities.models.timeline_event import TimelineEvent
 from core.html import sanitize_post
-from core.ld import canonicalise, format_ld_date, parse_ld_date
+from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
 from users.models.identity import Identity
@@ -25,7 +25,32 @@ class PostStates(StateGraph):
         """
         Creates all needed fan-out objects for a new Post.
         """
-        await instance.afan_out()
+        post = await instance.afetch_full()
+        # Non-local posts should not be here
+        if not post.local:
+            raise ValueError("Trying to run handle_new on a non-local post!")
+        # Build list of targets - mentions always included
+        targets = set()
+        async for mention in post.mentions.all():
+            targets.add(mention)
+        # Then, if it's not mentions only, also deliver to followers
+        if post.visibility != Post.Visibilities.mentioned:
+            async for follower in post.author.inbound_follows.select_related("source"):
+                targets.add(follower.source)
+        # Fan out to each one
+        for follow in targets:
+            await FanOut.objects.acreate(
+                identity=follow,
+                type=FanOut.Types.post,
+                subject_post=post,
+            )
+        # And one for themselves if they're local
+        if post.author.local:
+            await FanOut.objects.acreate(
+                identity_id=post.author_id,
+                type=FanOut.Types.post,
+                subject_post=post,
+            )
         return cls.fanned_out
 
 
@@ -91,6 +116,9 @@ class Post(StatorModel):
         blank=True,
     )
 
+    # Hashtags in the post
+    hashtags = models.JSONField(default=[])
+
     # When the post was originally created (as opposed to when we received it)
     published = models.DateTimeField(default=timezone.now)
 
@@ -133,7 +161,11 @@ class Post(StatorModel):
 
     @classmethod
     def create_local(
-        cls, author: Identity, content: str, summary: Optional[str] = None
+        cls,
+        author: Identity,
+        content: str,
+        summary: Optional[str] = None,
+        visibility: int = Visibilities.public,
     ) -> "Post":
         with transaction.atomic():
             post = cls.objects.create(
@@ -142,6 +174,7 @@ class Post(StatorModel):
                 summary=summary or None,
                 sensitive=bool(summary),
                 local=True,
+                visibility=visibility,
             )
             post.object_uri = post.urls.object_uri
             post.url = post.urls.view_nice
@@ -149,29 +182,6 @@ class Post(StatorModel):
         return post
 
     ### ActivityPub (outbound) ###
-
-    async def afan_out(self):
-        """
-        Creates FanOuts for a new post
-        """
-        # Send a copy to all people who follow this user
-        post = await self.afetch_full()
-        async for follow in post.author.inbound_follows.select_related(
-            "source", "target"
-        ):
-            if follow.source.local or follow.target.local:
-                await FanOut.objects.acreate(
-                    identity_id=follow.source_id,
-                    type=FanOut.Types.post,
-                    subject_post=post,
-                )
-        # And one for themselves if they're local
-        if post.author.local:
-            await FanOut.objects.acreate(
-                identity_id=post.author_id,
-                type=FanOut.Types.post,
-                subject_post=post,
-            )
 
     def to_ap(self) -> Dict:
         """
@@ -185,7 +195,7 @@ class Post(StatorModel):
             "content": self.safe_content,
             "to": "as:Public",
             "as:sensitive": self.sensitive,
-            "url": self.urls.view_nice if self.local else self.url,
+            "url": str(self.urls.view_nice if self.local else self.url),
         }
         if self.summary:
             value["summary"] = self.summary
@@ -236,8 +246,24 @@ class Post(StatorModel):
             post.url = data.get("url", None)
             post.published = parse_ld_date(data.get("published", None))
             # TODO: to
-            # TODO: mentions
-            # TODO: visibility
+            # Mentions and hashtags
+            post.hashtags = []
+            for tag in get_list(data, "tag"):
+                if tag["type"].lower() == "mention":
+                    mention_identity = Identity.by_actor_uri(tag["href"], create=True)
+                    post.mentions.add(mention_identity)
+                elif tag["type"].lower() == "as:hashtag":
+                    post.hashtags.append(tag["name"].lstrip("#"))
+                else:
+                    raise ValueError(f"Unknown tag type {tag['type']}")
+            # Visibility and to
+            # (a post is public if it's ever to/cc as:Public, otherwise we
+            # regard it as unlisted for now)
+            targets = get_list(data, "to") + get_list(data, "cc")
+            post.visibility = Post.Visibilities.unlisted
+            for target in targets:
+                if target.lower() == "as:public":
+                    post.visibility = Post.Visibilities.public
             post.save()
         return post
 
@@ -275,9 +301,13 @@ class Post(StatorModel):
             raise ValueError("Create actor does not match its Post object", data)
         # Create it
         post = cls.by_ap(data["object"], create=True, update=True)
-        # Make timeline events as appropriate
+        # Make timeline events for followers
         for follow in Follow.objects.filter(target=post.author, source__local=True):
             TimelineEvent.add_post(follow.source, post)
+        # Make timeline events for mentions if they're local
+        for mention in post.mentions.all():
+            if mention.local:
+                TimelineEvent.add_mentioned(mention, post)
         # Force it into fanned_out as it's not ours
         post.transition_perform(PostStates.fanned_out)
 

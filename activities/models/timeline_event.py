@@ -82,6 +82,17 @@ class TimelineEvent(models.Model):
         )[0]
 
     @classmethod
+    def add_mentioned(cls, identity, post):
+        """
+        Adds a mention of identity by post
+        """
+        return cls.objects.get_or_create(
+            identity=identity,
+            type=cls.Types.mentioned,
+            subject_post=post,
+        )[0]
+
+    @classmethod
     def add_post_interaction(cls, identity, interaction):
         """
         Adds a boost/like to the timeline if it's not there already.
