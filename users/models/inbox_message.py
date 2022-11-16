@@ -42,6 +42,14 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "follow":
                         await sync_to_async(Follow.handle_undo_ap)(instance.message)
+                    case "like":
+                        await sync_to_async(PostInteraction.handle_undo_ap)(
+                            instance.message
+                        )
+                    case "announce":
+                        await sync_to_async(PostInteraction.handle_undo_ap)(
+                            instance.message
+                        )
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type undo.{unknown}"

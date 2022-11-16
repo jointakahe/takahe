@@ -285,3 +285,18 @@ class PostInteraction(StatorModel):
             TimelineEvent.add_post_interaction(interaction.post.author, interaction)
         # Force it into fanned_out as it's not ours
         interaction.transition_perform(PostInteractionStates.fanned_out)
+
+    @classmethod
+    def handle_undo_ap(cls, data):
+        """
+        Handles an incoming undo for a announce/like
+        """
+        # Find it
+        interaction = cls.by_ap(data["object"])
+        # Verify the actor matches
+        if data["actor"] != interaction.identity.actor_uri:
+            raise ValueError("Actor mismatch on interaction undo")
+        # Delete all events that reference it
+        interaction.timeline_events.all().delete()
+        # Force it into undone_fanned_out as it's not ours
+        interaction.transition_perform(PostInteractionStates.undone_fanned_out)
