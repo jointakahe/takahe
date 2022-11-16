@@ -22,7 +22,13 @@
         {{ post.author.name_or_handle }} <small>@{{ post.author.handle }}</small>
     </a>
 
-    <div class="content">
+    {% if post.summary %}
+        <div class="summary" _="on click toggle .enabled then  toggle .hidden on the next .content">
+            {{ post.summary }}
+        </div>
+    {% endif %}
+
+    <div class="content {% if post.summary %}hidden{% endif %}">
         {{ post.safe_content }}
     </div>
 

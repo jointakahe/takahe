@@ -520,8 +520,33 @@ h1.identity small {
     color: var(--color-text-duller);
 }
 
+.post .summary {
+    margin: 12px 0 4px 64px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: var(--color-bg-menu);
+    cursor: pointer;
+}
+
+.post .summary::before {
+    display: block;
+    font-weight: bold;
+    float: right;
+    content: "SHOW";
+    font-size: 80%;
+    padding: 2px 2px 2px 10px;
+}
+
+.post .summary.enabled::before {
+    content: "HIDE";
+}
+
 .post .content {
-    padding-left: 64px;
+    margin-left: 64px;
+}
+
+.post .content.hidden {
+    display: none;
 }
 
 .post .content p {
