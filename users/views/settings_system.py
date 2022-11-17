@@ -9,16 +9,16 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, RedirectView, TemplateView
 
 from core.models import Config
-from users.decorators import identity_required
+from users.decorators import admin_required
 from users.models import Domain
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(admin_required, name="dispatch")
 class SystemSettingsRoot(RedirectView):
     url = "/settings/system/basic/"
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(admin_required, name="dispatch")
 class SystemSettingsPage(FormView):
     """
     Shows a settings page dynamically created from our settings layout
@@ -100,6 +100,7 @@ class BasicPage(SystemSettingsPage):
     }
 
 
+@method_decorator(admin_required, name="dispatch")
 class DomainsPage(TemplateView):
 
     template_name = "settings/settings_system_domains.html"
@@ -111,6 +112,7 @@ class DomainsPage(TemplateView):
         }
 
 
+@method_decorator(admin_required, name="dispatch")
 class DomainCreatePage(FormView):
 
     template_name = "settings/settings_system_domain_create.html"
@@ -170,6 +172,7 @@ class DomainCreatePage(FormView):
         return redirect(Domain.urls.root)
 
 
+@method_decorator(admin_required, name="dispatch")
 class DomainEditPage(FormView):
 
     template_name = "settings/settings_system_domain_edit.html"
@@ -215,6 +218,7 @@ class DomainEditPage(FormView):
         }
 
 
+@method_decorator(admin_required, name="dispatch")
 class DomainDeletePage(TemplateView):
 
     template_name = "settings/settings_system_domain_delete.html"
