@@ -1,5 +1,3 @@
-import base64
-import uuid
 from functools import partial
 from typing import Optional, Tuple
 from urllib.parse import urlparse
@@ -10,9 +8,11 @@ from asgiref.sync import async_to_sync, sync_to_async
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.db import models
+from django.templatetags.static import static
 from django.utils import timezone
 
 from core.ld import canonicalise
+from core.uploads import upload_namer
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
 
@@ -31,15 +31,6 @@ class IdentityStates(StateGraph):
         # Run the actor fetch and progress to updated if it succeeds
         if await identity.fetch_actor():
             return "updated"
-
-
-def upload_namer(prefix, instance, filename):
-    """
-    Names uploaded images etc.
-    """
-    now = timezone.now()
-    filename = base64.b32encode(uuid.uuid4().bytes).decode("ascii")
-    return f"{prefix}/{now.year}/{now.month}/{now.day}/{filename}"
 
 
 class Identity(StatorModel):
@@ -127,6 +118,26 @@ class Identity(StatorModel):
             return f"https://{self.domain.uri_domain}/@{self.username}/"
         else:
             return f"/@{self.username}@{self.domain_id}/"
+
+    def local_icon_url(self):
+        """
+        Returns an icon for us, with fallbacks to a placeholder
+        """
+        if self.icon:
+            return self.icon.url
+        elif self.icon_uri:
+            return self.icon_uri
+        else:
+            return static("img/unknown-icon-128.png")
+
+    def local_image_url(self):
+        """
+        Returns a background image for us, returning None if there isn't one
+        """
+        if self.image:
+            return self.image.url
+        elif self.image_uri:
+            return self.image_uri
 
     ### Alternate constructors/fetchers ###
 

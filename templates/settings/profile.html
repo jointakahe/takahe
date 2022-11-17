@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Settings{% endblock %}
+
+{% block content %}
+    {% block menu %}
+        {% include "settings/_menu.html" %}
+    {% endblock %}
+    <form action="." method="POST" enctype="multipart/form-data" >
+        {% csrf_token %}
+        {% for field in form %}
+            {% include "forms/_field.html" %}
+        {% endfor %}
+        <div class="buttons">
+            <a href="{{ request.identity.urls.view }}" class="button secondary">View Profile</a>
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

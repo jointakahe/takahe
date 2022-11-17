@@ -449,6 +449,11 @@ form .button.delete {
     background: var(--color-delete);
 }
 
+form button.secondary,
+form .button.secondary {
+    background: var(--color-bg-menu);
+}
+
 form button.toggle,
 form .button.toggle {
     background: var(--color-bg-main);
@@ -473,6 +478,13 @@ form .button:hover {
 
 h1.identity {
     margin: 15px 0 20px 15px;
+}
+
+h1.identity .banner {
+    width: 870px;
+    height: auto;
+    display: block;
+    margin: 0 0 20px 0;
 }
 
 h1.identity .icon {

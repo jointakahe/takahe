@@ -2,11 +2,7 @@
 {% load activity_tags %}
 <div class="post" data-takahe-id="{{ post.id }}">
 
-    {% if post.author.icon_uri %}
-        <img src="{{post.author.icon_uri}}" class="icon">
-    {% else %}
-        <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
-    {% endif %}
+    <img src="{{ post.author.local_icon_url }}" class="icon">
 
     <time>
         {% if post.visibility == 0 %}

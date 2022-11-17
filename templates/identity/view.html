@@ -9,11 +9,10 @@
     </nav>
 
     <h1 class="identity">
-        {% if identity.icon_uri %}
-            <img src="{{identity.icon_uri}}" class="icon">
-        {% else %}
-            <img src="{% static "img/unknown-icon-128.png" %}" class="icon">
+        {% if identity.local_image_url %}
+            <img src="{{ identity.local_image_url }}" class="banner">
         {% endif %}
+        <img src="{{ identity.local_icon_url }}" class="icon">
 
         {% if request.identity %}
             <form action="{{ identity.urls.action }}" method="POST" class="inline follow">

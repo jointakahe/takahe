@@ -44,11 +44,14 @@
                         {% if not request.identity %}
                             No Identity
                             <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
+                        {% elif request.identity.icon %}
+                            {{ request.identity.username }}
+                            <img src="{{ request.identity.icon.url }}" title="{{ request.identity.handle }}">
                         {% elif request.identity.icon_uri %}
-                            {{ request.identity.username }} <small>@{{ request.identity.domain_id }}</small>
+                            {{ request.identity.username }}
                             <img src="{{ request.identity.icon_uri }}" title="{{ request.identity.handle }}">
                         {% else %}
-                            {{ request.identity.username }} <small>@{{ request.identity.domain_id }}</small>
+                            {{ request.identity.username }}
                             <img src="{% static "img/unknown-icon-128.png" %}" title="{{ request.identity.handle }}">
                         {% endif %}
                     </a>

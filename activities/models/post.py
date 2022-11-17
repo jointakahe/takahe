@@ -27,8 +27,10 @@ class PostStates(StateGraph):
         """
         post = await instance.afetch_full()
         # Non-local posts should not be here
+        # TODO: This seems to keep happening. Work out how?
         if not post.local:
-            raise ValueError(f"Trying to run handle_new on a non-local post {post.pk}!")
+            print(f"Trying to run handle_new on a non-local post {post.pk}!")
+            return cls.fanned_out
         # Build list of targets - mentions always included
         targets = set()
         async for mention in post.mentions.all():

@@ -1,5 +1,9 @@
+import re
+
+from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
-from django.urls import path
+from django.urls import path, re_path
+from django.views.static import serve
 
 from activities.views import posts, timelines
 from core import views as core
@@ -17,6 +21,11 @@ urlpatterns = [
         "settings/",
         settings.SettingsRoot.as_view(),
         name="settings",
+    ),
+    path(
+        "settings/profile/",
+        settings.ProfilePage.as_view(),
+        name="settings_profile",
     ),
     path(
         "settings/interface/",
@@ -87,4 +96,10 @@ urlpatterns = [
     path(".stator/runner/", stator.RequestRunner.as_view()),
     # Django admin
     path("djadmin/", djadmin.site.urls),
+    # Media files
+    re_path(
+        r"^%s(?P<path>.*)$" % re.escape(djsettings.MEDIA_URL.lstrip("/")),
+        serve,
+        kwargs={"document_root": djsettings.MEDIA_ROOT},
+    ),
 ]
