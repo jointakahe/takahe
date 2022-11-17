@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Add Domain - System Settings{% endblock %}
+
+{% block content %}
+    {% block menu %}
+        {% include "settings/_settings_system_menu.html" %}
+    {% endblock %}
+    <form action="." method="POST">
+        <h1>Add A Domain</h1>
+        <p>
+            Use this form to add a domain that your users can create identities
+            on.
+        </p>
+        <p>
+            Takahē supports multiple domains per server, but note that when
+            identities are created they are <b>fixed to their chosen domain</b>,
+            and you will <b>not be able to delete a domain with identities on it</b>.
+        </p>
+        <p>
+            If you will be serving Takahē on the domain you choose, you can leave
+            the "service domain" field blank. If you would like to let users create
+            accounts on a domain serving something else, you must pick a unique
+            "service domain" that pairs up to your chosen domain name, make sure
+            Takahē is served on that, and add redirects
+            for <tt>/.well-known/webfinger</tt>, <tt>/.well-known/host-meta</tt>
+            and <tt>/.well-known/nodeinfo</tt> from the main domain to the
+            service domain.
+        </p>
+        {% csrf_token %}
+        {% for field in form %}
+            {% include "forms/_field.html" %}
+        {% endfor %}
+        <div class="buttons">
+            <a href="{{ domain.urls.delete }}" class="button delete">Delete</a>
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

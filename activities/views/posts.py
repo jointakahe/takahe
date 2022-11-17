@@ -108,6 +108,7 @@ class Boost(View):
 class Compose(FormView):
 
     template_name = "activities/compose.html"
+    extra_context = {"top_section": "compose"}
 
     class form_class(forms.Form):
         text = forms.CharField(

@@ -43,7 +43,6 @@ the less sure I am about it.
 - [ ] Receive post edits
 - [x] Set content warnings on posts
 - [x] Show content warnings on posts
-- [ ] Attach images to posts
 - [ ] Receive images on posts
 - [x] Create boosts
 - [x] Receive boosts
@@ -65,8 +64,8 @@ the less sure I am about it.
 - [x] Multiple domain support
 - [x] Multiple identity support
 - [x] Serverless-friendly worker subsystem
-- [ ] Settings subsystem
-- [ ] Server management page
+- [x] Settings subsystem
+- [x] Server management page
 - [ ] Domain management page
 - [ ] Email subsystem
 - [ ] Signup flow
@@ -75,6 +74,7 @@ the less sure I am about it.
 
 ### Beta
 
+- [ ] Attach images to posts
 - [ ] Delete posts
 - [ ] Reply threading on post creation
 - [ ] Display posts with reply threads

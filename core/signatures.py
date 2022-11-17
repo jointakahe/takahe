@@ -59,7 +59,7 @@ class HttpSignature:
             elif header_name == "content-type":
                 value = request.META["CONTENT_TYPE"]
             else:
-                value = request.META[f"HTTP_{header_name.upper()}"]
+                value = request.META["HTTP_%s" % header_name.upper().replace("-", "_")]
             headers[header_name] = value
         return "\n".join(f"{name.lower()}: {value}" for name, value in headers.items())
 

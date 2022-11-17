@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Delete {{ domain.domain }} - System Settings{% endblock %}
+
+{% block content %}
+    {% block menu %}
+        {% include "settings/_settings_system_menu.html" %}
+    {% endblock %}
+
+    <form action="." method="POST">
+        {% csrf_token %}
+
+        <h1>Deleting {{ domain.domain }}</h1>
+
+        {% if num_identities %}
+            <p>
+                You cannot delete this domain as it has <b>{{ num_identities }}
+                identit{{ num_identities|pluralize:"y,ies" }}</b> registered on it.
+            </p>
+            <p>
+                You will need to manually remove all identities from this domain in
+                order to delete it.
+            </p>
+        {% else %}
+            <p>Please confirm deletion of this domain - there are no identities registed on it.</p>
+            <div class="buttons">
+                <a class="button" href="{{ domain.urls.edit }}">Cancel</a>
+                <button class="delete">Confirm Deletion</button>
+            </div>
+        {% endif %}
+    </form>
+
+{% endblock %}

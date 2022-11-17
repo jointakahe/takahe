@@ -17,6 +17,13 @@ urlpatterns = [
     path("settings/interface/", settings_identity.InterfacePage.as_view()),
     path("settings/system/", settings_system.SystemSettingsRoot.as_view()),
     path("settings/system/basic/", settings_system.BasicPage.as_view()),
+    path("settings/system/domains/", settings_system.DomainsPage.as_view()),
+    path("settings/system/domains/create/", settings_system.DomainCreatePage.as_view()),
+    path("settings/system/domains/<domain>/", settings_system.DomainEditPage.as_view()),
+    path(
+        "settings/system/domains/<domain>/delete/",
+        settings_system.DomainDeletePage.as_view(),
+    ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/actor/", activitypub.Actor.as_view()),

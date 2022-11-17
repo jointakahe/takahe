@@ -17,6 +17,8 @@ class IdentitySettingsPage(SystemSettingsPage):
     at the bottom of the page. Don't add this to a URL directly - subclass!
     """
 
+    extra_context = {"top_section": "settings"}
+
     options_class = Config.IdentityOptions
     template_name = "settings/settings_identity.html"
 

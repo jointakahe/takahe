@@ -81,6 +81,7 @@ a {
     --color-bg-box: #1a2631;
     --color-bg-error: rgb(87, 32, 32);
     --color-highlight: #449c8c;
+    --color-delete: #8b2821;
 
     --color-text-duller: #5f6983;
     --color-text-dull: #99a;
@@ -148,7 +149,8 @@ header menu a {
     border-right: 1px solid var(--color-bg-menu);
 }
 
-header menu a:hover {
+header menu a:hover,
+header menu a.selected {
     border-bottom: 3px solid var(--color-highlight);
 }
 
@@ -436,6 +438,11 @@ form .button {
     background-color: var(--color-highlight);
     color: var(--color-text-main);
     display: inline-block;
+}
+
+form button.delete,
+form .button.delete {
+    background: var(--color-delete);
 }
 
 form button.toggle,

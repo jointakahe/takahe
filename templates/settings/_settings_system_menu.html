@@ -1,3 +1,5 @@
 <nav>
-    <a href="#" {% if section == "basic" %}class="selected"{% endif %}>Basic</a>
+    <a href="/settings/system/basic/" {% if section == "basic" %}class="selected"{% endif %}>Basic</a>
+    <a href="/settings/system/domains/" {% if section == "domains" %}class="selected"{% endif %}>Domains</a>
+    <a href="/settings/system/users/" {% if section == "users" %}class="selected"{% endif %}>Users</a>
 </nav>

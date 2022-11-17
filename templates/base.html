@@ -28,10 +28,16 @@
             </a>
             <menu>
                 {% if user.is_authenticated %}
-                    <a href="/compose/" title="Compose"><i class="fa-solid fa-feather"></i> Compose</a>
-                    <a href="/settings/" title="Settings"><i class="fa-solid fa-gear"></i> Settings</a>
+                    <a href="/compose/" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
+                        <i class="fa-solid fa-feather"></i> Compose
+                    </a>
+                    <a href="/settings/" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </a>
                     {% if request.user.admin %}
-                        <a href="/settings/system/" title="Admin"><i class="fa-solid fa-toolbox"></i> Admin</a>
+                        <a href="/settings/system/" title="Admin" {% if top_section == "settings_system" %}class="selected"{% endif %}>
+                            <i class="fa-solid fa-toolbox"></i> Admin
+                        </a>
                     {% endif %}
                     <div class="gap"></div>
                     <a href="/identity/select/" class="identity">

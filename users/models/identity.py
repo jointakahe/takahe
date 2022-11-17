@@ -67,6 +67,7 @@ class Identity(StatorModel):
         blank=True,
         null=True,
         on_delete=models.PROTECT,
+        related_name="identities",
     )
 
     name = models.CharField(max_length=500, blank=True, null=True)
