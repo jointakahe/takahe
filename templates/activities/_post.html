@@ -41,6 +41,16 @@
         {{ post.safe_content }}
     </div>
 
+    {% if post.attachments.exists %}
+        <div class="attachments">
+            {% for attachment in post.attachments.all %}
+                {% if attachment.is_image %}
+                    <a href="{{ attachment.remote_url }}" class="image"><img src="{{ attachment.remote_url }}" title="{{ attachment.name }}"></a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
     {% if request.identity %}
     <div class="actions">
         {% include "activities/_like.html" %}

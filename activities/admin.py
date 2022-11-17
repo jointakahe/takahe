@@ -1,6 +1,17 @@
 from django.contrib import admin
 
-from activities.models import FanOut, Post, PostInteraction, TimelineEvent
+from activities.models import (
+    FanOut,
+    Post,
+    PostAttachment,
+    PostInteraction,
+    TimelineEvent,
+)
+
+
+class PostAttachmentInline(admin.StackedInline):
+    model = PostAttachment
+    extra = 0
 
 
 @admin.register(Post)
@@ -8,6 +19,8 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "author", "created"]
     raw_id_fields = ["to", "mentions", "author"]
     actions = ["force_fetch"]
+    search_fields = ["content"]
+    inlines = [PostAttachmentInline]
     readonly_fields = ["created", "updated", "object_json"]
 
     @admin.action(description="Force Fetch")

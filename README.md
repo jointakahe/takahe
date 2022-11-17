@@ -43,7 +43,8 @@ the less sure I am about it.
 - [x] Receive post edits
 - [x] Set content warnings on posts
 - [x] Show content warnings on posts
-- [ ] Receive images on posts
+- [x] Receive images on posts
+- [x] Receive reply info
 - [x] Create boosts
 - [x] Receive boosts
 - [x] Create likes
@@ -77,6 +78,7 @@ the less sure I am about it.
 - [ ] Attach images to posts
 - [ ] Edit posts
 - [ ] Delete posts
+- [ ] Fetch remote post images locally and thumbnail
 - [ ] Show follow pending states
 - [ ] Manual approval of followers
 - [ ] Reply threading on post creation

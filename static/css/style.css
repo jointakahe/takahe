@@ -570,6 +570,22 @@ h1.identity small {
     margin: 12px 0 4px 0;
 }
 
+.post .attachments {
+    margin: 10px 0 10px 64px;
+}
+
+.post .attachments a.image {
+    display: inline-block;
+    border: 3px solid var(--color-bg-menu);
+    border-radius: 3px;
+}
+
+.post .attachments a.image img {
+    display: inline-block;
+    max-width: 200px;
+    max-height: 200px;
+}
+
 .post .actions {
     padding-left: 64px;
 }

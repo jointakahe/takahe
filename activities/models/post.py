@@ -146,6 +146,9 @@ class Post(StatorModel):
     def __str__(self):
         return f"{self.author} #{self.id}"
 
+    def get_absolute_url(self):
+        return self.urls.view
+
     @property
     def safe_content(self):
         return sanitize_post(self.content)
@@ -244,11 +247,12 @@ class Post(StatorModel):
                 raise KeyError(f"No post with ID {data['id']}", data)
         if update or created:
             post.content = sanitize_post(data["content"])
-            post.summary = data.get("summary", None)
+            post.summary = data.get("summary")
             post.sensitive = data.get("as:sensitive", False)
-            post.url = data.get("url", None)
-            post.published = parse_ld_date(data.get("published", None))
-            post.edited = parse_ld_date(data.get("updated", None))
+            post.url = data.get("url")
+            post.published = parse_ld_date(data.get("published"))
+            post.edited = parse_ld_date(data.get("updated"))
+            post.in_reply_to = data.get("inReplyTo")
             # Mentions and hashtags
             post.hashtags = []
             for tag in get_list(data, "tag"):
@@ -270,6 +274,26 @@ class Post(StatorModel):
             for target in targets:
                 if target.lower() == "as:public":
                     post.visibility = Post.Visibilities.public
+            # Attachments
+            # These have no IDs, so we have to wipe them each time
+            post.attachments.all().delete()
+            for attachment in get_list(data, "attachment"):
+                if "http://joinmastodon.org/ns#focalPoint" in attachment:
+                    focal_x, focal_y = attachment[
+                        "http://joinmastodon.org/ns#focalPoint"
+                    ]["@list"]
+                else:
+                    focal_x, focal_y = None, None
+                post.attachments.create(
+                    remote_url=attachment["url"],
+                    mimetype=attachment["mediaType"],
+                    name=attachment.get("name"),
+                    width=attachment.get("width"),
+                    height=attachment.get("height"),
+                    blurhash=attachment.get("http://joinmastodon.org/ns#blurhash"),
+                    focal_x=focal_x,
+                    focal_y=focal_y,
+                )
             post.save()
         return post
 
@@ -308,9 +332,13 @@ class Post(StatorModel):
                 raise ValueError("Create actor does not match its Post object", data)
             # Create it
             post = cls.by_ap(data["object"], create=True, update=True)
-            # Make timeline events for followers
-            for follow in Follow.objects.filter(target=post.author, source__local=True):
-                TimelineEvent.add_post(follow.source, post)
+            # Make timeline events for followers if it's not a reply
+            # TODO: _do_ show replies to people we follow somehow
+            if not post.in_reply_to:
+                for follow in Follow.objects.filter(
+                    target=post.author, source__local=True
+                ):
+                    TimelineEvent.add_post(follow.source, post)
             # Make timeline events for mentions if they're local
             for mention in post.mentions.all():
                 if mention.local:

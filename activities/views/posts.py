@@ -36,7 +36,9 @@ class Like(View):
 
     def post(self, request, handle, post_id):
         identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(identity.posts, pk=post_id)
+        post = get_object_or_404(
+            identity.posts.prefetch_related("attachments"), pk=post_id
+        )
         if self.undo:
             # Undo any likes on the post
             for interaction in PostInteraction.objects.filter(

@@ -39,6 +39,7 @@ class Home(FormView):
                 type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
             )
             .select_related("subject_post", "subject_post__author")
+            .prefetch_related("subject_post__attachments")
             .order_by("-created")[:100]
         )
         context["interactions"] = PostInteraction.get_event_interactions(
@@ -66,6 +67,7 @@ class Local(TemplateView):
         context["posts"] = (
             Post.objects.filter(visibility=Post.Visibilities.public, author__local=True)
             .select_related("author")
+            .prefetch_related("attachments")
             .order_by("-created")[:100]
         )
         context["current_page"] = "local"
@@ -82,6 +84,7 @@ class Federated(TemplateView):
         context["posts"] = (
             Post.objects.filter(visibility=Post.Visibilities.public)
             .select_related("author")
+            .prefetch_related("attachments")
             .order_by("-created")[:100]
         )
         context["current_page"] = "federated"
