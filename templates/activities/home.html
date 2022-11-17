@@ -32,7 +32,7 @@
                 {{ form.content_warning }}
                 <div class="buttons">
                     <span class="button toggle" _="on click toggle .enabled then toggle .hidden on #id_content_warning">CW</span>
-                    <button>Post</button>
+                    <button>{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
                 </div>
             </form>
         </div>

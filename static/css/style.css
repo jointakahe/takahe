@@ -163,6 +163,8 @@ header menu a.identity {
 }
 
 header menu a i {
+    display: inline-block;
+    vertical-align: middle;
     margin-right: 10px;
 }
 
@@ -603,4 +605,20 @@ h1.identity small {
         border-radius: 0;
     }
 
+}
+
+
+
+@media (max-width: 800px) {
+    header menu a {
+        font-size: 0;
+        padding: 10px 20px 4px 20px;
+    }
+
+    header menu a i {
+        display: inline-block;
+        vertical-align: middle;
+        margin: 0;
+        font-size: 20px;
+    }
 }

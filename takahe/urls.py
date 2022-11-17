@@ -4,7 +4,7 @@ from django.urls import path
 from activities.views import posts, timelines
 from core import views as core
 from stator import views as stator
-from users.views import activitypub, auth, identity
+from users.views import activitypub, auth, identity, settings_identity, settings_system
 
 urlpatterns = [
     path("", core.homepage),
@@ -13,6 +13,10 @@ urlpatterns = [
     path("notifications/", timelines.Notifications.as_view()),
     path("local/", timelines.Local.as_view()),
     path("federated/", timelines.Federated.as_view()),
+    path("settings/", settings_identity.IdentitySettingsRoot.as_view()),
+    path("settings/interface/", settings_identity.InterfacePage.as_view()),
+    path("settings/system/", settings_system.SystemSettingsRoot.as_view()),
+    path("settings/system/basic/", settings_system.BasicPage.as_view()),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/actor/", activitypub.Actor.as_view()),

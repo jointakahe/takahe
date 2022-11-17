@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
-from core.config import Config
+from core.models import Config
 from users.decorators import identity_required
 from users.models import Domain, Follow, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
@@ -25,7 +25,7 @@ class ViewIdentity(TemplateView):
             fetch=True,
         )
         posts = identity.posts.all()[:100]
-        if identity.data_age > Config.load().identity_max_age:
+        if identity.data_age > Config.system.identity_max_age:
             identity.transition_perform(IdentityStates.outdated)
         return {
             "identity": identity,

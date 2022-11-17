@@ -1,19 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Compose{% endblock %}
+{% block title %}{{ section.title }} - System Settings{% endblock %}
 
 {% block content %}
-    <nav>
-        <a href="." class="selected">Compose</a>
-    </nav>
-
+    {% block menu %}
+        {% include "settings/_settings_system_menu.html" %}
+    {% endblock %}
     <form action="." method="POST">
         {% csrf_token %}
         {% for field in form %}
             {% include "forms/_field.html" %}
         {% endfor %}
         <div class="buttons">
-            <button>{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+            <button>Save</button>
         </div>
     </form>
 {% endblock %}
