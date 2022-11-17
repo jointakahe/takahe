@@ -28,7 +28,7 @@ class PostStates(StateGraph):
         post = await instance.afetch_full()
         # Non-local posts should not be here
         if not post.local:
-            raise ValueError("Trying to run handle_new on a non-local post!")
+            raise ValueError(f"Trying to run handle_new on a non-local post {post.pk}!")
         # Build list of targets - mentions always included
         targets = set()
         async for mention in post.mentions.all():
@@ -121,6 +121,9 @@ class Post(StatorModel):
 
     # When the post was originally created (as opposed to when we received it)
     published = models.DateTimeField(default=timezone.now)
+
+    # If the post has been edited after initial publication
+    edited = models.DateTimeField(blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -245,7 +248,7 @@ class Post(StatorModel):
             post.sensitive = data.get("as:sensitive", False)
             post.url = data.get("url", None)
             post.published = parse_ld_date(data.get("published", None))
-            # TODO: to
+            post.edited = parse_ld_date(data.get("updated", None))
             # Mentions and hashtags
             post.hashtags = []
             for tag in get_list(data, "tag"):
@@ -254,6 +257,9 @@ class Post(StatorModel):
                     post.mentions.add(mention_identity)
                 elif tag["type"].lower() == "as:hashtag":
                     post.hashtags.append(tag["name"].lstrip("#"))
+                elif tag["type"].lower() == "http://joinmastodon.org/ns#emoji":
+                    # TODO: Handle incoming emoji
+                    pass
                 else:
                     raise ValueError(f"Unknown tag type {tag['type']}")
             # Visibility and to
@@ -311,6 +317,18 @@ class Post(StatorModel):
                     TimelineEvent.add_mentioned(mention, post)
             # Force it into fanned_out as it's not ours
             post.transition_perform(PostStates.fanned_out)
+
+    @classmethod
+    def handle_update_ap(cls, data):
+        """
+        Handles an incoming update request
+        """
+        with transaction.atomic():
+            # Ensure the Create actor is the Post's attributedTo
+            if data["actor"] != data["object"]["attributedTo"]:
+                raise ValueError("Create actor does not match its Post object", data)
+            # Find it and update it
+            cls.by_ap(data["object"], create=False, update=True)
 
     @classmethod
     def handle_delete_ap(cls, data):

@@ -13,15 +13,15 @@ class FollowStates(StateGraph):
     local_requested = State(try_interval=24 * 60 * 60)
     remote_requested = State(try_interval=24 * 60 * 60)
     accepted = State(externally_progressed=True)
-    undone_locally = State(try_interval=60 * 60)
+    undone = State(try_interval=60 * 60)
     undone_remotely = State()
 
     unrequested.transitions_to(local_requested)
     unrequested.transitions_to(remote_requested)
     local_requested.transitions_to(accepted)
     remote_requested.transitions_to(accepted)
-    accepted.transitions_to(undone_locally)
-    undone_locally.transitions_to(undone_remotely)
+    accepted.transitions_to(undone)
+    undone.transitions_to(undone_remotely)
 
     @classmethod
     async def handle_unrequested(cls, instance: "Follow"):
@@ -63,7 +63,7 @@ class FollowStates(StateGraph):
         return cls.accepted
 
     @classmethod
-    async def handle_undone_locally(cls, instance: "Follow"):
+    async def handle_undone(cls, instance: "Follow"):
         """
         Delivers the Undo object to the target server
         """

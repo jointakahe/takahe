@@ -40,7 +40,7 @@ the less sure I am about it.
 - [x] Receive posts
 - [x] Handle received post visibility (unlisted vs public only)
 - [x] Receive post deletions
-- [ ] Receive post edits
+- [x] Receive post edits
 - [x] Set content warnings on posts
 - [x] Show content warnings on posts
 - [ ] Receive images on posts
@@ -49,10 +49,10 @@ the less sure I am about it.
 - [x] Create likes
 - [x] Receive likes
 - [x] Create follows
-- [ ] Undo follows
+- [x] Undo follows
 - [x] Receive and accept follows
 - [x] Receive follow undos
-- [ ] Do mentions properly
+- [ ] Do outgoing mentions properly
 - [x] Home timeline (posts and boosts from follows)
 - [ ] Notifications page (followed, boosted, liked)
 - [x] Local timeline
@@ -66,7 +66,7 @@ the less sure I am about it.
 - [x] Serverless-friendly worker subsystem
 - [x] Settings subsystem
 - [x] Server management page
-- [ ] Domain management page
+- [x] Domain management page
 - [ ] Email subsystem
 - [ ] Signup flow
 - [ ] Password change flow
@@ -75,7 +75,10 @@ the less sure I am about it.
 ### Beta
 
 - [ ] Attach images to posts
+- [ ] Edit posts
 - [ ] Delete posts
+- [ ] Show follow pending states
+- [ ] Manual approval of followers
 - [ ] Reply threading on post creation
 - [ ] Display posts with reply threads
 - [ ] Create polls on posts

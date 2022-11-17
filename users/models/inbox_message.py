@@ -13,7 +13,7 @@ class InboxMessageStates(StateGraph):
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
         from activities.models import Post, PostInteraction
-        from users.models import Follow
+        from users.models import Follow, Identity
 
         match instance.message_type:
             case "follow":
@@ -29,6 +29,16 @@ class InboxMessageStates(StateGraph):
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type create.{unknown}"
+                        )
+            case "update":
+                match instance.message_object_type:
+                    case "note":
+                        await sync_to_async(Post.handle_update_ap)(instance.message)
+                    case "person":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type update.{unknown}"
                         )
             case "accept":
                 match instance.message_object_type:

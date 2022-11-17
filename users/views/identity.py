@@ -9,7 +9,7 @@ from django.views.generic import FormView, TemplateView, View
 
 from core.models import Config
 from users.decorators import identity_required
-from users.models import Domain, Follow, Identity, IdentityStates
+from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
 
 
@@ -27,12 +27,19 @@ class ViewIdentity(TemplateView):
         posts = identity.posts.all()[:100]
         if identity.data_age > Config.system.identity_max_age:
             identity.transition_perform(IdentityStates.outdated)
+        follow = None
+        if self.request.identity:
+            follow = Follow.maybe_get(self.request.identity, identity)
+            if follow and follow.state not in [
+                FollowStates.unrequested,
+                FollowStates.local_requested,
+                FollowStates.accepted,
+            ]:
+                follow = None
         return {
             "identity": identity,
             "posts": posts,
-            "follow": Follow.maybe_get(self.request.identity, identity)
-            if self.request.identity
-            else None,
+            "follow": follow,
         }
 
 
@@ -46,6 +53,15 @@ class ActionIdentity(View):
             existing_follow = Follow.maybe_get(self.request.identity, identity)
             if not existing_follow:
                 Follow.create_local(self.request.identity, identity)
+            elif existing_follow.state in [
+                FollowStates.undone,
+                FollowStates.undone_remotely,
+            ]:
+                existing_follow.transition_perform(FollowStates.unrequested)
+        elif action == "unfollow":
+            existing_follow = Follow.maybe_get(self.request.identity, identity)
+            if existing_follow:
+                existing_follow.transition_perform(FollowStates.undone)
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)

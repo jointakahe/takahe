@@ -162,7 +162,7 @@ class Identity(StatorModel):
             if create:
                 return cls.objects.create(actor_uri=uri, local=False)
             else:
-                raise KeyError(f"No identity found matching {uri}")
+                raise cls.DoesNotExist(f"No identity found with actor_uri {uri}")
 
     ### Dynamic properties ###
 
@@ -192,7 +192,7 @@ class Identity(StatorModel):
         # TODO: Setting
         return self.data_age > 60 * 24 * 24
 
-    ### ActivityPub (boutbound) ###
+    ### ActivityPub (outbound) ###
 
     def to_ap(self):
         response = {
@@ -206,13 +206,28 @@ class Identity(StatorModel):
                 "publicKeyPem": self.public_key,
             },
             "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "url": self.urls.view_nice,
+            "url": str(self.urls.view_nice),
         }
         if self.name:
             response["name"] = self.name
         if self.summary:
             response["summary"] = self.summary
         return response
+
+    ### ActivityPub (inbound) ###
+
+    @classmethod
+    def handle_update_ap(cls, data):
+        """
+        Takes an incoming update.person message and just forces us to add it
+        to our fetch queue (don't want to bother with two load paths right now)
+        """
+        # Find by actor
+        try:
+            actor = cls.by_actor_uri(data["actor"])
+            actor.transition_perform(IdentityStates.outdated)
+        except cls.DoesNotExist:
+            pass
 
     ### Actor/Webfinger fetching ###
 
@@ -314,4 +329,5 @@ class Identity(StatorModel):
             )
             .decode("ascii")
         )
+        self.public_key_id = self.actor_uri + "#main-key"
         self.save()
