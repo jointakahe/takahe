@@ -147,7 +147,7 @@ class CreateIdentity(FormView):
         domain_instance = Domain.get_domain(domain)
         new_identity = Identity.objects.create(
             actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/actor/",
-            username=username,
+            username=username.lower(),
             domain_id=domain,
             name=form.cleaned_data["name"],
             local=True,

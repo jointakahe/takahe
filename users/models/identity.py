@@ -134,6 +134,7 @@ class Identity(StatorModel):
     def by_username_and_domain(cls, username, domain, fetch=False, local=False):
         if username.startswith("@"):
             raise ValueError("Username must not start with @")
+        username = username.lower()
         try:
             if local:
                 return cls.objects.get(username=username, domain_id=domain, local=True)
@@ -281,6 +282,8 @@ class Identity(StatorModel):
             self.username = document.get("preferredUsername")
             if self.username and "@value" in self.username:
                 self.username = self.username["@value"]
+            if self.username:
+                self.username = self.username.lower()
             self.manually_approves_followers = document.get(
                 "as:manuallyApprovesFollowers"
             )
