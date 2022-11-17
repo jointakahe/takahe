@@ -1,4 +1,6 @@
-from users.models import Identity
+from django.utils import timezone
+
+from users.models import Identity, User
 
 
 class IdentityMiddleware:
@@ -17,6 +19,7 @@ class IdentityMiddleware:
         else:
             try:
                 request.identity = Identity.objects.get(id=identity_id)
+                User.objects.filter(pk=request.user.pk).update(last_seen=timezone.now())
             except Identity.DoesNotExist:
                 request.identity = None
 

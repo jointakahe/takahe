@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ section.title }} - Admin{% endblock %}
+
+{% block content %}
+    {% block menu %}
+        {% include "admin/_menu.html" %}
+    {% endblock %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+            {% include "forms/_field.html" %}
+        {% endfor %}
+        <div class="buttons">
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

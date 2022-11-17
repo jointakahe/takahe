@@ -10,7 +10,7 @@ class DomainAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["email", "created", "last_seen", "admin", "moderator", "banned"]
 
 
 @admin.register(UserEvent)
@@ -21,6 +21,7 @@ class UserEventAdmin(admin.ModelAdmin):
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
     list_display = ["id", "handle", "actor_uri", "state", "local"]
+    list_filter = ["local"]
     raw_id_fields = ["users"]
     actions = ["force_update"]
     readonly_fields = ["actor_json"]

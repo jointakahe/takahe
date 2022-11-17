@@ -117,7 +117,7 @@ class Post(StatorModel):
     )
 
     # Hashtags in the post
-    hashtags = models.JSONField(default=[])
+    hashtags = models.JSONField(blank=True, null=True)
 
     # When the post was originally created (as opposed to when we received it)
     published = models.DateTimeField(default=timezone.now)
@@ -296,36 +296,38 @@ class Post(StatorModel):
         """
         Handles an incoming create request
         """
-        # Ensure the Create actor is the Post's attributedTo
-        if data["actor"] != data["object"]["attributedTo"]:
-            raise ValueError("Create actor does not match its Post object", data)
-        # Create it
-        post = cls.by_ap(data["object"], create=True, update=True)
-        # Make timeline events for followers
-        for follow in Follow.objects.filter(target=post.author, source__local=True):
-            TimelineEvent.add_post(follow.source, post)
-        # Make timeline events for mentions if they're local
-        for mention in post.mentions.all():
-            if mention.local:
-                TimelineEvent.add_mentioned(mention, post)
-        # Force it into fanned_out as it's not ours
-        post.transition_perform(PostStates.fanned_out)
+        with transaction.atomic():
+            # Ensure the Create actor is the Post's attributedTo
+            if data["actor"] != data["object"]["attributedTo"]:
+                raise ValueError("Create actor does not match its Post object", data)
+            # Create it
+            post = cls.by_ap(data["object"], create=True, update=True)
+            # Make timeline events for followers
+            for follow in Follow.objects.filter(target=post.author, source__local=True):
+                TimelineEvent.add_post(follow.source, post)
+            # Make timeline events for mentions if they're local
+            for mention in post.mentions.all():
+                if mention.local:
+                    TimelineEvent.add_mentioned(mention, post)
+            # Force it into fanned_out as it's not ours
+            post.transition_perform(PostStates.fanned_out)
 
     @classmethod
     def handle_delete_ap(cls, data):
         """
         Handles an incoming create request
         """
-        # Find our post by ID if we have one
-        try:
-            post = cls.by_object_uri(data["object"]["id"])
-        except cls.DoesNotExist:
-            # It's already been deleted
-            return
-        # Ensure the actor on the request authored the post
-        if not post.author.actor_uri == data["actor"]:
-            raise ValueError("Actor on delete does not match object")
-        post.delete()
+        with transaction.atomic():
+            # Find our post by ID if we have one
+            try:
+                post = cls.by_object_uri(data["object"]["id"])
+            except cls.DoesNotExist:
+                # It's already been deleted
+                return
+            # Ensure the actor on the request authored the post
+            if not post.author.actor_uri == data["actor"]:
+                raise ValueError("Actor on delete does not match object")
+            post.delete()
 
     def debug_fetch(self):
         """

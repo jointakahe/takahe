@@ -49,10 +49,10 @@ class Domain(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class urls(urlman.Urls):
-        root = "/settings/system/domains/"
-        create = "/settings/system/domains/create/"
-        edit = "/settings/system/domains/{self.domain}/"
-        delete = "/settings/system/domains/{self.domain}/delete/"
+        root = "/admin/domains/"
+        create = "/admin/domains/create/"
+        edit = "/admin/domains/{self.domain}/"
+        delete = "/admin/domains/{self.domain}/delete/"
 
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Identities - Admin{% endblock %}
+
+{% block content %}
+    {% block menu %}
+        {% include "admin/_menu.html" %}
+    {% endblock %}
+    <form>
+        <p>
+            Please use the <a href="/djadmin/users/identity/">Django Admin</a> for now.
+        </p>
+    </form>
+{% endblock %}

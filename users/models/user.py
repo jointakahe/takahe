@@ -38,6 +38,7 @@ class User(AbstractBaseUser):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    last_seen = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"

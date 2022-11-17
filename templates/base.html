@@ -31,11 +31,11 @@
                     <a href="/compose/" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-feather"></i> Compose
                     </a>
-                    <a href="/settings/" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
+                    <a href="{% url "settings" %}" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-gear"></i> Settings
                     </a>
                     {% if request.user.admin %}
-                        <a href="/settings/system/" title="Admin" {% if top_section == "settings_system" %}class="selected"{% endif %}>
+                        <a href="{% url "admin" %}" title="Admin" {% if top_section == "admin" %}class="selected"{% endif %}>
                             <i class="fa-solid fa-toolbox"></i> Admin
                         </a>
                     {% endif %}

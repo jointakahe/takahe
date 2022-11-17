@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}{{ section.title }} - System Settings{% endblock %}
+{% block title %}{{ section.title }} - Admin{% endblock %}
 
 {% block content %}
     {% block menu %}
-        {% include "settings/_settings_system_menu.html" %}
+        {% include "admin/_menu.html" %}
     {% endblock %}
     <section class="icon-menu">
         {% for domain in domains %}
@@ -21,7 +21,7 @@
         {% empty %}
             <p class="option empty">You have no domains set up.</p>
         {% endfor %}
-        <a href="/settings/system/domains/create/" class="option new">
+        <a href="{% url "admin_domains_create" %}" class="option new">
             <i class="fa-solid fa-plus"></i> Add a domain
         </a>
     </section>

@@ -1,0 +1,6 @@
+<nav>
+    <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %}>Basic</a>
+    <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %}>Domains</a>
+    <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %}>Users</a>
+    <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %}>Identities</a>
+</nav>

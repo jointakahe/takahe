@@ -58,6 +58,10 @@ a {
     text-decoration: none;
 }
 
+p a {
+    text-decoration: underline;
+}
+
 @media (prefers-reduced-motion: reduce) {
     html:focus-within {
         scroll-behavior: auto;

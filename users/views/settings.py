@@ -3,24 +3,22 @@ from django.views.generic import RedirectView
 
 from core.models import Config
 from users.decorators import identity_required
-from users.views.settings_system import SystemSettingsPage
+from users.views.admin import AdminSettingsPage
 
 
 @method_decorator(identity_required, name="dispatch")
-class IdentitySettingsRoot(RedirectView):
+class SettingsRoot(RedirectView):
     url = "/settings/interface/"
 
 
-class IdentitySettingsPage(SystemSettingsPage):
+class SettingsPage(AdminSettingsPage):
     """
     Shows a settings page dynamically created from our settings layout
     at the bottom of the page. Don't add this to a URL directly - subclass!
     """
 
-    extra_context = {"top_section": "settings"}
-
     options_class = Config.IdentityOptions
-    template_name = "settings/settings_identity.html"
+    template_name = "settings/settings.html"
 
     def load_config(self):
         return Config.load_identity(self.request.identity)
@@ -29,7 +27,7 @@ class IdentitySettingsPage(SystemSettingsPage):
         Config.set_identity(self.request.identity, key, value)
 
 
-class InterfacePage(IdentitySettingsPage):
+class InterfacePage(SettingsPage):
 
     section = "interface"
 

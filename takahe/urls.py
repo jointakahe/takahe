@@ -1,10 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin as djadmin
 from django.urls import path
 
 from activities.views import posts, timelines
 from core import views as core
 from stator import views as stator
-from users.views import activitypub, auth, identity, settings_identity, settings_system
+from users.views import activitypub, admin, auth, identity, settings
 
 urlpatterns = [
     path("", core.homepage),
@@ -13,16 +13,53 @@ urlpatterns = [
     path("notifications/", timelines.Notifications.as_view()),
     path("local/", timelines.Local.as_view()),
     path("federated/", timelines.Federated.as_view()),
-    path("settings/", settings_identity.IdentitySettingsRoot.as_view()),
-    path("settings/interface/", settings_identity.InterfacePage.as_view()),
-    path("settings/system/", settings_system.SystemSettingsRoot.as_view()),
-    path("settings/system/basic/", settings_system.BasicPage.as_view()),
-    path("settings/system/domains/", settings_system.DomainsPage.as_view()),
-    path("settings/system/domains/create/", settings_system.DomainCreatePage.as_view()),
-    path("settings/system/domains/<domain>/", settings_system.DomainEditPage.as_view()),
     path(
-        "settings/system/domains/<domain>/delete/",
-        settings_system.DomainDeletePage.as_view(),
+        "settings/",
+        settings.SettingsRoot.as_view(),
+        name="settings",
+    ),
+    path(
+        "settings/interface/",
+        settings.InterfacePage.as_view(),
+        name="settings_interface",
+    ),
+    path(
+        "admin/",
+        admin.AdminRoot.as_view(),
+        name="admin",
+    ),
+    path(
+        "admin/basic/",
+        admin.BasicPage.as_view(),
+        name="admin_basic",
+    ),
+    path(
+        "admin/domains/",
+        admin.DomainsPage.as_view(),
+        name="admin_domains",
+    ),
+    path(
+        "admin/domains/create/",
+        admin.DomainCreatePage.as_view(),
+        name="admin_domains_create",
+    ),
+    path(
+        "admin/domains/<domain>/",
+        admin.DomainEditPage.as_view(),
+    ),
+    path(
+        "admin/domains/<domain>/delete/",
+        admin.DomainDeletePage.as_view(),
+    ),
+    path(
+        "admin/users/",
+        admin.UsersPage.as_view(),
+        name="admin_users",
+    ),
+    path(
+        "admin/identities/",
+        admin.IdentitiesPage.as_view(),
+        name="admin_identities",
     ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
@@ -49,5 +86,5 @@ urlpatterns = [
     # Task runner
     path(".stator/runner/", stator.RequestRunner.as_view()),
     # Django admin
-    path("djadmin/", admin.site.urls),
+    path("djadmin/", djadmin.site.urls),
 ]

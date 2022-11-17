@@ -10,27 +10,25 @@ from django.views.generic import FormView, RedirectView, TemplateView
 
 from core.models import Config
 from users.decorators import admin_required
-from users.models import Domain
+from users.models import Domain, Identity, User
 
 
 @method_decorator(admin_required, name="dispatch")
-class SystemSettingsRoot(RedirectView):
-    url = "/settings/system/basic/"
+class AdminRoot(RedirectView):
+    pattern_name = "admin_basic"
 
 
 @method_decorator(admin_required, name="dispatch")
-class SystemSettingsPage(FormView):
+class AdminSettingsPage(FormView):
     """
     Shows a settings page dynamically created from our settings layout
     at the bottom of the page. Don't add this to a URL directly - subclass!
     """
 
-    template_name = "settings/settings_system.html"
+    template_name = "admin/settings.html"
     options_class = Config.SystemOptions
     section: ClassVar[str]
     options: Dict[str, Dict[str, str]]
-
-    extra_context = {"top_section": "settings_system"}
 
     def get_form_class(self):
         # Create the fields dict from the config object
@@ -84,7 +82,7 @@ class SystemSettingsPage(FormView):
         return redirect(".")
 
 
-class BasicPage(SystemSettingsPage):
+class BasicPage(AdminSettingsPage):
 
     section = "basic"
 
@@ -103,7 +101,7 @@ class BasicPage(SystemSettingsPage):
 @method_decorator(admin_required, name="dispatch")
 class DomainsPage(TemplateView):
 
-    template_name = "settings/settings_system_domains.html"
+    template_name = "admin/domains.html"
 
     def get_context_data(self):
         return {
@@ -115,7 +113,7 @@ class DomainsPage(TemplateView):
 @method_decorator(admin_required, name="dispatch")
 class DomainCreatePage(FormView):
 
-    template_name = "settings/settings_system_domain_create.html"
+    template_name = "admin/domain_create.html"
     extra_context = {"section": "domains"}
 
     class form_class(forms.Form):
@@ -175,7 +173,7 @@ class DomainCreatePage(FormView):
 @method_decorator(admin_required, name="dispatch")
 class DomainEditPage(FormView):
 
-    template_name = "settings/settings_system_domain_edit.html"
+    template_name = "admin/domain_edit.html"
     extra_context = {"section": "domains"}
 
     class form_class(forms.Form):
@@ -221,7 +219,7 @@ class DomainEditPage(FormView):
 @method_decorator(admin_required, name="dispatch")
 class DomainDeletePage(TemplateView):
 
-    template_name = "settings/settings_system_domain_delete.html"
+    template_name = "admin/domain_delete.html"
 
     def dispatch(self, request, domain):
         self.domain = get_object_or_404(
@@ -241,3 +239,27 @@ class DomainDeletePage(TemplateView):
             raise ValueError("Tried to delete domain with identities!")
         self.domain.delete()
         return redirect("/settings/system/domains/")
+
+
+@method_decorator(admin_required, name="dispatch")
+class UsersPage(TemplateView):
+
+    template_name = "admin/users.html"
+
+    def get_context_data(self):
+        return {
+            "users": User.objects.order_by("email"),
+            "section": "users",
+        }
+
+
+@method_decorator(admin_required, name="dispatch")
+class IdentitiesPage(TemplateView):
+
+    template_name = "admin/identities.html"
+
+    def get_context_data(self):
+        return {
+            "identities": Identity.objects.order_by("username"),
+            "section": "identities",
+        }

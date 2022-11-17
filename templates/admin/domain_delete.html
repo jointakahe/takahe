@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Delete {{ domain.domain }} - System Settings{% endblock %}
+{% block title %}Delete {{ domain.domain }} - Admin{% endblock %}
 
 {% block content %}
     {% block menu %}
-        {% include "settings/_settings_system_menu.html" %}
+        {% include "admin/_menu.html" %}
     {% endblock %}
 
     <form action="." method="POST">

@@ -1,6 +1,6 @@
 from typing import Dict
 
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from activities.models.fan_out import FanOut
@@ -272,31 +272,33 @@ class PostInteraction(StatorModel):
         """
         Handles an incoming announce/like
         """
-        # Create it
-        interaction = cls.by_ap(data, create=True)
-        # Boosts (announces) go to everyone who follows locally
-        if interaction.type == cls.Types.boost:
-            for follow in Follow.objects.filter(
-                target=interaction.identity, source__local=True
-            ):
-                TimelineEvent.add_post_interaction(follow.source, interaction)
-        # Likes go to just the author of the post
-        elif interaction.type == cls.Types.like:
-            TimelineEvent.add_post_interaction(interaction.post.author, interaction)
-        # Force it into fanned_out as it's not ours
-        interaction.transition_perform(PostInteractionStates.fanned_out)
+        with transaction.atomic():
+            # Create it
+            interaction = cls.by_ap(data, create=True)
+            # Boosts (announces) go to everyone who follows locally
+            if interaction.type == cls.Types.boost:
+                for follow in Follow.objects.filter(
+                    target=interaction.identity, source__local=True
+                ):
+                    TimelineEvent.add_post_interaction(follow.source, interaction)
+            # Likes go to just the author of the post
+            elif interaction.type == cls.Types.like:
+                TimelineEvent.add_post_interaction(interaction.post.author, interaction)
+            # Force it into fanned_out as it's not ours
+            interaction.transition_perform(PostInteractionStates.fanned_out)
 
     @classmethod
     def handle_undo_ap(cls, data):
         """
         Handles an incoming undo for a announce/like
         """
-        # Find it
-        interaction = cls.by_ap(data["object"])
-        # Verify the actor matches
-        if data["actor"] != interaction.identity.actor_uri:
-            raise ValueError("Actor mismatch on interaction undo")
-        # Delete all events that reference it
-        interaction.timeline_events.all().delete()
-        # Force it into undone_fanned_out as it's not ours
-        interaction.transition_perform(PostInteractionStates.undone_fanned_out)
+        with transaction.atomic():
+            # Find it
+            interaction = cls.by_ap(data["object"])
+            # Verify the actor matches
+            if data["actor"] != interaction.identity.actor_uri:
+                raise ValueError("Actor mismatch on interaction undo")
+            # Delete all events that reference it
+            interaction.timeline_events.all().delete()
+            # Force it into undone_fanned_out as it's not ours
+            interaction.transition_perform(PostInteractionStates.undone_fanned_out)
