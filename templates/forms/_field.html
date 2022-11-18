@@ -1,13 +1,18 @@
 <div class="field">
-    <label for="{{ field.id_for_label }}">
-        {{ field.label }}
-        {% if field.field.required %}<small>(Required)</small>{% endif %}
-    </label>
-    {% if field.help_text %}
-        <p class="help">
-            {{ field.help_text|linebreaksbr }}
-        </p>
+    <div class="label-input">
+        <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}<small>(Required)</small>{% endif %}
+        </label>
+        {% if field.help_text %}
+            <p class="help">
+                {{ field.help_text|linebreaksbr }}
+            </p>
+        {% endif %}
+        {{ field.errors }}
+        {{ field }}
+    </div>
+    {% if preview %}
+        <img class="preview" src="{{ preview }}">
     {% endif %}
-    {{ field.errors }}
-    {{ field }}
 </div>

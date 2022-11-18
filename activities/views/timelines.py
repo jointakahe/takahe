@@ -40,7 +40,7 @@ class Home(FormView):
             )
             .select_related("subject_post", "subject_post__author")
             .prefetch_related("subject_post__attachments")
-            .order_by("-created")[:100]
+            .order_by("-created")[:50]
         )
         context["interactions"] = PostInteraction.get_event_interactions(
             context["events"], self.request.identity
@@ -68,7 +68,7 @@ class Local(TemplateView):
             Post.objects.filter(visibility=Post.Visibilities.public, author__local=True)
             .select_related("author")
             .prefetch_related("attachments")
-            .order_by("-created")[:100]
+            .order_by("-created")[:50]
         )
         context["current_page"] = "local"
         return context
@@ -85,7 +85,7 @@ class Federated(TemplateView):
             Post.objects.filter(visibility=Post.Visibilities.public)
             .select_related("author")
             .prefetch_related("attachments")
-            .order_by("-created")[:100]
+            .order_by("-created")[:50]
         )
         context["current_page"] = "federated"
         return context

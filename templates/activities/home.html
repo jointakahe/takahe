@@ -3,39 +3,18 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    {% include "activities/_home_menu.html" %}
-
-    <section class="columns">
-
-        <div class="left-column">
-            {% for event in events %}
-                {% if event.type == "post" %}
-                    {% include "activities/_post.html" with post=event.subject_post %}
-                {% elif event.type == "boost" %}
-                    <div class="boost-banner">
-                        <a href="{{ event.subject_identity.urls.view }}">
-                            {{ event.subject_identity.name_or_handle }}
-                        </a> boosted
-                    </div>
-                    {% include "activities/_post.html" with post=event.subject_post %}
-                {% endif %}
-            {% empty %}
-                Nothing to show yet.
-            {% endfor %}
-        </div>
-
-        <div class="right-column">
-            <h2>Compose</h2>
-            <form action="/compose/" method="POST" class="compose">
-                {% csrf_token %}
-                {{ form.text }}
-                {{ form.content_warning }}
-                <div class="buttons">
-                    <span class="button toggle" _="on click toggle .enabled then toggle .hidden on #id_content_warning">CW</span>
-                    <button>{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
-                </div>
-            </form>
-        </div>
-
-    </section>
+    {% for event in events %}
+        {% if event.type == "post" %}
+            {% include "activities/_post.html" with post=event.subject_post %}
+        {% elif event.type == "boost" %}
+            <div class="boost-banner">
+                <a href="{{ event.subject_identity.urls.view }}">
+                    {{ event.subject_identity.name_or_handle }}
+                </a> boosted
+            </div>
+            {% include "activities/_post.html" with post=event.subject_post %}
+        {% endif %}
+    {% empty %}
+        Nothing to show yet.
+    {% endfor %}
 {% endblock %}

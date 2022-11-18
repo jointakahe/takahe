@@ -1,14 +1,9 @@
-{% extends "base.html" %}
+{% extends "settings/base.html" %}
 
-{% block title %}Users - Admin{% endblock %}
+{% block subtitle %}Users{% endblock %}
 
 {% block content %}
-    {% block menu %}
-        {% include "admin/_menu.html" %}
-    {% endblock %}
-    <form>
-        <p>
-            Please use the <a href="/djadmin/users/user/">Django Admin</a> for now.
-        </p>
-    </form>
+    <p>
+        Please use the <a href="/djadmin/users/user/">Django Admin</a> for now.
+    </p>
 {% endblock %}

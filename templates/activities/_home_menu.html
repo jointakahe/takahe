@@ -1,6 +1,27 @@
 <nav>
-    <a href="/" {% if current_page == "home" %}class="selected"{% endif %}>Home</a>
-    <a href="/notifications/" {% if current_page == "notifications" %}class="selected"{% endif %}>Notifications</a>
-    <a href="/local/" {% if current_page == "local" %}class="selected"{% endif %}>Local</a>
-    <a href="/federated/" {% if current_page == "federated" %}class="selected"{% endif %}>Federated</a>
+    <a href="/" {% if current_page == "home" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-home"></i> Home
+    </a>
+    <a href="/notifications/" {% if current_page == "notifications" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-at"></i> Notifications
+    </a>
+    <a href="/local/" {% if current_page == "local" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-city"></i> Local
+    </a>
+    <a href="/federated/" {% if current_page == "federated" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-globe"></i> Federated
+    </a>
 </nav>
+
+{% if current_page == "home" %}
+    <h2>Compose</h2>
+    <form action="/compose/" method="POST" class="compose">
+        {% csrf_token %}
+        {{ form.text }}
+        {{ form.content_warning }}
+        <div class="buttons">
+            <span class="button toggle" _="on click toggle .enabled then toggle .hidden on #id_content_warning">CW</span>
+            <button>{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+        </div>
+    </form>
+{% endif %}

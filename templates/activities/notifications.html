@@ -3,20 +3,9 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
-    {% include "activities/_home_menu.html" %}
-
-    <section class="columns">
-        <div class="left-column">
-            {% for event in events %}
-                {% include "activities/_event.html" %}
-            {% empty %}
-                No events yet.
-            {% endfor %}
-        </div>
-
-        <div class="right-column">
-            <h2>?</h2>
-        </div>
-
-    </section>
+    {% for event in events %}
+        {% include "activities/_event.html" %}
+    {% empty %}
+        No events yet.
+    {% endfor %}
 {% endblock %}

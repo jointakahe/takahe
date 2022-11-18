@@ -16,6 +16,7 @@ figure,
 blockquote,
 dl,
 dd,
+fieldset,
 menu {
     margin: 0;
     padding: 0;
@@ -166,6 +167,9 @@ header menu a.identity {
     border-right: 0;
     text-align: right;
     padding-right: 10px;
+    background: var(--color-bg-menu);
+    border-radius: 0 5px 0 0;
+    width: 250px;
 }
 
 header menu a i {
@@ -188,26 +192,47 @@ header menu a small {
 }
 
 nav {
-    display: flex;
-    height: 40px;
-    background: var(--color-bg-menu);
+    padding: 10px 10px 20px 0;
+}
+
+nav h3 {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 90%;
+    padding: 15px 18px 7px 16px;
+}
+
+nav h3:first-child {
+    padding-top: 0;
 }
 
 nav a {
     display: block;
     color: var(--color-text-dull);
-    text-transform: uppercase;
-    font-weight: bold;
-    padding: 9px 18px 9px 18px;
+    padding: 7px 18px 7px 13px;
+    border-left: 3px solid transparent;
 }
 
 nav a.selected {
     color: var(--color-text-main);
-    border-bottom: 3px solid var(--color-highlight);
+    background: var(--color-bg-main);
+    border-radius: 0 5px 5px 0;
 }
 
 nav a:hover {
     color: var(--color-text-main);
+    border-left: 3px solid var(--color-highlight);
+}
+
+nav a.selected:hover {
+    border-left: 3px solid transparent;
+}
+
+nav a i {
+    width: 20px;
+    text-align: center;
+    margin-right: 4px;
+    display: inline-block;
 }
 
 /* Left-right columns */
@@ -225,6 +250,7 @@ nav a:hover {
 .right-column {
     width: 250px;
     background: var(--color-bg-menu);
+    border-radius: 0 0 5px 0;
 }
 
 .right-column h2 {
@@ -237,22 +263,16 @@ nav a:hover {
 
 /* Icon menus */
 
-.icon-menu {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 30px 0 0 30px;
-}
+.icon-menu {}
 
 .icon-menu>a {
-    margin: 0px 40px 40px 0;
+    display: block;
+    margin: 0px 0 20px 0;
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    width: 370px;
-    height: 100px;
-    line-height: 100px;
     color: inherit;
     text-decoration: none;
-    padding: 0 20px;
+    padding: 10px 20px;
     border: 2px solid rgba(255, 255, 255, 0);
     border-radius: 3px;
 }
@@ -291,8 +311,21 @@ nav a:hover {
 
 /* Forms */
 
-form {
-    padding: 20px 40px 20px 30px;
+fieldset {
+    border: 0;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    margin: 25px 0 45px 0;
+    padding: 5px 15px;
+}
+
+fieldset legend {
+    position: relative;
+    top: -15px;
+    left: -15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--color-text-dull);
 }
 
 .right-column form,
@@ -316,10 +349,16 @@ form p {
 }
 
 form .field {
-    margin: 25px 0 25px 0;
-    background: var(--color-bg-box);
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    padding: 10px 10px;
+    margin: 0 0 25px 0;
+    display: flex;
+}
+
+form .field:last-of-type {
+    margin-bottom: 10px;
+}
+
+form .field .label-input {
+    flex-grow: 1;
 }
 
 .right-column form .field {
@@ -334,6 +373,7 @@ form label {
     text-transform: uppercase;
     font-size: 100%;
     font-weight: bold;
+    margin: 0 0 5px 0;
 }
 
 form label small {
@@ -349,7 +389,7 @@ form label small {
 form .help {
     color: var(--color-text-dull);
     font-size: 90%;
-    margin: 2px 0 6px 0;
+    margin: -5px 0 5px 0;
 }
 
 form .errorlist {
@@ -422,9 +462,16 @@ form input[type=submit]:hover {
     background: var(--color-button-main-hover);
 }
 
+form img.preview {
+    max-height: 100%;
+    max-width: 100px;
+    margin: 0 0 0 20px;
+    align-self: center;
+}
+
 form .buttons {
     text-align: right;
-    margin: 25px 0 15px 0;
+    margin: -20px 0 15px 0;
 }
 
 .right-column form .buttons {
@@ -457,6 +504,12 @@ form .button.secondary {
 form button.toggle,
 form .button.toggle {
     background: var(--color-bg-main);
+}
+
+form button.left,
+form .button.left {
+    float: left;
+    margin: 0 5px 0 0;
 }
 
 form button.toggle.enabled,
@@ -659,5 +712,39 @@ h1.identity small {
         vertical-align: middle;
         margin: 0;
         font-size: 20px;
+    }
+}
+
+
+@media (max-width: 700px) {
+    header menu a.identity {
+        width: 50px;
+        padding: 10px 10px 0 0;
+    }
+
+    .right-column {
+        width: 50px;
+    }
+
+    .right-column nav {
+        padding-right: 0;
+    }
+
+    .right-column nav a {
+        font-size: 0;
+        padding: 10px 0 10px 10px;
+    }
+
+    .right-column nav a i {
+        font-size: 22px;
+    }
+
+    .right-column h3 {
+        visibility: hidden;
+    }
+
+    .right-column h2,
+    .right-column .compose {
+        display: none;
     }
 }

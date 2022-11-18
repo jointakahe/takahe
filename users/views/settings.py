@@ -1,5 +1,5 @@
 from functools import partial
-from typing import ClassVar, Dict
+from typing import ClassVar, Dict, List
 
 from django import forms
 from django.shortcuts import redirect
@@ -27,6 +27,7 @@ class SettingsPage(FormView):
     template_name = "settings/settings.html"
     section: ClassVar[str]
     options: Dict[str, Dict[str, str]]
+    layout: Dict[str, List[str]]
 
     def get_form_class(self):
         # Create the fields dict from the config object
@@ -42,6 +43,8 @@ class SettingsPage(FormView):
                 )
             elif config_field.type_ is str:
                 form_field = forms.CharField
+            elif config_field.type_ is int:
+                form_field = forms.IntegerField
             else:
                 raise ValueError(f"Cannot render settings type {config_field.type_}")
             fields[key] = form_field(
@@ -68,6 +71,10 @@ class SettingsPage(FormView):
     def get_context_data(self):
         context = super().get_context_data()
         context["section"] = self.section
+        # Gather fields into fieldsets
+        context["fieldsets"] = {}
+        for title, fields in self.layout.items():
+            context["fieldsets"][title] = [context["form"][field] for field in fields]
         return context
 
     def form_valid(self, form):
@@ -87,9 +94,11 @@ class InterfacePage(SettingsPage):
     options = {
         "toot_mode": {
             "title": "I Will Toot As I Please",
-            "help_text": "If enabled, changes all 'Post' buttons to 'Toot!'",
+            "help_text": "Changes all 'Post' buttons to 'Toot!'",
         }
     }
+
+    layout = {"Posting": ["toot_mode"]}
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -102,9 +111,18 @@ class ProfilePage(FormView):
 
     class form_class(forms.Form):
         name = forms.CharField(max_length=500)
-        summary = forms.CharField(widget=forms.Textarea, required=False)
-        icon = forms.ImageField(required=False)
-        image = forms.ImageField(required=False)
+        summary = forms.CharField(
+            widget=forms.Textarea,
+            required=False,
+            help_text="Describe you and your interests",
+            label="Bio",
+        )
+        icon = forms.ImageField(
+            required=False, help_text="Shown next to all your posts and activities"
+        )
+        image = forms.ImageField(
+            required=False, help_text="Shown at the top of your profile"
+        )
 
     def get_initial(self):
         return {

@@ -1,11 +1,8 @@
-{% extends "base.html" %}
+{% extends "settings/base.html" %}
 
-{% block title %}{{ section.title }} - Admin{% endblock %}
+{% block subtitle %}Domains{% endblock %}
 
 {% block content %}
-    {% block menu %}
-        {% include "admin/_menu.html" %}
-    {% endblock %}
     <section class="icon-menu">
         {% for domain in domains %}
             <a class="option" href="{{ domain.urls.edit }}">

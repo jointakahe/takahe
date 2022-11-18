@@ -1,18 +1,22 @@
-{% extends "base.html" %}
+{% extends "settings/base.html" %}
 
-{% block title %}Profile - Settings{% endblock %}
+{% block subtitle %}Profile{% endblock %}
 
 {% block content %}
-    {% block menu %}
-        {% include "settings/_menu.html" %}
-    {% endblock %}
     <form action="." method="POST" enctype="multipart/form-data" >
         {% csrf_token %}
-        {% for field in form %}
-            {% include "forms/_field.html" %}
-        {% endfor %}
+        <fieldset>
+            <legend>Details</legend>
+            {% include "forms/_field.html" with field=form.name %}
+            {% include "forms/_field.html" with field=form.summary %}
+        </fieldset>
+        <fieldset>
+            <legend>Images</legend>
+            {% include "forms/_field.html" with field=form.icon preview=request.identity.icon.url %}
+            {% include "forms/_field.html" with field=form.image preview=request.identity.image.url %}
+        </fieldset>
         <div class="buttons">
-            <a href="{{ request.identity.urls.view }}" class="button secondary">View Profile</a>
+            <a href="{{ request.identity.urls.view }}" class="button secondary left">View Profile</a>
             <button>Save</button>
         </div>
     </form>

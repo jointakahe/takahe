@@ -24,7 +24,6 @@ class AdminSettingsPage(SettingsPage):
     at the bottom of the page. Don't add this to a URL directly - subclass!
     """
 
-    template_name = "admin/settings.html"
     options_class = Config.SystemOptions
 
     def load_config(self):
@@ -47,6 +46,15 @@ class BasicPage(AdminSettingsPage):
             "title": "Highlight Color",
             "help_text": "Used for logo background and other highlights",
         },
+        "post_length": {
+            "title": "Maximum Post Length",
+            "help_text": "The maximum number of characters allowed per post",
+        },
+    }
+
+    layout = {
+        "Branding": ["site_name", "highlight_color"],
+        "Posts": ["post_length"],
     }
 
 

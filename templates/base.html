@@ -31,14 +31,12 @@
                     <a href="/compose/" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-feather"></i> Compose
                     </a>
+                    <a href="#" title="Search" {% if top_section == "search" %}class="selected"{% endif %}>
+                        <i class="fa-solid fa-search"></i> Search
+                    </a>
                     <a href="{% url "settings" %}" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-gear"></i> Settings
                     </a>
-                    {% if request.user.admin %}
-                        <a href="{% url "admin" %}" title="Admin" {% if top_section == "admin" %}class="selected"{% endif %}>
-                            <i class="fa-solid fa-toolbox"></i> Admin
-                        </a>
-                    {% endif %}
                     <div class="gap"></div>
                     <a href="/identity/select/" class="identity">
                         {% if not request.identity %}
@@ -61,7 +59,18 @@
             </menu>
         </header>
 
-        {% block content %}
+        {% block full_content %}
+        <div class="columns">
+            <div class="left-column">
+                {% block content %}
+                {% endblock %}
+            </div>
+            <div class="right-column">
+                {% block right_content %}
+                    {% include "activities/_home_menu.html" %}
+                {% endblock %}
+            </div>
+        </div>
         {% endblock %}
     </main>
 

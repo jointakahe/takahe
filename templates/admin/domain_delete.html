@@ -1,12 +1,8 @@
-{% extends "base.html" %}
+{% extends "settings/base.html" %}
 
 {% block title %}Delete {{ domain.domain }} - Admin{% endblock %}
 
 {% block content %}
-    {% block menu %}
-        {% include "admin/_menu.html" %}
-    {% endblock %}
-
     <form action="." method="POST">
         {% csrf_token %}
 
@@ -28,6 +24,5 @@
                 <button class="delete">Confirm Deletion</button>
             </div>
         {% endif %}
-    </form>
 
 {% endblock %}

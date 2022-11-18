@@ -100,6 +100,7 @@ class Config(models.Model):
 
         site_name: str = "takahē"
         highlight_color: str = "#449c8c"
+        post_length: int = 500
         identity_max_age: int = 24 * 60 * 60
 
     class UserOptions(pydantic.BaseModel):

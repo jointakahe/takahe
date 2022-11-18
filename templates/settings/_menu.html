@@ -1,5 +1,28 @@
 <nav>
-    <a href="{% url "settings_profile" %}" {% if section == "profile" %}class="selected"{% endif %}>Profile</a>
-    <a href="#" {% if section == "interface" %}class="selected"{% endif %}>Interface</a>
-    <a href="#" {% if section == "filtering" %}class="selected"{% endif %}>Filtering</a>
+    <h3>Identity</h3>
+    <a href="{% url "settings_profile" %}" {% if section == "profile" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-user"></i> Profile
+    </a>
+    <a href="{% url "settings_interface" %}" {% if section == "interface" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-display"></i> Interface
+    </a>
+    {% if request.user.admin %}
+    <h3>Account</h3>
+    <a href="#" {% if section == "login" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-key"></i> Login &amp; Security
+    </a>
+    <h3>Administration</h3>
+    <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-book"></i> Basic
+    </a>
+    <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-globe"></i> Domains
+    </a>
+    <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-users"></i> Users
+    </a>
+    <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-id-card"></i> Identities
+    </a>
+    {% endif %}
 </nav>
