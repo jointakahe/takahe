@@ -2,11 +2,12 @@ import string
 
 from django import forms
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
+from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
 from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
@@ -14,16 +15,41 @@ from users.shortcuts import by_handle_or_404
 
 
 class ViewIdentity(TemplateView):
+    """
+    Shows identity profile pages, and also acts as the Actor endpoint when
+    approached with the right Accept header.
+    """
 
     template_name = "identity/view.html"
 
-    def get_context_data(self, handle):
+    def get(self, request, handle):
+        # Make sure we understand this handle
         identity = by_handle_or_404(
             self.request,
             handle,
             local=False,
             fetch=True,
         )
+        # If they're coming in looking for JSON, they want the actor
+        accept = request.META.get("HTTP_ACCEPT", "text/html").lower()
+        if (
+            "application/json" in accept
+            or "application/ld" in accept
+            or "application/activity" in accept
+        ):
+            # Return actor info
+            return self.serve_actor(identity)
+        else:
+            # Show normal page
+            return super().get(request, identity=identity)
+
+    def serve_actor(self, identity):
+        # If this not a local actor, redirect to their canonical URI
+        if not identity.local:
+            return redirect(identity.actor_uri)
+        return JsonResponse(canonicalise(identity.to_ap(), include_security=True))
+
+    def get_context_data(self, identity):
         posts = identity.posts.all()[:100]
         if identity.data_age > Config.system.identity_max_age:
             identity.transition_perform(IdentityStates.outdated)
@@ -150,7 +176,7 @@ class CreateIdentity(FormView):
         domain = form.cleaned_data["domain"]
         domain_instance = Domain.get_domain(domain)
         new_identity = Identity.objects.create(
-            actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/actor/",
+            actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/",
             username=username.lower(),
             domain_id=domain,
             name=form.cleaned_data["name"],

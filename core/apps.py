@@ -9,7 +9,4 @@ class CoreConfig(AppConfig):
     name = "core"
 
     def ready(self) -> None:
-        from core.models import Config
-
-        Config.system = Config.load_system()
         jsonld.set_document_loader(builtin_document_loader)

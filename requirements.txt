@@ -11,3 +11,4 @@ psycopg2~=2.9.5
 bleach~=5.0.1
 pydantic~=1.10.2
 django-htmx~=1.13.0
+django-storages[google,boto3]~=1.13.1

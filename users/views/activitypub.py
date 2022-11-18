@@ -1,18 +1,22 @@
 import json
 
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
+from activities.models import Post
 from core.ld import canonicalise
+from core.models import Config
 from core.signatures import (
     HttpSignature,
     LDSignature,
     VerificationError,
     VerificationFormatError,
 )
+from takahe import __version__
 from users.models import Identity, InboxMessage
 from users.shortcuts import by_handle_or_404
 
@@ -34,6 +38,51 @@ class HostMeta(View):
             </XRD>"""
             % request.META["HTTP_HOST"],
             content_type="application/xml",
+        )
+
+
+class NodeInfo(View):
+    """
+    Returns the well-known nodeinfo response, pointing to the 2.0 one
+    """
+
+    def get(self, request):
+        host = request.META.get("HOST", settings.MAIN_DOMAIN)
+        return JsonResponse(
+            {
+                "links": [
+                    {
+                        "rel": "http://nodeinfo.diaspora.software/ns/schema/2.0",
+                        "href": f"https://{host}/nodeinfo/2.0/",
+                    }
+                ]
+            }
+        )
+
+
+class NodeInfo2(View):
+    """
+    Returns the nodeinfo 2.0 response
+    """
+
+    def get(self, request):
+        # Fetch some user stats
+        local_identities = Identity.objects.filter(local=True).count()
+        local_posts = Post.objects.filter(local=True).count()
+        return JsonResponse(
+            {
+                "version": "2.0",
+                "software": {"name": "takahe", "version": __version__},
+                "protocols": ["activitypub"],
+                "services": {"outbound": [], "inbound": []},
+                "usage": {
+                    "users": {"total": local_identities},
+                    "localPosts": local_posts,
+                },
+                "openRegistrations": Config.system.signup_allowed
+                and not Config.system.signup_invite_only,
+                "metadata": {},
+            }
         )
 
 
@@ -68,16 +117,6 @@ class Webfinger(View):
                 ],
             }
         )
-
-
-class Actor(View):
-    """
-    Returns the AP Actor object
-    """
-
-    def get(self, request, handle):
-        identity = by_handle_or_404(self.request, handle)
-        return JsonResponse(canonicalise(identity.to_ap(), include_security=True))
 
 
 @method_decorator(csrf_exempt, name="dispatch")

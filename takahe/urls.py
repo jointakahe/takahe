@@ -86,8 +86,7 @@ urlpatterns = [
     ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
-    path("@<handle>/actor/", activitypub.Actor.as_view()),
-    path("@<handle>/actor/inbox/", activitypub.Inbox.as_view()),
+    path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Posts
     path("compose/", posts.Compose.as_view(), name="compose"),
@@ -109,6 +108,8 @@ urlpatterns = [
     # Well-known endpoints
     path(".well-known/webfinger", activitypub.Webfinger.as_view()),
     path(".well-known/host-meta", activitypub.HostMeta.as_view()),
+    path(".well-known/nodeinfo", activitypub.NodeInfo.as_view()),
+    path("nodeinfo/2.0/", activitypub.NodeInfo2.as_view()),
     # Task runner
     path(".stator/runner/", stator.RequestRunner.as_view()),
     # Django admin

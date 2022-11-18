@@ -160,7 +160,7 @@ class Config(models.Model):
         site_icon: UploadedImage = static("img/icon-128.png")
         site_banner: UploadedImage = static("img/fjords-banner-600.jpg")
 
-        signup_allowed: bool = False
+        signup_allowed: bool = True
         signup_invite_only: bool = False
         signup_text: str = ""
 

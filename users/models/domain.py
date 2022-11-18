@@ -41,6 +41,9 @@ class Domain(models.Model):
     # should)
     public = models.BooleanField(default=False)
 
+    # If this is the default domain (shown as the default entry for new users)
+    default = models.BooleanField(default=False)
+
     # Domains can also be linked to one or more users for their private use
     # This should be display domains ONLY
     users = models.ManyToManyField("users.User", related_name="domains", blank=True)
@@ -52,7 +55,7 @@ class Domain(models.Model):
         root = "/admin/domains/"
         create = "/admin/domains/create/"
         edit = "/admin/domains/{self.domain}/"
-        delete = "/admin/domains/{self.domain}/delete/"
+        delete = "{edit}delete/"
 
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":
@@ -81,7 +84,7 @@ class Domain(models.Model):
         return cls.objects.filter(
             models.Q(public=True) | models.Q(users__id=user.id),
             local=True,
-        )
+        ).order_by("-default", "domain")
 
     def __str__(self):
         return self.domain

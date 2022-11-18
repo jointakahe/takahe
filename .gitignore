@@ -2,5 +2,6 @@
 *.sqlite3
 .venv
 /*.env
+/docs/_build
 /media/
 notes.md

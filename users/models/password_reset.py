@@ -12,7 +12,7 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class PasswordResetStates(StateGraph):
-    new = State(try_interval=3)
+    new = State(try_interval=300)
     sent = State()
 
     new.transitions_to(sent)

@@ -14,6 +14,9 @@
                         {% if domain.service_domain %}({{ domain.service_domain }}){% endif %}
                     </small>
                 </span>
+                {% if domain.default %}
+                    <span class="pill">Default</span>
+                {% endif %}
             </a>
         {% empty %}
             <p class="option empty">You have no domains set up.</p>

@@ -147,8 +147,8 @@ class ProfilePage(FormView):
         return {
             "name": self.request.identity.name,
             "summary": self.request.identity.summary,
-            "icon": self.request.identity.icon.url,
-            "image": self.request.identity.image.url,
+            "icon": self.request.identity.icon and self.request.identity.icon.url,
+            "image": self.request.identity.image and self.request.identity.image.url,
         }
 
     def form_valid(self, form):

@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.core.management.base import BaseCommand
 
+from core.models import Config
 from stator.models import StatorModel
 from stator.runner import StatorRunner
 
@@ -22,6 +23,8 @@ class Command(BaseCommand):
         parser.add_argument("model_labels", nargs="*", type=str)
 
     def handle(self, model_labels: List[str], concurrency: int, *args, **options):
+        # Cache system config
+        Config.system = Config.load_system()
         # Resolve the models list into names
         models = cast(
             List[Type[StatorModel]],

@@ -549,6 +549,10 @@ form .buttons {
     margin: -20px 0 15px 0;
 }
 
+form p+.buttons {
+    margin-top: 0;
+}
+
 .right-column form .buttons {
     margin: 5px 10px 5px 0;
 }

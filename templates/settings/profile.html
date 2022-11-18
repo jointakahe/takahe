@@ -12,8 +12,8 @@
         </fieldset>
         <fieldset>
             <legend>Images</legend>
-            {% include "forms/_field.html" with field=form.icon preview=request.identity.icon.url %}
-            {% include "forms/_field.html" with field=form.image preview=request.identity.image.url %}
+            {% include "forms/_field.html" with field=form.icon %}
+            {% include "forms/_field.html" with field=form.image %}
         </fieldset>
         <div class="buttons">
             <a href="{{ request.identity.urls.view }}" class="button secondary left">View Profile</a>

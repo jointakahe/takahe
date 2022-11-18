@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import get_object_or_404, render
@@ -50,6 +51,10 @@ class Signup(FormView):
 
     def form_valid(self, form):
         user = User.objects.create(email=form.cleaned_data["email"])
+        # Auto-promote the user to admin if that setting is set
+        if settings.AUTO_ADMIN_EMAIL and user.email == settings.AUTO_ADMIN_EMAIL:
+            user.admin = True
+            user.save()
         PasswordReset.create_for_user(user)
         if "invite_code" in form.cleaned_data:
             Invite.objects.filter(token=form.cleaned_data["invite_code"]).delete()

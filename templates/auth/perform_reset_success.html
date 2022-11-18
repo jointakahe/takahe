@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Password Reset{% endblock %}
+{% block title %}Password Set{% endblock %}
 
 {% block content %}
     <form>
         <fieldset>
-            <legend>Password Reset</legend>
+            <legend>Password Set</legend>
             <p>
-                Your password for <tt>{{ email }}</tt> has been reset!
+                Your password for <tt>{{ email }}</tt> has been set. You can
+                now <a href="/auth/login/">login</a>.
             </p>
         </fieldset>
     </form>

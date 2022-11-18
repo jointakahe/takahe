@@ -41,6 +41,11 @@ class DomainCreate(FormView):
             widget=forms.Select(choices=[(True, "Public"), (False, "Private")]),
             required=False,
         )
+        default = forms.BooleanField(
+            help_text="If this is the default option for new identities",
+            widget=forms.Select(choices=[(True, "Yes"), (False, "No")]),
+            required=False,
+        )
 
         domain_regex = re.compile(
             r"^((?!-))(xn--)?[a-z0-9][a-z0-9-_]{0,61}[a-z0-9]{0,1}\.(xn--)?([a-z0-9\-]{1,61}|[a-z0-9-]{1,30}\.[a-z]{2,})$"
@@ -72,13 +77,22 @@ class DomainCreate(FormView):
                 )
             return self.cleaned_data["service_domain"]
 
+        def clean_default(self):
+            value = self.cleaned_data["default"]
+            if value and not self.cleaned_data.get("public"):
+                raise forms.ValidationError("A non-public domain cannot be the default")
+            return value
+
     def form_valid(self, form):
-        Domain.objects.create(
+        domain = Domain.objects.create(
             domain=form.cleaned_data["domain"],
             service_domain=form.cleaned_data["service_domain"] or None,
             public=form.cleaned_data["public"],
+            default=form.cleaned_data["default"],
             local=True,
         )
+        if domain.default:
+            Domain.objects.exclude(pk=domain.pk).update(default=False)
         return redirect(Domain.urls.root)
 
 
@@ -88,21 +102,17 @@ class DomainEdit(FormView):
     template_name = "admin/domain_edit.html"
     extra_context = {"section": "domains"}
 
-    class form_class(forms.Form):
-        domain = forms.CharField(
-            help_text="The domain displayed as part of a user's identity.\nCannot be changed after the domain has been created.",
-            disabled=True,
-        )
-        service_domain = forms.CharField(
-            help_text="Optional - a domain that serves Takahē if it is not running on the main domain.\nCannot be changed after the domain has been created.",
-            disabled=True,
-            required=False,
-        )
-        public = forms.BooleanField(
-            help_text="If any user on this server can create identities here",
-            widget=forms.Select(choices=[(True, "Public"), (False, "Private")]),
-            required=False,
-        )
+    class form_class(DomainCreate.form_class):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields["domain"].disabled = True
+            self.fields["service_domain"].disabled = True
+
+        def clean_domain(self):
+            return self.cleaned_data["domain"]
+
+        def clean_service_domain(self):
+            return self.cleaned_data["service_domain"]
 
     def dispatch(self, request, domain):
         self.domain = get_object_or_404(
@@ -110,14 +120,17 @@ class DomainEdit(FormView):
         )
         return super().dispatch(request)
 
-    def get_context_data(self):
-        context = super().get_context_data()
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
         context["domain"] = self.domain
         return context
 
     def form_valid(self, form):
         self.domain.public = form.cleaned_data["public"]
+        self.domain.default = form.cleaned_data["default"]
         self.domain.save()
+        if self.domain.default:
+            Domain.objects.exclude(pk=self.domain.pk).update(default=False)
         return redirect(Domain.urls.root)
 
     def get_initial(self):
@@ -125,6 +138,7 @@ class DomainEdit(FormView):
             "domain": self.domain.domain,
             "service_domain": self.domain.service_domain,
             "public": self.domain.public,
+            "default": self.domain.default,
         }
 
 
@@ -150,4 +164,4 @@ class DomainDelete(TemplateView):
         if self.domain.identities.exists():
             raise ValueError("Tried to delete domain with identities!")
         self.domain.delete()
-        return redirect("/settings/system/domains/")
+        return redirect("admin_domains")

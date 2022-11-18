@@ -1,5 +1,7 @@
 import os
+import sys
 from pathlib import Path
+from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -56,11 +58,11 @@ WSGI_APPLICATION = "takahe.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", 5432),
-        "NAME": os.environ.get("POSTGRES_DB", "takahe"),
-        "USER": os.environ.get("POSTGRES_USER", "postgres"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "HOST": os.environ.get("PGHOST", "localhost"),
+        "PORT": os.environ.get("PGPORT", 5432),
+        "NAME": os.environ.get("PGDATABASE", "takahe"),
+        "USER": os.environ.get("PGUSER", "postgres"),
+        "PASSWORD": os.environ.get("PGPASSWORD"),
     }
 }
 
@@ -109,12 +111,47 @@ STATICFILES_DIRS = [
 
 ALLOWED_HOSTS = ["*"]
 
+### User-configurable options, pulled from the environment ###
+
 MAIN_DOMAIN = os.environ["TAKAHE_MAIN_DOMAIN"]
 if "/" in MAIN_DOMAIN:
     print("TAKAHE_MAIN_DOMAIN should be just the domain name - no https:// or path")
+    sys.exit(1)
 
-EMAIL_FROM = os.environ["TAKAHE_EMAIL_FROM"]
 
-# Note that this MUST be a fully qualified URL in production
-MEDIA_URL = os.environ.get("TAKAHE_MEDIA_URL", "/media/")
-MEDIA_ROOT = os.environ.get("TAKAHE_MEDIA_ROOT", BASE_DIR / "media")
+if os.environ.get("TAKAHE_EMAIL_CONSOLE_ONLY"):
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_FROM = "test@example.com"
+else:
+    EMAIL_FROM = os.environ["TAKAHE_EMAIL_FROM"]
+    if "TAKAHE_EMAIL_SENDGRID_KEY" in os.environ:
+        EMAIL_HOST = "smtp.sendgrid.net"
+        EMAIL_PORT = 587
+        EMAIL_HOST_USER: Optional[str] = "apikey"
+        EMAIL_HOST_PASSWORD: Optional[str] = os.environ["TAKAHE_EMAIL_SENDGRID_KEY"]
+        EMAIL_USE_TLS = True
+    else:
+        EMAIL_HOST = os.environ["TAKAHE_EMAIL_HOST"]
+        EMAIL_PORT = int(os.environ["TAKAHE_EMAIL_PORT"])
+        EMAIL_HOST_USER = os.environ.get("TAKAHE_EMAIL_USER")
+        EMAIL_HOST_PASSWORD = os.environ.get("TAKAHE_EMAIL_PASSWORD")
+        EMAIL_USE_SSL = EMAIL_PORT == 465
+        EMAIL_USE_TLS = EMAIL_PORT == 587
+
+AUTO_ADMIN_EMAIL = os.environ.get("TAKAHE_AUTO_ADMIN_EMAIL")
+
+# Set up media storage
+MEDIA_BACKEND = os.environ.get("TAKAHE_MEDIA_BACKEND", None)
+if MEDIA_BACKEND == "local":
+    # Note that this MUST be a fully qualified URL in production
+    MEDIA_URL = os.environ.get("TAKAHE_MEDIA_URL", "/media/")
+    MEDIA_ROOT = os.environ.get("TAKAHE_MEDIA_ROOT", BASE_DIR / "media")
+elif MEDIA_BACKEND == "gcs":
+    DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    GS_BUCKET_NAME = os.environ["TAKAHE_MEDIA_BUCKET"]
+elif MEDIA_BACKEND == "s3":
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    AWS_STORAGE_BUCKET_NAME = os.environ["TAKAHE_MEDIA_BUCKET"]
+else:
+    print("Unknown TAKAHE_MEDIA_BACKEND value")
+    sys.exit(1)

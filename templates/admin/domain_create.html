@@ -33,8 +33,10 @@
         <fieldset>
             <legend>Access Control</legend>
             {% include "forms/_field.html" with field=form.public %}
+            {% include "forms/_field.html" with field=form.default %}
         </fieldset>
         <div class="buttons">
+            <a href="{% url "admin_domains" %}" class="button secondary left">Back</a>
             <button>Create</button>
         </div>
     </form>
