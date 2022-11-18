@@ -108,5 +108,7 @@ STATICFILES_DIRS = [
 
 ALLOWED_HOSTS = ["*"]
 
-MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "/media/"
+
+# Note that this MUST be a fully qualified URL in production
+MEDIA_URL = os.environ.get("TAKAHE_MEDIA_URL", "/media/")
+MEDIA_ROOT = os.environ.get("TAKAHE_MEDIA_ROOT", BASE_DIR / "media")

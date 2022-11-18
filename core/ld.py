@@ -1,4 +1,5 @@
 import datetime
+import os
 import urllib.parse as urllib_parse
 from typing import Dict, List, Optional, Union
 
@@ -436,3 +437,19 @@ def parse_ld_date(value: Optional[str]) -> Optional[datetime.datetime]:
     return datetime.datetime.strptime(value, DATETIME_FORMAT).replace(
         tzinfo=datetime.timezone.utc
     )
+
+
+def media_type_from_filename(filename):
+    _, extension = os.path.splitext(filename)
+    if extension == ".png":
+        return "image/png"
+    elif extension in [".jpg", ".jpeg"]:
+        return "image/png"
+    elif extension == ".gif":
+        return "image/gif"
+    elif extension == ".apng":
+        return "image/apng"
+    elif extension == ".webp":
+        return "image/webp"
+    else:
+        return "application/octet-stream"

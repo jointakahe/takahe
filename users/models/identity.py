@@ -8,10 +8,12 @@ from asgiref.sync import async_to_sync, sync_to_async
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.db import models
+from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
 from django.utils import timezone
 
-from core.ld import canonicalise
+from core.html import sanitize_post
+from core.ld import canonicalise, media_type_from_filename
 from core.uploads import upload_namer
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
@@ -139,6 +141,10 @@ class Identity(StatorModel):
         elif self.image_uri:
             return self.image_uri
 
+    @property
+    def safe_summary(self):
+        return sanitize_post(self.summary)
+
     ### Alternate constructors/fetchers ###
 
     @classmethod
@@ -223,7 +229,19 @@ class Identity(StatorModel):
         if self.name:
             response["name"] = self.name
         if self.summary:
-            response["summary"] = self.summary
+            response["summary"] = str(linebreaks_filter(self.summary))
+        if self.icon:
+            response["icon"] = {
+                "type": "Image",
+                "mediaType": media_type_from_filename(self.icon.name),
+                "url": self.icon.url,
+            }
+        if self.image:
+            response["image"] = {
+                "type": "Image",
+                "mediaType": media_type_from_filename(self.image.name),
+                "url": self.image.url,
+            }
         return response
 
     ### ActivityPub (inbound) ###

@@ -1,5 +1,6 @@
 *.psql
 *.sqlite3
 .venv
+/*.env
 /media/
 notes.md

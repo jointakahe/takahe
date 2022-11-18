@@ -2,7 +2,9 @@
 {% load activity_tags %}
 <div class="post" data-takahe-id="{{ post.id }}">
 
-    <img src="{{ post.author.local_icon_url }}" class="icon">
+    <a href="{{ post.author.urls.view }}">
+        <img src="{{ post.author.local_icon_url }}" class="icon">
+    </a>
 
     <time>
         {% if post.visibility == 0 %}

@@ -1,5 +1,3 @@
-import re
-
 from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
 from django.urls import path, re_path
@@ -99,7 +97,7 @@ urlpatterns = [
     path("djadmin/", djadmin.site.urls),
     # Media files
     re_path(
-        r"^%s(?P<path>.*)$" % re.escape(djsettings.MEDIA_URL.lstrip("/")),
+        r"^media/(?P<path>.*)$",
         serve,
         kwargs={"document_root": djsettings.MEDIA_ROOT},
     ),
