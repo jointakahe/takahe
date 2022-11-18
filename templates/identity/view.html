@@ -1,17 +1,13 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}{{ identity }}{% endblock %}
 
 {% block content %}
-    <nav>
-        <a href="." class="selected">Profile</a>
-    </nav>
-
     <h1 class="identity">
         {% if identity.local_image_url %}
             <img src="{{ identity.local_image_url }}" class="banner">
         {% endif %}
+
         <img src="{{ identity.local_icon_url }}" class="icon">
 
         {% if request.identity %}
@@ -43,13 +39,9 @@
         {% endif %}
     {% endif %}
 
-    <section class="columns">
-        <div class="left-column">
-            {% for post in posts %}
-                {% include "activities/_post.html" %}
-            {% empty %}
-                No posts yet.
-            {% endfor %}
-        </div>
-    </section>
+    {% for post in posts %}
+        {% include "activities/_post.html" %}
+    {% empty %}
+        No posts yet.
+    {% endfor %}
 {% endblock %}

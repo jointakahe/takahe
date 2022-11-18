@@ -37,7 +37,6 @@ class FanOutStates(StateGraph):
                     private_key=post.author.private_key,
                     key_id=post.author.public_key_id,
                 )
-            return cls.sent
         # Handle boosts/likes
         elif fan_out.type == FanOut.Types.interaction:
             interaction = await fan_out.subject_post_interaction.afetch_full()
@@ -74,6 +73,7 @@ class FanOutStates(StateGraph):
                 )
         else:
             raise ValueError(f"Cannot fan out with type {fan_out.type}")
+        return cls.sent
 
 
 class FanOut(StatorModel):

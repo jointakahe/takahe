@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
 from activities.models import Post, PostInteraction, PostInteractionStates
+from core.models import Config
 from users.decorators import identity_required
 from users.shortcuts import by_handle_or_404
 
@@ -112,6 +113,7 @@ class Compose(FormView):
     template_name = "activities/compose.html"
 
     class form_class(forms.Form):
+
         text = forms.CharField(
             widget=forms.Textarea(
                 attrs={
@@ -136,6 +138,22 @@ class Compose(FormView):
             ),
             help_text="Optional - Post will be hidden behind this text until clicked",
         )
+
+        def clean_text(self):
+            text = self.cleaned_data.get("text")
+            if not text:
+                return text
+            length = len(text)
+            if length > Config.system.post_length:
+                raise forms.ValidationError(
+                    f"Maximum post length is {Config.system.post_length} characters (you have {length})"
+                )
+            return text
+
+    def get_form_class(self):
+        form = super().get_form_class()
+        form.declared_fields["text"]
+        return form
 
     def form_valid(self, form):
         Post.create_local(

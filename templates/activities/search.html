@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Search{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            {% include "forms/_field.html" with field=form.query %}
+        </fieldset>
+        <div class="buttons">
+            <button>Search</button>
+        </div>
+    </form>
+    {% if results.identities %}
+        <h2>People</h2>
+        {% for identity in results.identities %}
+            {% include "activities/_identity.html" %}
+        {% endfor %}
+    {% endif %}
+{% endblock %}

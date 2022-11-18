@@ -28,10 +28,10 @@
             </a>
             <menu>
                 {% if user.is_authenticated %}
-                    <a href="/compose/" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
+                    <a href="{% url "compose" %}" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-feather"></i> Compose
                     </a>
-                    <a href="#" title="Search" {% if top_section == "search" %}class="selected"{% endif %}>
+                    <a href="{% url "search" %}" title="Search" {% if top_section == "search" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-search"></i> Search
                     </a>
                     <a href="{% url "settings" %}" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
@@ -67,7 +67,7 @@
             </div>
             <div class="right-column">
                 {% block right_content %}
-                    {% include "activities/_home_menu.html" %}
+                    {% include "activities/_menu.html" %}
                 {% endblock %}
             </div>
         </div>

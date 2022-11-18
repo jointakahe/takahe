@@ -55,11 +55,12 @@ the less sure I am about it.
 - [x] Receive follow undos
 - [ ] Do outgoing mentions properly
 - [x] Home timeline (posts and boosts from follows)
-- [ ] Notifications page (followed, boosted, liked)
+- [x] Notifications page (followed, boosted, liked)
 - [x] Local timeline
 - [x] Federated timeline
 - [x] Profile pages
-- [ ] Settable icon and background image for profiles
+- [x] Settable icon and background image for profiles
+- [x] User search
 - [ ] Following page
 - [ ] Followers page
 - [x] Multiple domain support
@@ -88,6 +89,7 @@ the less sure I am about it.
 - [ ] Emoji fetching and display
 - [ ] Emoji creation
 - [ ] Image descriptions
+- [ ] Hashtag search
 - [ ] Flag for moderation
 - [ ] Moderation queue
 - [ ] User management page

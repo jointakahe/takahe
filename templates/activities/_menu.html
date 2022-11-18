@@ -19,6 +19,7 @@
         {% csrf_token %}
         {{ form.text }}
         {{ form.content_warning }}
+        <input type="hidden" name="visibility" value="0">
         <div class="buttons">
             <span class="button toggle" _="on click toggle .enabled then toggle .hidden on #id_content_warning">CW</span>
             <button>{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>

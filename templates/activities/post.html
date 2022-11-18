@@ -3,15 +3,5 @@
 {% block title %}Post by {{ post.author.name_or_handle }}{% endblock %}
 
 {% block content %}
-    <nav>
-        <a href="." class="selected">Post</a>
-    </nav>
-
-    <section class="columns">
-
-        <div class="left-column">
-            {% include "activities/_post.html" %}
-        </div>
-
-    </section>
+    {% include "activities/_post.html" %}
 {% endblock %}

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from django.db import models
+from django.db import models, transaction
 
 from core.ld import canonicalise
 from core.signatures import HttpSignature
@@ -218,9 +218,14 @@ class Follow(StatorModel):
         """
         Handles an incoming follow request
         """
-        follow = cls.by_ap(data, create=True)
-        # Force it into remote_requested so we send an accept
-        follow.transition_perform(FollowStates.remote_requested)
+        from activities.models import TimelineEvent
+
+        with transaction.atomic():
+            follow = cls.by_ap(data, create=True)
+            # Force it into remote_requested so we send an accept
+            follow.transition_perform(FollowStates.remote_requested)
+            # Add a timeline event
+            TimelineEvent.add_follow(follow.target, follow.source)
 
     @classmethod
     def handle_accept_ap(cls, data):

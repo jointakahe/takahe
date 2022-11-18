@@ -247,6 +247,10 @@ nav a i {
     padding: 15px;
 }
 
+.left-column h2 {
+    margin: 10px 0 10px 0;
+}
+
 .right-column {
     width: 250px;
     background: var(--color-bg-menu);
@@ -335,7 +339,7 @@ form.inline {
 
 form.follow {
     float: right;
-    margin: 20px 20px 0 0;
+    margin: 20px 0 0 0;
     font-size: 16px;
 }
 
@@ -530,12 +534,13 @@ form .button:hover {
 /* Identities */
 
 h1.identity {
-    margin: 15px 0 20px 15px;
+    margin: 0 0 20px 0;
 }
 
 h1.identity .banner {
-    width: 870px;
-    height: auto;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
     display: block;
     margin: 0 0 20px 0;
 }
@@ -560,7 +565,7 @@ h1.identity small {
     color: var(--color-text-dull);
     border-radius: 3px;
     padding: 5px 8px;
-    margin: 15px;
+    margin: 15px 0;
 }
 
 .system-note a {
@@ -658,6 +663,7 @@ h1.identity small {
 .post .actions a {
     cursor: pointer;
     color: var(--color-text-dull);
+    margin-right: 10px;
 }
 
 .post .actions a:hover {
@@ -668,8 +674,18 @@ h1.identity small {
     color: var(--color-highlight);
 }
 
-.boost-banner {
+.boost-banner,
+.mention-banner,
+.follow-banner,
+.like-banner {
     padding: 0 0 3px 5px;
+}
+
+.boost-banner a,
+.mention-banner a,
+.follow-banner a,
+.like-banner a {
+    font-weight: bold;
 }
 
 .boost-banner::before {
@@ -678,8 +694,22 @@ h1.identity small {
     margin-right: 4px;
 }
 
-.boost-banner a {
-    font-weight: bold;
+.mention-banner::before {
+    content: "\0040";
+    font: var(--fa-font-solid);
+    margin-right: 4px;
+}
+
+.follow-banner::before {
+    content: "\f007";
+    font: var(--fa-font-solid);
+    margin-right: 4px;
+}
+
+.like-banner::before {
+    content: "\f005";
+    font: var(--fa-font-solid);
+    margin-right: 4px;
 }
 
 

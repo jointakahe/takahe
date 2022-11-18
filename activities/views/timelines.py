@@ -98,9 +98,18 @@ class Notifications(TemplateView):
 
     def get_context_data(self):
         context = super().get_context_data()
-        context["events"] = TimelineEvent.objects.filter(
-            identity=self.request.identity,
-            type__in=[TimelineEvent.Types.mentioned, TimelineEvent.Types.boosted],
-        ).select_related("subject_post", "subject_post__author", "subject_identity")
+        context["events"] = (
+            TimelineEvent.objects.filter(
+                identity=self.request.identity,
+                type__in=[
+                    TimelineEvent.Types.mentioned,
+                    TimelineEvent.Types.boosted,
+                    TimelineEvent.Types.liked,
+                    TimelineEvent.Types.followed,
+                ],
+            )
+            .order_by("-created")[:50]
+            .select_related("subject_post", "subject_post__author", "subject_identity")
+        )
         context["current_page"] = "notifications"
         return context

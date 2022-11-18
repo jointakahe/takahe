@@ -5,7 +5,7 @@ from django.contrib import admin as djadmin
 from django.urls import path, re_path
 from django.views.static import serve
 
-from activities.views import posts, timelines
+from activities.views import posts, search, timelines
 from core import views as core
 from stator import views as stator
 from users.views import activitypub, admin, auth, identity, settings
@@ -14,9 +14,10 @@ urlpatterns = [
     path("", core.homepage),
     path("manifest.json", core.AppManifest.as_view()),
     # Activity views
-    path("notifications/", timelines.Notifications.as_view()),
-    path("local/", timelines.Local.as_view()),
-    path("federated/", timelines.Federated.as_view()),
+    path("notifications/", timelines.Notifications.as_view(), name="notifications"),
+    path("local/", timelines.Local.as_view(), name="local"),
+    path("federated/", timelines.Federated.as_view(), name="federated"),
+    path("search/", search.Search.as_view(), name="search"),
     path(
         "settings/",
         settings.SettingsRoot.as_view(),
@@ -76,7 +77,7 @@ urlpatterns = [
     path("@<handle>/actor/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Posts
-    path("compose/", posts.Compose.as_view()),
+    path("compose/", posts.Compose.as_view(), name="compose"),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
     path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),

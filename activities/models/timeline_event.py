@@ -66,7 +66,7 @@ class TimelineEvent(models.Model):
         """
         return cls.objects.get_or_create(
             identity=identity,
-            type=cls.Types.follow,
+            type=cls.Types.followed,
             subject_identity=source_identity,
         )[0]
 
@@ -90,6 +90,7 @@ class TimelineEvent(models.Model):
             identity=identity,
             type=cls.Types.mentioned,
             subject_post=post,
+            subject_identity=post.author,
         )[0]
 
     @classmethod

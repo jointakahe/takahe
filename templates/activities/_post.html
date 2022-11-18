@@ -51,11 +51,6 @@
     <div class="actions">
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
-        {% if request.user.admin %}
-            <a title="Admin" href="/djadmin/activities/post/{{ post.pk }}/change/">
-                <i class="fa-solid fa-file-code"></i>
-            </a>
-        {% endif %}
     </div>
     {% endif %}
 </div>
