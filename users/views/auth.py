@@ -44,9 +44,38 @@ class Signup(FormView):
         )
 
 
-class Reset(FormView):
+class TriggerReset(FormView):
 
-    template_name = "auth/reset.html"
+    template_name = "auth/trigger_reset.html"
+
+    class form_class(forms.Form):
+
+        email = forms.EmailField(
+            help_text="We will send a reset link to this email",
+        )
+
+        def clean_email(self):
+            email = self.cleaned_data.get("email").lower()
+            if not email:
+                return
+            if not User.objects.filter(email=email).exists():
+                raise forms.ValidationError("This email does not have an account")
+            return email
+
+    def form_valid(self, form):
+        PasswordReset.create_for_user(
+            User.objects.get(email=form.cleaned_data["email"])
+        )
+        return render(
+            self.request,
+            "auth/trigger_reset_success.html",
+            {"email": form.cleaned_data["email"]},
+        )
+
+
+class PerformReset(FormView):
+
+    template_name = "auth/perform_reset.html"
 
     class form_class(forms.Form):
 
@@ -81,7 +110,7 @@ class Reset(FormView):
         self.reset.delete()
         return render(
             self.request,
-            "auth/reset_success.html",
+            "auth/perform_reset_success.html",
             {"email": self.reset.user.email},
         )
 

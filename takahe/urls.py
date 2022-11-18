@@ -22,6 +22,11 @@ urlpatterns = [
         name="settings",
     ),
     path(
+        "settings/security/",
+        settings.SecurityPage.as_view(),
+        name="settings_security",
+    ),
+    path(
         "settings/profile/",
         settings.ProfilePage.as_view(),
         name="settings_profile",
@@ -85,7 +90,8 @@ urlpatterns = [
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),
     path("auth/signup/", auth.Signup.as_view(), name="signup"),
-    path("auth/reset/<token>/", auth.Reset.as_view(), name="password_reset"),
+    path("auth/reset/", auth.TriggerReset.as_view(), name="trigger_reset"),
+    path("auth/reset/<token>/", auth.PerformReset.as_view(), name="password_reset"),
     # Identity selection
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
     path("identity/select/", identity.SelectIdentity.as_view()),

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Reset Password{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Reset Password</legend>
+            {% for field in form %}
+                {% include "forms/_field.html" %}
+            {% endfor %}
+        </fieldset>
+        <div class="buttons">
+            <button>Send Email</button>
+        </div>
+    </form>
+{% endblock %}

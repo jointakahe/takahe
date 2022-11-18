@@ -9,7 +9,7 @@ class Search(FormView):
     template_name = "activities/search.html"
 
     class form_class(forms.Form):
-        query = forms.CharField()
+        query = forms.CharField(help_text="Search for a user by @username@domain")
 
     def form_valid(self, form):
         query = form.cleaned_data["query"].lstrip("@").lower()

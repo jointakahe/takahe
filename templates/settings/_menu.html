@@ -8,7 +8,7 @@
     </a>
     {% if request.user.admin %}
     <h3>Account</h3>
-    <a href="#" {% if section == "login" %}class="selected"{% endif %}>
+    <a href="{% url "settings_security" %}" {% if section == "security" %}class="selected"{% endif %}>
         <i class="fa-solid fa-key"></i> Login &amp; Security
     </a>
     <a href="/auth/logout/">

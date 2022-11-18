@@ -69,16 +69,16 @@ the less sure I am about it.
 - [x] Settings subsystem
 - [x] Server management page
 - [x] Domain management page
-- [ ] Email subsystem
-- [ ] Signup flow
-- [ ] Password change flow
-- [ ] Password reset flow
+- [x] Email subsystem
+- [x] Signup flow
+- [x] Password reset flow
 
 ### Beta
 
 - [ ] Attach images to posts
 - [ ] Edit posts
 - [ ] Delete posts
+- [ ] Password change flow
 - [ ] Fetch remote post images locally and thumbnail
 - [ ] Show follow pending states
 - [ ] Manual approval of followers

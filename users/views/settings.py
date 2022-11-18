@@ -126,6 +126,7 @@ class ProfilePage(FormView):
     """
 
     template_name = "settings/profile.html"
+    extra_context = {"section": "profile"}
 
     class form_class(forms.Form):
         name = forms.CharField(max_length=500)
@@ -150,11 +151,6 @@ class ProfilePage(FormView):
             "image": self.request.identity.image.url,
         }
 
-    def get_context_data(self):
-        context = super().get_context_data()
-        context["section"] = "profile"
-        return context
-
     def form_valid(self, form):
         # Update identity name and summary
         self.request.identity.name = form.cleaned_data["name"]
@@ -174,3 +170,24 @@ class ProfilePage(FormView):
             self.request.identity.image = image
         self.request.identity.save()
         return redirect(".")
+
+
+@method_decorator(identity_required, name="dispatch")
+class SecurityPage(FormView):
+    """
+    Lets the identity's profile be edited
+    """
+
+    template_name = "settings/login_security.html"
+    extra_context = {"section": "security"}
+
+    class form_class(forms.Form):
+        email = forms.EmailField(
+            disabled=True,
+            help_text="Your email address cannot be changed yet.",
+        )
+
+    def get_initial(self):
+        return {"email": self.request.user.email}
+
+    template_name = "settings/login_security.html"
