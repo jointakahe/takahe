@@ -11,20 +11,24 @@ services:
       - internal_network
     restart: always
     environment:
-      - "POSTGRES_DB=tahake"
+      - "POSTGRES_DB=takahe"
       - "POSTGRES_USER=postgres"
       - "POSTGRES_PASSWORD=insecure_password"
 
   web:
     build: .
-    image: tahake:latest
+    image: takahe:latest
     environment:
       - "DJANGO_SETTINGS_MODULE=takahe.settings.production"
-      - "SECRET_KEY=insecure_secret"
-      - "POSTGRES_HOST=db"
-      - "POSTGRES_DB=tahake"
-      - "POSTGRES_USER=postgres"
-      - "POSTGRES_PASSWORD=insecure_password"
+      - "PGHOST=db"
+      - "PGDATABASE=takahe"
+      - "PGUSER=postgres"
+      - "PGPASSWORD=insecure_password"
+      - "TAKAHE_SECRET_KEY=insecure_secret"
+      - "TAKAHE_MAIN_DOMAIN=example.com"
+      - "TAKAHE_EMAIL_CONSOLE_ONLY=True"
+      - "TAKAHE_MEDIA_BACKEND=local"
+      - "TAKAHE_AUTO_ADMIN_EMAIL=admin@example.com"
     networks:
       - external_network
       - internal_network
