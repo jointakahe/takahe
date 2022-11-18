@@ -7,6 +7,7 @@
         {% csrf_token %}
         <fieldset>
             <legend>Create An Account</legend>
+            {{ config.signup_text|safe|linebreaks }}
             {% for field in form %}
                 {% include "forms/_field.html" %}
             {% endfor %}

@@ -4,85 +4,14 @@ from django import forms
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, RedirectView, TemplateView
+from django.views.generic import FormView, TemplateView
 
-from core.models import Config
 from users.decorators import admin_required
-from users.models import Domain, Identity, User
-from users.views.settings import SettingsPage
+from users.models import Domain
 
 
 @method_decorator(admin_required, name="dispatch")
-class AdminRoot(RedirectView):
-    pattern_name = "admin_basic"
-
-
-@method_decorator(admin_required, name="dispatch")
-class AdminSettingsPage(SettingsPage):
-    """
-    Shows a settings page dynamically created from our settings layout
-    at the bottom of the page. Don't add this to a URL directly - subclass!
-    """
-
-    options_class = Config.SystemOptions
-
-    def load_config(self):
-        return Config.load_system()
-
-    def save_config(self, key, value):
-        Config.set_system(key, value)
-
-
-class BasicPage(AdminSettingsPage):
-
-    section = "basic"
-
-    options = {
-        "site_name": {
-            "title": "Site Name",
-        },
-        "highlight_color": {
-            "title": "Highlight Color",
-            "help_text": "Used for logo background and other highlights",
-        },
-        "post_length": {
-            "title": "Maximum Post Length",
-            "help_text": "The maximum number of characters allowed per post",
-        },
-        "site_about": {
-            "title": "About This Site",
-            "help_text": "Displayed on the homepage and the about page",
-            "display": "textarea",
-        },
-        "site_icon": {
-            "title": "Site Icon",
-            "help_text": "Minimum size 64x64px. Should be square.",
-        },
-        "site_banner": {
-            "title": "Site Banner",
-            "help_text": "Must be at least 650px wide. 3:1 ratio of width:height recommended.",
-        },
-        "identity_max_per_user": {
-            "title": "Maximum Identities Per User",
-            "help_text": "Non-admins will be blocked from creating more than this",
-        },
-    }
-
-    layout = {
-        "Branding": [
-            "site_name",
-            "site_about",
-            "site_icon",
-            "site_banner",
-            "highlight_color",
-        ],
-        "Posts": ["post_length"],
-        "Identities": ["identity_max_per_user"],
-    }
-
-
-@method_decorator(admin_required, name="dispatch")
-class DomainsPage(TemplateView):
+class Domains(TemplateView):
 
     template_name = "admin/domains.html"
 
@@ -94,7 +23,7 @@ class DomainsPage(TemplateView):
 
 
 @method_decorator(admin_required, name="dispatch")
-class DomainCreatePage(FormView):
+class DomainCreate(FormView):
 
     template_name = "admin/domain_create.html"
     extra_context = {"section": "domains"}
@@ -154,7 +83,7 @@ class DomainCreatePage(FormView):
 
 
 @method_decorator(admin_required, name="dispatch")
-class DomainEditPage(FormView):
+class DomainEdit(FormView):
 
     template_name = "admin/domain_edit.html"
     extra_context = {"section": "domains"}
@@ -200,7 +129,7 @@ class DomainEditPage(FormView):
 
 
 @method_decorator(admin_required, name="dispatch")
-class DomainDeletePage(TemplateView):
+class DomainDelete(TemplateView):
 
     template_name = "admin/domain_delete.html"
 
@@ -222,27 +151,3 @@ class DomainDeletePage(TemplateView):
             raise ValueError("Tried to delete domain with identities!")
         self.domain.delete()
         return redirect("/settings/system/domains/")
-
-
-@method_decorator(admin_required, name="dispatch")
-class UsersPage(TemplateView):
-
-    template_name = "admin/users.html"
-
-    def get_context_data(self):
-        return {
-            "users": User.objects.order_by("email"),
-            "section": "users",
-        }
-
-
-@method_decorator(admin_required, name="dispatch")
-class IdentitiesPage(TemplateView):
-
-    template_name = "admin/identities.html"
-
-    def get_context_data(self):
-        return {
-            "identities": Identity.objects.order_by("username"),
-            "section": "identities",
-        }

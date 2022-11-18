@@ -48,36 +48,41 @@ urlpatterns = [
     ),
     path(
         "admin/basic/",
-        admin.BasicPage.as_view(),
+        admin.BasicSettings.as_view(),
         name="admin_basic",
     ),
     path(
         "admin/domains/",
-        admin.DomainsPage.as_view(),
+        admin.Domains.as_view(),
         name="admin_domains",
     ),
     path(
         "admin/domains/create/",
-        admin.DomainCreatePage.as_view(),
+        admin.DomainCreate.as_view(),
         name="admin_domains_create",
     ),
     path(
         "admin/domains/<domain>/",
-        admin.DomainEditPage.as_view(),
+        admin.DomainEdit.as_view(),
     ),
     path(
         "admin/domains/<domain>/delete/",
-        admin.DomainDeletePage.as_view(),
+        admin.DomainDelete.as_view(),
     ),
     path(
         "admin/users/",
-        admin.UsersPage.as_view(),
+        admin.Users.as_view(),
         name="admin_users",
     ),
     path(
         "admin/identities/",
-        admin.IdentitiesPage.as_view(),
+        admin.Identities.as_view(),
         name="admin_identities",
+    ),
+    path(
+        "admin/invites/",
+        admin.Invites.as_view(),
+        name="admin_invites",
     ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),

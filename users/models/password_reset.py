@@ -27,7 +27,7 @@ class PasswordResetStates(StateGraph):
             await sync_to_async(send_mail)(
                 subject=f"{Config.system.site_name}: Confirm new account",
                 message=render_to_string(
-                    "emails/new_account.txt",
+                    "emails/account_new.txt",
                     {
                         "reset": reset,
                         "config": Config.system,

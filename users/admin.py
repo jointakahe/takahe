@@ -5,6 +5,7 @@ from users.models import (
     Follow,
     Identity,
     InboxMessage,
+    Invite,
     PasswordReset,
     User,
     UserEvent,
@@ -66,3 +67,8 @@ class InboxMessageAdmin(admin.ModelAdmin):
     def reset_state(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("received")
+
+
+@admin.register(Invite)
+class InviteAdmin(admin.ModelAdmin):
+    list_display = ["id", "created", "token", "note"]

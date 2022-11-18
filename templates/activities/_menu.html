@@ -27,9 +27,11 @@
             <i class="fa-solid fa-city"></i> Local Posts
         </a>
         <h3></h3>
-        <a href="{% url "signup" %}" {% if current_page == "signup" %}class="selected"{% endif %}>
-            <i class="fa-solid fa-user-plus"></i> Create Account
-        </a>
+        {% if config.signup_allowed %}
+            <a href="{% url "signup" %}" {% if current_page == "signup" %}class="selected"{% endif %}>
+                <i class="fa-solid fa-user-plus"></i> Create Account
+            </a>
+        {% endif %}
     {% endif %}
 </nav>
 

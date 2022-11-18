@@ -4,7 +4,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import FormView
 
-from users.models import PasswordReset, User
+from core.models import Config
+from users.models import Invite, PasswordReset, User
 
 
 class Login(LoginView):
@@ -26,6 +27,13 @@ class Signup(FormView):
             help_text="We will send a link to this email to set your password and create your account",
         )
 
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if Config.system.signup_invite_only:
+                self.fields["invite_code"] = forms.CharField(
+                    help_text="Your invite code from one of our admins"
+                )
+
         def clean_email(self):
             email = self.cleaned_data.get("email").lower()
             if not email:
@@ -34,9 +42,17 @@ class Signup(FormView):
                 raise forms.ValidationError("This email already has an account")
             return email
 
+        def clean_invite_code(self):
+            invite_code = self.cleaned_data["invite_code"].lower().strip()
+            if not Invite.objects.filter(token=invite_code).exists():
+                raise forms.ValidationError("That is not a valid invite code")
+            return invite_code
+
     def form_valid(self, form):
         user = User.objects.create(email=form.cleaned_data["email"])
         PasswordReset.create_for_user(user)
+        if "invite_code" in form.cleaned_data:
+            Invite.objects.filter(token=form.cleaned_data["invite_code"]).delete()
         return render(
             self.request,
             "auth/signup_success.html",

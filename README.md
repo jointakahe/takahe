@@ -61,8 +61,8 @@ the less sure I am about it.
 - [x] Profile pages
 - [x] Settable icon and background image for profiles
 - [x] User search
-- [ ] Following page
-- [ ] Followers page
+- [x] Following page
+- [x] Followers page
 - [x] Multiple domain support
 - [x] Multiple identity support
 - [x] Serverless-friendly worker subsystem

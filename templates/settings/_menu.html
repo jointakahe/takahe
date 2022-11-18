@@ -30,6 +30,9 @@
     <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %}>
         <i class="fa-solid fa-id-card"></i> Identities
     </a>
+    <a href="{% url "admin_invites" %}" {% if section == "invites" %}class="selected"{% endif %}>
+        <i class="fa-solid fa-envelope"></i> Invites
+    </a>
     <a href="/djadmin">
         <i class="fa-solid fa-gear"></i> Django Admin
     </a>
