@@ -6,7 +6,7 @@ from django.views.static import serve
 from activities.views import posts, search, timelines
 from core import views as core
 from stator import views as stator
-from users.views import activitypub, admin, auth, identity, settings
+from users.views import activitypub, admin, auth, follows, identity, settings
 
 urlpatterns = [
     path("", core.homepage),
@@ -30,6 +30,11 @@ urlpatterns = [
         "settings/profile/",
         settings.ProfilePage.as_view(),
         name="settings_profile",
+    ),
+    path(
+        "settings/follows/",
+        follows.FollowsPage.as_view(),
+        name="settings_follows",
     ),
     path(
         "settings/interface/",

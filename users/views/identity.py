@@ -28,18 +28,22 @@ class ViewIdentity(TemplateView):
         if identity.data_age > Config.system.identity_max_age:
             identity.transition_perform(IdentityStates.outdated)
         follow = None
+        reverse_follow = None
         if self.request.identity:
             follow = Follow.maybe_get(self.request.identity, identity)
-            if follow and follow.state not in [
-                FollowStates.unrequested,
-                FollowStates.local_requested,
-                FollowStates.accepted,
-            ]:
+            if follow and follow.state not in FollowStates.group_active():
                 follow = None
+            reverse_follow = Follow.maybe_get(identity, self.request.identity)
+            if (
+                reverse_follow
+                and reverse_follow.state not in FollowStates.group_active()
+            ):
+                reverse_follow = None
         return {
             "identity": identity,
             "posts": posts,
             "follow": follow,
+            "reverse_follow": reverse_follow,
         }
 
 

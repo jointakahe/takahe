@@ -24,6 +24,10 @@ class FollowStates(StateGraph):
     undone.transitions_to(undone_remotely)
 
     @classmethod
+    def group_active(cls):
+        return [cls.unrequested, cls.local_requested, cls.accepted]
+
+    @classmethod
     async def handle_unrequested(cls, instance: "Follow"):
         """
         Follows that are unrequested need us to deliver the Follow object

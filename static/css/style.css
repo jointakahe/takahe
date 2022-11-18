@@ -335,6 +335,18 @@ nav a i {
     font-size: 200%;
 }
 
+.icon-menu .option .handle {
+    margin-right: 20px;
+}
+
+.icon-menu .option .pill {
+    display: inline-block;
+    padding: 5px 8px;
+    background: var(--color-highlight);
+    border-radius: 5px;
+    margin: 0 5px 0 5px;
+}
+
 .handle {
     vertical-align: middle;
     display: inline-block;
@@ -375,6 +387,20 @@ form.follow {
     float: right;
     margin: 20px 0 0 0;
     font-size: 16px;
+    text-align: center;
+}
+
+form.follow.has-reverse {
+    margin-top: 0;
+}
+
+form.follow .reverse-follow {
+    display: block;
+    margin: 0 0 5px 0;
+}
+
+form.follow button {
+    margin: 0;
 }
 
 form h1 {
