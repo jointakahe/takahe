@@ -136,6 +136,7 @@ header .logo {
     font-weight: bold;
     background: var(--color-highlight);
     border-radius: 5px 0 0 0;
+    text-transform: lowercase;
     padding: 10px 11px 9px 10px;
     height: 50px;
     font-size: 130%;
@@ -196,6 +197,12 @@ header menu a.identity {
     background: var(--color-bg-menu) !important;
     border-radius: 0 5px 0 0;
     width: 250px;
+}
+
+header menu a.identity i {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0 7px 2px 0;
 }
 
 header menu a img {
@@ -287,7 +294,7 @@ nav a i {
 
 /* Icon menus */
 
-.icon-menu>a {
+.icon-menu .option {
     display: block;
     margin: 0px 0 20px 0;
     background: var(--color-bg-box);
@@ -299,19 +306,28 @@ nav a i {
     border-radius: 3px;
 }
 
-.icon-menu>a:hover {
+.icon-menu .option:hover {
     border: 2px solid var(--color-highlight);
 }
 
-.icon-menu>a img,
-.icon-menu>a i {
+.icon-menu .option.empty {
+    color: var(--color-text-dull);
+}
+
+.icon-menu .option.empty:hover {
+    border: 0;
+    border: 2px solid rgba(255, 255, 255, 0);
+}
+
+.icon-menu .option img,
+.icon-menu .option i {
     vertical-align: middle;
     margin: 0 10px 3px 0;
     height: 50px;
     width: auto;
 }
 
-.icon-menu>a i {
+.icon-menu .option i {
     display: inline-block;
     text-align: center;
     width: 50px;

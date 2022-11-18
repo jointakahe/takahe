@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from users.models import Domain, Follow, Identity, InboxMessage, User, UserEvent
+from users.models import (
+    Domain,
+    Follow,
+    Identity,
+    InboxMessage,
+    PasswordReset,
+    User,
+    UserEvent,
+)
 
 
 @admin.register(Domain)
@@ -40,6 +48,12 @@ class IdentityAdmin(admin.ModelAdmin):
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
     raw_id_fields = ["source", "target"]
+
+
+@admin.register(PasswordReset)
+class PasswordResetAdmin(admin.ModelAdmin):
+    list_display = ["id", "user", "created"]
+    raw_id_fields = ["user"]
 
 
 @admin.register(InboxMessage)

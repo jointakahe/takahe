@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Password Reset{% endblock %}
+
+{% block content %}
+    <form>
+        <fieldset>
+            <legend>Password Reset</legend>
+            <p>
+                Your password for <tt>{{ email }}</tt> has been reset!
+            </p>
+        </fieldset>
+    </form>
+{% endblock %}

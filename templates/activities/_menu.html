@@ -23,11 +23,11 @@
             <i class="fa-solid fa-gear"></i> Settings
         </a>
     {% else %}
-        <a href="/local/" {% if current_page == "local" %}class="selected"{% endif %}>
+        <a href="{% url "local" %}" {% if current_page == "local" %}class="selected"{% endif %}>
             <i class="fa-solid fa-city"></i> Local Posts
         </a>
         <h3></h3>
-        <a href="/auth/signup/" {% if current_page == "signup" %}class="selected"{% endif %}>
+        <a href="{% url "signup" %}" {% if current_page == "signup" %}class="selected"{% endif %}>
             <i class="fa-solid fa-user-plus"></i> Create Account
         </a>
     {% endif %}

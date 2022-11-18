@@ -5,7 +5,6 @@ import pydantic
 from django.core.files import File
 from django.db import models
 from django.templatetags.static import static
-from django.utils.functional import classproperty
 
 from core.uploads import upload_namer
 from takahe import __version__
@@ -53,11 +52,6 @@ class Config(models.Model):
         unique_together = [
             ("key", "user", "identity"),
         ]
-
-    @classproperty
-    def system(cls):
-        cls.system = cls.load_system()
-        return cls.system
 
     system: ClassVar["Config.ConfigOptions"]  # type: ignore
 
@@ -160,13 +154,16 @@ class Config(models.Model):
 
         version: str = __version__
 
-        site_name: str = "takahē"
+        site_name: str = "Takahē"
         highlight_color: str = "#449c8c"
         site_about: str = "<h2>Welcome!</h2>\n\nThis is a community running Takahē."
         site_icon: UploadedImage = static("img/icon-128.png")
         site_banner: UploadedImage = static("img/fjords-banner-600.jpg")
 
+        allow_signups: bool = False
+
         post_length: int = 500
+        identity_max_per_user: int = 5
         identity_max_age: int = 24 * 60 * 60
 
     class UserOptions(pydantic.BaseModel):

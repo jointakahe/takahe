@@ -1,0 +1,8 @@
+Your email address was used to create a new account at {{config.site_name}} (https://{{settings.MAIN_DOMAIN}}).
+
+To confirm your new account, go to this link:
+
+https://{{settings.MAIN_DOMAIN}}/auth/reset/{{reset.token}}/
+
+If this was not you, then please ignore this message - your email will not be
+used to make an account if this link is not visited.

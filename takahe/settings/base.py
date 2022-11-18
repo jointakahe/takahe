@@ -108,6 +108,11 @@ STATICFILES_DIRS = [
 
 ALLOWED_HOSTS = ["*"]
 
+MAIN_DOMAIN = os.environ["TAKAHE_MAIN_DOMAIN"]
+if "/" in MAIN_DOMAIN:
+    print("TAKAHE_MAIN_DOMAIN should be just the domain name - no https:// or path")
+
+EMAIL_FROM = os.environ["TAKAHE_EMAIL_FROM"]
 
 # Note that this MUST be a fully qualified URL in production
 MEDIA_URL = os.environ.get("TAKAHE_MEDIA_URL", "/media/")

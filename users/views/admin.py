@@ -62,6 +62,10 @@ class BasicPage(AdminSettingsPage):
             "title": "Site Banner",
             "help_text": "Must be at least 650px wide. 3:1 ratio of width:height recommended.",
         },
+        "identity_max_per_user": {
+            "title": "Maximum Identities Per User",
+            "help_text": "Non-admins will be blocked from creating more than this",
+        },
     }
 
     layout = {
@@ -73,6 +77,7 @@ class BasicPage(AdminSettingsPage):
             "highlight_color",
         ],
         "Posts": ["post_length"],
+        "Identities": ["identity_max_per_user"],
     }
 
 

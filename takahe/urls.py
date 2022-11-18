@@ -82,8 +82,10 @@ urlpatterns = [
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
     path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
     # Authentication
-    path("auth/login/", auth.Login.as_view()),
-    path("auth/logout/", auth.Logout.as_view()),
+    path("auth/login/", auth.Login.as_view(), name="login"),
+    path("auth/logout/", auth.Logout.as_view(), name="logout"),
+    path("auth/signup/", auth.Signup.as_view(), name="signup"),
+    path("auth/reset/<token>/", auth.Reset.as_view(), name="password_reset"),
     # Identity selection
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
     path("identity/select/", identity.SelectIdentity.as_view()),
