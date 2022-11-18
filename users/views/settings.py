@@ -2,18 +2,19 @@ from functools import partial
 from typing import ClassVar, Dict, List
 
 from django import forms
+from django.core.files import File
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, RedirectView
 from PIL import Image, ImageOps
 
-from core.models import Config
+from core.models.config import Config, UploadedImage
 from users.decorators import identity_required
 
 
 @method_decorator(identity_required, name="dispatch")
 class SettingsRoot(RedirectView):
-    url = "/settings/interface/"
+    pattern_name = "settings_profile"
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -41,8 +42,16 @@ class SettingsPage(FormView):
                         choices=[(True, "Enabled"), (False, "Disabled")]
                     ),
                 )
+            elif config_field.type_ is UploadedImage:
+                form_field = forms.ImageField
             elif config_field.type_ is str:
-                form_field = forms.CharField
+                if details.get("display") == "textarea":
+                    form_field = partial(
+                        forms.CharField,
+                        widget=forms.Textarea,
+                    )
+                else:
+                    form_field = forms.CharField
             elif config_field.type_ is int:
                 form_field = forms.IntegerField
             else:
@@ -80,6 +89,15 @@ class SettingsPage(FormView):
     def form_valid(self, form):
         # Save each key
         for field in form:
+            if field.field.__class__.__name__ == "ImageField":
+                # These can be cleared with an extra checkbox
+                if self.request.POST.get(f"{field.name}__clear"):
+                    self.save_config(field.name, None)
+                    continue
+                # We shove the preview values in initial_data, so only save file
+                # fields if they have a File object.
+                if not isinstance(form.cleaned_data[field.name], File):
+                    continue
             self.save_config(
                 field.name,
                 form.cleaned_data[field.name],
@@ -128,6 +146,8 @@ class ProfilePage(FormView):
         return {
             "name": self.request.identity.name,
             "summary": self.request.identity.summary,
+            "icon": self.request.identity.icon.url,
+            "image": self.request.identity.image.url,
         }
 
     def get_context_data(self):
@@ -142,12 +162,12 @@ class ProfilePage(FormView):
         # Resize images
         icon = form.cleaned_data.get("icon")
         image = form.cleaned_data.get("image")
-        if icon:
+        if isinstance(icon, File):
             resized_image = ImageOps.fit(Image.open(icon), (400, 400))
             icon.open()
             resized_image.save(icon)
             self.request.identity.icon = icon
-        if image:
+        if isinstance(image, File):
             resized_image = ImageOps.fit(Image.open(image), (1500, 500))
             image.open()
             resized_image.save(image)

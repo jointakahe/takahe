@@ -23,56 +23,57 @@
     <main>
         <header>
             <a class="logo" href="/">
-                <img src="{% static "img/icon-128.png" %}" width="32">
+                <img src="{{ config.site_icon }}" width="32">
                 {{ config.site_name }}
             </a>
             <menu>
                 {% if user.is_authenticated %}
                     <a href="{% url "compose" %}" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
-                        <i class="fa-solid fa-feather"></i> Compose
+                        <i class="fa-solid fa-feather"></i>
                     </a>
                     <a href="{% url "search" %}" title="Search" {% if top_section == "search" %}class="selected"{% endif %}>
-                        <i class="fa-solid fa-search"></i> Search
+                        <i class="fa-solid fa-search"></i>
                     </a>
                     <a href="{% url "settings" %}" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
-                        <i class="fa-solid fa-gear"></i> Settings
+                        <i class="fa-solid fa-gear"></i>
                     </a>
                     <div class="gap"></div>
                     <a href="/identity/select/" class="identity">
                         {% if not request.identity %}
                             No Identity
                             <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
-                        {% elif request.identity.icon %}
-                            {{ request.identity.username }}
-                            <img src="{{ request.identity.icon.url }}" title="{{ request.identity.handle }}">
-                        {% elif request.identity.icon_uri %}
-                            {{ request.identity.username }}
-                            <img src="{{ request.identity.icon_uri }}" title="{{ request.identity.handle }}">
                         {% else %}
                             {{ request.identity.username }}
-                            <img src="{% static "img/unknown-icon-128.png" %}" title="{{ request.identity.handle }}">
+                            <img src="{{ request.identity.local_icon_url }}" title="{{ request.identity.handle }}">
                         {% endif %}
                     </a>
                 {% else %}
-                    <a href="/auth/login/"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+                    <div class="gap"></div>
+                    <a href="/auth/login/" class="identity"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
                 {% endif %}
             </menu>
         </header>
 
         {% block full_content %}
-        <div class="columns">
-            <div class="left-column">
-                {% block content %}
-                {% endblock %}
+            {% block pre_content %}
+            {% endblock %}
+            <div class="columns">
+                <div class="left-column">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+                <div class="right-column">
+                    {% block right_content %}
+                        {% include "activities/_menu.html" %}
+                    {% endblock %}
+                </div>
             </div>
-            <div class="right-column">
-                {% block right_content %}
-                    {% include "activities/_menu.html" %}
-                {% endblock %}
-            </div>
-        </div>
         {% endblock %}
     </main>
+
+    <footer>
+        <span>Powered by <a href="https://jointakahe.com">Takahē {{ config.version }}</a></span>
+    </footer>
 
 </body>
 </html>

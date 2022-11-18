@@ -104,6 +104,7 @@ body {
     color: var(--color-text-main);
     font-family: "Raleway", sans-serif;
     font-size: 16px;
+    min-height: 100%;
 }
 
 main {
@@ -111,6 +112,19 @@ main {
     margin: 20px auto;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     border-radius: 5px;
+}
+
+footer {
+    width: 900px;
+    margin: 0 auto;
+    padding: 0 0 10px 0;
+    color: var(--color-text-duller);
+    text-align: center;
+    font-size: 90%;
+}
+
+footer a {
+    border-bottom: 1px solid var(--color-text-duller);
 }
 
 header {
@@ -127,6 +141,7 @@ header .logo {
     font-size: 130%;
     color: var(--color-text-main);
     border-bottom: 3px solid rgba(0, 0, 0, 0);
+    z-index: 10;
 }
 
 header .logo:hover {
@@ -144,6 +159,7 @@ header menu {
     display: flex;
     list-style-type: none;
     justify-content: flex-start;
+    z-index: 10;
 }
 
 header menu a {
@@ -151,12 +167,22 @@ header menu a {
     color: #eee;
     line-height: 30px;
     border-bottom: 3px solid rgba(0, 0, 0, 0);
-    border-right: 1px solid var(--color-bg-menu);
+}
+
+body.has-banner header menu a {
+    background: rgba(0, 0, 0, 0.5);
+    border-right: 0;
 }
 
 header menu a:hover,
 header menu a.selected {
     border-bottom: 3px solid var(--color-highlight);
+}
+
+header menu a i {
+    font-size: 24px;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 header menu .gap {
@@ -167,15 +193,9 @@ header menu a.identity {
     border-right: 0;
     text-align: right;
     padding-right: 10px;
-    background: var(--color-bg-menu);
+    background: var(--color-bg-menu) !important;
     border-radius: 0 5px 0 0;
     width: 250px;
-}
-
-header menu a i {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 10px;
 }
 
 header menu a img {
@@ -266,8 +286,6 @@ nav a i {
 }
 
 /* Icon menus */
-
-.icon-menu {}
 
 .icon-menu>a {
     display: block;
@@ -431,6 +449,17 @@ form textarea {
     color: var(--color-text-main);
 }
 
+form .clear {
+    color: var(--color-text-main);
+    font-size: 90%;
+    margin: 5px 0 5px 0;
+}
+
+form .clear input {
+    display: inline;
+    width: 32px;
+}
+
 .right-column form.compose input,
 .right-column form.compose textarea {
     margin: 0 0 10px 0;
@@ -531,6 +560,16 @@ form .button:hover {
     padding: 2px 6px;
 }
 
+/* Logged out homepage */
+
+.about img.banner {
+    width: calc(100% + 30px);
+    height: auto;
+    object-fit: cover;
+    margin: -65px -15px 0 -15px;
+    display: block;
+}
+
 /* Identities */
 
 h1.identity {
@@ -542,7 +581,8 @@ h1.identity .banner {
     height: 200px;
     object-fit: cover;
     display: block;
-    margin: 0 0 20px 0;
+    width: calc(100% + 30px);
+    margin: -65px -15px 20px -15px;
 }
 
 h1.identity .icon {
@@ -723,26 +763,16 @@ h1.identity small {
         border-radius: 0;
     }
 
+    footer {
+        width: 100%;
+        background-color: var(--color-bg-box);
+        padding: 10px 0;
+    }
+
     header .logo {
         border-radius: 0;
     }
 
-}
-
-
-
-@media (max-width: 800px) {
-    header menu a {
-        font-size: 0;
-        padding: 10px 20px 4px 20px;
-    }
-
-    header menu a i {
-        display: inline-block;
-        vertical-align: middle;
-        margin: 0;
-        font-size: 20px;
-    }
 }
 
 

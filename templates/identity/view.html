@@ -2,6 +2,8 @@
 
 {% block title %}{{ identity }}{% endblock %}
 
+{% block body_class %}has-banner{% endblock %}
+
 {% block content %}
     <h1 class="identity">
         {% if identity.local_image_url %}

@@ -1,5 +1,11 @@
 <nav>
-    <a href="/identity/select/" {% if identities %}class="selected"{% endif %}>Select Identity</a>
-    <a href="/identity/create/" {% if form %}class="selected"{% endif %}>Create Identity</a>
-    <a href="/auth/logout/">Logout</a>
+    <a href="/identity/select/" {% if identities %}class="selected"{% endif %}>
+        <i class="fa-solid fa-user"></i> Select Identity
+    </a>
+    <a href="/identity/create/" {% if form %}class="selected"{% endif %}>
+        <i class="fa-solid fa-plus"></i> Create Identity
+    </a>
+    <a href="/auth/logout/">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
 </nav>

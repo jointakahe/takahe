@@ -11,6 +11,9 @@
     <a href="#" {% if section == "login" %}class="selected"{% endif %}>
         <i class="fa-solid fa-key"></i> Login &amp; Security
     </a>
+    <a href="/auth/logout/">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
     <h3>Administration</h3>
     <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %}>
         <i class="fa-solid fa-book"></i> Basic
@@ -23,6 +26,9 @@
     </a>
     <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %}>
         <i class="fa-solid fa-id-card"></i> Identities
+    </a>
+    <a href="/djadmin">
+        <i class="fa-solid fa-gear"></i> Django Admin
     </a>
     {% endif %}
 </nav>

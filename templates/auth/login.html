@@ -3,14 +3,14 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-    <nav>
-        <a href="." class="selected">Login</a>
-    </nav>
     <form action="." method="POST">
         {% csrf_token %}
-        {% for field in form %}
-            {% include "forms/_field.html" %}
-        {% endfor %}
+        <fieldset>
+            <legend>Login</legend>
+            {% for field in form %}
+                {% include "forms/_field.html" %}
+            {% endfor %}
+        </fieldset>
         <div class="buttons">
             <button>Login</button>
         </div>

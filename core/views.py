@@ -19,7 +19,7 @@ class LoggedOutHomepage(TemplateView):
 
     def get_context_data(self):
         return {
-            "identities": Identity.objects.filter(local=True),
+            "identities": Identity.objects.filter(local=True).order_by("-created")[:20],
         }
 
 

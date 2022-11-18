@@ -10,9 +10,14 @@
             </p>
         {% endif %}
         {{ field.errors }}
+        {% if field.field.widget.input_type == "file" and field.value %}
+        <div class="clear">
+            <input type="checkbox" class="clear" name="{{ field.name }}__clear"> Clear current value</input>
+        </div>
+        {% endif %}
         {{ field }}
     </div>
-    {% if preview %}
-        <img class="preview" src="{{ preview }}">
+    {% if field.field.widget.input_type == "file" %}
+        <img class="preview" src="{{ field.value }}">
     {% endif %}
 </div>

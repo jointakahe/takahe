@@ -57,7 +57,6 @@ class Home(FormView):
         return redirect(".")
 
 
-@method_decorator(identity_required, name="dispatch")
 class Local(TemplateView):
 
     template_name = "activities/local.html"

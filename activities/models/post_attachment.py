@@ -1,5 +1,8 @@
+from functools import partial
+
 from django.db import models
 
+from core.uploads import upload_namer
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
@@ -31,7 +34,9 @@ class PostAttachment(StatorModel):
     mimetype = models.CharField(max_length=200)
 
     # File may not be populated if it's remote and not cached on our side yet
-    file = models.FileField(upload_to="attachments/%Y/%m/%d/", null=True, blank=True)
+    file = models.FileField(
+        upload_to=partial(upload_namer, "attachments"), null=True, blank=True
+    )
 
     remote_url = models.CharField(max_length=500, null=True, blank=True)
 

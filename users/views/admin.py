@@ -40,7 +40,6 @@ class BasicPage(AdminSettingsPage):
     options = {
         "site_name": {
             "title": "Site Name",
-            "help_text": "Shown in the top-left of the page, and titles",
         },
         "highlight_color": {
             "title": "Highlight Color",
@@ -50,10 +49,29 @@ class BasicPage(AdminSettingsPage):
             "title": "Maximum Post Length",
             "help_text": "The maximum number of characters allowed per post",
         },
+        "site_about": {
+            "title": "About This Site",
+            "help_text": "Displayed on the homepage and the about page",
+            "display": "textarea",
+        },
+        "site_icon": {
+            "title": "Site Icon",
+            "help_text": "Minimum size 64x64px. Should be square.",
+        },
+        "site_banner": {
+            "title": "Site Banner",
+            "help_text": "Must be at least 650px wide. 3:1 ratio of width:height recommended.",
+        },
     }
 
     layout = {
-        "Branding": ["site_name", "highlight_color"],
+        "Branding": [
+            "site_name",
+            "site_about",
+            "site_icon",
+            "site_banner",
+            "highlight_color",
+        ],
         "Posts": ["post_length"],
     }
 

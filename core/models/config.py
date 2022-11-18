@@ -1,8 +1,20 @@
+from functools import partial
 from typing import ClassVar
 
 import pydantic
+from django.core.files import File
 from django.db import models
+from django.templatetags.static import static
 from django.utils.functional import classproperty
+
+from core.uploads import upload_namer
+from takahe import __version__
+
+
+class UploadedImage(str):
+    """
+    Type used to indicate a setting is an image
+    """
 
 
 class Config(models.Model):
@@ -31,7 +43,11 @@ class Config(models.Model):
     )
 
     json = models.JSONField(blank=True, null=True)
-    image = models.ImageField(blank=True, null=True, upload_to="config/%Y/%m/%d/")
+    image = models.ImageField(
+        blank=True,
+        null=True,
+        upload_to=partial(upload_namer, "config"),
+    )
 
     class Meta:
         unique_together = [
@@ -46,60 +62,110 @@ class Config(models.Model):
     system: ClassVar["Config.ConfigOptions"]  # type: ignore
 
     @classmethod
-    def load_system(cls):
+    def load_values(cls, options_class, filters):
         """
-        Load all of the system config options and return an object with them
+        Loads config options and returns an object with them
         """
         values = {}
-        for config in cls.objects.filter(user__isnull=True, identity__isnull=True):
-            values[config.key] = config.image or config.json
-        return cls.SystemOptions(**values)
+        for config in cls.objects.filter(**filters):
+            values[config.key] = config.image.url if config.image else config.json
+            if values[config.key] is None:
+                del values[config.key]
+        values["version"] = __version__
+        return options_class(**values)
+
+    @classmethod
+    def load_system(cls):
+        """
+        Loads the system config options object
+        """
+        return cls.load_values(
+            cls.SystemOptions,
+            {"identity__isnull": True, "user__isnull": True},
+        )
 
     @classmethod
     def load_user(cls, user):
         """
-        Load all of the user config options and return an object with them
+        Loads a user config options object
         """
-        values = {}
-        for config in cls.objects.filter(user=user, identity__isnull=True):
-            values[config.key] = config.image or config.json
-        return cls.UserOptions(**values)
+        return cls.load_values(
+            cls.SystemOptions,
+            {"identity__isnull": True, "user": user},
+        )
 
     @classmethod
     def load_identity(cls, identity):
         """
-        Load all of the identity config options and return an object with them
+        Loads a user config options object
         """
-        values = {}
-        for config in cls.objects.filter(user__isnull=True, identity=identity):
-            values[config.key] = config.image or config.json
-        return cls.IdentityOptions(**values)
+        return cls.load_values(
+            cls.IdentityOptions,
+            {"identity": identity, "user__isnull": True},
+        )
+
+    @classmethod
+    def set_value(cls, key, value, options_class, filters):
+        config_field = options_class.__fields__[key]
+        if isinstance(value, File):
+            if config_field.type_ is not UploadedImage:
+                raise ValueError(f"Cannot save file to {key} of type: {type(value)}")
+            cls.objects.update_or_create(
+                key=key,
+                defaults={"json": None, "image": value},
+                **filters,
+            )
+        elif value is None:
+            cls.objects.filter(key=key, **filters).delete()
+        else:
+            if not isinstance(value, config_field.type_):
+                raise ValueError(f"Invalid type for {key}: {type(value)}")
+            if value == config_field.default:
+                cls.objects.filter(key=key, **filters).delete()
+            else:
+                cls.objects.update_or_create(
+                    key=key,
+                    defaults={"json": value},
+                    **filters,
+                )
 
     @classmethod
     def set_system(cls, key, value):
-        config_field = cls.SystemOptions.__fields__[key]
-        if not isinstance(value, config_field.type_):
-            raise ValueError(f"Invalid type for {key}: {type(value)}")
-        cls.objects.update_or_create(
-            key=key,
-            defaults={"json": value},
+        cls.set_value(
+            key,
+            value,
+            cls.SystemOptions,
+            {"identity__isnull": True, "user__isnull": True},
+        )
+
+    @classmethod
+    def set_user(cls, user, key, value):
+        cls.set_value(
+            key,
+            value,
+            cls.UserOptions,
+            {"identity__isnull": True, "user": user},
         )
 
     @classmethod
     def set_identity(cls, identity, key, value):
-        config_field = cls.IdentityOptions.__fields__[key]
-        if not isinstance(value, config_field.type_):
-            raise ValueError(f"Invalid type for {key}: {type(value)}")
-        cls.objects.update_or_create(
-            identity=identity,
-            key=key,
-            defaults={"json": value},
+        cls.set_value(
+            key,
+            value,
+            cls.IdentityOptions,
+            {"identity": identity, "user__isnull": True},
         )
 
     class SystemOptions(pydantic.BaseModel):
 
+        version: str = __version__
+
         site_name: str = "takahē"
         highlight_color: str = "#449c8c"
+        site_about: str = "<h2>Welcome!</h2>\n\nThis is a community running Takahē."
+        site_icon: UploadedImage = static("img/icon-128.png")
+        site_banner: UploadedImage = static("img/fjords-banner-600.jpg")
+
         post_length: int = 500
         identity_max_age: int = 24 * 60 * 60
 
