@@ -12,12 +12,39 @@ Prerequisites
 -------------
 
 * SSL support (Takahē *requires* HTTPS)
-* Something that can run Docker/OCI images ("serverless" platforms are fine!)
+* Something that can run Docker/OCI images
 * A PostgreSQL 14 (or above) database
 * One of these to store uploaded images and media:
   * Amazon S3
   * Google Cloud Storage
   * Writable local directory (must be accessible by all running copies!)
+
+Note that ActivityPub is a chatty protocol that has a lot of background
+activity, so you will need a platform that can run *background tasks*, in
+order to fetch profiles, retry delivery of posts, and more.
+
+This means that a "serverless" platform like AWS Lambda or Google Cloud Run is
+not enough by itself; while you can use these to serve the web pages if you
+like, you will need to run the Stator runner somewhere else as well.
+
+The flagship Takahē instance, [takahe.social](https://takahe.social), runs
+inside of Kubernetes, with one Deployment for the webserver and one for the
+Stator runner.
+
+
+What To Run
+-----------
+
+You need to run at least two copies of the Docker image:
+
+* One with no command or arguments specified, which will serve web traffic
+* One with the arguments (command) ``python manage.py runstator``, which will
+  run the background worker that handles asynchronous communication with other
+  servers.
+
+Both of these can have as many copies run as needed. Note that the image has
+required environment variables before it will boot, and this is the only way
+to configure it - see below.
 
 
 Environment Variables
@@ -76,25 +103,6 @@ be provided from the first boot.
   should get them.
 
 
-Setting Up Task Runners
------------------------
-
-Takahe is designed to not require a continuously-running background worker;
-instead, you can trigger the "Stator Runner" (our internal task system) either
-via a periodic admin command or via a periodic hit to a URL (which is useful
-if you are on "serverless" hosting that does not allow background tasks).
-
-To use the URL method, configure something to hit
-``/.stator/runner/?token=ABCDEF`` every 60 seconds. You can do this less often
-if you don't mind delays in content and profiles being fetched, or more often
-if you are under increased load. The value of the token should be the same
-as what you set for ``TAKAHE_STATOR_TOKEN``.
-
-Alternatively, you can set up ``python manage.py runstator`` to run in the
-Docker image with the same time interval. We still recommend setting
-``TAKAHE_STATOR_TOKEN`` in this case so nobody else can trigger it from a URL.
-
-
 Making An Admin Account
 -----------------------
 
@@ -109,6 +117,9 @@ If your email settings have a problem and you don't get the email, don't worry;
 fix them and then follow the "reset my password" flow on the login screen, and
 you'll get another password reset email that you can use.
 
+If you have shell access to the Docker image and would rather use that, you
+can run ``python3 manage.py createsuperuser`` instead and follow the prompts.
+
 
 Adding A Domain
 ---------------
@@ -116,5 +127,5 @@ Adding A Domain
 When you login you'll be greeted with the "make an identity" screen, but you
 won't be able to as you will have no domains yet.
 
-You should navigate directly to ``/admin/domains/`` and make one, and then
-you will be able to create an identity.
+You should select the "Domains" link in the sidebar and create one, and then
+you will be able to make your first identity.

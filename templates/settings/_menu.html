@@ -9,7 +9,6 @@
     <a href="{% url "settings_follows" %}" {% if section == "follows" %}class="selected"{% endif %}>
         <i class="fa-solid fa-arrow-right-arrow-left"></i> Follows
     </a>
-    {% if request.user.admin %}
     <h3>Account</h3>
     <a href="{% url "settings_security" %}" {% if section == "security" %}class="selected"{% endif %}>
         <i class="fa-solid fa-key"></i> Login &amp; Security
@@ -17,6 +16,7 @@
     <a href="/auth/logout/">
         <i class="fa-solid fa-right-from-bracket"></i> Logout
     </a>
+    {% if request.user.admin %}
     <h3>Administration</h3>
     <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %}>
         <i class="fa-solid fa-book"></i> Basic
