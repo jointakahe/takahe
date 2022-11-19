@@ -16,4 +16,7 @@ RUN DJANGO_SETTINGS_MODULE=takahe.settings.development python3 manage.py collect
 
 EXPOSE 8000
 
+# Set some sensible defaults
+ENV GUNICORN_CMD_ARGS="--workers 8"
+
 CMD ["sh", "/takahe/docker/start.sh"]

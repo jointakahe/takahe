@@ -39,7 +39,7 @@ class BasicSettings(AdminSettingsPage):
         },
         "site_about": {
             "title": "About This Site",
-            "help_text": "Displayed on the homepage and the about page",
+            "help_text": "Displayed on the homepage and the about page.\nNewlines are preserved; HTML also allowed.",
             "display": "textarea",
         },
         "site_icon": {
@@ -67,6 +67,11 @@ class BasicSettings(AdminSettingsPage):
             "help_text": "Shown above the signup form",
             "display": "textarea",
         },
+        "restricted_usernames": {
+            "title": "Restricted Usernames",
+            "help_text": "Usernames that only admins can register for identities. One per line.",
+            "display": "textarea",
+        },
     }
 
     layout = {
@@ -79,5 +84,5 @@ class BasicSettings(AdminSettingsPage):
         ],
         "Signups": ["signup_allowed", "signup_invite_only", "signup_text"],
         "Posts": ["post_length"],
-        "Identities": ["identity_max_per_user"],
+        "Identities": ["identity_max_per_user", "restricted_usernames"],
     }

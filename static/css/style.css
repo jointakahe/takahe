@@ -608,6 +608,10 @@ form .button:hover {
 
 /* Logged out homepage */
 
+.about p {
+    margin: 0 0 15px 0;
+}
+
 .about img.banner {
     width: calc(100% + 30px);
     height: auto;
