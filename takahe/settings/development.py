@@ -18,3 +18,9 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+SERVER_EMAIL = "test@example.com"
+
+MAIN_DOMAIN = os.environ.get("TAKAHE_MAIN_DOMAIN", "https://example.com")
+
+MEDIA_URL = os.environ.get("TAKAHE_MEDIA_URL", "/media/")
+MEDIA_ROOT = os.environ.get("TAKAHE_MEDIA_ROOT", BASE_DIR / "media")

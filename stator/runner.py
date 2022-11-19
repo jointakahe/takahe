@@ -19,9 +19,9 @@ class StatorRunner:
     def __init__(
         self,
         models: List[Type[StatorModel]],
-        concurrency: int = 30,
-        concurrency_per_model: int = 5,
-        run_period: int = 30,
+        concurrency: int = 50,
+        concurrency_per_model: int = 10,
+        run_period: int = 60,
         wait_period: int = 30,
     ):
         self.models = models

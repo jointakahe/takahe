@@ -168,6 +168,8 @@ class Config(models.Model):
         identity_max_per_user: int = 5
         identity_max_age: int = 24 * 60 * 60
 
+        restricted_usernames: str = "admin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
+
     class UserOptions(pydantic.BaseModel):
 
         pass

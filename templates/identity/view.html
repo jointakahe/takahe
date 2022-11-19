@@ -38,7 +38,7 @@
     </h1>
 
     {% if identity.summary %}
-        <div class="summary">
+        <div class="bio">
             {{ identity.safe_summary }}
         </div>
     {% endif %}
@@ -59,6 +59,6 @@
     {% for post in posts %}
         {% include "activities/_post.html" %}
     {% empty %}
-        No posts yet.
+        <span class="empty">No posts yet.</a>
     {% endfor %}
 {% endblock %}

@@ -34,7 +34,7 @@ class PasswordResetStates(StateGraph):
                         "settings": settings,
                     },
                 ),
-                from_email=settings.EMAIL_FROM,
+                from_email=settings.SERVER_EMAIL,
                 recipient_list=[reset.user.email],
             )
         else:
@@ -48,7 +48,7 @@ class PasswordResetStates(StateGraph):
                         "settings": settings,
                     },
                 ),
-                from_email=settings.EMAIL_FROM,
+                from_email=settings.SERVER_EMAIL,
                 recipient_list=[reset.user.email],
             )
         return cls.sent

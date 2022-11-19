@@ -646,6 +646,10 @@ h1.identity small {
     margin: -10px 0 0 0;
 }
 
+.bio {
+    margin: 0 0 20px 0;
+}
+
 .system-note {
     background: var(--color-bg-menu);
     color: var(--color-text-dull);

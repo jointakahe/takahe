@@ -29,6 +29,9 @@ be provided from the first boot.
 * ``PGHOST``, ``PGPORT``, ``PGUSER``, ``PGDATABASE``, and ``PGPASSWORD`` are the
   standard PostgreSQL environment variables for configuring your database.
 
+* ``TAKAHE_SECRET_KEY`` must be a fixed, random value (it's used for internal
+  cryptography). Don't change this unless you want to invalidate all sessions.
+
 * ``TAKAHE_MEDIA_BACKEND`` must be one of ``local``, ``s3`` or ``gcs``.
 
     * If it is set to ``local``, you must also provide ``TAKAHE_MEDIA_ROOT``,
@@ -36,7 +39,8 @@ be provided from the first boot.
       fully-qualified URL prefix that serves that directory.
 
     * If it is set to ``gcs``, you must also provide ``TAKAHE_MEDIA_BUCKET``,
-      the name of the bucket to store files in.
+      the name of the bucket to store files in. The bucket must be publically
+      readable and have "uniform access control" enabled.
 
     * If it is set to ``s3``, you must also provide ``TAKAHE_MEDIA_BUCKET``,
       the name of the bucket to store files in.
@@ -60,6 +64,36 @@ be provided from the first boot.
   be automatically promoted to administrator when it signs up. You only need
   this for initial setup, and can unset it after that if you like.
 
+* ``TAKAHE_STATOR_TOKEN`` should be a random string that you are using to
+  protect the stator (task runner) endpoint. You'll use this value later.
+
+* If your installation is behind a HTTPS endpoint that is proxying it, set
+  ``TAKAHE_SECURE_HEADER`` to the header name used to signify that HTTPS is
+  being used (usually ``X-Forwarded-Proto``)
+
+* If you want to receive emails about internal site errors, set
+  ``TAKAHE_ERROR_EMAILS`` to a comma-separated list of email addresses that
+  should get them.
+
+
+Setting Up Task Runners
+-----------------------
+
+Takahe is designed to not require a continuously-running background worker;
+instead, you can trigger the "Stator Runner" (our internal task system) either
+via a periodic admin command or via a periodic hit to a URL (which is useful
+if you are on "serverless" hosting that does not allow background tasks).
+
+To use the URL method, configure something to hit
+``/.stator/runner/?token=ABCDEF`` every 60 seconds. You can do this less often
+if you don't mind delays in content and profiles being fetched, or more often
+if you are under increased load. The value of the token should be the same
+as what you set for ``TAKAHE_STATOR_TOKEN``.
+
+Alternatively, you can set up ``python manage.py runstator`` to run in the
+Docker image with the same time interval. We still recommend setting
+``TAKAHE_STATOR_TOKEN`` in this case so nobody else can trigger it from a URL.
+
 
 Making An Admin Account
 -----------------------
@@ -74,3 +108,13 @@ admin account.
 If your email settings have a problem and you don't get the email, don't worry;
 fix them and then follow the "reset my password" flow on the login screen, and
 you'll get another password reset email that you can use.
+
+
+Adding A Domain
+---------------
+
+When you login you'll be greeted with the "make an identity" screen, but you
+won't be able to as you will have no domains yet.
+
+You should navigate directly to ``/admin/domains/`` and make one, and then
+you will be able to create an identity.
