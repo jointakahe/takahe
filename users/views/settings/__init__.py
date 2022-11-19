@@ -6,10 +6,10 @@ from django.core.files import File
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, RedirectView
-from PIL import Image, ImageOps
 
 from core.models.config import Config, UploadedImage
 from users.decorators import identity_required
+from users.views.settings.profile import ProfilePage  # noqa
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -117,59 +117,6 @@ class InterfacePage(SettingsPage):
     }
 
     layout = {"Posting": ["toot_mode"]}
-
-
-@method_decorator(identity_required, name="dispatch")
-class ProfilePage(FormView):
-    """
-    Lets the identity's profile be edited
-    """
-
-    template_name = "settings/profile.html"
-    extra_context = {"section": "profile"}
-
-    class form_class(forms.Form):
-        name = forms.CharField(max_length=500)
-        summary = forms.CharField(
-            widget=forms.Textarea,
-            required=False,
-            help_text="Describe you and your interests",
-            label="Bio",
-        )
-        icon = forms.ImageField(
-            required=False, help_text="Shown next to all your posts and activities"
-        )
-        image = forms.ImageField(
-            required=False, help_text="Shown at the top of your profile"
-        )
-
-    def get_initial(self):
-        return {
-            "name": self.request.identity.name,
-            "summary": self.request.identity.summary,
-            "icon": self.request.identity.icon and self.request.identity.icon.url,
-            "image": self.request.identity.image and self.request.identity.image.url,
-        }
-
-    def form_valid(self, form):
-        # Update identity name and summary
-        self.request.identity.name = form.cleaned_data["name"]
-        self.request.identity.summary = form.cleaned_data["summary"]
-        # Resize images
-        icon = form.cleaned_data.get("icon")
-        image = form.cleaned_data.get("image")
-        if isinstance(icon, File):
-            resized_image = ImageOps.fit(Image.open(icon), (400, 400))
-            icon.open()
-            resized_image.save(icon)
-            self.request.identity.icon = icon
-        if isinstance(image, File):
-            resized_image = ImageOps.fit(Image.open(image), (1500, 500))
-            image.open()
-            resized_image.save(image)
-            self.request.identity.image = image
-        self.request.identity.save()
-        return redirect(".")
 
 
 @method_decorator(identity_required, name="dispatch")

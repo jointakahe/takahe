@@ -162,6 +162,8 @@ class Identity(StatorModel):
                 actor_uri, handle = async_to_sync(cls.fetch_webfinger)(
                     f"{username}@{domain}"
                 )
+                if handle is None:
+                    return None
                 username, domain = handle.split("@")
                 domain = Domain.get_remote_domain(domain)
                 return cls.objects.create(

@@ -1,30 +1,14 @@
 ![takahē](static/img/logo-128.png)
 
-A *very experimental* Fediverse server for microblogging/"toots". Not fully functional yet -
+An *experimental* Fediverse server for microblogging/"toots". Not fully functional yet -
 I'm still working on making all the basic bits work! For more background and information,
-see [my blog posts about it](https://aeracode.org/category/takahe/).
+see [jointakahe.org]](https://jointakahe.org/).
 
-Indended features:
-
-* Can run on serverless hosting (no need for worker daemons)
-* Multiple account domains possible per server
-* Async evented core for fan-out/delivery
-* Mastodon client API compatible (eventually)
 
 
 ## Deployment
 
-### Requirements:
-
-- **Python** 3.11
-- **PostgreSQL** 14+
-- **Lots of patience** This is *very experimental*
-
-### Setup
-
-More deployment docs will come soon! Just know that you need to run the Takahē
-Django app, and then either hit `/.stator/runner/` or run `./manage.py runstator`
-at least every 30 seconds.
+See [the documentation](https://takahe-server.readthedocs.io)
 
 ## Roadmap
 

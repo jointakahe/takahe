@@ -617,6 +617,7 @@ form .button:hover {
     height: auto;
     object-fit: cover;
     margin: -65px -15px 0 -15px;
+    border-radius: 5px 0 0 0;
     display: block;
 }
 
@@ -633,6 +634,7 @@ h1.identity .banner {
     display: block;
     width: calc(100% + 30px);
     margin: -65px -15px 20px -15px;
+    border-radius: 5px 0 0 0;
 }
 
 h1.identity .icon {
@@ -644,10 +646,10 @@ h1.identity .icon {
 
 h1.identity small {
     display: block;
-    font-size: 80%;
+    font-size: 60%;
     font-weight: normal;
     color: var(--color-text-dull);
-    margin: -10px 0 0 0;
+    margin: -5px 0 0 0;
 }
 
 .bio {
@@ -834,6 +836,11 @@ h1.identity small {
     header menu a.identity {
         width: 50px;
         padding: 10px 10px 0 0;
+        font-size: 0;
+    }
+
+    header menu a.identity i {
+        font-size: 22px;
     }
 
     .right-column {
