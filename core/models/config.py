@@ -165,6 +165,7 @@ class Config(models.Model):
         signup_text: str = ""
 
         post_length: int = 500
+        identity_min_length: int = 2
         identity_max_per_user: int = 5
         identity_max_age: int = 24 * 60 * 60
 

@@ -54,6 +54,10 @@ class BasicSettings(AdminSettingsPage):
             "title": "Maximum Identities Per User",
             "help_text": "Non-admins will be blocked from creating more than this",
         },
+        "identity_min_length": {
+            "title": "Minimum Length For User Identities",
+            "help_text": "Non-admins will be blocked from creating identities shorter than this",
+        },
         "signup_allowed": {
             "title": "Signups Allowed",
             "help_text": "If signups are allowed at all",
@@ -84,5 +88,9 @@ class BasicSettings(AdminSettingsPage):
         ],
         "Signups": ["signup_allowed", "signup_invite_only", "signup_text"],
         "Posts": ["post_length"],
-        "Identities": ["identity_max_per_user", "restricted_usernames"],
+        "Identities": [
+            "identity_max_per_user",
+            "identity_min_length",
+            "restricted_usernames",
+        ],
     }
