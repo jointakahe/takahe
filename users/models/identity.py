@@ -12,6 +12,7 @@ from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
 from django.utils import timezone
 
+from core.exceptions import ActorMismatchError
 from core.html import sanitize_post
 from core.ld import canonicalise, media_type_from_filename
 from core.uploads import upload_namer
@@ -258,6 +259,24 @@ class Identity(StatorModel):
         try:
             actor = cls.by_actor_uri(data["actor"])
             actor.transition_perform(IdentityStates.outdated)
+        except cls.DoesNotExist:
+            pass
+
+    @classmethod
+    def handle_delete_ap(cls, data):
+        """
+        Takes an incoming update.person message and just forces us to add it
+        to our fetch queue (don't want to bother with two load paths right now)
+        """
+        # Assert that the actor matches the object
+        if data["actor"] != data["object"]:
+            raise ActorMismatchError(
+                f"Actor {data['actor']} trying to delete identity {data['object']}"
+            )
+        # Find by actor
+        try:
+            actor = cls.by_actor_uri(data["actor"])
+            actor.delete()
         except cls.DoesNotExist:
             pass
 

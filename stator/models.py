@@ -158,7 +158,7 @@ class StatorModel(models.Model):
             if settings.SENTRY_ENABLED:
                 from sentry_sdk import capture_exception
 
-                capture_exception(e)
+                await sync_to_async(capture_exception, thread_sensitive=False)(e)
             traceback.print_exc()
         else:
             if next_state:

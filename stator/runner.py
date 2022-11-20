@@ -5,6 +5,7 @@ import traceback
 import uuid
 from typing import List, Optional, Type
 
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils import timezone
 
@@ -46,12 +47,12 @@ class StatorRunner:
                 if (time.monotonic() - self.last_clean) >= self.schedule_interval:
                     print(f"{self.handled} tasks processed so far")
                     print("Running cleaning and scheduling")
-                    self.remove_completed_tasks()
                     for model in self.models:
                         asyncio.create_task(model.atransition_clean_locks())
                         asyncio.create_task(model.atransition_schedule_due())
                     self.last_clean = time.monotonic()
                 # Calculate space left for tasks
+                self.remove_completed_tasks()
                 space_remaining = self.concurrency - len(self.tasks)
                 # Fetch new tasks
                 for model in self.models:
@@ -95,7 +96,7 @@ class StatorRunner:
             if settings.SENTRY_ENABLED:
                 from sentry_sdk import capture_exception
 
-                capture_exception(e)
+                await sync_to_async(capture_exception, thread_sensitive=False)(e)
             traceback.print_exc()
 
     def remove_completed_tasks(self):
