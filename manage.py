@@ -8,7 +8,7 @@ GUARDED_ENVIRONMENTS = [
     "production",
 ]
 
-GUARDED_COMMANDS =[
+GUARDED_COMMANDS = [
     "test",
 ]
 
