@@ -64,7 +64,7 @@ class ProfilePage(FormView):
         if isinstance(image, File):
             self.request.identity.image.save(
                 image.name,
-                self.resize_image(image, size=(400, 400)),
+                self.resize_image(image, size=(1500, 500)),
             )
         self.request.identity.save()
         return redirect(".")
