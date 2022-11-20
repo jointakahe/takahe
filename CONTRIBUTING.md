@@ -7,7 +7,7 @@ Development can be done "bare metal" or with Docker.  We'll describe both here.
 
 ### Bare Metal
 
-Takahē requires Python 3.11, so you'll need that first.  Then, create and
+Takahē requires Python 3.10 or above, so you'll need that first.  Then, create and
 activate a virtual environment:
 
 ```shell
