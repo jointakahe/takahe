@@ -2,7 +2,7 @@
 
 An *experimental* Fediverse server for microblogging/"toots". Not fully functional yet -
 I'm still working on making all the basic bits work! For more background and information,
-see [jointakahe.org]](https://jointakahe.org/).
+see [jointakahe.org](https://jointakahe.org/).
 
 
 
