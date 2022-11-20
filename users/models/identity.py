@@ -327,6 +327,10 @@ class Identity(StatorModel):
                 )
             except httpx.RequestError:
                 return False
+            if response.status_code == 410:
+                # Their account got deleted, so let's do the same.
+                await Identity.objects.filter(pk=self.pk).adelete()
+                return False
             if response.status_code >= 400:
                 return False
             document = canonicalise(response.json(), include_security=True)
