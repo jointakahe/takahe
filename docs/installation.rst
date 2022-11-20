@@ -15,6 +15,7 @@ Prerequisites
 * Something that can run Docker/OCI images
 * A PostgreSQL 14 (or above) database
 * One of these to store uploaded images and media:
+
   * Amazon S3
   * Google Cloud Storage
   * Writable local directory (must be accessible by all running copies!)
