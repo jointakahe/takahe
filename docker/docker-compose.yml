@@ -37,6 +37,8 @@ services:
       - db
     ports:
       - "8000:8000"
+    volumes:
+      - ../:/takahe/
 
 networks:
   internal_network:
