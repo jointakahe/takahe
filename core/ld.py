@@ -444,7 +444,7 @@ def media_type_from_filename(filename):
     if extension == ".png":
         return "image/png"
     elif extension in [".jpg", ".jpeg"]:
-        return "image/png"
+        return "image/jpeg"
     elif extension == ".gif":
         return "image/gif"
     elif extension == ".apng":
