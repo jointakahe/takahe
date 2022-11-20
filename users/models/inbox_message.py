@@ -68,13 +68,14 @@ class InboxMessageStates(StateGraph):
                 # If there is no object type, it's probably a profile
                 if not isinstance(instance.message["object"], dict):
                     await sync_to_async(Identity.handle_delete_ap)(instance.message)
-                match instance.message_object_type:
-                    case "tombstone":
-                        await sync_to_async(Post.handle_delete_ap)(instance.message)
-                    case unknown:
-                        raise ValueError(
-                            f"Cannot handle activity of type delete.{unknown}"
-                        )
+                else:
+                    match instance.message_object_type:
+                        case "tombstone":
+                            await sync_to_async(Post.handle_delete_ap)(instance.message)
+                        case unknown:
+                            raise ValueError(
+                                f"Cannot handle activity of type delete.{unknown}"
+                            )
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed
