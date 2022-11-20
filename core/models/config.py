@@ -56,6 +56,12 @@ class Config(models.Model):
     system: ClassVar["Config.ConfigOptions"]  # type: ignore
 
     @classmethod
+    def lazy_system_value(cls, key: str):
+        from django.utils.functional import lazy
+
+        return lazy(lambda: getattr(Config.system, key))
+
+    @classmethod
     def load_values(cls, options_class, filters):
         """
         Loads config options and returns an object with them
@@ -166,6 +172,7 @@ class Config(models.Model):
         signup_allowed: bool = True
         signup_invite_only: bool = False
         signup_text: str = ""
+        content_warning_text: str = "Content Warning"
 
         post_length: int = 500
         identity_min_length: int = 2

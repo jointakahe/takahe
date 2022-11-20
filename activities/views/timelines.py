@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 
 from activities.models import Post, PostInteraction, TimelineEvent
+from core.models import Config
 from users.decorators import identity_required
 
 
@@ -23,10 +24,11 @@ class Home(FormView):
         )
         content_warning = forms.CharField(
             required=False,
+            label=Config.lazy_system_value("content_warning_text"),
             widget=forms.TextInput(
                 attrs={
-                    "placeholder": "Content Warning",
                     "class": "hidden",
+                    "placeholder": Config.lazy_system_value("content_warning_text"),
                 },
             ),
         )

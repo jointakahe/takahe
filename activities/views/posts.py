@@ -130,9 +130,10 @@ class Compose(FormView):
         )
         content_warning = forms.CharField(
             required=False,
+            label=Config.lazy_system_value("content_warning_text"),
             widget=forms.TextInput(
                 attrs={
-                    "placeholder": "Content Warning",
+                    "placeholder": Config.lazy_system_value("content_warning_text"),
                 },
             ),
             help_text="Optional - Post will be hidden behind this text until clicked",
