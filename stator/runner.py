@@ -5,6 +5,7 @@ import traceback
 import uuid
 from typing import List, Optional, Type
 
+from django.conf import settings
 from django.utils import timezone
 
 from stator.models import StatorModel
@@ -90,7 +91,11 @@ class StatorRunner:
                 f"Attempting transition on {instance._meta.label_lower}#{instance.pk} from state {instance.state}"
             )
             await instance.atransition_attempt()
-        except BaseException:
+        except BaseException as e:
+            if settings.SENTRY_ENABLED:
+                from sentry_sdk import capture_exception
+
+                capture_exception(e)
             traceback.print_exc()
 
     def remove_completed_tasks(self):

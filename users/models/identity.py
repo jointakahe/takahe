@@ -277,7 +277,7 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                     follow_redirects=True,
                 )
-        except (httpx.ReadTimeout, httpx.ReadError, httpx.RemoteProtocolError):
+        except httpx.RequestError:
             return None, None
         if response.status_code >= 400:
             return None, None
@@ -306,7 +306,7 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                     follow_redirects=True,
                 )
-            except (httpx.ReadTimeout, httpx.ReadError, httpx.RemoteProtocolError):
+            except httpx.RequestError:
                 return False
             if response.status_code >= 400:
                 return False

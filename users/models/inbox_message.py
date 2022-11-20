@@ -65,6 +65,9 @@ class InboxMessageStates(StateGraph):
                             f"Cannot handle activity of type undo.{unknown}"
                         )
             case "delete":
+                # If there is no object type, it's probably a profile
+                if not isinstance(instance.message["object"], dict):
+                    raise ValueError("Cannot handle activity of type delete")
                 match instance.message_object_type:
                     case "tombstone":
                         await sync_to_async(Post.handle_delete_ap)(instance.message)

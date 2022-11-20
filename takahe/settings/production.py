@@ -91,3 +91,4 @@ if "SENTRY_DSN" in os.environ:
         traces_sample_rate=1.0,
         send_default_pii=True,
     )
+    SENTRY_ENABLED = True
