@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from activities.models import Post
+from core import exceptions
 from core.ld import canonicalise
 from core.models import Config
 from core.signatures import (
@@ -131,22 +132,26 @@ class Inbox(View):
         # Find the Identity by the actor on the incoming item
         # This ensures that the signature used for the headers matches the actor
         # described in the payload.
-        identity = Identity.by_actor_uri(document["actor"], create=True)
+        identity = Identity.by_actor_uri(document["actor"], create=True, transient=True)
         if not identity.public_key:
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()
         if not identity.public_key:
-            print("Cannot get actor", document["actor"])
+            exceptions.capture_message(
+                f"Inbox error: cannot fetch actor {document['actor']}"
+            )
             return HttpResponseBadRequest("Cannot retrieve actor")
         # If there's a "signature" payload, verify against that
         if "signature" in document:
             try:
                 LDSignature.verify_signature(document, identity.public_key)
             except VerificationFormatError as e:
-                print("Bad LD signature format:", e.args[0])
+                exceptions.capture_message(
+                    f"Inbox error: Bad LD signature format: {e.args[0]}"
+                )
                 return HttpResponseBadRequest(e.args[0])
             except VerificationError:
-                print("Bad LD signature")
+                exceptions.capture_message("Inbox error: Bad LD signature")
                 return HttpResponseUnauthorized("Bad signature")
         # Otherwise, verify against the header (assuming it's the same actor)
         else:
@@ -156,10 +161,12 @@ class Inbox(View):
                     identity.public_key,
                 )
             except VerificationFormatError as e:
-                print("Bad HTTP signature format:", e.args[0])
+                exceptions.capture_message(
+                    f"Inbox error: Bad HTTP signature format: {e.args[0]}"
+                )
                 return HttpResponseBadRequest(e.args[0])
             except VerificationError:
-                print("Bad HTTP signature")
+                exceptions.capture_message("Inbox error: Bad HTTP signature")
                 return HttpResponseUnauthorized("Bad signature")
         # Hand off the item to be processed by the queue
         InboxMessage.objects.create(message=document)

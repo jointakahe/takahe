@@ -5,10 +5,9 @@ import traceback
 import uuid
 from typing import List, Optional, Type
 
-from asgiref.sync import sync_to_async
-from django.conf import settings
 from django.utils import timezone
 
+from core import exceptions
 from stator.models import StatorModel
 
 
@@ -93,10 +92,7 @@ class StatorRunner:
             )
             await instance.atransition_attempt()
         except BaseException as e:
-            if settings.SENTRY_ENABLED:
-                from sentry_sdk import capture_exception
-
-                await sync_to_async(capture_exception, thread_sensitive=False)(e)
+            await exceptions.acapture_exception(e)
             traceback.print_exc()
 
     def remove_completed_tasks(self):

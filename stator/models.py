@@ -4,11 +4,11 @@ import traceback
 from typing import ClassVar, List, Optional, Type, Union, cast
 
 from asgiref.sync import sync_to_async
-from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.functional import classproperty
 
+from core import exceptions
 from stator.graph import State, StateGraph
 
 
@@ -155,10 +155,7 @@ class StatorModel(models.Model):
             next_state = await current_state.handler(self)
         except BaseException as e:
             await StatorError.acreate_from_instance(self, e)
-            if settings.SENTRY_ENABLED:
-                from sentry_sdk import capture_exception
-
-                await sync_to_async(capture_exception, thread_sensitive=False)(e)
+            await exceptions.acapture_exception(e)
             traceback.print_exc()
         else:
             if next_state:

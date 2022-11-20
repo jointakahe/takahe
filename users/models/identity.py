@@ -176,12 +176,17 @@ class Identity(StatorModel):
             return None
 
     @classmethod
-    def by_actor_uri(cls, uri, create=False) -> "Identity":
+    def by_actor_uri(cls, uri, create=False, transient=False) -> "Identity":
         try:
             return cls.objects.get(actor_uri=uri)
         except cls.DoesNotExist:
             if create:
-                return cls.objects.create(actor_uri=uri, local=False)
+                if transient:
+                    # Some code (like inbox fetching) doesn't need this saved
+                    # to the DB until the fetch succeeds
+                    return cls(actor_uri=uri, local=False)
+                else:
+                    return cls.objects.create(actor_uri=uri, local=False)
             else:
                 raise cls.DoesNotExist(f"No identity found with actor_uri {uri}")
 
@@ -329,7 +334,8 @@ class Identity(StatorModel):
                 return False
             if response.status_code == 410:
                 # Their account got deleted, so let's do the same.
-                await Identity.objects.filter(pk=self.pk).adelete()
+                if self.pk:
+                    await Identity.objects.filter(pk=self.pk).adelete()
                 return False
             if response.status_code >= 400:
                 return False
