@@ -26,8 +26,8 @@ def timedeltashort(value: datetime.datetime):
         hours = seconds // (60 * 60)
         text = f"{hours:0n}h"
     elif days < 365:
-        text = f"{days:0n}h"
+        text = f"{days:0n}d"
     else:
-        years = days // 365.25
+        years = max(days // 365.25, 1)
         text = f"{years:0n}y"
     return text
