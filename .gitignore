@@ -1,9 +1,13 @@
+*.egg
+*.egg-info
 *.psql
+*.pyc
 *.sqlite3
 .venv
 /*.env
+/build
 /docs/_build
 /media/
-notes.md
+/static-collected
 __pycache__/
-*.pyc
+notes.md

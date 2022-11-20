@@ -4,7 +4,6 @@ from users.models import Domain, Identity, User
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail
 def test_webfinger_actor(client):
     """
     Ensures the webfinger and actor URLs are working properly
@@ -16,7 +15,7 @@ def test_webfinger_actor(client):
     domain.users.add(user)
     # Make an identity for them
     identity = Identity.objects.create(
-        actor_uri="https://example.com/@test@example.com/actor/",
+        actor_uri="https://example.com/@test@example.com/",
         username="test",
         domain=domain,
         name="Test User",
@@ -28,5 +27,5 @@ def test_webfinger_actor(client):
     assert data["subject"] == "acct:test@example.com"
     assert data["aliases"][0] == "https://example.com/@test/"
     # Fetch their actor
-    data = client.get("/@test@example.com/actor/").json()
-    assert data["id"] == "https://example.com/@test@example.com/actor/"
+    data = client.get("/@test@example.com/", HTTP_ACCEPT="application/ld+json").json()
+    assert data["id"] == "https://example.com/@test@example.com/"

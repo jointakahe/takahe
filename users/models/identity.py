@@ -297,11 +297,14 @@ class Identity(StatorModel):
         if self.local:
             raise ValueError("Cannot fetch local identities")
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                self.actor_uri,
-                headers={"Accept": "application/json"},
-                follow_redirects=True,
-            )
+            try:
+                response = await client.get(
+                    self.actor_uri,
+                    headers={"Accept": "application/json"},
+                    follow_redirects=True,
+                )
+            except (httpx.ReadTimeout, httpx.ReadError):
+                return False
             if response.status_code >= 400:
                 return False
             document = canonicalise(response.json(), include_security=True)
