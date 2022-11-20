@@ -32,6 +32,12 @@ class PostAdmin(admin.ModelAdmin):
     def object_json(self, instance):
         return instance.to_ap()
 
+    def has_add_permission(self, request, obj=None):
+        """
+        Disables admin creation of posts as it will skip steps
+        """
+        return False
+
 
 @admin.register(TimelineEvent)
 class TimelineEventAdmin(admin.ModelAdmin):

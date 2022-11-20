@@ -77,3 +77,17 @@ STATOR_TOKEN = os.environ.get("TAKAHE_STATOR_TOKEN")
 # Error email recipients
 if "TAKAHE_ERROR_EMAILS" in os.environ:
     ADMINS = [("Admin", e) for e in os.environ["TAKAHE_ERROR_EMAILS"].split(",")]
+
+# Sentry integration
+if "SENTRY_DSN" in os.environ:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DSN"],
+        integrations=[
+            DjangoIntegration(),
+        ],
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+    )

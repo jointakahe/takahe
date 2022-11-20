@@ -44,6 +44,12 @@ class IdentityAdmin(admin.ModelAdmin):
     def actor_json(self, instance):
         return instance.to_ap()
 
+    def has_add_permission(self, request, obj=None):
+        """
+        Disables admin creation of identities as it will skip steps
+        """
+        return False
+
 
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
