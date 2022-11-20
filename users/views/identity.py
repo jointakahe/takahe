@@ -2,6 +2,7 @@ import string
 
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -144,10 +145,23 @@ class CreateIdentity(FormView):
                 (domain.domain, domain.domain)
                 for domain in Domain.available_for_user(user)
             ]
+            self.user = user
 
         def clean_username(self):
             # Remove any leading @ and force it lowercase
             value = self.cleaned_data["username"].lstrip("@").lower()
+
+            if not self.user.admin:
+                # Apply username min length
+                limit = int(Config.system.identity_min_length)
+                validators.MinLengthValidator(limit)(value)
+
+                # Apply username restrictions
+                if value in Config.system.restricted_usernames.split():
+                    raise forms.ValidationError(
+                        "This username is restricted to administrators only."
+                    )
+
             # Validate it's all ascii characters
             for character in value:
                 if character not in string.ascii_letters + string.digits + "_-":
@@ -166,6 +180,14 @@ class CreateIdentity(FormView):
                 and Identity.objects.filter(username=username, domain=domain).exists()
             ):
                 raise forms.ValidationError(f"{username}@{domain} is already taken")
+
+            if not self.user.admin and (
+                Identity.objects.filter(users=self.user).count()
+                >= Config.system.identity_max_per_user
+            ):
+                raise forms.ValidationError(
+                    f"You are not allowed more than {Config.system.identity_max_per_user} identities"
+                )
 
     def get_form(self):
         form_class = self.get_form_class()
