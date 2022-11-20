@@ -270,12 +270,15 @@ class Identity(StatorModel):
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1]
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
-                headers={"Accept": "application/json"},
-                follow_redirects=True,
-            )
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
+                    headers={"Accept": "application/json"},
+                    follow_redirects=True,
+                )
+        except (httpx.ReadTimeout, httpx.ReadError, httpx.RemoteProtocolError):
+            return None, None
         if response.status_code >= 400:
             return None, None
         data = response.json()
@@ -303,7 +306,7 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                     follow_redirects=True,
                 )
-            except (httpx.ReadTimeout, httpx.ReadError):
+            except (httpx.ReadTimeout, httpx.ReadError, httpx.RemoteProtocolError):
                 return False
             if response.status_code >= 400:
                 return False
