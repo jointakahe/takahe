@@ -49,6 +49,10 @@ class Signup(FormView):
                 raise forms.ValidationError("That is not a valid invite code")
             return invite_code
 
+        def clean(self):
+            if not Config.system.signup_allowed:
+                raise forms.ValidationError("Not accepting new users at this time")
+
     def form_valid(self, form):
         user = User.objects.create(email=form.cleaned_data["email"])
         # Auto-promote the user to admin if that setting is set

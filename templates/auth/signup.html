@@ -7,13 +7,24 @@
         {% csrf_token %}
         <fieldset>
             <legend>Create An Account</legend>
-            {{ config.signup_text|safe|linebreaks }}
+            {% if config.signup_text %}{{ config.signup_text|safe|linebreaks }}{% endif %}
+            {% if config.signup_allowed %}
             {% for field in form %}
                 {% include "forms/_field.html" %}
             {% endfor %}
+            {% else %}
+                {% if not config.signup_text %}
+                <p>Not accepting new users at this time</p>
+                {% endif %}
+            {% endif %}
+
         </fieldset>
+
+        {% if config.signup_allowed %}
         <div class="buttons">
             <button>Create</button>
         </div>
+        {% endif %}
+
     </form>
 {% endblock %}
