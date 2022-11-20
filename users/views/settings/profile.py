@@ -42,6 +42,13 @@ class ProfilePage(FormView):
             "image": self.request.identity.image and self.request.identity.image.url,
         }
 
+    def resize_image(self, image: File, *, size: tuple[int, int]) -> File:
+        with Image.open(image) as img:
+            resized_image = ImageOps.fit(img, size)
+            new_image_bytes = io.BytesIO()
+            resized_image.save(new_image_bytes, format=img.format)
+            return File(new_image_bytes)
+
     def form_valid(self, form):
         # Update identity name and summary
         self.request.identity.name = form.cleaned_data["name"]
@@ -50,14 +57,14 @@ class ProfilePage(FormView):
         icon = form.cleaned_data.get("icon")
         image = form.cleaned_data.get("image")
         if isinstance(icon, File):
-            resized_image = ImageOps.fit(Image.open(icon), (400, 400))
-            new_icon_bytes = io.BytesIO()
-            resized_image.save(new_icon_bytes, format=icon.format)
-            self.request.identity.icon.save(icon.name, File(new_icon_bytes))
+            self.request.identity.icon.save(
+                icon.name,
+                self.resize_image(icon, size=(400, 400)),
+            )
         if isinstance(image, File):
-            resized_image = ImageOps.fit(Image.open(image), (400, 400))
-            new_image_bytes = io.BytesIO()
-            resized_image.save(new_image_bytes, format=image.format)
-            self.request.identity.image.save(image.name, File(new_image_bytes))
+            self.request.identity.image.save(
+                image.name,
+                self.resize_image(image, size=(400, 400)),
+            )
         self.request.identity.save()
         return redirect(".")
