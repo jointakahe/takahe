@@ -1,6 +1,6 @@
 FROM python:3.11.0-slim-buster
 
-RUN apt-get update && apt-get -y install libpq-dev python3-dev build-essential
+RUN apt-get update && apt-get -y install libpq-dev libxml2-dev libxslt1-dev zlib1g-dev python3-dev build-essential
 
 COPY requirements.txt requirements.txt
 
