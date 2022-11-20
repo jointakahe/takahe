@@ -70,7 +70,7 @@ class Post(StatorModel):
     # The author (attributedTo) of the post
     author = models.ForeignKey(
         "users.Identity",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="posts",
     )
 
