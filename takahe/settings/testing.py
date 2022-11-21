@@ -4,3 +4,5 @@ from .base import *  # noqa
 SECRET_KEY = "testing_secret"
 
 IN_TESTS = True
+
+MAIN_DOMAIN = "example.com"
