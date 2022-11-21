@@ -118,3 +118,5 @@ AUTO_ADMIN_EMAIL: Optional[str] = None
 STATOR_TOKEN: Optional[str] = None
 
 SENTRY_ENABLED = False
+
+IN_TESTS = False

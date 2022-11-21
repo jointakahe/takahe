@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class UsersConfig(AppConfig):
@@ -6,7 +7,8 @@ class UsersConfig(AppConfig):
     name = "users"
 
     def ready(self) -> None:
-        # Generate the server actor keypair if needed
-        from users.models import SystemActor
+        if not settings.IN_TESTS:
+            # Generate the server actor keypair if needed
+            from users.models import SystemActor
 
-        SystemActor.generate_keys_if_needed()
+            SystemActor.generate_keys_if_needed()
