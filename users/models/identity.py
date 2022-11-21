@@ -307,11 +307,15 @@ class Identity(StatorModel):
             )
         except httpx.RequestError:
             return None, None
-        if response.status_code == 404:
-            # We don't trust this as much as 410 Gone, but skip for now
+        if response.status_code in [404, 410]:
             return None, None
         if response.status_code >= 500:
             return None, None
+        if response.status_code >= 400:
+            raise ValueError(
+                f"Client error fetching webfinger: {response.status_code}",
+                response.content,
+            )
         data = response.json()
         if data["subject"].startswith("acct:"):
             data["subject"] = data["subject"][5:]
@@ -347,6 +351,10 @@ class Identity(StatorModel):
             return False
         if response.status_code >= 500:
             return False
+        if response.status_code >= 400:
+            raise ValueError(
+                f"Client error fetching actor: {response.status_code}", response.content
+            )
         document = canonicalise(response.json(), include_security=True)
         self.name = document.get("name")
         self.profile_uri = document.get("url")
