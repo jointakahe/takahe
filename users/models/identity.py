@@ -165,6 +165,12 @@ class Identity(StatorModel):
                 )
                 if handle is None:
                     return None
+                # See if this actually does match an existing actor
+                try:
+                    return cls.objects.get(actor_uri=actor_uri)
+                except cls.DoesNotExist:
+                    pass
+                # OK, make one
                 username, domain = handle.split("@")
                 domain = Domain.get_remote_domain(domain)
                 return cls.objects.create(
