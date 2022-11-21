@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Optional, Tuple
+from typing import Dict, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
 import httpx
@@ -13,7 +13,7 @@ from django.utils import timezone
 from core.exceptions import ActorMismatchError
 from core.html import sanitize_post
 from core.ld import canonicalise, media_type_from_filename
-from core.signatures import RsaKeys
+from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
@@ -383,6 +383,23 @@ class Identity(StatorModel):
         return True
 
     ### Cryptography ###
+
+    async def signed_request(
+        self,
+        method: Literal["get", "post"],
+        uri: str,
+        body: Optional[Dict] = None,
+    ):
+        """
+        Performs a signed request on behalf of the System Actor.
+        """
+        return await HttpSignature.signed_request(
+            method=method,
+            uri=uri,
+            body=body,
+            private_key=self.private_key,
+            key_id=self.public_key_id,
+        )
 
     def generate_keypair(self):
         if not self.local:

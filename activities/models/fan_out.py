@@ -3,7 +3,6 @@ from django.db import models
 
 from activities.models.timeline_event import TimelineEvent
 from core.ld import canonicalise
-from core.signatures import HttpSignature
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
@@ -31,11 +30,10 @@ class FanOutStates(StateGraph):
                 # Send it to the remote inbox
                 post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
-                await HttpSignature.signed_request(
+                await post.author.signed_request(
+                    method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(post.to_create_ap()),
-                    private_key=post.author.private_key,
-                    key_id=post.author.public_key_id,
                 )
         # Handle boosts/likes
         elif fan_out.type == FanOut.Types.interaction:
@@ -48,11 +46,10 @@ class FanOutStates(StateGraph):
                 )
             else:
                 # Send it to the remote inbox
-                await HttpSignature.signed_request(
+                await interaction.identity.signed_request(
+                    method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(interaction.to_ap()),
-                    private_key=interaction.identity.private_key,
-                    key_id=interaction.identity.public_key_id,
                 )
         # Handle undoing boosts/likes
         elif fan_out.type == FanOut.Types.undo_interaction:
@@ -65,11 +62,10 @@ class FanOutStates(StateGraph):
                 )
             else:
                 # Send an undo to the remote inbox
-                await HttpSignature.signed_request(
+                await interaction.identity.signed_request(
+                    method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(interaction.to_undo_ap()),
-                    private_key=interaction.identity.private_key,
-                    key_id=interaction.identity.public_key_id,
                 )
         else:
             raise ValueError(f"Cannot fan out with type {fan_out.type}")
