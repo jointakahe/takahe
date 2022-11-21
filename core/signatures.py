@@ -227,9 +227,9 @@ class HttpSignature:
                 content=body_bytes,
                 follow_redirects=method == "get",
             )
-            if response.status_code >= 400:
+            if method == "post" and response.status_code >= 400:
                 raise ValueError(
-                    f"Request error: {response.status_code} {response.content}"
+                    f"POST error: {response.status_code} {response.content}"
                 )
             return response
 
