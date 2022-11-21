@@ -44,7 +44,7 @@ kwIDAQAB
 
 
 @pytest.fixture
-def config_system(db):
+def config_system():
     Config.system = Config.SystemOptions(
         system_actor_private_key=private_key, system_actor_public_key=public_key
     )

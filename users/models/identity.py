@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
-from django.db import models
+from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
 from django.utils import timezone
@@ -387,7 +387,19 @@ class Identity(StatorModel):
         else:
             self.domain = await get_domain(actor_url_parts.hostname)
         self.fetched = timezone.now()
-        await sync_to_async(self.save)()
+        try:
+            await sync_to_async(self.save)()
+        except IntegrityError as e:
+            # See if we can fetch a PK and save there
+            if self.pk is None:
+                try:
+                    other_row = await Identity.objects.aget(actor_uri=self.actor_uri)
+                except Identity.DoesNotExist:
+                    raise ValueError(
+                        f"Could not save Identity at end of actor fetch: {e}"
+                    )
+                self.pk: Optional[int] = other_row.pk
+                await sync_to_async(self.save)()
         return True
 
     ### Cryptography ###
