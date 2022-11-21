@@ -96,7 +96,7 @@ def test_identity_max_per_user(client):
 
 
 @pytest.mark.django_db
-def test_fetch_actor(httpx_mock):
+def test_fetch_actor(httpx_mock, config_system):
     """
     Ensures that making identities via actor fetching works
     """

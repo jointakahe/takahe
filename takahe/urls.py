@@ -104,11 +104,12 @@ urlpatterns = [
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
     path("identity/select/", identity.SelectIdentity.as_view()),
     path("identity/create/", identity.CreateIdentity.as_view()),
-    # Well-known endpoints
+    # Well-known endpoints and system actor
     path(".well-known/webfinger", activitypub.Webfinger.as_view()),
     path(".well-known/host-meta", activitypub.HostMeta.as_view()),
     path(".well-known/nodeinfo", activitypub.NodeInfo.as_view()),
     path("nodeinfo/2.0/", activitypub.NodeInfo2.as_view()),
+    path("actor/", activitypub.SystemActorView.as_view()),
     # Django admin
     path("djadmin/", djadmin.site.urls),
     # Media files

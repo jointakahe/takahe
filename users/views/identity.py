@@ -161,6 +161,10 @@ class CreateIdentity(FormView):
                     raise forms.ValidationError(
                         "This username is restricted to administrators only."
                     )
+                if value in ["__system__"]:
+                    raise forms.ValidationError(
+                        "This username is reserved for system use."
+                    )
 
             # Validate it's all ascii characters
             for character in value:

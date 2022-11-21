@@ -5,8 +5,6 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from django.db import models
 from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
@@ -15,9 +13,11 @@ from django.utils import timezone
 from core.exceptions import ActorMismatchError
 from core.html import sanitize_post
 from core.ld import canonicalise, media_type_from_filename
+from core.signatures import RsaKeys
 from core.uploads import upload_namer
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
+from users.models.system_actor import SystemActor
 
 
 class IdentityStates(StateGraph):
@@ -301,15 +301,16 @@ class Identity(StatorModel):
         """
         domain = handle.split("@")[1]
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
-                    headers={"Accept": "application/json"},
-                    follow_redirects=True,
-                )
+            response = await SystemActor().signed_request(
+                method="get",
+                uri=f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
+            )
         except httpx.RequestError:
             return None, None
-        if response.status_code >= 400:
+        if response.status_code == 404:
+            # We don't trust this as much as 410 Gone, but skip for now
+            return None, None
+        if response.status_code >= 500:
             return None, None
         data = response.json()
         if data["subject"].startswith("acct:"):
@@ -329,40 +330,39 @@ class Identity(StatorModel):
         """
         if self.local:
             raise ValueError("Cannot fetch local identities")
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(
-                    self.actor_uri,
-                    headers={"Accept": "application/json"},
-                    follow_redirects=True,
-                )
-            except httpx.RequestError:
-                return False
-            if response.status_code == 410:
-                # Their account got deleted, so let's do the same.
-                if self.pk:
-                    await Identity.objects.filter(pk=self.pk).adelete()
-                return False
-            if response.status_code >= 400:
-                return False
-            document = canonicalise(response.json(), include_security=True)
-            self.name = document.get("name")
-            self.profile_uri = document.get("url")
-            self.inbox_uri = document.get("inbox")
-            self.outbox_uri = document.get("outbox")
-            self.summary = document.get("summary")
-            self.username = document.get("preferredUsername")
-            if self.username and "@value" in self.username:
-                self.username = self.username["@value"]
-            if self.username:
-                self.username = self.username.lower()
-            self.manually_approves_followers = document.get(
-                "as:manuallyApprovesFollowers"
+        try:
+            response = await SystemActor().signed_request(
+                method="get",
+                uri=self.actor_uri,
             )
-            self.public_key = document.get("publicKey", {}).get("publicKeyPem")
-            self.public_key_id = document.get("publicKey", {}).get("id")
-            self.icon_uri = document.get("icon", {}).get("url")
-            self.image_uri = document.get("image", {}).get("url")
+        except httpx.RequestError:
+            return False
+        if response.status_code == 410:
+            # Their account got deleted, so let's do the same.
+            if self.pk:
+                await Identity.objects.filter(pk=self.pk).adelete()
+            return False
+        if response.status_code == 404:
+            # We don't trust this as much as 410 Gone, but skip for now
+            return False
+        if response.status_code >= 500:
+            return False
+        document = canonicalise(response.json(), include_security=True)
+        self.name = document.get("name")
+        self.profile_uri = document.get("url")
+        self.inbox_uri = document.get("inbox")
+        self.outbox_uri = document.get("outbox")
+        self.summary = document.get("summary")
+        self.username = document.get("preferredUsername")
+        if self.username and "@value" in self.username:
+            self.username = self.username["@value"]
+        if self.username:
+            self.username = self.username.lower()
+        self.manually_approves_followers = document.get("as:manuallyApprovesFollowers")
+        self.public_key = document.get("publicKey", {}).get("publicKeyPem")
+        self.public_key_id = document.get("publicKey", {}).get("id")
+        self.icon_uri = document.get("icon", {}).get("url")
+        self.image_uri = document.get("image", {}).get("url")
         # Now go do webfinger with that info to see if we can get a canonical domain
         actor_url_parts = urlparse(self.actor_uri)
         get_domain = sync_to_async(Domain.get_remote_domain)
@@ -387,22 +387,6 @@ class Identity(StatorModel):
     def generate_keypair(self):
         if not self.local:
             raise ValueError("Cannot generate keypair for remote user")
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-        )
-        self.private_key = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        ).decode("ascii")
-        self.public_key = (
-            private_key.public_key()
-            .public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo,
-            )
-            .decode("ascii")
-        )
+        self.private_key, self.public_key = RsaKeys.generate_keypair()
         self.public_key_id = self.actor_uri + "#main-key"
         self.save()

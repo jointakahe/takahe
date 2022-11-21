@@ -18,7 +18,7 @@ from core.signatures import (
     VerificationFormatError,
 )
 from takahe import __version__
-from users.models import Identity, InboxMessage
+from users.models import Identity, InboxMessage, SystemActor
 from users.shortcuts import by_handle_or_404
 
 
@@ -96,28 +96,52 @@ class Webfinger(View):
         resource = request.GET.get("resource")
         if not resource.startswith("acct:"):
             raise Http404("Not an account resource")
-        handle = resource[5:].replace("testfedi", "feditest")
-        identity = by_handle_or_404(request, handle)
-        return JsonResponse(
-            {
-                "subject": f"acct:{identity.handle}",
-                "aliases": [
-                    str(identity.urls.view_nice),
-                ],
-                "links": [
-                    {
-                        "rel": "http://webfinger.net/rel/profile-page",
-                        "type": "text/html",
-                        "href": str(identity.urls.view_nice),
-                    },
-                    {
-                        "rel": "self",
-                        "type": "application/activity+json",
-                        "href": identity.actor_uri,
-                    },
-                ],
-            }
-        )
+        handle = resource[5:]
+        if handle.startswith("__system__@"):
+            # They are trying to webfinger the system actor
+            system_actor = SystemActor()
+            return JsonResponse(
+                {
+                    "subject": f"acct:{handle}",
+                    "aliases": [
+                        system_actor.profile_uri,
+                    ],
+                    "links": [
+                        {
+                            "rel": "http://webfinger.net/rel/profile-page",
+                            "type": "text/html",
+                            "href": system_actor.profile_uri,
+                        },
+                        {
+                            "rel": "self",
+                            "type": "application/activity+json",
+                            "href": system_actor.actor_uri,
+                        },
+                    ],
+                }
+            )
+        else:
+            identity = by_handle_or_404(request, handle)
+            return JsonResponse(
+                {
+                    "subject": f"acct:{identity.handle}",
+                    "aliases": [
+                        str(identity.urls.view_nice),
+                    ],
+                    "links": [
+                        {
+                            "rel": "http://webfinger.net/rel/profile-page",
+                            "type": "text/html",
+                            "href": str(identity.urls.view_nice),
+                        },
+                        {
+                            "rel": "self",
+                            "type": "application/activity+json",
+                            "href": identity.actor_uri,
+                        },
+                    ],
+                }
+            )
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -171,3 +195,17 @@ class Inbox(View):
         # Hand off the item to be processed by the queue
         InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)
+
+
+class SystemActorView(View):
+    """
+    Special endpoint for the overall system actor
+    """
+
+    def get(self, request):
+        return JsonResponse(
+            canonicalise(
+                SystemActor().to_ap(),
+                include_security=True,
+            )
+        )

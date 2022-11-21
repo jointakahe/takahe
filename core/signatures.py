@@ -1,10 +1,11 @@
 import base64
 import json
-from typing import Dict, List, Literal, TypedDict
+from typing import Dict, List, Literal, Optional, Tuple, TypedDict
 from urllib.parse import urlparse
 
 import httpx
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.http import http_date, parse_http_date
@@ -28,6 +29,32 @@ class VerificationFormatError(VerificationError):
     """
 
     pass
+
+
+class RsaKeys:
+    @classmethod
+    def generate_keypair(cls) -> Tuple[str, str]:
+        """
+        Generates a new RSA keypair
+        """
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        private_key_serialized = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ).decode("ascii")
+        public_key_serialized = (
+            private_key.public_key()
+            .public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+            .decode("ascii")
+        )
+        return private_key_serialized, public_key_serialized
 
 
 class HttpSignature:
@@ -138,28 +165,37 @@ class HttpSignature:
 
     @classmethod
     async def signed_request(
-        self,
+        cls,
         uri: str,
-        body: Dict,
+        body: Optional[Dict],
         private_key: str,
         key_id: str,
         content_type: str = "application/json",
-        method: Literal["post"] = "post",
+        method: Literal["get", "post"] = "post",
     ):
         """
         Performs an async request to the given path, with a document, signed
         as an identity.
         """
+        # Create the core header field set
         uri_parts = urlparse(uri)
         date_string = http_date()
-        body_bytes = json.dumps(body).encode("utf8")
         headers = {
             "(request-target)": f"{method} {uri_parts.path}",
             "Host": uri_parts.hostname,
             "Date": date_string,
-            "Digest": self.calculate_digest(body_bytes),
-            "Content-Type": content_type,
         }
+        # If we have a body, add a digest and content type
+        if body is not None:
+            body_bytes = json.dumps(body).encode("utf8")
+            headers["Digest"] = cls.calculate_digest(body_bytes)
+            headers["Content-Type"] = content_type
+        else:
+            body_bytes = b""
+        # GET requests get implicit accept headers added
+        if method == "get":
+            headers["Accept"] = "application/activity+json, application/ld+json"
+        # Sign the headers
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
         )
@@ -172,7 +208,7 @@ class HttpSignature:
             signed_string.encode("ascii"),
             "sha256",
         )
-        headers["Signature"] = self.compile_signature(
+        headers["Signature"] = cls.compile_signature(
             {
                 "keyid": key_id,
                 "headers": list(headers.keys()),
@@ -180,6 +216,7 @@ class HttpSignature:
                 "algorithm": "rsa-sha256",
             }
         )
+        # Send the request with all those headers except the pseudo one
         del headers["(request-target)"]
         async with httpx.AsyncClient() as client:
             response = await client.request(
@@ -187,6 +224,7 @@ class HttpSignature:
                 uri,
                 headers=headers,
                 content=body_bytes,
+                follow_redirects=method == "get",
             )
             if response.status_code >= 400:
                 raise ValueError(

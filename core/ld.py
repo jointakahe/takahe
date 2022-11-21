@@ -358,6 +358,12 @@ schemas = {
             ]
         },
     },
+    "joinmastodon.org/ns": {
+        "contentType": "application/ld+json",
+        "documentUrl": "http://joinmastodon.org/ns",
+        "contextUrl": None,
+        "document": {},
+    },
 }
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"

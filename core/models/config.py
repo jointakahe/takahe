@@ -154,6 +154,9 @@ class Config(models.Model):
 
         version: str = __version__
 
+        system_actor_public_key: str = ""
+        system_actor_private_key: str = ""
+
         site_name: str = "Takahē"
         highlight_color: str = "#449c8c"
         site_about: str = "<h2>Welcome!</h2>\n\nThis is a community running Takahē."
