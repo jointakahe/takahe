@@ -2,7 +2,7 @@ import json
 
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -94,8 +94,10 @@ class Webfinger(View):
 
     def get(self, request):
         resource = request.GET.get("resource")
+        if not resource:
+            return HttpResponseBadRequest("No resource specified")
         if not resource.startswith("acct:"):
-            raise Http404("Not an account resource")
+            return HttpResponseBadRequest("Not an account resource")
         handle = resource[5:]
         if handle.startswith("__system__@"):
             # They are trying to webfinger the system actor
