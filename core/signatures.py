@@ -4,12 +4,12 @@ from typing import Dict, List, Literal, Optional, Tuple, TypedDict
 from urllib.parse import urlparse
 
 import httpx
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.http import http_date, parse_http_date
-from OpenSSL import crypto
 from pyld import jsonld
 
 from core.ld import format_ld_date
@@ -121,16 +121,17 @@ class HttpSignature:
         cleartext: str,
         public_key: str,
     ):
-        x509 = crypto.X509()
-        x509.set_pubkey(
-            crypto.load_publickey(
-                crypto.FILETYPE_PEM,
-                public_key.encode("ascii"),
-            )
+        public_key_instance = serialization.load_pem_public_key(
+            public_key.encode("ascii")
         )
         try:
-            crypto.verify(x509, signature, cleartext.encode("ascii"), "sha256")
-        except crypto.Error:
+            public_key_instance.verify(
+                signature,
+                cleartext.encode("ascii"),
+                padding.PKCS1v15(),
+                hashes.SHA256(),
+            )
+        except InvalidSignature:
             raise VerificationError("Signature mismatch")
 
     @classmethod
@@ -199,14 +200,14 @@ class HttpSignature:
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
         )
-        pkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
+        private_key_instance = serialization.load_pem_private_key(
             private_key.encode("ascii"),
+            password=None,
         )
-        signature = crypto.sign(
-            pkey,
+        signature = private_key_instance.sign(
             signed_string.encode("ascii"),
-            "sha256",
+            padding.PKCS1v15(),
+            hashes.SHA256(),
         )
         headers["Signature"] = cls.compile_signature(
             {
@@ -266,21 +267,17 @@ class LDSignature:
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)
         # Verify the signature
-        x509 = crypto.X509()
-        x509.set_pubkey(
-            crypto.load_publickey(
-                crypto.FILETYPE_PEM,
-                public_key.encode("ascii"),
-            )
+        public_key_instance = serialization.load_pem_public_key(
+            public_key.encode("ascii")
         )
         try:
-            crypto.verify(
-                x509,
+            public_key_instance.verify(
                 base64.b64decode(signature["signatureValue"]),
                 final_hash,
-                "sha256",
+                padding.PKCS1v15(),
+                hashes.SHA256(),
             )
-        except crypto.Error:
+        except InvalidSignature:
             raise VerificationError("Signature mismatch")
 
     @classmethod
@@ -299,11 +296,17 @@ class LDSignature:
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)
         # Create the signature
-        pkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
+        private_key_instance = serialization.load_pem_private_key(
             private_key.encode("ascii"),
+            password=None,
         )
-        signature = base64.b64encode(crypto.sign(pkey, final_hash, "sha256"))
+        signature = base64.b64encode(
+            private_key_instance.sign(
+                final_hash,
+                padding.PKCS1v15(),
+                hashes.SHA256(),
+            )
+        )
         # Add it to the options document along with other bits
         options["signatureValue"] = signature.decode("ascii")
         options["type"] = "RsaSignature2017"
