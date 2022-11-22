@@ -129,6 +129,7 @@ footer a {
 
 header {
     display: flex;
+    height: 50px;
 }
 
 header .logo {
@@ -266,6 +267,7 @@ nav a i {
 
 .columns {
     display: flex;
+    align-items: stretch;
 }
 
 .left-column {
@@ -812,17 +814,39 @@ h1.identity small {
 
 @media (max-width: 920px) or (display-mode: standalone) {
 
+    html {
+        scrollbar-color: var(--color-bg-main) var(--color-text-duller);
+    }
+
+    *::-webkit-scrollbar {
+        background: var(--color-bg-main);
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background: var(--color-text-dull);
+    }
+
+    div.columns {
+        height: calc(100vh - 50px);
+        align-items: stretch;
+    }
+
+    .left-column,
+    .right-column {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
     main {
         width: 100%;
+        overflow: hidden;
         margin: 0;
         box-shadow: none;
         border-radius: 0;
     }
 
     footer {
-        width: 100%;
-        background-color: var(--color-bg-box);
-        padding: 10px 0;
+        display: none;
     }
 
     header .logo {
