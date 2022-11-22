@@ -94,6 +94,17 @@ def test_linkify_mentions_local(identity, remote_identity):
         post.safe_content_local()
         == '<p><a href="/@test@example.com/">@test@example.com</a>, welcome!</p>'
     )
+    # Test a full username (remote) with no <p>
+    post = Post.objects.create(
+        content="@test@remote.test hello!",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(remote_identity)
+    assert (
+        post.safe_content_local()
+        == '<a href="/@test@remote.test/">@test@remote.test</a> hello!'
+    )
     # Test that they don't get touched without a mention
     post = Post.objects.create(
         content="<p>@test@example.com, welcome!</p>",

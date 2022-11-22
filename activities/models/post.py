@@ -166,7 +166,7 @@ class Post(StatorModel):
     ### Content cleanup and extraction ###
 
     mention_regex = re.compile(
-        r"([^\w\d\-_])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
+        r"(^|[^\w\d\-_])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
     )
 
     def linkify_mentions(self, content, local=False):
