@@ -278,14 +278,14 @@ class Post(StatorModel):
                 post = cls.objects.create(
                     object_uri=data["id"],
                     author=author,
-                    content=sanitize_post(data["content"]),
+                    content=data["content"],
                     local=False,
                 )
                 created = True
             else:
                 raise KeyError(f"No post with ID {data['id']}", data)
         if update or created:
-            post.content = sanitize_post(data["content"])
+            post.content = data["content"]
             post.summary = data.get("summary")
             post.sensitive = data.get("as:sensitive", False)
             post.url = data.get("url")
