@@ -5,3 +5,6 @@ image:
 
 docs:
 	cd docs/ && make html
+
+compose_up:
+	docker-compose -f docker/docker-compose.yml up

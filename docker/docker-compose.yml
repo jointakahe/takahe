@@ -1,4 +1,28 @@
-version: "3"
+version: "3.4"
+
+x-takahe-common:
+  &takahe-common
+    build: .
+    image: takahe:latest
+    environment:
+      DJANGO_SETTINGS_MODULE: takahe.settings.production
+      PGHOST: db
+      PGDATABASE: takahe
+      PGUSER: postgres
+      PGPASSWORD: insecure_password
+      TAKAHE_SECRET_KEY: insecure_secret
+      TAKAHE_MAIN_DOMAIN: example.com
+      TAKAHE_EMAIL_CONSOLE_ONLY: "true"
+      TAKAHE_MEDIA_BACKEND: local
+      TAKAHE_AUTO_ADMIN_EMAIL: admin@example.com
+    networks:
+      - external_network
+      - internal_network
+    restart: on-failure
+    depends_on:
+      - db
+    volumes:
+      - ..:/takahe/
 
 services:
   db:
@@ -11,34 +35,18 @@ services:
       - internal_network
     restart: always
     environment:
-      - "POSTGRES_DB=takahe"
-      - "POSTGRES_USER=postgres"
-      - "POSTGRES_PASSWORD=insecure_password"
+      POSTGRES_DB: takahe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: insecure_password
 
   web:
-    build: .
-    image: takahe:latest
-    environment:
-      - "DJANGO_SETTINGS_MODULE=takahe.settings.production"
-      - "PGHOST=db"
-      - "PGDATABASE=takahe"
-      - "PGUSER=postgres"
-      - "PGPASSWORD=insecure_password"
-      - "TAKAHE_SECRET_KEY=insecure_secret"
-      - "TAKAHE_MAIN_DOMAIN=example.com"
-      - "TAKAHE_EMAIL_CONSOLE_ONLY=True"
-      - "TAKAHE_MEDIA_BACKEND=local"
-      - "TAKAHE_AUTO_ADMIN_EMAIL=admin@example.com"
-    networks:
-      - external_network
-      - internal_network
-    restart: always
-    depends_on:
-      - db
+    <<: *takahe-common
     ports:
       - "8000:8000"
-    volumes:
-      - ../:/takahe/
+
+  setup:
+    <<: *takahe-common
+    command: ["/takahe/manage.py", "migrate"]
 
 networks:
   internal_network:
