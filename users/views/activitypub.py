@@ -128,13 +128,13 @@ class Webfinger(View):
                 {
                     "subject": f"acct:{identity.handle}",
                     "aliases": [
-                        str(identity.urls.view_nice),
+                        identity.absolute_profile_uri(),
                     ],
                     "links": [
                         {
                             "rel": "http://webfinger.net/rel/profile-page",
                             "type": "text/html",
-                            "href": str(identity.urls.view_nice),
+                            "href": identity.absolute_profile_uri(),
                         },
                         {
                             "rel": "self",

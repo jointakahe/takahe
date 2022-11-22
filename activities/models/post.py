@@ -4,12 +4,13 @@ from typing import Dict, Optional
 import httpx
 import urlman
 from django.db import models, transaction
+from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from activities.models.fan_out import FanOut
 from activities.models.timeline_event import TimelineEvent
-from core.html import sanitize_post
+from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
@@ -134,7 +135,6 @@ class Post(StatorModel):
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"
-        view_nice = "{self.author.urls.view_nice}posts/{self.id}/"
         object_uri = "{self.author.actor_uri}posts/{self.id}/"
         action_like = "{view}like/"
         action_unlike = "{view}unlike/"
@@ -153,42 +153,58 @@ class Post(StatorModel):
     def get_absolute_url(self):
         return self.urls.view
 
+    def absolute_object_uri(self):
+        """
+        Returns an object URI that is always absolute, for sending out to
+        other servers.
+        """
+        if self.local:
+            return self.author.absolute_profile_uri() + f"posts/{self.id}/"
+        else:
+            return self.object_uri
+
     ### Content cleanup and extraction ###
 
     mention_regex = re.compile(
-        r"([^\w\d\-_])(@[\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
+        r"([^\w\d\-_])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
     )
 
-    def linkify_mentions(self, content):
+    def linkify_mentions(self, content, local=False):
         """
-        Links mentions _in the context of the post_ - meaning that if there's
-        a short @andrew mention, it will look at the mentions link to resolve
-        it rather than presuming it's local.
+        Links mentions _in the context of the post_ - as in, using the mentions
+        property as the only source (as we might be doing this without other
+        DB access allowed)
         """
+
+        possible_matches = {}
+        for mention in self.mentions.all():
+            if local:
+                url = str(mention.urls.view)
+            else:
+                url = mention.absolute_profile_uri()
+            possible_matches[mention.username] = url
+            possible_matches[f"{mention.username}@{mention.domain_id}"] = url
 
         def replacer(match):
             precursor = match.group(1)
             handle = match.group(2)
-            # If the handle has no domain, try to match it with a mention
-            if "@" not in handle.lstrip("@"):
-                username = handle.lstrip("@")
-                identity = self.mentions.filter(username=username).first()
-                if identity:
-                    url = identity.urls.view
-                else:
-                    url = f"/@{username}/"
-            else:
-                url = f"/{handle}/"
-            # If we have a URL, link to it, otherwise don't link
-            if url:
-                return f'{precursor}<a href="{url}">{handle}</a>'
+            if handle in possible_matches:
+                return f'{precursor}<a href="{possible_matches[handle]}">@{handle}</a>'
             else:
                 return match.group()
 
         return mark_safe(self.mention_regex.sub(replacer, content))
 
-    @property
-    def safe_content(self):
+    def safe_content_local(self):
+        """
+        Returns the content formatted for local display
+        """
+        return self.linkify_mentions(sanitize_post(self.content), local=True)
+
+    def safe_content_remote(self):
+        """
+        Returns the content formatted for remote consumption
+        """
         return self.linkify_mentions(sanitize_post(self.content))
 
     ### Async helpers ###
@@ -197,8 +213,10 @@ class Post(StatorModel):
         """
         Returns a version of the object with all relations pre-loaded
         """
-        return await Post.objects.select_related("author", "author__domain").aget(
-            pk=self.pk
+        return (
+            await Post.objects.select_related("author", "author__domain")
+            .prefetch_related("mentions", "mentions__domain")
+            .aget(pk=self.pk)
         )
 
     ### Local creation ###
@@ -212,6 +230,25 @@ class Post(StatorModel):
         visibility: int = Visibilities.public,
     ) -> "Post":
         with transaction.atomic():
+            # Find mentions in this post
+            mention_hits = cls.mention_regex.findall(content)
+            mentions = set()
+            for precursor, handle in mention_hits:
+                if "@" in handle:
+                    username, domain = handle.split("@", 1)
+                else:
+                    username = handle
+                    domain = author.domain_id
+                identity = Identity.by_username_and_domain(
+                    username=username,
+                    domain=domain,
+                    fetch=True,
+                )
+                if identity is not None:
+                    mentions.add(identity)
+            # Strip all HTML and apply linebreaks filter
+            content = linebreaks_filter(strip_html(content))
+            # Make the Post object
             post = cls.objects.create(
                 author=author,
                 content=content,
@@ -221,7 +258,8 @@ class Post(StatorModel):
                 visibility=visibility,
             )
             post.object_uri = post.urls.object_uri
-            post.url = post.urls.view_nice
+            post.url = post.absolute_object_uri()
+            post.mentions.set(mentions)
             post.save()
         return post
 
@@ -232,28 +270,48 @@ class Post(StatorModel):
         Returns the AP JSON for this object
         """
         value = {
+            "to": "as:Public",
+            "cc": [],
             "type": "Note",
             "id": self.object_uri,
             "published": format_ld_date(self.published),
             "attributedTo": self.author.actor_uri,
-            "content": self.safe_content,
-            "to": "as:Public",
+            "content": self.safe_content_remote(),
             "as:sensitive": self.sensitive,
-            "url": str(self.urls.view_nice if self.local else self.url),
+            "url": self.absolute_object_uri(),
+            "tag": [],
         }
         if self.summary:
             value["summary"] = self.summary
+        # Mentions
+        for mention in self.mentions.all():
+            value["tag"].append(
+                {
+                    "href": mention.actor_uri,
+                    "name": "@" + mention.handle,
+                    "type": "Mention",
+                }
+            )
+            value["cc"].append(mention.actor_uri)
+        # Remove tag and cc if they're empty
+        if not value["cc"]:
+            del value["cc"]
+        if not value["tag"]:
+            del value["tag"]
         return value
 
     def to_create_ap(self):
         """
         Returns the AP JSON to create this object
         """
+        object = self.to_ap()
         return {
+            "to": object["to"],
+            "cc": object.get("cc", []),
             "type": "Create",
             "id": self.object_uri + "#create",
             "actor": self.author.actor_uri,
-            "object": self.to_ap(),
+            "object": object,
         }
 
     ### ActivityPub (inbound) ###

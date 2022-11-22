@@ -1,6 +1,5 @@
 from django import forms
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
@@ -158,7 +157,7 @@ class Compose(FormView):
     def form_valid(self, form):
         Post.create_local(
             author=self.request.identity,
-            content=linebreaks_filter(form.cleaned_data["text"]),
+            content=form.cleaned_data["text"],
             summary=form.cleaned_data.get("content_warning"),
             visibility=form.cleaned_data["visibility"],
         )

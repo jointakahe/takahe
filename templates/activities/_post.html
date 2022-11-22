@@ -36,7 +36,7 @@
     {% endif %}
 
     <div class="content {% if post.summary %}hidden{% endif %}">
-        {{ post.safe_content }}
+        {{ post.safe_content_local }}
     </div>
 
     {% if post.attachments.exists %}

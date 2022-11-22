@@ -68,14 +68,15 @@ def identity():
     """
     user = User.objects.create(email="test@example.com")
     domain = Domain.objects.create(domain="example.com", local=True, public=True)
-    return Identity.objects.create(
+    identity = Identity.objects.create(
         actor_uri="https://example.com/test-actor/",
         username="test",
         domain=domain,
-        user=user,
         name="Test User",
         local=True,
     )
+    identity.users.set([user])
+    return identity
 
 
 @pytest.fixture
@@ -87,6 +88,7 @@ def remote_identity():
     domain = Domain.objects.create(domain="remote.test", local=False)
     return Identity.objects.create(
         actor_uri="https://remote.test/test-actor/",
+        profile_uri="https://remote.test/@test/",
         username="test",
         domain=domain,
         name="Test Remote User",

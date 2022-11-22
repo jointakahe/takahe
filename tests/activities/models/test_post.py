@@ -32,32 +32,72 @@ def test_fetch_post(httpx_mock: HTTPXMock):
 
 
 @pytest.mark.django_db
-def test_linkify_mentions(identity, remote_identity):
+def test_linkify_mentions_remote(identity, remote_identity):
     """
-    Tests that we can linkify post mentions properly
+    Tests that we can linkify post mentions properly for remote use
     """
-    # Test a short username without a mention (presumed local)
-    post = Post.objects.create(
-        content="<p>Hello @test</p>",
-        author=identity,
-        local=True,
-    )
-    assert post.safe_content == '<p>Hello <a href="/@test/">@test</a></p>'
-    # Test a full username
-    post = Post.objects.create(
-        content="<p>@test@example.com, welcome!</p>",
-        author=identity,
-        local=True,
-    )
-    assert (
-        post.safe_content
-        == '<p><a href="/@test@example.com/">@test@example.com</a>, welcome!</p>'
-    )
-    # Test a short username with a mention resolving to remote
+    # Test a short username (remote)
     post = Post.objects.create(
         content="<p>Hello @test</p>",
         author=identity,
         local=True,
     )
     post.mentions.add(remote_identity)
-    assert post.safe_content == '<p>Hello <a href="/@test@remote.test/">@test</a></p>'
+    assert (
+        post.safe_content_remote()
+        == '<p>Hello <a href="https://remote.test/@test/">@test</a></p>'
+    )
+    # Test a full username (local)
+    post = Post.objects.create(
+        content="<p>@test@example.com, welcome!</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(identity)
+    assert (
+        post.safe_content_remote()
+        == '<p><a href="https://example.com/@test/">@test@example.com</a>, welcome!</p>'
+    )
+    # Test that they don't get touched without a mention
+    post = Post.objects.create(
+        content="<p>@test@example.com, welcome!</p>",
+        author=identity,
+        local=True,
+    )
+    assert post.safe_content_remote() == "<p>@test@example.com, welcome!</p>"
+
+
+@pytest.mark.django_db
+def test_linkify_mentions_local(identity, remote_identity):
+    """
+    Tests that we can linkify post mentions properly for local use
+    """
+    # Test a short username (remote)
+    post = Post.objects.create(
+        content="<p>Hello @test</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(remote_identity)
+    assert (
+        post.safe_content_local()
+        == '<p>Hello <a href="/@test@remote.test/">@test</a></p>'
+    )
+    # Test a full username (local)
+    post = Post.objects.create(
+        content="<p>@test@example.com, welcome!</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(identity)
+    assert (
+        post.safe_content_local()
+        == '<p><a href="/@test@example.com/">@test@example.com</a>, welcome!</p>'
+    )
+    # Test that they don't get touched without a mention
+    post = Post.objects.create(
+        content="<p>@test@example.com, welcome!</p>",
+        author=identity,
+        local=True,
+    )
+    assert post.safe_content_local() == "<p>@test@example.com, welcome!</p>"

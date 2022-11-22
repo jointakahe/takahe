@@ -30,3 +30,11 @@ def sanitize_post(post_html: str) -> str:
         strip=True,
     )
     return mark_safe(cleaner.clean(post_html))
+
+
+def strip_html(post_html: str) -> str:
+    """
+    Strips all tags from the text, then linkifies it.
+    """
+    cleaner = bleach.Cleaner(tags=[], strip=True, filters=[LinkifyFilter])
+    return mark_safe(cleaner.clean(post_html))

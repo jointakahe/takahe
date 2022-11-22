@@ -37,7 +37,7 @@ the less sure I am about it.
 - [x] Undo follows
 - [x] Receive and accept follows
 - [x] Receive follow undos
-- [ ] Do outgoing mentions properly
+- [x] Do outgoing mentions properly
 - [x] Home timeline (posts and boosts from follows)
 - [x] Notifications page (followed, boosted, liked)
 - [x] Local timeline

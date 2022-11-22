@@ -97,7 +97,6 @@ class Identity(StatorModel):
         unique_together = [("username", "domain")]
 
     class urls(urlman.Urls):
-        view_nice = "{self._nice_view_url}"
         view = "/@{self.username}@{self.domain_id}/"
         action = "{view}action/"
         activate = "{view}activate/"
@@ -113,14 +112,15 @@ class Identity(StatorModel):
             return self.handle
         return self.actor_uri
 
-    def _nice_view_url(self):
+    def absolute_profile_uri(self):
         """
-        Returns the "nice" user URL if they're local, otherwise our general one
+        Returns a profile URI that is always absolute, for sending out to
+        other servers.
         """
         if self.local:
             return f"https://{self.domain.uri_domain}/@{self.username}/"
         else:
-            return f"/@{self.username}@{self.domain_id}/"
+            return self.profile_uri
 
     def local_icon_url(self):
         """
@@ -206,7 +206,7 @@ class Identity(StatorModel):
     def handle(self):
         if self.domain_id:
             return f"{self.username}@{self.domain_id}"
-        return f"{self.username}@UNKNOWN-DOMAIN"
+        return f"{self.username}@unknown.invalid"
 
     @property
     def data_age(self) -> float:
@@ -238,7 +238,7 @@ class Identity(StatorModel):
                 "publicKeyPem": self.public_key,
             },
             "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "url": str(self.urls.view_nice),
+            "url": self.absolute_profile_uri(),
         }
         if self.name:
             response["name"] = self.name
