@@ -818,11 +818,16 @@ h1.identity small {
         scrollbar-color: var(--color-bg-main) var(--color-text-duller);
     }
 
-    *::-webkit-scrollbar {
+    div::-webkit-scrollbar {
+        background: var(--color-bg-main);
+        width: 7px;
+    }
+
+    div::-webkit-scrollbar-thumb {
         background: var(--color-bg-main);
     }
 
-    *::-webkit-scrollbar-thumb {
+    div:hover::-webkit-scrollbar-thumb {
         background: var(--color-text-dull);
     }
 
