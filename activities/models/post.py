@@ -1,9 +1,11 @@
+import re
 from typing import Dict, Optional
 
 import httpx
 import urlman
 from django.db import models, transaction
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from activities.models.fan_out import FanOut
 from activities.models.timeline_event import TimelineEvent
@@ -151,9 +153,44 @@ class Post(StatorModel):
     def get_absolute_url(self):
         return self.urls.view
 
+    ### Content cleanup and extraction ###
+
+    mention_regex = re.compile(
+        r"([^\w\d\-_])(@[\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
+    )
+
+    def linkify_mentions(self, content):
+        """
+        Links mentions _in the context of the post_ - meaning that if there's
+        a short @andrew mention, it will look at the mentions link to resolve
+        it rather than presuming it's local.
+        """
+
+        def replacer(match):
+            print(match)
+            precursor = match.group(1)
+            handle = match.group(2)
+            # If the handle has no domain, try to match it with a mention
+            if "@" not in handle.lstrip("@"):
+                identity = self.mentions.filter(username=handle.lstrip("@")).first()
+                if identity:
+                    url = identity.urls.view
+                else:
+                    url = None
+            else:
+                url = f"/{handle}/"
+            # If we have a URL, link to it, otherwise don't link
+            if url:
+                return f"{precursor}<a href='{url}'>{handle}</a>"
+            else:
+                return match.group()
+
+        print(f"replacing on {content!r}")
+        return mark_safe(self.mention_regex.sub(replacer, content))
+
     @property
     def safe_content(self):
-        return sanitize_post(self.content)
+        return self.linkify_mentions(sanitize_post(self.content))
 
     ### Async helpers ###
 
