@@ -5,6 +5,7 @@ import pydantic
 from django.core.files import File
 from django.db import models
 from django.templatetags.static import static
+from django.utils.functional import lazy
 
 from core.uploads import upload_namer
 from takahe import __version__
@@ -57,8 +58,11 @@ class Config(models.Model):
 
     @classmethod
     def lazy_system_value(cls, key: str):
-        from django.utils.functional import lazy
-
+        """
+        Lazily load a System.Config value
+        """
+        if key not in cls.SystemOptions.__fields__:
+            raise KeyError(f"Undefined SystemOption for {key}")
         return lazy(lambda: getattr(Config.system, key))
 
     @classmethod
