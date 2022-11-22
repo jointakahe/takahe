@@ -1,6 +1,7 @@
 import pytest
 
 from core.models import Config
+from users.models import Domain, Identity, User
 
 
 @pytest.fixture
@@ -57,3 +58,37 @@ def config_system(keypair):
         system_actor_public_key=keypair["public_key"],
     )
     yield Config.system
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def identity():
+    """
+    Creates a basic test identity with a user and domain.
+    """
+    user = User.objects.create(email="test@example.com")
+    domain = Domain.objects.create(domain="example.com", local=True, public=True)
+    return Identity.objects.create(
+        actor_uri="https://example.com/test-actor/",
+        username="test",
+        domain=domain,
+        user=user,
+        name="Test User",
+        local=True,
+    )
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def remote_identity():
+    """
+    Creates a basic remote test identity with a domain.
+    """
+    domain = Domain.objects.create(domain="remote.test", local=False)
+    return Identity.objects.create(
+        actor_uri="https://remote.test/test-actor/",
+        username="test",
+        domain=domain,
+        name="Test Remote User",
+        local=False,
+    )

@@ -167,25 +167,24 @@ class Post(StatorModel):
         """
 
         def replacer(match):
-            print(match)
             precursor = match.group(1)
             handle = match.group(2)
             # If the handle has no domain, try to match it with a mention
             if "@" not in handle.lstrip("@"):
-                identity = self.mentions.filter(username=handle.lstrip("@")).first()
+                username = handle.lstrip("@")
+                identity = self.mentions.filter(username=username).first()
                 if identity:
                     url = identity.urls.view
                 else:
-                    url = None
+                    url = f"/@{username}/"
             else:
                 url = f"/{handle}/"
             # If we have a URL, link to it, otherwise don't link
             if url:
-                return f"{precursor}<a href='{url}'>{handle}</a>"
+                return f'{precursor}<a href="{url}">{handle}</a>'
             else:
                 return match.group()
 
-        print(f"replacing on {content!r}")
         return mark_safe(self.mention_regex.sub(replacer, content))
 
     @property
