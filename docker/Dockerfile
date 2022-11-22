@@ -19,4 +19,4 @@ EXPOSE 8000
 # Set some sensible defaults
 ENV GUNICORN_CMD_ARGS="--workers 8"
 
-CMD ["gunicorn", "takahe.wsgi:application", "-b", "0.0.0.0:8000"]
+CMD ["sh", "/takahe/docker/start.sh"]
