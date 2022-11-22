@@ -2,8 +2,14 @@ import pytest
 
 from core.models import Config
 
-# Our testing-only keypair
-private_key = """-----BEGIN PRIVATE KEY-----
+
+@pytest.fixture
+def keypair():
+    """
+    Testing-only keypair
+    """
+    return {
+        "private_key": """-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCzNJa9JIxQpOtQ
 z8UQKXDPREF9DyBliGu3uPWo6DMnkOm7hoh2+nOryrWDqWOFaVK//n7kltHXUEbm
 U3exh0/0iWfzx2AbNrI04csAvW/hRvHbHBnVTotSxzqTd3ESkpcSW4xVuz9aCcFR
@@ -30,9 +36,8 @@ pxxwUvuKdWsceVWhgAjZQj5iRtvDK8Fi0XDCFekCgYALTU1v5iMIpaRAe+eyA2B1
 42qm4B/uhXznvOu2YXU6iJFmMgHGYgpa+Dq8uUjKtpn/LIFeX1KN0hH8z/0LW3gB
 e7tN7taW0oLK3RQcEMfkZ7diE9x3LGqo/xMxsZMtxAr88p5eMEU/nxxznOqq+W9b
 qxRbXYzEtHz+cW9+FZkyVw==
------END PRIVATE KEY-----"""
-
-public_key = """-----BEGIN PUBLIC KEY-----
+-----END PRIVATE KEY-----""",
+        "public_key": """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAszSWvSSMUKTrUM/FEClw
 z0RBfQ8gZYhrt7j1qOgzJ5Dpu4aIdvpzq8q1g6ljhWlSv/5+5JbR11BG5lN3sYdP
 9Iln88dgGzayNOHLAL1v4Ubx2xwZ1U6LUsc6k3dxEpKXEluMVbs/WgnBUZFt7p0g
@@ -40,12 +45,15 @@ jt3xdC4fCbMvTfwk+qE58BvmaXhrx1W4fcX0eVsOswO8/AOgde4W83THf96lD4o8
 iG+bHuHFlbRoP2SdF9bMp/bvZKcFI4R5clh/3rDER8T7luPQT2T4YSrNfrf/+MYG
 XEV+deahaj0thLWIGQH4ezN00b/Lgksy+E0/vJGvSFMCnVekxWqh9u2wBisiUHxm
 kwIDAQAB
------END PUBLIC KEY-----"""
+-----END PUBLIC KEY-----""",
+        "public_key_id": "https://example.com/test-actor#test-key",
+    }
 
 
 @pytest.fixture
-def config_system():
+def config_system(keypair):
     Config.system = Config.SystemOptions(
-        system_actor_private_key=private_key, system_actor_public_key=public_key
+        system_actor_private_key=keypair["private_key"],
+        system_actor_public_key=keypair["public_key"],
     )
     yield Config.system

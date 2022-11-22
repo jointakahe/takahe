@@ -7,7 +7,7 @@ from users.views.identity import CreateIdentity
 
 
 @pytest.mark.django_db
-def test_create_identity_form(client):
+def test_create_identity_form(config_system, client):
     """ """
     # Make a user
     user = User.objects.create(email="test@example.com")
@@ -62,7 +62,7 @@ def test_create_identity_form(client):
 
 
 @pytest.mark.django_db
-def test_identity_max_per_user(client):
+def test_identity_max_per_user(config_system, client):
     """
     Ensures that the identity limit is functioning
     """
