@@ -3,9 +3,13 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
-    {% for event in events %}
+    {% for event in page_obj %}
         {% include "activities/_event.html" %}
     {% empty %}
-        No events yet.
+        No notirications yet.
     {% endfor %}
+
+    {% if page_obj.has_next %}
+        <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
+    {% endif %}
 {% endblock %}

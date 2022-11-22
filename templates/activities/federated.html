@@ -1,11 +1,3 @@
-{% extends "base.html" %}
+{% extends "activities/local.html" %}
 
 {% block title %}Federated Timeline{% endblock %}
-
-{% block content %}
-    {% for post in posts %}
-        {% include "activities/_post.html" %}
-    {% empty %}
-        No posts yet.
-    {% endfor %}
-{% endblock %}

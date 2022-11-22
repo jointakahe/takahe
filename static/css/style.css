@@ -559,8 +559,8 @@ form p+.buttons {
     margin: 5px 10px 5px 0;
 }
 
-form button,
-form .button {
+button,
+.button {
     padding: 5px 10px;
     margin: 0 0 0 5px;
     border-radius: 5px;
@@ -572,39 +572,39 @@ form .button {
     display: inline-block;
 }
 
-form button.delete,
-form .button.delete {
+button.delete,
+.button.delete {
     background: var(--color-delete);
 }
 
-form button.secondary,
-form .button.secondary {
+button.secondary,
+.button.secondary {
     background: var(--color-bg-menu);
 }
 
-form button.toggle,
-form .button.toggle {
+button.toggle,
+.button.toggle {
     background: var(--color-bg-main);
 }
 
-form button.left,
-form .button.left {
+button.left,
+.button.left {
     float: left;
     margin: 0 5px 0 0;
 }
 
-form button.toggle.enabled,
-form .button.toggle.enabled {
+button.toggle.enabled,
+.button.toggle.enabled {
     background: var(--color-highlight);
 }
 
-form button:hover,
-form .button:hover {
+button:hover,
+.button:hover {
     border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
-.right-column form button,
-.right-column form .button {
+.right-column button,
+.right-column .button {
     padding: 2px 6px;
 }
 
@@ -810,6 +810,10 @@ h1.identity small {
     margin-right: 4px;
 }
 
+.load-more {
+    margin: 10px 0;
+    text-align: center;
+}
 
 
 @media (max-width: 920px) or (display-mode: standalone) {

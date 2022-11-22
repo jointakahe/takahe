@@ -2,7 +2,7 @@ from django import forms
 from django.shortcuts import redirect
 from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, ListView
 
 from activities.models import Post, PostInteraction, TimelineEvent
 from users.decorators import identity_required
@@ -57,47 +57,46 @@ class Home(FormView):
         return redirect(".")
 
 
-class Local(TemplateView):
+class Local(ListView):
 
     template_name = "activities/local.html"
+    extra_context = {"current_page": "local"}
+    paginate_by = 50
 
-    def get_context_data(self):
-        context = super().get_context_data()
-        context["posts"] = (
+    def get_queryset(self):
+        return (
             Post.objects.filter(visibility=Post.Visibilities.public, author__local=True)
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]
         )
-        context["current_page"] = "local"
-        return context
 
 
 @method_decorator(identity_required, name="dispatch")
-class Federated(TemplateView):
+class Federated(ListView):
 
     template_name = "activities/federated.html"
+    extra_context = {"current_page": "federated"}
+    paginate_by = 50
 
-    def get_context_data(self):
-        context = super().get_context_data()
-        context["posts"] = (
+    def get_queryset(self):
+        return (
             Post.objects.filter(visibility=Post.Visibilities.public)
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]
         )
-        context["current_page"] = "federated"
-        return context
 
 
 @method_decorator(identity_required, name="dispatch")
-class Notifications(TemplateView):
+class Notifications(ListView):
 
     template_name = "activities/notifications.html"
+    extra_context = {"current_page": "notifications"}
+    paginate_by = 50
 
-    def get_context_data(self):
-        context = super().get_context_data()
-        context["events"] = (
+    def get_queryset(self):
+        return (
             TimelineEvent.objects.filter(
                 identity=self.request.identity,
                 type__in=[
@@ -110,5 +109,3 @@ class Notifications(TemplateView):
             .order_by("-created")[:50]
             .select_related("subject_post", "subject_post__author", "subject_identity")
         )
-        context["current_page"] = "notifications"
-        return context
