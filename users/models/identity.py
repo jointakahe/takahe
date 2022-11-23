@@ -239,6 +239,7 @@ class Identity(StatorModel):
             },
             "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "url": self.absolute_profile_uri(),
+            "discoverable": True,
         }
         if self.name:
             response["name"] = self.name
