@@ -40,6 +40,13 @@ class PostInteractionStates(StateGraph):
                         subject_post=interaction.post,
                         subject_post_interaction=interaction,
                     )
+            # And one to the post's author
+            await FanOut.objects.acreate(
+                type=FanOut.Types.interaction,
+                identity_id=interaction.post.author_id,
+                subject_post=interaction.post,
+                subject_post_interaction=interaction,
+            )
         # Like: send a copy to the original post author only
         elif interaction.type == interaction.Types.like:
             await FanOut.objects.acreate(
