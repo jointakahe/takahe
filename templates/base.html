@@ -34,9 +34,11 @@
                     <a href="{% url "search" %}" title="Search" {% if top_section == "search" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-search"></i>
                     </a>
-                    <a href="{% url "settings" %}" title="Settings" {% if top_section == "settings" %}class="selected"{% endif %}>
-                        <i class="fa-solid fa-gear"></i>
-                    </a>
+                    {% if allows_refresh %}
+                        <a href="." title="Refresh" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML">
+                            <i class="fa-solid fa-rotate"></i>
+                        </a>
+                    {% endif %}
                     <div class="gap"></div>
                     <a href="/identity/select/" class="identity">
                         {% if not request.identity %}

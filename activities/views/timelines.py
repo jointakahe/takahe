@@ -46,6 +46,7 @@ class Home(FormView):
             context["events"], self.request.identity
         )
         context["current_page"] = "home"
+        context["allows_refresh"] = True
         return context
 
     def form_valid(self, form):
@@ -60,7 +61,10 @@ class Home(FormView):
 class Local(ListView):
 
     template_name = "activities/local.html"
-    extra_context = {"current_page": "local"}
+    extra_context = {
+        "current_page": "local",
+        "allows_refresh": True,
+    }
     paginate_by = 50
 
     def get_queryset(self):
@@ -76,7 +80,10 @@ class Local(ListView):
 class Federated(ListView):
 
     template_name = "activities/federated.html"
-    extra_context = {"current_page": "federated"}
+    extra_context = {
+        "current_page": "federated",
+        "allows_refresh": True,
+    }
     paginate_by = 50
 
     def get_queryset(self):
@@ -92,7 +99,10 @@ class Federated(ListView):
 class Notifications(ListView):
 
     template_name = "activities/notifications.html"
-    extra_context = {"current_page": "notifications"}
+    extra_context = {
+        "current_page": "notifications",
+        "allows_refresh": True,
+    }
     paginate_by = 50
 
     def get_queryset(self):
