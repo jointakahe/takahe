@@ -6,8 +6,9 @@ from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import FormView, ListView, TemplateView, View
 
+from activities.models import Post
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
@@ -15,22 +16,28 @@ from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
 
 
-class ViewIdentity(TemplateView):
+class ViewIdentity(ListView):
     """
     Shows identity profile pages, and also acts as the Actor endpoint when
     approached with the right Accept header.
     """
 
     template_name = "identity/view.html"
+    paginate_by = 5
 
     def get(self, request, handle):
         # Make sure we understand this handle
-        identity = by_handle_or_404(
+        self.identity = by_handle_or_404(
             self.request,
             handle,
             local=False,
             fetch=True,
         )
+        if (
+            not self.identity.local
+            and self.identity.data_age > Config.system.identity_max_age
+        ):
+            self.identity.transition_perform(IdentityStates.outdated)
         # If they're coming in looking for JSON, they want the actor
         accept = request.META.get("HTTP_ACCEPT", "text/html").lower()
         if (
@@ -39,10 +46,10 @@ class ViewIdentity(TemplateView):
             or "application/activity" in accept
         ):
             # Return actor info
-            return self.serve_actor(identity)
+            return self.serve_actor(self.identity)
         else:
             # Show normal page
-            return super().get(request, identity=identity)
+            return super().get(request, identity=self.identity)
 
     def serve_actor(self, identity):
         # If this not a local actor, redirect to their canonical URI
@@ -50,28 +57,29 @@ class ViewIdentity(TemplateView):
             return redirect(identity.actor_uri)
         return JsonResponse(canonicalise(identity.to_ap(), include_security=True))
 
-    def get_context_data(self, identity):
-        posts = identity.posts.all()[:100]
-        if identity.data_age > Config.system.identity_max_age:
-            identity.transition_perform(IdentityStates.outdated)
-        follow = None
-        reverse_follow = None
+    def get_queryset(self):
+        return (
+            self.identity.posts.filter(
+                visibility__in=[Post.Visibilities.public, Post.Visibilities.unlisted],
+            )
+            .select_related("author")
+            .prefetch_related("attachments")
+            .order_by("-created")
+        )
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["identity"] = self.identity
+        context["follow"] = None
+        context["reverse_follow"] = None
         if self.request.identity:
-            follow = Follow.maybe_get(self.request.identity, identity)
-            if follow and follow.state not in FollowStates.group_active():
-                follow = None
-            reverse_follow = Follow.maybe_get(identity, self.request.identity)
-            if (
-                reverse_follow
-                and reverse_follow.state not in FollowStates.group_active()
-            ):
-                reverse_follow = None
-        return {
-            "identity": identity,
-            "posts": posts,
-            "follow": follow,
-            "reverse_follow": reverse_follow,
-        }
+            follow = Follow.maybe_get(self.request.identity, self.identity)
+            if follow and follow.state in FollowStates.group_active():
+                context["follow"] = follow
+            reverse_follow = Follow.maybe_get(self.identity, self.request.identity)
+            if reverse_follow and reverse_follow.state in FollowStates.group_active():
+                context["reverse_follow"] = reverse_follow
+        return context
 
 
 @method_decorator(identity_required, name="dispatch")

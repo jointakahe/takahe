@@ -56,9 +56,13 @@
         {% endif %}
     {% endif %}
 
-    {% for post in posts %}
+    {% for post in page_obj %}
         {% include "activities/_post.html" %}
     {% empty %}
         <span class="empty">No posts yet.</a>
     {% endfor %}
+
+    {% if page_obj.has_next %}
+        <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
+    {% endif %}
 {% endblock %}
