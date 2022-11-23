@@ -99,51 +99,34 @@ class Webfinger(View):
         if not resource.startswith("acct:"):
             return HttpResponseBadRequest("Not an account resource")
         handle = resource[5:]
+
         if handle.startswith("__system__@"):
             # They are trying to webfinger the system actor
-            system_actor = SystemActor()
-            return JsonResponse(
-                {
-                    "subject": f"acct:{handle}",
-                    "aliases": [
-                        system_actor.profile_uri,
-                    ],
-                    "links": [
-                        {
-                            "rel": "http://webfinger.net/rel/profile-page",
-                            "type": "text/html",
-                            "href": system_actor.profile_uri,
-                        },
-                        {
-                            "rel": "self",
-                            "type": "application/activity+json",
-                            "href": system_actor.actor_uri,
-                        },
-                    ],
-                }
-            )
+            actor = SystemActor()
         else:
-            identity = by_handle_or_404(request, handle)
-            return JsonResponse(
-                {
-                    "subject": f"acct:{identity.handle}",
-                    "aliases": [
-                        identity.absolute_profile_uri(),
-                    ],
-                    "links": [
-                        {
-                            "rel": "http://webfinger.net/rel/profile-page",
-                            "type": "text/html",
-                            "href": identity.absolute_profile_uri(),
-                        },
-                        {
-                            "rel": "self",
-                            "type": "application/activity+json",
-                            "href": identity.actor_uri,
-                        },
-                    ],
-                }
-            )
+            actor = by_handle_or_404(request, handle)
+            handle = actor.handle
+
+        return JsonResponse(
+            {
+                "subject": f"acct:{handle}",
+                "aliases": [
+                    actor.absolute_profile_uri(),
+                ],
+                "links": [
+                    {
+                        "rel": "http://webfinger.net/rel/profile-page",
+                        "type": "text/html",
+                        "href": actor.absolute_profile_uri(),
+                    },
+                    {
+                        "rel": "self",
+                        "type": "application/activity+json",
+                        "href": actor.actor_uri,
+                    },
+                ],
+            }
+        )
 
 
 @method_decorator(csrf_exempt, name="dispatch")
