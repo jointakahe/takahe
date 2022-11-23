@@ -1,8 +1,6 @@
 name: Publish Development Image
 
-on:
-  push:
-    branches: ["main"]
+on: workflow_dispatch
 
 jobs:
   push_to_registry:
@@ -25,6 +23,7 @@ jobs:
           images: jointakahe/takahe-dev
           tags: |
             type=edge,branch=main
+            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@175d02bffea74695e96b351069ac938b338802f9
