@@ -2,7 +2,10 @@ version: "3.4"
 
 x-takahe-common:
   &takahe-common
-    build: .
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+
     image: takahe:latest
     environment:
       DJANGO_SETTINGS_MODULE: takahe.settings.development
