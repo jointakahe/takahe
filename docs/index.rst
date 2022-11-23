@@ -15,5 +15,7 @@ in alpha. For more information about Takahē, see
    :caption: Contents:
 
    installation
+   features
    domains
    stator
+   contributing
