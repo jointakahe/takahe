@@ -4,6 +4,7 @@
 *.pyc
 *.sqlite3
 .venv
+.vscode
 /*.env
 /build
 /docs/_build

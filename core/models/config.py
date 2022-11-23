@@ -5,6 +5,7 @@ import pydantic
 from django.core.files import File
 from django.db import models
 from django.templatetags.static import static
+from django.utils.functional import lazy
 
 from core.uploads import upload_namer
 from takahe import __version__
@@ -54,6 +55,15 @@ class Config(models.Model):
         ]
 
     system: ClassVar["Config.ConfigOptions"]  # type: ignore
+
+    @classmethod
+    def lazy_system_value(cls, key: str):
+        """
+        Lazily load a System.Config value
+        """
+        if key not in cls.SystemOptions.__fields__:
+            raise KeyError(f"Undefined SystemOption for {key}")
+        return lazy(lambda: getattr(Config.system, key))
 
     @classmethod
     def load_values(cls, options_class, filters):
@@ -166,6 +176,7 @@ class Config(models.Model):
         signup_allowed: bool = True
         signup_invite_only: bool = False
         signup_text: str = ""
+        content_warning_text: str = "Content Warning"
 
         post_length: int = 500
         identity_min_length: int = 2

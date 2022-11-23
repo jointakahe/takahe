@@ -37,6 +37,10 @@ class BasicSettings(AdminSettingsPage):
             "title": "Maximum Post Length",
             "help_text": "The maximum number of characters allowed per post",
         },
+        "content_warning_text": {
+            "title": "Content Warning Feature Name",
+            "help_text": "What the feature that lets users provide post summaries is called",
+        },
         "site_about": {
             "title": "About This Site",
             "help_text": "Displayed on the homepage and the about page.\nNewlines are preserved; HTML also allowed.",
@@ -87,7 +91,7 @@ class BasicSettings(AdminSettingsPage):
             "highlight_color",
         ],
         "Signups": ["signup_allowed", "signup_invite_only", "signup_text"],
-        "Posts": ["post_length"],
+        "Posts": ["post_length", "content_warning_text"],
         "Identities": [
             "identity_max_per_user",
             "identity_min_length",

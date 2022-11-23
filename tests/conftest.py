@@ -62,11 +62,16 @@ def config_system(keypair):
 
 @pytest.fixture
 @pytest.mark.django_db
-def identity():
+def user() -> User:
+    return User.objects.create(email="test@example.com")
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def identity(user):
     """
     Creates a basic test identity with a user and domain.
     """
-    user = User.objects.create(email="test@example.com")
     domain = Domain.objects.create(domain="example.com", local=True, public=True)
     identity = Identity.objects.create(
         actor_uri="https://example.com/test-actor/",
