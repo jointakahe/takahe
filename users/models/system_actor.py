@@ -22,6 +22,9 @@ class SystemActor:
         self.profile_uri = f"https://{settings.MAIN_DOMAIN}/about/"
         self.username = "__system__"
 
+    def absolute_profile_uri(self):
+        return self.profile_uri
+
     def generate_keys(self):
         self.private_key, self.public_key = RsaKeys.generate_keypair()
         Config.set_system("system_actor_private_key", self.private_key)
@@ -39,7 +42,7 @@ class SystemActor:
         return {
             "id": self.actor_uri,
             "type": "Application",
-            "inbox": self.actor_uri + "/inbox/",
+            "inbox": self.actor_uri + "inbox/",
             "preferredUsername": self.username,
             "url": self.profile_uri,
             "as:manuallyApprovesFollowers": True,

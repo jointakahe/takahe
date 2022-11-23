@@ -74,7 +74,7 @@ def identity(user):
     """
     domain = Domain.objects.create(domain="example.com", local=True, public=True)
     identity = Identity.objects.create(
-        actor_uri="https://example.com/test-actor/",
+        actor_uri="https://example.com/@test@example.com/",
         username="test",
         domain=domain,
         name="Test User",

@@ -1,4 +1,5 @@
 import os
+import sys
 
 from .base import *  # noqa
 
@@ -18,7 +19,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 SERVER_EMAIL = "test@example.com"
 
-MAIN_DOMAIN = os.environ.get("TAKAHE_MAIN_DOMAIN", "https://example.com")
+MAIN_DOMAIN = os.environ.get("TAKAHE_MAIN_DOMAIN", "example.com")
+if "/" in MAIN_DOMAIN:
+    print("TAKAHE_MAIN_DOMAIN should be just the domain name - no https:// or path")
+    sys.exit(1)
 
 MEDIA_URL = os.environ.get("TAKAHE_MEDIA_URL", "/media/")
 MEDIA_ROOT = os.environ.get("TAKAHE_MEDIA_ROOT", BASE_DIR / "media")
