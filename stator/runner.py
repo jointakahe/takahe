@@ -8,6 +8,7 @@ from typing import List, Optional, Type
 from django.utils import timezone
 
 from core import exceptions
+from core.models import Config
 from stator.models import StatorModel
 
 
@@ -44,6 +45,8 @@ class StatorRunner:
             while True:
                 # Do we need to do cleaning?
                 if (time.monotonic() - self.last_clean) >= self.schedule_interval:
+                    # Refresh the config
+                    Config.system = await Config.aload_system()
                     print(f"{self.handled} tasks processed so far")
                     print("Running cleaning and scheduling")
                     for model in self.models:
