@@ -2,6 +2,7 @@ from functools import partial
 from typing import ClassVar
 
 import pydantic
+from asgiref.sync import sync_to_async
 from django.core.files import File
 from django.db import models
 from django.templatetags.static import static
@@ -89,21 +90,51 @@ class Config(models.Model):
         )
 
     @classmethod
+    async def aload_system(cls):
+        """
+        Async loads the system config options object
+        """
+        return await sync_to_async(cls.load_values)(
+            cls.SystemOptions,
+            {"identity__isnull": True, "user__isnull": True},
+        )
+
+    @classmethod
     def load_user(cls, user):
         """
         Loads a user config options object
         """
         return cls.load_values(
-            cls.SystemOptions,
+            cls.UserOptions,
+            {"identity__isnull": True, "user": user},
+        )
+
+    @classmethod
+    async def aload_user(cls, user):
+        """
+        Async loads the user config options object
+        """
+        return await sync_to_async(cls.load_values)(
+            cls.UserOptions,
             {"identity__isnull": True, "user": user},
         )
 
     @classmethod
     def load_identity(cls, identity):
         """
-        Loads a user config options object
+        Loads an identity config options object
         """
         return cls.load_values(
+            cls.IdentityOptions,
+            {"identity": identity, "user__isnull": True},
+        )
+
+    @classmethod
+    async def aload_identity(cls, identity):
+        """
+        Async loads an identity config options object
+        """
+        return await sync_to_async(cls.load_values)(
             cls.IdentityOptions,
             {"identity": identity, "user__isnull": True},
         )
