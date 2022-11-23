@@ -50,6 +50,7 @@ class PostStates(StateGraph):
                 subject_post=post,
             )
         # And one for themselves if they're local
+        # (most views will do this at time of post, but it's idempotent)
         if post.author.local:
             await FanOut.objects.acreate(
                 identity_id=post.author_id,

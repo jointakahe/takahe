@@ -3,7 +3,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
-from activities.models import Post, PostInteraction, PostInteractionStates
+from activities.models import (
+    Post,
+    PostInteraction,
+    PostInteractionStates,
+    TimelineEvent,
+)
 from core.models import Config
 from users.decorators import identity_required
 from users.shortcuts import by_handle_or_404
@@ -155,10 +160,12 @@ class Compose(FormView):
         return form
 
     def form_valid(self, form):
-        Post.create_local(
+        post = Post.create_local(
             author=self.request.identity,
             content=form.cleaned_data["text"],
             summary=form.cleaned_data.get("content_warning"),
             visibility=form.cleaned_data["visibility"],
         )
+        # Add their own timeline event for immediate visibility
+        TimelineEvent.add_post(self.request.identity, post)
         return redirect("/")
