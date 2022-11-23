@@ -35,7 +35,7 @@
                         <i class="fa-solid fa-search"></i>
                     </a>
                     {% if allows_refresh %}
-                        <a href="." title="Refresh" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML">
+                        <a href="." title="Refresh" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="every 120s">
                             <i class="fa-solid fa-rotate"></i>
                         </a>
                     {% endif %}
