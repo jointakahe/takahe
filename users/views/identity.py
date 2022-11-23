@@ -218,4 +218,5 @@ class CreateIdentity(FormView):
         )
         new_identity.users.add(self.request.user)
         new_identity.generate_keypair()
+        self.request.session["identity_id"] = new_identity.id
         return redirect(new_identity.urls.view)
