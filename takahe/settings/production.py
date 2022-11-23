@@ -10,6 +10,8 @@ DEBUG = bool(os.environ.get("TAKAHE__SECURITY_HAZARD__DEBUG", False))
 # TODO: Allow better setting of allowed_hosts, if we need to
 ALLOWED_HOSTS = ["*"]
 
+CONN_MAX_AGE = 60
+
 ### User-configurable options, pulled from the environment ###
 
 # Secret key
