@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView, TemplateView, View
 
-from activities.models import Post
+from activities.models import Post, PostInteraction
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
@@ -72,6 +72,10 @@ class ViewIdentity(ListView):
         context["identity"] = self.identity
         context["follow"] = None
         context["reverse_follow"] = None
+        context["interactions"] = PostInteraction.get_post_interactions(
+            context["page_obj"],
+            self.request.identity,
+        )
         if self.request.identity:
             follow = Follow.maybe_get(self.request.identity, self.identity)
             if follow and follow.state in FollowStates.group_active():

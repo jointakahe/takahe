@@ -77,6 +77,13 @@ class Local(ListView):
             .order_by("-created")[:50]
         )
 
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["interactions"] = PostInteraction.get_post_interactions(
+            context["page_obj"], self.request.identity
+        )
+        return context
+
 
 @method_decorator(identity_required, name="dispatch")
 class Federated(ListView):
@@ -95,6 +102,13 @@ class Federated(ListView):
             .prefetch_related("attachments")
             .order_by("-created")[:50]
         )
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["interactions"] = PostInteraction.get_post_interactions(
+            context["page_obj"], self.request.identity
+        )
+        return context
 
 
 @method_decorator(identity_required, name="dispatch")
