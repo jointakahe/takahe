@@ -25,6 +25,13 @@
         </a>
     </time>
 
+    {% if request.identity %}
+    <div class="actions">
+        {% include "activities/_like.html" %}
+        {% include "activities/_boost.html" %}
+    </div>
+    {% endif %}
+
     <a href="{{ post.author.urls.view }}" class="handle">
         {{ post.author.name_or_handle }} <small>@{{ post.author.handle }}</small>
     </a>
@@ -47,12 +54,5 @@
                 {% endif %}
             {% endfor %}
         </div>
-    {% endif %}
-
-    {% if request.identity %}
-    <div class="actions">
-        {% include "activities/_like.html" %}
-        {% include "activities/_boost.html" %}
-    </div>
     {% endif %}
 </div>
