@@ -14,6 +14,7 @@ Prerequisites
 * SSL support (Takahē *requires* HTTPS)
 * Something that can run Docker/OCI images
 * A PostgreSQL 14 (or above) database
+* Hosting/reverse proxy that passes the ``HOST`` header down to Takahē
 * One of these to store uploaded images and media:
 
   * Amazon S3
@@ -28,7 +29,7 @@ This means that a "serverless" platform like AWS Lambda or Google Cloud Run is
 not enough by itself; while you can use these to serve the web pages if you
 like, you will need to run the Stator runner somewhere else as well.
 
-The flagship Takahē instance, [takahe.social](https://takahe.social), runs
+The flagship Takahē instance, `takahe.social <https://takahe.social>`_, runs
 inside of Kubernetes, with one Deployment for the webserver and one for the
 Stator runner.
 

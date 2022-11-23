@@ -15,4 +15,5 @@ in alpha. For more information about Takahē, see
    :caption: Contents:
 
    installation
-   principles
+   domains
+   stator
