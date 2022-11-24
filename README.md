@@ -15,7 +15,7 @@ For more background and information, see [jointakahe.org](https://jointakahe.org
 
 ## Deployment
 
-See [our deployment documentation](https://takahe-server.readthedocs.io/en/latest/installation/)
+See [our deployment documentation](https://takahe-server.readthedocs.io/en/latest/installation/).
 
 
 ## Roadmap
