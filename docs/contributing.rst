@@ -36,7 +36,7 @@ Direct installation
 
 Takahē requires Python 3.10 or above, so you'll need that first. Clone the repo::
 
-    git clone git@github.com:jointakahe/takahe
+    git clone https://github.com/jointakahe/takahe/
 
 Then, ``cd`` into that directory and create and activate a virtual environment
 (you can use other options, but this is the basic example)::
