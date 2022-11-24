@@ -22,5 +22,14 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
+html_theme = "nature"
 html_static_path = ["_static"]
+html_logo = "../static/img/logo-128.png"
+html_favicon = "../static/img/icon-32.png"
+html_sidebars = {
+    "**": [
+        "localtoc.html",
+        "extralinks.html",
+        "searchbox.html",
+    ]
+}
