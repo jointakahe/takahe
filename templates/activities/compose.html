@@ -7,6 +7,10 @@
         {% csrf_token %}
         <fieldset>
             <legend>Content</legend>
+            {% if reply_to %}
+                <p>Replying to <a href="{{ reply_to.urls.view }}">{{ reply_to }}</a></p>
+            {% endif %}
+            {{ form.reply_to }}
             {% include "forms/_field.html" with field=form.text %}
             {% include "forms/_field.html" with field=form.content_warning %}
             {% include "forms/_field.html" with field=form.visibility %}

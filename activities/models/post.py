@@ -3,6 +3,7 @@ from typing import Dict, Optional
 
 import httpx
 import urlman
+from asgiref.sync import sync_to_async
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
@@ -42,6 +43,10 @@ class PostStates(StateGraph):
         if post.visibility != Post.Visibilities.mentioned:
             async for follower in post.author.inbound_follows.select_related("source"):
                 targets.add(follower.source)
+        # If it's a reply, always include the original author if we know them
+        reply_post = await post.ain_reply_to_post()
+        if reply_post:
+            targets.add(reply_post.author)
         # Fan out to each one
         for follow in targets:
             await FanOut.objects.acreate(
@@ -141,6 +146,7 @@ class Post(StatorModel):
         action_unlike = "{view}unlike/"
         action_boost = "{view}boost/"
         action_unboost = "{view}unboost/"
+        action_reply = "/compose/?reply_to={self.id}"
 
         def get_scheme(self, url):
             return "https"
@@ -163,6 +169,18 @@ class Post(StatorModel):
             return self.author.absolute_profile_uri() + f"posts/{self.id}/"
         else:
             return self.object_uri
+
+    def in_reply_to_post(self) -> Optional["Post"]:
+        """
+        Returns the actual Post object we're replying to, if we can find it
+        """
+        return (
+            Post.objects.filter(object_uri=self.in_reply_to)
+            .select_related("author")
+            .first()
+        )
+
+    ain_reply_to_post = sync_to_async(in_reply_to_post)
 
     ### Content cleanup and extraction ###
 
@@ -229,6 +247,7 @@ class Post(StatorModel):
         content: str,
         summary: Optional[str] = None,
         visibility: int = Visibilities.public,
+        reply_to: Optional["Post"] = None,
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
@@ -247,6 +266,8 @@ class Post(StatorModel):
                 )
                 if identity is not None:
                     mentions.add(identity)
+            if reply_to:
+                mentions.add(reply_to.author)
             # Strip all HTML and apply linebreaks filter
             content = linebreaks_filter(strip_html(content))
             # Make the Post object
@@ -257,6 +278,7 @@ class Post(StatorModel):
                 sensitive=bool(summary),
                 local=True,
                 visibility=visibility,
+                in_reply_to=reply_to.object_uri if reply_to else None,
             )
             post.object_uri = post.urls.object_uri
             post.url = post.absolute_object_uri()
@@ -284,6 +306,8 @@ class Post(StatorModel):
         }
         if self.summary:
             value["summary"] = self.summary
+        if self.in_reply_to:
+            value["inReplyTo"] = self.in_reply_to
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(

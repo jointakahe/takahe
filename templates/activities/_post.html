@@ -27,6 +27,7 @@
 
     {% if request.identity %}
     <div class="actions">
+        {% include "activities/_reply.html" %}
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
     </div>

@@ -37,12 +37,14 @@ Features planned for releases up to 1.0:
 * Server defederation (blocking)
 * IP and email domain banning
 * Mastodon-compatible client API for use with apps
+* RSS feeds for users' public posts
 
 Features that may make it into 1.0, or might be further out:
 
 * Creating polls on posts, and handling received polls
 * Filter system for Home timeline
 * Hashtag trending system with moderation
+* Mastodon-compatible account migration target/source
 * Relay support
 
 Features on the long-term roadmap:

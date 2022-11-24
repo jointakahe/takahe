@@ -143,6 +143,7 @@ class Compose(FormView):
             ),
             help_text="Optional - Post will be hidden behind this text until clicked",
         )
+        reply_to = forms.CharField(widget=forms.HiddenInput(), required=False)
 
         def clean_text(self):
             text = self.cleaned_data.get("text")
@@ -155,10 +156,13 @@ class Compose(FormView):
                 )
             return text
 
-    def get_form_class(self):
-        form = super().get_form_class()
-        form.declared_fields["text"]
-        return form
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.reply_to:
+            initial["reply_to"] = self.reply_to.pk
+            initial["visibility"] = Post.Visibilities.unlisted
+            initial["text"] = f"@{self.reply_to.author.handle} "
+        return initial
 
     def form_valid(self, form):
         post = Post.create_local(
@@ -166,7 +170,27 @@ class Compose(FormView):
             content=form.cleaned_data["text"],
             summary=form.cleaned_data.get("content_warning"),
             visibility=form.cleaned_data["visibility"],
+            reply_to=self.reply_to,
         )
         # Add their own timeline event for immediate visibility
         TimelineEvent.add_post(self.request.identity, post)
         return redirect("/")
+
+    def dispatch(self, request, *args, **kwargs):
+        # Grab the reply-to post info now
+        self.reply_to = None
+        reply_to_id = self.request.POST.get("reply_to") or self.request.GET.get(
+            "reply_to"
+        )
+        if reply_to_id:
+            try:
+                self.reply_to = Post.objects.get(pk=reply_to_id)
+            except Post.DoesNotExist:
+                pass
+        # Keep going with normal rendering
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["reply_to"] = self.reply_to
+        return context
