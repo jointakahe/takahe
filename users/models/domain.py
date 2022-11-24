@@ -59,13 +59,14 @@ class Domain(models.Model):
 
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":
-        return cls.objects.get_or_create(domain=domain, local=False)[0]
+        return cls.objects.get_or_create(domain=domain.lower(), local=False)[0]
 
     @classmethod
     def get_domain(cls, domain: str) -> Optional["Domain"]:
         try:
             return cls.objects.get(
-                models.Q(domain=domain) | models.Q(service_domain=domain)
+                models.Q(domain=domain.lower())
+                | models.Q(service_domain=domain.lower())
             )
         except cls.DoesNotExist:
             return None

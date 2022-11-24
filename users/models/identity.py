@@ -153,6 +153,7 @@ class Identity(StatorModel):
         if username.startswith("@"):
             raise ValueError("Username must not start with @")
         username = username.lower()
+        domain = domain.lower()
         try:
             if local:
                 return cls.objects.get(username=username, domain_id=domain, local=True)
@@ -300,7 +301,7 @@ class Identity(StatorModel):
         Given a username@domain handle, returns a tuple of
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
-        domain = handle.split("@")[1]
+        domain = handle.split("@")[1].lower()
         try:
             response = await SystemActor().signed_request(
                 method="get",
@@ -381,7 +382,7 @@ class Identity(StatorModel):
             )
             if webfinger_handle:
                 webfinger_username, webfinger_domain = webfinger_handle.split("@")
-                self.username = webfinger_username
+                self.username = webfinger_username.lower()
                 self.domain = await get_domain(webfinger_domain)
             else:
                 self.domain = await get_domain(actor_url_parts.hostname)
