@@ -37,7 +37,7 @@ Stator runner.
 What To Run
 -----------
 
-You need to run at least two copies of the Docker image:
+You need to run at least two copies of the `Docker image <https://hub.docker.com/r/jointakahe/takahe>`_:
 
 * One with no command or arguments specified, which will serve web traffic
 * One with the arguments (command) ``python manage.py runstator``, which will
@@ -47,6 +47,12 @@ You need to run at least two copies of the Docker image:
 Both of these can have as many copies run as needed. Note that the image has
 required environment variables before it will boot, and this is the only way
 to configure it - see below.
+
+While you can run Takahē directly from a checkout if you like, we're not
+officially supporting that right now, as it increases our support burden by
+having to deal with lots of OS and library versions. It's a standard Django
+app, though, so if you know what you're doing, have at it - just expect us to
+push back if you file tickets about things not working on your OS!
 
 
 Environment Variables
