@@ -693,10 +693,18 @@ h1.identity small {
     overflow: hidden;
 }
 
+.post.mini {
+    font-size: 14px;
+}
+
 .left-column .post {
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
+}
+
+.left-column form .post {
+    background-color: var(--color-bg-main);
 }
 
 .post .icon {
@@ -705,9 +713,19 @@ h1.identity small {
     float: left;
 }
 
+.post.mini .icon {
+    height: 28px;
+    width: auto;
+    float: left;
+}
+
 .post .handle {
     display: block;
     padding: 7px 0 0 64px;
+}
+
+.post.mini .handle {
+    padding: 7px 0 0 36px;
 }
 
 .post time {
@@ -748,6 +766,10 @@ h1.identity small {
 
 .post .content {
     margin-left: 64px;
+}
+
+.post.mini .content {
+    margin-left: 0px;
 }
 
 .post .content.hidden {

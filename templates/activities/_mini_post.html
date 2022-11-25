@@ -1,0 +1,16 @@
+{% load static %}
+{% load activity_tags %}
+<div class="post mini" data-takahe-id="{{ post.id }}">
+
+    <a href="{{ post.author.urls.view }}">
+        <img src="{{ post.author.local_icon_url }}" class="icon">
+    </a>
+
+    <a href="{{ post.author.urls.view }}" class="handle">
+        {{ post.author.name_or_handle }}
+    </a>
+
+    <div class="content">
+        {{ post.safe_content_local }}
+    </div>
+</div>

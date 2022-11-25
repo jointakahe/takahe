@@ -8,7 +8,8 @@
         <fieldset>
             <legend>Content</legend>
             {% if reply_to %}
-                <p>Replying to <a href="{{ reply_to.urls.view }}">{{ reply_to }}</a></p>
+                <label>Replying to</label>
+                {% include "activities/_mini_post.html" with post=reply_to %}
             {% endif %}
             {{ form.reply_to }}
             {% include "forms/_field.html" with field=form.text %}
