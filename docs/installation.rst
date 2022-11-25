@@ -74,7 +74,7 @@ be provided from the first boot.
       fully-qualified URL prefix that serves that directory.
 
     * If it is set to ``gcs``, you must also provide ``TAKAHE_MEDIA_BUCKET``,
-      the name of the bucket to store files in. The bucket must be publically
+      the name of the bucket to store files in. The bucket must be publicly
       readable and have "uniform access control" enabled.
 
     * If it is set to ``s3``, you must also provide ``TAKAHE_MEDIA_BUCKET``,

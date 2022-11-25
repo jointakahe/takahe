@@ -9,7 +9,7 @@ class TimelineEvent(models.Model):
 
     class Types(models.TextChoices):
         post = "post"
-        boost = "boost"  # A boost from someone (post substitude)
+        boost = "boost"  # A boost from someone (post substitute)
         mentioned = "mentioned"
         liked = "liked"  # Someone liking one of our posts
         followed = "followed"

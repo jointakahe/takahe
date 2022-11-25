@@ -14,7 +14,7 @@ class StateGraph:
     automatic_states: ClassVar[Set["State"]]
 
     def __init_subclass__(cls) -> None:
-        # Collect state memebers
+        # Collect state members
         cls.states = {}
         for name, value in cls.__dict__.items():
             if name in ["__module__", "__doc__", "states"]:
