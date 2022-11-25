@@ -1,4 +1,5 @@
 from django import forms
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
@@ -7,8 +8,10 @@ from activities.models import (
     Post,
     PostInteraction,
     PostInteractionStates,
+    PostStates,
     TimelineEvent,
 )
+from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
 from users.shortcuts import by_handle_or_404
@@ -18,17 +21,37 @@ class Individual(TemplateView):
 
     template_name = "activities/post.html"
 
-    def get_context_data(self, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(identity.posts, pk=post_id)
+    def get(self, request, handle, post_id):
+        self.identity = by_handle_or_404(self.request, handle, local=False)
+        self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
+        # If they're coming in looking for JSON, they want the actor
+        accept = request.META.get("HTTP_ACCEPT", "text/html").lower()
+        if (
+            "application/json" in accept
+            or "application/ld" in accept
+            or "application/activity" in accept
+        ):
+            # Return post JSON
+            return self.serve_object()
+        else:
+            # Show normal page
+            return super().get(request)
+
+    def get_context_data(self):
         return {
-            "identity": identity,
-            "post": post,
+            "identity": self.identity,
+            "post": self.post_obj,
             "interactions": PostInteraction.get_post_interactions(
-                [post],
+                [self.post_obj],
                 self.request.identity,
             ),
         }
+
+    def serve_object(self):
+        # If this not a local post, redirect to its canonical URI
+        if not self.post_obj.local:
+            return redirect(self.post_obj.object_uri)
+        return JsonResponse(canonicalise(self.post_obj.to_ap(), include_security=True))
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -109,6 +132,27 @@ class Boost(View):
                 },
             )
         return redirect(post.urls.view)
+
+
+@method_decorator(identity_required, name="dispatch")
+class Delete(TemplateView):
+    """
+    Deletes a post
+    """
+
+    template_name = "activities/post_delete.html"
+
+    def dispatch(self, request, handle, post_id):
+        self.identity = by_handle_or_404(self.request, handle, local=False)
+        self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
+        return super().dispatch(request)
+
+    def get_context_data(self):
+        return {"post": self.post_obj}
+
+    def post(self, request):
+        self.post_obj.transition_perform(PostStates.deleted)
+        return redirect("/")
 
 
 @method_decorator(identity_required, name="dispatch")

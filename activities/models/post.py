@@ -138,6 +138,7 @@ class Post(StatorModel):
         action_unlike = "{view}unlike/"
         action_boost = "{view}boost/"
         action_unboost = "{view}unboost/"
+        action_delete = "{view}delete/"
         action_reply = "/compose/?reply_to={self.id}"
 
         def get_scheme(self, url):

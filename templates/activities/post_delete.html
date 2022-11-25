@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Post{% endblock %}
+
+{% block content %}
+    <h1>Delete this post?</h1>
+    <form action="." method="POST">
+        {% csrf_token %}
+        <a class="button" onclick="history.back()">Cancel</a>
+        <button class="delete">Delete</button>
+    </form>
+
+    {% include "activities/_post.html" %}
+{% endblock %}

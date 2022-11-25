@@ -94,6 +94,7 @@ urlpatterns = [
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
     path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
+    path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),
