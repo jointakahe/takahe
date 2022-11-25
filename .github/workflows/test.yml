@@ -4,10 +4,25 @@ on: [push, pull_request]
 
 jobs:
   test:
+    name: test ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]
+        db:
+          - "postgres://postgres:postgres@localhost/postgres"
+          - "sqlite:///takahe.db"
+        include:
+          - db: "sqlite:///takahe.db"
+            search: false
+          - db: "postgres://postgres:postgres@localhost/postgres"
+            search: true
+    env:
+      TAKAHE_ENVIRONMENT: "test"
+      TAKAHE_SECRET_KEY: "testing_secret"
+      TAKAHE_MAIN_DOMAIN: "example.com"
+      TAKAHE_DATABASE_URL: ${{ matrix.db }}
+      TAKAHE_SEARCH: ${{ matrix.search }}
     services:
       postgres:
         image: postgres:15
@@ -15,8 +30,13 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
-        ports: ["5432:5432"]
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -28,11 +48,6 @@ jobs:
         run: |
           python -m pip install -r requirements-dev.txt
       - name: Run pytest
-        env:
-          TAKAHE_DATABASE_URL: "postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
-          TAKAHE_ENVIRONMENT: "test"
-          TAKAHE_SECRET_KEY: "testing_secret"
-          TAKAHE_MAIN_DOMAIN: "example.com"
         run: |
           python -m pytest
       - name: Run pre-commit

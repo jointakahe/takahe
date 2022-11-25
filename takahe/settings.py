@@ -5,10 +5,14 @@ from typing import List, Literal, Optional, Union
 
 import dj_database_url
 import sentry_sdk
-from pydantic import AnyUrl, BaseSettings, EmailStr, Field, PostgresDsn
+from pydantic import AnyUrl, BaseSettings, EmailStr, Field
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class ImplicitHostnameURL(AnyUrl):
+    host_required = False
 
 
 def as_bool(v: Optional[Union[str, List[str]]]):
@@ -28,7 +32,7 @@ class Settings(BaseSettings):
     """
 
     #: The default database.
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: ImplicitHostnameURL
     #: The currently running environment, used for things such as sentry
     #: error reporting.
     ENVIRONMENT: Literal["dev", "prod", "test"] = "dev"
@@ -64,6 +68,10 @@ class Settings(BaseSettings):
     MEDIA_URL: str = "/media/"
     MEDIA_ROOT: str = str(BASE_DIR / "MEDIA")
     MEDIA_BACKEND: Optional[AnyUrl] = None
+
+    #: If search features like full text search should be enabled.
+    #: (placeholder setting, no effect)
+    SEARCH: bool = True
 
     class Config:
         env_prefix = "TAKAHE_"
