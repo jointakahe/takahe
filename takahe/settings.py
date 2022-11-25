@@ -1,14 +1,14 @@
 import secrets
 import urllib.parse
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import List, Literal, Optional, Union
 
 import dj_database_url
 import sentry_sdk
-from pydantic import BaseSettings, PostgresDsn, Field, AnyUrl, EmailStr
+from pydantic import AnyUrl, BaseSettings, EmailStr, Field, PostgresDsn
 from sentry_sdk.integrations.django import DjangoIntegration
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def as_bool(v: Optional[Union[str, List[str]]]):
@@ -26,8 +26,12 @@ class Settings(BaseSettings):
     Pydantic-powered settings, to provide consistent error messages, strong
     typing, consistent prefixes, .venv support, etc.
     """
+
     #: The default database.
     DATABASE_URL: PostgresDsn
+    #: The currently running environment, used for things such as sentry
+    #: error reporting.
+    ENVIRONMENT: Literal["dev", "prod", "test"] = "dev"
     #: Should django run in debug mode?
     DEBUG: bool = False
     #: Set a secret key used for signing values such as sessions. Randomized
@@ -126,9 +130,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "takahe.wsgi.application"
 
-DATABASES = {
-    "default": dj_database_url.parse(CONFIG.DATABASE_URL, conn_max_age=600)
-}
+DATABASES = {"default": dj_database_url.parse(CONFIG.DATABASE_URL, conn_max_age=600)}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -177,7 +179,7 @@ ALLOWED_HOSTS = CONFIG.ALLOWED_HOSTS
 
 AUTO_ADMIN_EMAIL = CONFIG.AUTO_ADMIN_EMAIL
 
-STATOR_TOKEN: CONFIG.STATOR_TOKEN
+STATOR_TOKEN = CONFIG.STATOR_TOKEN
 
 CORS_ORIGIN_WHITELIST = CONFIG.CORS_HOSTS
 CORS_ALLOW_CREDENTIALS = True
@@ -190,7 +192,7 @@ MEDIA_ROOT = CONFIG.MEDIA_ROOT
 MAIN_DOMAIN = CONFIG.MAIN_DOMAIN
 
 if CONFIG.USE_PROXY_HEADERS:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 if CONFIG.SENTRY_DSN:
@@ -201,6 +203,7 @@ if CONFIG.SENTRY_DSN:
         ],
         traces_sample_rate=1.0,
         send_default_pii=True,
+        environment=CONFIG.ENVIRONMENT,
     )
 
 SERVER_EMAIL = CONFIG.EMAIL_FROM
@@ -214,10 +217,10 @@ if CONFIG.EMAIL_DSN:
         EMAIL_PORT = parsed.port
         EMAIl_HOST_USER = parsed.username
         EMAIL_HOST_PASSWORD = parsed.password
-        EMAIL_USE_TLS = as_bool(query.get('tls'))
-        EMAIL_USE_SSL = as_bool(query.get('ssl'))
+        EMAIL_USE_TLS = as_bool(query.get("tls"))
+        EMAIL_USE_SSL = as_bool(query.get("ssl"))
     else:
-        raise ValueError('Unknown schema for EMAIL_DSN.')
+        raise ValueError("Unknown schema for EMAIL_DSN.")
 
 
 if CONFIG.MEDIA_BACKEND:
@@ -236,6 +239,4 @@ if CONFIG.MEDIA_BACKEND:
         AWS_S3_ENDPOINT_URL = f"{parsed.hostname}:{port}"
 
 if CONFIG.ERROR_EMAILS:
-    ADMINS = [
-        ("Admin", e) for e in CONFIG.ERROR_EMAILS
-    ]
+    ADMINS = [("Admin", e) for e in CONFIG.ERROR_EMAILS]

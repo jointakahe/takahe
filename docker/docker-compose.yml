@@ -12,11 +12,15 @@ x-takahe-common:
 
     image: takahe:latest
     environment:
-      DJANGO_SETTINGS_MODULE: takahe.settings.development
-      PGHOST: db
-      PGDATABASE: takahe
-      PGUSER: postgres
-      PGPASSWORD: insecure_password
+      TAKAHE_DATABASE_URL: "postgres://postgres:insecure_password@db/takahe"
+      TAKAHE_DEBUG: true
+      TAKAHE_SECRET_KEY: "insecure_secret"
+      TAKAHE_CSRF_TRUSTED_ORIGINS: '["http://127.0.0.1:8000", "https://127.0.0.1:8000"]'
+      TAKAHE_USE_PROXY_HEADERS: true
+      TAKAHE_EMAIL_BACKEND: "console://console"
+      TAKAHE_MAIN_DOMAIN: "example.com"
+      TAKAHE_ENVIRONMENT: "dev"
+      DJANGO_SETTINGS_MODULE: "takahe.settings"
     networks:
       - external_network
       - internal_network

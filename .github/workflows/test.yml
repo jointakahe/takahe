@@ -26,11 +26,10 @@ jobs:
           python -m pip install -r requirements-dev.txt
       - name: Run pytest
         env:
-          PGHOST: localhost
-          PGPORT: ${{ job.services.postgres.ports[5432] }}
-          PGNAME: postgres
-          PGUSER: postgres
-          PGPASSWORD: postgres
+          TAKAHE_DATABASE_URL: "postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
+          TAKAHE_ENVIRONMENT: "test"
+          TAKAHE_SECRET_KEY: "testing_secret"
+          TAKAHE_MAIN_DOMAIN: "example.com"
         run: |
           python -m pytest
       - name: Run pre-commit

@@ -11,8 +11,7 @@ COPY . /takahe
 
 WORKDIR /takahe
 
-# We use development here to skip settings checks
-RUN DJANGO_SETTINGS_MODULE=takahe.settings.development python3 manage.py collectstatic
+RUN TAKAHE_DATABASE_URL="postgres://dummy:dummy@localhost/postgres" python3 manage.py collectstatic
 
 EXPOSE 8000
 
