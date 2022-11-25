@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Optional
+from typing import Dict, Iterable, Optional
 
 import httpx
 import urlman
@@ -10,19 +10,21 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from activities.models.fan_out import FanOut
-from activities.models.timeline_event import TimelineEvent
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models.follow import Follow
 from users.models.identity import Identity
 
 
 class PostStates(StateGraph):
     new = State(try_interval=300)
-    fanned_out = State()
+    fanned_out = State(externally_progressed=True)
+    deleted = State(try_interval=300)
+    deleted_fanned_out = State()
 
     new.transitions_to(fanned_out)
+    fanned_out.transitions_to(deleted)
+    deleted.transitions_to(deleted_fanned_out)
 
     @classmethod
     async def handle_new(cls, instance: "Post"):
@@ -30,39 +32,29 @@ class PostStates(StateGraph):
         Creates all needed fan-out objects for a new Post.
         """
         post = await instance.afetch_full()
-        # Non-local posts should not be here
-        # TODO: This seems to keep happening. Work out how?
-        if not post.local:
-            print(f"Trying to run handle_new on a non-local post {post.pk}!")
-            return cls.fanned_out
-        # Build list of targets - mentions always included
-        targets = set()
-        async for mention in post.mentions.all():
-            targets.add(mention)
-        # Then, if it's not mentions only, also deliver to followers
-        if post.visibility != Post.Visibilities.mentioned:
-            async for follower in post.author.inbound_follows.select_related("source"):
-                targets.add(follower.source)
-        # If it's a reply, always include the original author if we know them
-        reply_post = await post.ain_reply_to_post()
-        if reply_post:
-            targets.add(reply_post.author)
-        # Fan out to each one
-        for follow in targets:
+        # Fan out to each target
+        for follow in await post.aget_targets():
             await FanOut.objects.acreate(
                 identity=follow,
                 type=FanOut.Types.post,
                 subject_post=post,
             )
-        # And one for themselves if they're local
-        # (most views will do this at time of post, but it's idempotent)
-        if post.author.local:
+        return cls.fanned_out
+
+    @classmethod
+    async def handle_deleted(cls, instance: "Post"):
+        """
+        Creates all needed fan-out objects needed to delete a Post.
+        """
+        post = await instance.afetch_full()
+        # Fan out to each target
+        for follow in await post.aget_targets():
             await FanOut.objects.acreate(
-                identity_id=post.author_id,
-                type=FanOut.Types.post,
+                identity=follow,
+                type=FanOut.Types.post_deleted,
                 subject_post=post,
             )
-        return cls.fanned_out
+        return cls.deleted_fanned_out
 
 
 class Post(StatorModel):
@@ -339,6 +331,43 @@ class Post(StatorModel):
             "object": object,
         }
 
+    def to_delete_ap(self):
+        """
+        Returns the AP JSON to create this object
+        """
+        object = self.to_ap()
+        return {
+            "to": object["to"],
+            "cc": object.get("cc", []),
+            "type": "Delete",
+            "id": self.object_uri + "#delete",
+            "actor": self.author.actor_uri,
+            "object": object,
+        }
+
+    async def aget_targets(self) -> Iterable[Identity]:
+        """
+        Returns a list of Identities that need to see posts and their changes
+        """
+        targets = set()
+        async for mention in self.mentions.all():
+            targets.add(mention)
+        # Then, if it's not mentions only, also deliver to followers
+        if self.visibility != Post.Visibilities.mentioned:
+            async for follower in self.author.inbound_follows.select_related("source"):
+                targets.add(follower.source)
+        # If it's a reply, always include the original author if we know them
+        reply_post = await self.ain_reply_to_post()
+        if reply_post:
+            targets.add(reply_post.author)
+        # If this is a remote post, filter to only include local identities
+        if not self.local:
+            targets = {target for target in targets if target.local}
+        # If it's a local post, include the author
+        else:
+            targets.add(self.author)
+        return targets
+
     ### ActivityPub (inbound) ###
 
     @classmethod
@@ -451,21 +480,8 @@ class Post(StatorModel):
             # Ensure the Create actor is the Post's attributedTo
             if data["actor"] != data["object"]["attributedTo"]:
                 raise ValueError("Create actor does not match its Post object", data)
-            # Create it
-            post = cls.by_ap(data["object"], create=True, update=True)
-            # Make timeline events for followers if it's not a reply
-            # TODO: _do_ show replies to people we follow somehow
-            if not post.in_reply_to:
-                for follow in Follow.objects.filter(
-                    target=post.author, source__local=True
-                ):
-                    TimelineEvent.add_post(follow.source, post)
-            # Make timeline events for mentions if they're local
-            for mention in post.mentions.all():
-                if mention.local:
-                    TimelineEvent.add_mentioned(mention, post)
-            # Force it into fanned_out as it's not ours
-            post.transition_perform(PostStates.fanned_out)
+            # Create it, stator will fan it out locally
+            cls.by_ap(data["object"], create=True, update=True)
 
     @classmethod
     def handle_update_ap(cls, data):

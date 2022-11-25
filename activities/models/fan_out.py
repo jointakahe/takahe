@@ -20,20 +20,42 @@ class FanOutStates(StateGraph):
         fan_out = await instance.afetch_full()
         # Handle Posts
         if fan_out.type == FanOut.Types.post:
+            post = await fan_out.subject_post.afetch_full()
             if fan_out.identity.local:
                 # Make a timeline event directly
+                # TODO: Exclude replies to people we don't follow
                 await sync_to_async(TimelineEvent.add_post)(
                     identity=fan_out.identity,
-                    post=fan_out.subject_post,
+                    post=post,
                 )
+                # We might have been mentioned
+                if fan_out.identity in list(post.mentions.all()):
+                    TimelineEvent.add_mentioned(
+                        identity=fan_out.identity,
+                        post=post,
+                    )
             else:
-                # Send it to the remote inbox
-                post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
                 await post.author.signed_request(
                     method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(post.to_create_ap()),
+                )
+        # Handle deleting posts
+        elif fan_out.type == FanOut.Types.post_deleted:
+            post = await fan_out.subject_post.afetch_full()
+            if fan_out.identity.local:
+                # Remove all timeline events mentioning it
+                await TimelineEvent.objects.filter(
+                    identity=fan_out.identity,
+                    subject_post=post,
+                ).adelete()
+            else:
+                # Send it to the remote inbox
+                await post.author.signed_request(
+                    method="post",
+                    uri=fan_out.identity.inbox_uri,
+                    body=canonicalise(post.to_delete_ap()),
                 )
         # Handle boosts/likes
         elif fan_out.type == FanOut.Types.interaction:
@@ -79,6 +101,8 @@ class FanOut(StatorModel):
 
     class Types(models.TextChoices):
         post = "post"
+        post_edited = "post_edited"
+        post_deleted = "post_deleted"
         interaction = "interaction"
         undo_interaction = "undo_interaction"
 

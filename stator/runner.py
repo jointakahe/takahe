@@ -15,7 +15,7 @@ from stator.models import StatorModel
 class StatorRunner:
     """
     Runs tasks on models that are looking for state changes.
-    Designed to run for a determinate amount of time, and then exit.
+    Designed to run either indefinitely, or just for a few seconds.
     """
 
     def __init__(

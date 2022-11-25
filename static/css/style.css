@@ -775,14 +775,21 @@ h1.identity small {
 }
 
 .post .actions {
+    position: relative;
     float: right;
     padding: 3px 5px 0 0;
 }
 
 .post .actions a {
+    text-align: center;
     cursor: pointer;
     color: var(--color-text-dull);
     margin-right: 5px;
+}
+
+.post .actions a.menu {
+    width: 16px;
+    display: inline-block;
 }
 
 .post .actions a:hover {
@@ -791,6 +798,32 @@ h1.identity small {
 
 .post .actions a.active {
     color: var(--color-highlight);
+}
+
+.post .actions menu {
+    position: absolute;
+    display: none;
+    top: 25px;
+    right: 10px;
+    background-color: var(--color-bg-menu);
+    border-radius: 5px;
+    padding: 5px 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.post .actions menu.enabled {
+    display: block;
+}
+
+.post .actions menu a {
+    text-align: left;
+    display: block;
+    width: 160px;
+    font-size: 15px;
+}
+
+.post .actions menu a i {
+    margin-right: 4px;
 }
 
 .boost-banner,
