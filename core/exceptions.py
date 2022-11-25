@@ -20,7 +20,7 @@ def capture_message(message: str):
     """
     Sends the informational message to Sentry if it's configured
     """
-    if settings.SENTRY_ENABLED:
+    if settings.CONFIG.SENTRY_DSN:
         from sentry_sdk import capture_message
 
         capture_message(message)
@@ -32,7 +32,7 @@ def capture_exception(exception: BaseException):
     """
     Sends the exception to Sentry if it's configured
     """
-    if settings.SENTRY_ENABLED:
+    if settings.CONFIG.SENTRY_DSN:
         from sentry_sdk import capture_exception
 
         capture_exception(exception)
