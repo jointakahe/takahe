@@ -14,7 +14,7 @@ Currently, it supports:
 * Creating and receiving likes
 * Delivering mentions to those mentioned, and notifications for incoming mentions
 * Following and unfollowing
-* Reciving follows and unfollows
+* Receiving follows and unfollows
 * A home timeline, a local timeline, and a federated timeline
 * Profile pages with bios, icons, and header images
 * Searching for users by exact handle
