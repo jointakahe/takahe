@@ -56,6 +56,7 @@ class Home(FormView):
             author=self.request.identity,
             content=linebreaks_filter(form.cleaned_data["text"]),
             summary=form.cleaned_data.get("content_warning"),
+            visibility=self.request.identity.config_identity.default_post_visibility,
         )
         return redirect(".")
 

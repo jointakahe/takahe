@@ -202,6 +202,9 @@ class Compose(FormView):
 
     def get_initial(self):
         initial = super().get_initial()
+        initial[
+            "visibility"
+        ] = self.request.identity.config_identity.default_post_visibility
         if self.reply_to:
             initial["reply_to"] = self.reply_to.pk
             initial["visibility"] = Post.Visibilities.unlisted

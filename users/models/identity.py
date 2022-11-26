@@ -1,4 +1,4 @@
-from functools import partial
+from functools import cached_property, partial
 from typing import Dict, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -9,10 +9,12 @@ from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
 from django.utils import timezone
+from django.utils.functional import lazy
 
 from core.exceptions import ActorMismatchError
 from core.html import sanitize_post
 from core.ld import canonicalise, media_type_from_filename
+from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -433,3 +435,17 @@ class Identity(StatorModel):
         self.private_key, self.public_key = RsaKeys.generate_keypair()
         self.public_key_id = self.actor_uri + "#main-key"
         self.save()
+
+    ### Config ###
+
+    @cached_property
+    def config_identity(self) -> Config.IdentityOptions:
+        return Config.load_identity(self)
+
+    def lazy_config_value(self, key: str):
+        """
+        Lazily load a config value for this Identity
+        """
+        if key not in Config.IdentityOptions.__fields__:
+            raise KeyError(f"Undefined IdentityOption for {key}")
+        return lazy(lambda: getattr(self.config_identity, key))
