@@ -60,6 +60,7 @@ class Migration(migrations.Migration):
                     models.IntegerField(
                         choices=[
                             (0, "Public"),
+                            (4, "Local Only"),
                             (1, "Unlisted"),
                             (2, "Followers"),
                             (3, "Mentioned"),

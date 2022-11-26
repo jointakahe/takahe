@@ -15,6 +15,8 @@
             <i class="visibility fa-solid fa-lock" title="Followers Only"></i>
         {% elif post.visibility == 3 %}
             <i class="visibility fa-solid fa-at" title="Mentioned Only"></i>
+        {% elif post.visibility == 4 %}
+        <i class="visibility fa-solid fa-link-slash" title="Local Only"></i>
         {% endif %}
         <a href="{{ post.url }}">
             {% if post.published %}

@@ -64,6 +64,7 @@ class Post(StatorModel):
 
     class Visibilities(models.IntegerChoices):
         public = 0
+        local_only = 4
         unlisted = 1
         followers = 2
         mentioned = 3
@@ -261,6 +262,9 @@ class Post(StatorModel):
                     mentions.add(identity)
             if reply_to:
                 mentions.add(reply_to.author)
+                # Maintain local-only for replies
+                if reply_to.visibility == reply_to.Visibilities.local_only:
+                    visibility = reply_to.Visibilities.local_only
             # Strip all HTML and apply linebreaks filter
             content = linebreaks_filter(strip_html(content))
             # Make the Post object
@@ -361,11 +365,12 @@ class Post(StatorModel):
         reply_post = await self.ain_reply_to_post()
         if reply_post:
             targets.add(reply_post.author)
-        # If this is a remote post, filter to only include local identities
-        if not self.local:
+        # If this is a remote post or local-only, filter to only include
+        # local identities
+        if not self.local or self.visibility == Post.Visibilities.local_only:
             targets = {target for target in targets if target.local}
         # If it's a local post, include the author
-        else:
+        if self.local:
             targets.add(self.author)
         return targets
 
