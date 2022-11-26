@@ -365,6 +365,10 @@ nav a i {
     margin: 0 5px 0 5px;
 }
 
+.icon-menu .option .pill.bad {
+    background: var(--color-delete);
+}
+
 .handle {
     vertical-align: middle;
     display: inline-block;

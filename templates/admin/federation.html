@@ -1,0 +1,24 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Federation{% endblock %}
+
+{% block content %}
+    <section class="icon-menu">
+        {% for domain in domains %}
+            <a class="option" href="{{ domain.urls.edit_federation }}">
+                <i class="fa-solid fa-globe"></i>
+                <span class="handle">
+                    {{ domain.domain }}
+                    <small>
+                        {{ domain.num_users }} remote identit{{ domain.num_users|pluralize:"y,ies" }}
+                    </small>
+                </span>
+                {% if domain.blocked %}
+                    <span class="pill bad">Blocked</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="option empty">There are no federation links yet.</p>
+        {% endfor %}
+    </section>
+{% endblock %}

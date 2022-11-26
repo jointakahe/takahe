@@ -24,6 +24,9 @@
     <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
         <i class="fa-solid fa-globe"></i> Domains
     </a>
+    <a href="{% url "admin_federation" %}" {% if section == "federation" %}class="selected"{% endif %} title="Federation">
+        <i class="fa-solid fa-diagram-project"></i> Federation
+    </a>
     <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %} title="Users">
         <i class="fa-solid fa-users"></i> Users
     </a>

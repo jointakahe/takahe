@@ -10,6 +10,7 @@ from users.views.admin.domains import (  # noqa
     DomainEdit,
     Domains,
 )
+from users.views.admin.federation import FederationEdit, FederationRoot  # noqa
 from users.views.admin.settings import BasicSettings  # noqa
 
 

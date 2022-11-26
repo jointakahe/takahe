@@ -69,6 +69,16 @@ urlpatterns = [
         admin.DomainDelete.as_view(),
     ),
     path(
+        "admin/federation/",
+        admin.FederationRoot.as_view(),
+        name="admin_federation",
+    ),
+    path(
+        "admin/federation/<domain>/",
+        admin.FederationEdit.as_view(),
+        name="admin_federation_edit",
+    ),
+    path(
         "admin/users/",
         admin.Users.as_view(),
         name="admin_users",
