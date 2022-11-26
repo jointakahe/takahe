@@ -150,6 +150,13 @@ class Inbox(View):
                 f"Inbox error: cannot fetch actor {document['actor']}"
             )
             return HttpResponseBadRequest("Cannot retrieve actor")
+        # See if it's from a blocked domain
+        if identity.domain.blocked:
+            # I love to lie! Throw it away!
+            exceptions.capture_message(
+                f"Inbox: Discarded message from {identity.domain}"
+            )
+            return HttpResponse(status=202)
         # If there's a "signature" payload, verify against that
         if "signature" in document:
             try:

@@ -30,7 +30,7 @@ class FederationEdit(FormView):
 
     class form_class(forms.Form):
         blocked = forms.BooleanField(
-            help_text="If this domain is blocked from interacting with this server",
+            help_text="If this domain is blocked from interacting with this server.\nAll incoming posts from this domain will be irrecoverably dropped.",
             widget=forms.Select(choices=[(True, "Blocked"), (False, "Not Blocked")]),
             required=False,
         )
