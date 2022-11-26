@@ -4,3 +4,4 @@ notes.md
 .git
 .venv
 .pre-commit-config.yaml
+.env

@@ -11,7 +11,7 @@ COPY . /takahe
 
 WORKDIR /takahe
 
-RUN TAKAHE_DATABASE_URL="postgres://dummy:dummy@localhost/postgres" python3 manage.py collectstatic
+RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" python3 manage.py collectstatic
 
 EXPOSE 8000
 

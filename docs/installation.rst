@@ -61,36 +61,33 @@ Environment Variables
 All of these variables are *required* for a working installation, and should
 be provided from the first boot.
 
-* ``PGHOST``, ``PGPORT``, ``PGUSER``, ``PGDATABASE``, and ``PGPASSWORD`` are the
-  standard PostgreSQL environment variables for configuring your database.
+* ``TAKAHE_DATABASE_SERVER`` should be a database DSN for your database (you can use
+  the standard ``PG*`` variables too if you want)
 
 * ``TAKAHE_SECRET_KEY`` must be a fixed, random value (it's used for internal
   cryptography). Don't change this unless you want to invalidate all sessions.
 
-* ``TAKAHE_MEDIA_BACKEND`` must be one of ``local``, ``s3`` or ``gcs``.
+* ``TAKAHE_MEDIA_BACKEND`` must be a URI starting with ``local://``, ``s3://`` or ``gcs://``.
 
-    * If it is set to ``local``, you must also provide ``TAKAHE_MEDIA_ROOT``,
+    * If it is set to ``local://``, you must also provide ``TAKAHE_MEDIA_ROOT``,
       the path to the local media directory, and ``TAKAHE_MEDIA_URL``, a
       fully-qualified URL prefix that serves that directory.
 
-    * If it is set to ``gcs``, you must also provide ``TAKAHE_MEDIA_BUCKET``,
-      the name of the bucket to store files in. The bucket must be publicly
-      readable and have "uniform access control" enabled.
+    * If it is set to ``gcs://``, it must be in the form ``gcs://bucket-name``
+      (note the two slashes if you just want a bucket name)
 
-    * If it is set to ``s3``, you must also provide ``TAKAHE_MEDIA_BUCKET``,
-      the name of the bucket to store files in.
+    * If it is set to ``s3://``, it must be in the form ``s3://access-key:secret-key@endpoint-url/bucket-name``
 
 * ``TAKAHE_MAIN_DOMAIN`` should be the domain name (without ``https://``) that
   will be used for default links (such as in emails). It does *not* need to be
   the same as any domain you are hosting user accounts on.
 
-* ``TAKAHE_EMAIL_HOST`` and ``TAKAHE_EMAIL_PORT`` (along with
-  ``TAKAHE_EMAIL_USER`` and ``TAKAHE_EMAIL_PASSWORD``, if needed) should point
-  to an SMTP server Takahe can use for sending email. Email is *required*, to
-  allow account creation and password resets.
+* ``TAKAHE_EMAIL_SERVER`` should be set to an ``smtp://`` or ``sendgrid://`` URI
 
-  * If you are using SendGrid, you can just set an API key in
-    ``TAKAHE_EMAIL_SENDGRID_KEY`` instead.
+  * If you are using SMTP, it is ``smtp://username:password@host:port/``. You
+    can also put ``?tls=true`` or ``?ssl=true`` on the end to enable encryption.
+
+  * If you are using SendGrid, you should set the URI to ``sendgrid://api-key``
 
 * ``TAKAHE_EMAIL_FROM`` is the email address that emails from the system will
   appear to come from.
@@ -99,12 +96,13 @@ be provided from the first boot.
   be automatically promoted to administrator when it signs up. You only need
   this for initial setup, and can unset it after that if you like.
 
-* ``TAKAHE_STATOR_TOKEN`` should be a random string that you are using to
-  protect the stator (task runner) endpoint. You'll use this value later.
+* If you don't want to run Stator as a background process but as a view,
+  set ``TAKAHE_STATOR_TOKEN`` to a random string that you are using to
+  protect it; you'll use this when setting up the URL to be called.
 
 * If your installation is behind a HTTPS endpoint that is proxying it, set
-  ``TAKAHE_SECURE_HEADER`` to the header name used to signify that HTTPS is
-  being used (usually ``X-Forwarded-Proto``)
+  ``TAKAHE_USE_PROXY_HEADERS`` to ``true``. (The HTTPS proxy header must be called
+  ``X-Forwarded-Proto``).
 
 * If you want to receive emails about internal site errors, set
   ``TAKAHE_ERROR_EMAILS`` to a comma-separated list of email addresses that

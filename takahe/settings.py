@@ -31,25 +31,32 @@ class Settings(BaseSettings):
     """
 
     #: The default database.
-    DATABASE_URL: Optional[PostgresDsn]
+    DATABASE_SERVER: Optional[PostgresDsn]
+
     #: The currently running environment, used for things such as sentry
     #: error reporting.
     ENVIRONMENT: Environments = "development"
+
     #: Should django run in debug mode?
     DEBUG: bool = False
+
     #: Set a secret key used for signing values such as sessions. Randomized
     #: by default, so you'll logout everytime the process restarts.
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_hex(128))
+
     #: Set a secret key used to protect the stator. Randomized by default.
     STATOR_TOKEN: str = Field(default_factory=lambda: secrets.token_hex(128))
 
     #: If set, a list of allowed values for the HOST header. The default value
     #: of '*' means any host will be accepted.
     ALLOWED_HOSTS: List[str] = Field(default_factory=lambda: ["*"])
+
     #: If set, a list of hosts to accept for CORS.
     CORS_HOSTS: List[str] = Field(default_factory=list)
+
     #: If set, a list of hosts to accept for CSRF.
     CSRF_HOSTS: List[str] = Field(default_factory=list)
+
     #: If enabled, trust the HTTP_X_FORWARDED_FOR header.
     USE_PROXY_HEADERS: bool = False
 
@@ -59,25 +66,25 @@ class Settings(BaseSettings):
     #: Fallback domain for links.
     MAIN_DOMAIN: str = "example.com"
 
-    EMAIL_DSN: AnyUrl = "console://localhost"
+    EMAIL_SERVER: AnyUrl = "console://localhost"
     EMAIL_FROM: EmailStr = "test@example.com"
     AUTO_ADMIN_EMAIL: Optional[EmailStr] = None
     ERROR_EMAILS: Optional[List[EmailStr]] = None
 
     MEDIA_URL: str = "/media/"
-    MEDIA_ROOT: str = str(BASE_DIR / "MEDIA")
+    MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: Optional[AnyUrl] = None
 
     PGHOST: Optional[str] = None
-    PGPORT: int = 5432
+    PGPORT: Optional[int] = 5432
     PGNAME: str = "takahe"
     PGUSER: str = "postgres"
     PGPASSWORD: Optional[str] = None
 
     @validator("PGHOST", always=True)
     def validate_db(cls, PGHOST, values):  # noqa
-        if not values.get("DATABASE_URL") and not PGHOST:
-            raise ValueError("Either DATABASE_URL or PGHOST are required.")
+        if not values.get("DATABASE_SERVER") and not PGHOST:
+            raise ValueError("Either DATABASE_SERVER or PGHOST are required.")
         return PGHOST
 
     class Config:
@@ -154,8 +161,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "takahe.wsgi.application"
 
-if SETUP.DATABASE_URL:
-    DATABASES = {"default": dj_database_url.parse(SETUP.DATABASE_URL, conn_max_age=600)}
+if SETUP.DATABASE_SERVER:
+    DATABASES = {
+        "default": dj_database_url.parse(SETUP.DATABASE_SERVER, conn_max_age=600)
+    }
 else:
     DATABASES = {
         "default": {
@@ -243,11 +252,17 @@ if SETUP.SENTRY_DSN:
     )
 
 SERVER_EMAIL = SETUP.EMAIL_FROM
-if SETUP.EMAIL_DSN:
-    parsed = urllib.parse.urlparse(SETUP.EMAIL_DSN)
+if SETUP.EMAIL_SERVER:
+    parsed = urllib.parse.urlparse(SETUP.EMAIL_SERVER)
     query = urllib.parse.parse_qs(parsed.query)
     if parsed.scheme == "console":
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    elif parsed.scheme == "sendgrid":
+        EMAIL_HOST = "smtp.sendgrid.net"
+        EMAIL_PORT = 587
+        EMAIL_HOST_USER = "apikey"
+        EMAIL_HOST_PASSWORD = parsed.hostname
+        EMAIL_USE_TLS = True
     elif parsed.scheme == "smtp":
         EMAIL_HOST = parsed.hostname
         EMAIL_PORT = parsed.port
@@ -256,7 +271,7 @@ if SETUP.EMAIL_DSN:
         EMAIL_USE_TLS = as_bool(query.get("tls"))
         EMAIL_USE_SSL = as_bool(query.get("ssl"))
     else:
-        raise ValueError("Unknown schema for EMAIL_DSN.")
+        raise ValueError("Unknown schema for EMAIL_SERVER.")
 
 
 if SETUP.MEDIA_BACKEND:
@@ -264,7 +279,10 @@ if SETUP.MEDIA_BACKEND:
     query = urllib.parse.parse_qs(parsed.query)
     if parsed.scheme == "gcs":
         DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-        GS_BUCKET_NAME = parsed.path.lstrip("/")
+        if parsed.path.lstrip("/"):
+            GS_BUCKET_NAME = parsed.path.lstrip("/")
+        else:
+            GS_BUCKET_NAME = parsed.hostname
         GS_QUERYSTRING_AUTH = False
     elif parsed.scheme == "s3":
         DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -273,6 +291,8 @@ if SETUP.MEDIA_BACKEND:
         AWS_SECRET_ACCESS_KEY = parsed.password
         port = parsed.port or 443
         AWS_S3_ENDPOINT_URL = f"{parsed.hostname}:{port}"
+    else:
+        raise ValueError(f"Unsupported media backend {parsed.scheme}")
 
 if SETUP.ERROR_EMAILS:
     ADMINS = [("Admin", e) for e in SETUP.ERROR_EMAILS]
