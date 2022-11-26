@@ -15,10 +15,10 @@ GUARDED_COMMANDS = [
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "takahe.settings.production")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "takahe.settings")
 
     # Guard against running tests in arbitrary environments
-    env_name = os.environ["DJANGO_SETTINGS_MODULE"].rsplit(".", 1)[-1]
+    env_name = os.environ.get("TAKAHE_ENVIRONMENT", "development")
     if env_name in GUARDED_ENVIRONMENTS:
         for cmd in sys.argv:
             if cmd in GUARDED_COMMANDS:
