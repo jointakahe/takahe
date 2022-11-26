@@ -3,6 +3,7 @@
 *.psql
 *.pyc
 *.sqlite3
+.idea/*
 .venv
 .vscode
 /*.env
