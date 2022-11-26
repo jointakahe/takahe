@@ -10,7 +10,7 @@ want to contribute we'd love help in the following areas:
 * Illustration (for the app, project site, and outreach materials)
 * Writing (for our development and user documentation)
 
-If you're interested in helping out, join `our Discord server <https://discord.gg/qvQ39tAMvf>`_`
+If you're interested in helping out, join `our Discord server <https://discord.gg/qvQ39tAMvf>`_
 or email contact@jointakahe.org, and mention what you'd like to help with.
 
 All contributors are expected to abide by our `Code of Conduct <https://jointakahe.org/conduct/>`_.
