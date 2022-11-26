@@ -53,9 +53,9 @@ and enable the git commit hooks to do auto-formatting and linting
 
     pre-commit install
 
-You will need to set your system to use development settings::
+You will need to set up some development settings (you can edit `.env` later)::
 
-    export DJANGO_SETTINGS_MODULE=takahe.settings.development
+    cp development.env .env
 
 You can run the web interface to see it at http://localhost:8000::
 
@@ -97,3 +97,26 @@ Once your session is up and running, you can make yourself a superuser account::
 And you can run the tests inside your container::
 
     docker compose -f docker/docker-compose.yml exec web pytest
+    
+
+Coding Guidelines
+-----------------
+
+We have linters, typechecking and formatters enabled for the project; ensure these
+are set up locally by running `pre-commit install`, otherwise your pull request
+will fail its testing phase.
+
+Comment anything weird, unusual or complicated; if in doubt, leave a comment.
+
+Don't use overly complex language constructs - like double-nested list comprehensions -
+when a simple, understandable version is possible instead. We optimise for code
+readability.
+
+All features should be accessible without JavaScript if at all possible; this doesn't
+mean that we can't have nice JavaScript user interfaces and affordances, but all
+basic functionality *should* be accessible without it.
+
+We use `HTMX <https://htmx.org/>`_ for dynamically loading content, and
+`Hyperscript <https://hyperscript.org/>`_ for most interactions rather than raw 
+JavaScript. If you can accomplish what you need with these tools, please use them
+rather than adding JS.
