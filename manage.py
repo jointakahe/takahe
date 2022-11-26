@@ -5,7 +5,7 @@ import sys
 
 # List of settings files that should guard against running certain commands
 GUARDED_ENVIRONMENTS = [
-    "prod",
+    "production",
 ]
 
 GUARDED_COMMANDS = [
@@ -18,7 +18,7 @@ def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "takahe.settings")
 
     # Guard against running tests in arbitrary environments
-    env_name = os.environ.get("TAKAHE_ENVIRONMENT", "dev")
+    env_name = os.environ.get("TAKAHE_ENVIRONMENT", "development")
     if env_name in GUARDED_ENVIRONMENTS:
         for cmd in sys.argv:
             if cmd in GUARDED_COMMANDS:

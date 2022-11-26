@@ -21,6 +21,9 @@ def as_bool(v: Optional[Union[str, List[str]]]):
     return v[0].lower() in ("true", "yes", "t", "1")
 
 
+Environments = Literal["development", "production", "test"]
+
+
 class Settings(BaseSettings):
     """
     Pydantic-powered settings, to provide consistent error messages, strong
@@ -31,7 +34,7 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     #: The currently running environment, used for things such as sentry
     #: error reporting.
-    ENVIRONMENT: Literal["dev", "prod", "test"] = "dev"
+    ENVIRONMENT: Environments = "development"
     #: Should django run in debug mode?
     DEBUG: bool = False
     #: Set a secret key used for signing values such as sessions. Randomized
