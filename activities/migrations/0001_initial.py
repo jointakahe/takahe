@@ -83,7 +83,7 @@ class Migration(migrations.Migration):
                 (
                     "author",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
+                        on_delete=django.db.models.deletion.CASCADE,
                         related_name="posts",
                         to="users.identity",
                     ),
@@ -257,6 +257,8 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[
                             ("post", "Post"),
+                            ("post_edited", "Post Edited"),
+                            ("post_deleted", "Post Deleted"),
                             ("interaction", "Interaction"),
                             ("undo_interaction", "Undo Interaction"),
                         ],

@@ -67,6 +67,7 @@ class Identity(StatorModel):
     name = models.CharField(max_length=500, blank=True, null=True)
     summary = models.TextField(blank=True, null=True)
     manually_approves_followers = models.BooleanField(blank=True, null=True)
+    discoverable = models.BooleanField(default=True)
 
     profile_uri = models.CharField(max_length=500, blank=True, null=True)
     inbox_uri = models.CharField(max_length=500, blank=True, null=True)
@@ -240,7 +241,7 @@ class Identity(StatorModel):
             },
             "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "url": self.absolute_profile_uri(),
-            "discoverable": True,
+            "http://joinmastodon.org/ns#discoverable": self.discoverable,
         }
         if self.name:
             response["name"] = self.name
@@ -373,6 +374,9 @@ class Identity(StatorModel):
         self.public_key_id = document.get("publicKey", {}).get("id")
         self.icon_uri = document.get("icon", {}).get("url")
         self.image_uri = document.get("image", {}).get("url")
+        self.discoverable = document.get(
+            "http://joinmastodon.org/ns#discoverable", True
+        )
         # Now go do webfinger with that info to see if we can get a canonical domain
         actor_url_parts = urlparse(self.actor_uri)
         get_domain = sync_to_async(Domain.get_remote_domain)

@@ -33,13 +33,22 @@ class ProfilePage(FormView):
         image = forms.ImageField(
             required=False, help_text="Shown at the top of your profile"
         )
+        discoverable = forms.BooleanField(
+            help_text="If this user is visible on the frontpage and in user directories.",
+            widget=forms.Select(
+                choices=[(True, "Discoverable"), (False, "Not Discoverable")]
+            ),
+            required=False,
+        )
 
     def get_initial(self):
+        identity = self.request.identity
         return {
-            "name": self.request.identity.name,
-            "summary": self.request.identity.summary,
-            "icon": self.request.identity.icon and self.request.identity.icon.url,
-            "image": self.request.identity.image and self.request.identity.image.url,
+            "name": identity.name,
+            "summary": identity.summary,
+            "icon": identity.icon and identity.icon.url,
+            "image": identity.image and identity.image.url,
+            "discoverable": identity.discoverable,
         }
 
     def resize_image(self, image: File, *, size: tuple[int, int]) -> File:
@@ -50,21 +59,23 @@ class ProfilePage(FormView):
             return File(new_image_bytes)
 
     def form_valid(self, form):
-        # Update identity name and summary
-        self.request.identity.name = form.cleaned_data["name"]
-        self.request.identity.summary = form.cleaned_data["summary"]
+        # Update basic info
+        identity = self.request.identity
+        identity.name = form.cleaned_data["name"]
+        identity.summary = form.cleaned_data["summary"]
+        identity.discoverable = form.cleaned_data["discoverable"]
         # Resize images
         icon = form.cleaned_data.get("icon")
         image = form.cleaned_data.get("image")
         if isinstance(icon, File):
-            self.request.identity.icon.save(
+            identity.icon.save(
                 icon.name,
                 self.resize_image(icon, size=(400, 400)),
             )
         if isinstance(image, File):
-            self.request.identity.image.save(
+            identity.image.save(
                 image.name,
                 self.resize_image(image, size=(1500, 500)),
             )
-        self.request.identity.save()
+        identity.save()
         return redirect(".")

@@ -150,6 +150,14 @@ class CreateIdentity(FormView):
         name = forms.CharField(
             help_text="The display name other users see. You can change this easily."
         )
+        discoverable = forms.BooleanField(
+            help_text="If this user is visible on the frontpage and in user directories.",
+            initial=True,
+            widget=forms.Select(
+                choices=[(True, "Discoverable"), (False, "Not Discoverable")]
+            ),
+            required=False,
+        )
 
         def __init__(self, user, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -219,6 +227,7 @@ class CreateIdentity(FormView):
             domain_id=domain,
             name=form.cleaned_data["name"],
             local=True,
+            discoverable=form.cleaned_data["discoverable"],
         )
         new_identity.users.add(self.request.user)
         new_identity.generate_keypair()
