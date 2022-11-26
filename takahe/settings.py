@@ -5,14 +5,7 @@ from typing import List, Literal, Optional, Union
 
 import dj_database_url
 import sentry_sdk
-from pydantic import (
-    AnyUrl,
-    BaseSettings,
-    EmailStr,
-    Field,
-    PostgresDsn,
-    validator
-)
+from pydantic import AnyUrl, BaseSettings, EmailStr, Field, PostgresDsn, validator
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,14 +70,14 @@ class Settings(BaseSettings):
 
     PGHOST: Optional[str] = None
     PGPORT: int = 5432
-    PGNAME: str = 'takahe'
-    PGUSER: str = 'postgres'
+    PGNAME: str = "takahe"
+    PGUSER: str = "postgres"
     PGPASSWORD: Optional[str] = None
 
-    @validator('PGHOST', always=True)
+    @validator("PGHOST", always=True)
     def validate_db(cls, PGHOST, values):  # noqa
-        if not values.get('DATABASE_URL') and not PGHOST:
-            raise ValueError('Either DATABASE_URL or PGHOST are required.')
+        if not values.get("DATABASE_URL") and not PGHOST:
+            raise ValueError("Either DATABASE_URL or PGHOST are required.")
         return PGHOST
 
     class Config:
@@ -97,11 +90,11 @@ class Settings(BaseSettings):
 
         # Override the env_prefix so these fields load without TAKAHE_
         fields = {
-            'PGHOST': {'env': 'PGHOST'},
-            'PGPORT': {'env': 'PGPORT'},
-            'PGNAME': {'env': 'PGNAME'},
-            'PGUSER': {'env': 'PGUSER'},
-            'PGPASSWORD': {'env': 'PGPASSWORD'}
+            "PGHOST": {"env": "PGHOST"},
+            "PGPORT": {"env": "PGPORT"},
+            "PGNAME": {"env": "PGNAME"},
+            "PGUSER": {"env": "PGUSER"},
+            "PGPASSWORD": {"env": "PGPASSWORD"},
         }
 
 
@@ -162,9 +155,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "takahe.wsgi.application"
 
 if SETUP.DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(SETUP.DATABASE_URL, conn_max_age=600)
-    }
+    DATABASES = {"default": dj_database_url.parse(SETUP.DATABASE_URL, conn_max_age=600)}
 else:
     DATABASES = {
         "default": {
@@ -173,7 +164,7 @@ else:
             "PORT": SETUP.PGPORT,
             "NAME": SETUP.PGNAME,
             "USER": SETUP.PGUSER,
-            "PASSWORD": SETUP.PGPASSWORD
+            "PASSWORD": SETUP.PGPASSWORD,
         }
     }
 
