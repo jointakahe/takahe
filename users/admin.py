@@ -68,6 +68,7 @@ class InboxMessageAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "message_type", "message_actor"]
     search_fields = ["message"]
     actions = ["reset_state"]
+    readonly_fields = ["state_changed"]
 
     @admin.action(description="Reset State")
     def reset_state(self, request, queryset):

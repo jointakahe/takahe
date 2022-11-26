@@ -29,7 +29,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
       - name: Run pytest
         env:
-          TAKAHE_DATABASE_URL: "postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
+          TAKAHE_DATABASE_SERVER: "postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
           TAKAHE_ENVIRONMENT: "test"
           TAKAHE_SECRET_KEY: "testing_secret"
           TAKAHE_MAIN_DOMAIN: "example.com"
