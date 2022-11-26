@@ -22,6 +22,7 @@ Currently, it supports:
 * Multiple identity (per user account support)
 * Signup flow
 * Password reset flow
+* Server defederation (blocking)
 
 Features planned for releases up to 1.0:
 
@@ -34,7 +35,6 @@ Features planned for releases up to 1.0:
 * Searching for hashtags
 * Server announcements system
 * Moderation flagging system and queue
-* Server defederation (blocking)
 * IP and email domain banning
 * Mastodon-compatible client API for use with apps
 * RSS feeds for users' public posts
