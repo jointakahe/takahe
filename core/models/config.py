@@ -223,3 +223,4 @@ class Config(models.Model):
     class IdentityOptions(pydantic.BaseModel):
 
         toot_mode: bool = False
+        default_post_visibility: int = 1  # Post.Visibilities.unlisted

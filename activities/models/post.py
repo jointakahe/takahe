@@ -499,7 +499,7 @@ class Post(StatorModel):
     @classmethod
     def handle_delete_ap(cls, data):
         """
-        Handles an incoming create request
+        Handles an incoming delete request
         """
         with transaction.atomic():
             # Find our post by ID if we have one
