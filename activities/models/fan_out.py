@@ -23,13 +23,23 @@ class FanOutStates(StateGraph):
             post = await fan_out.subject_post.afetch_full()
             if fan_out.identity.local:
                 # Make a timeline event directly
-                # TODO: Exclude replies to people we don't follow
-                await sync_to_async(TimelineEvent.add_post)(
-                    identity=fan_out.identity,
-                    post=post,
-                )
+                # If it's a reply, we only add it if we follow at least one
+                # of the people mentioned.
+                add = True
+                mentioned = {identity.id for identity in post.mentions.all()}
+                if post.in_reply_to:
+                    add = False
+                    async for follow in fan_out.identity.outbound_follows.all():
+                        if follow.target_id in mentioned:
+                            add = True
+                            break
+                if add:
+                    await sync_to_async(TimelineEvent.add_post)(
+                        identity=fan_out.identity,
+                        post=post,
+                    )
                 # We might have been mentioned
-                if fan_out.identity in list(post.mentions.all()):
+                if fan_out.identity.id in mentioned:
                     TimelineEvent.add_mentioned(
                         identity=fan_out.identity,
                         post=post,

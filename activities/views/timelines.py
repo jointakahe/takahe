@@ -71,7 +71,11 @@ class Local(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.filter(visibility=Post.Visibilities.public, author__local=True)
+            Post.objects.filter(
+                visibility=Post.Visibilities.public,
+                author__local=True,
+                in_reply_to__isnull=True,
+            )
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]
@@ -97,7 +101,9 @@ class Federated(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.filter(visibility=Post.Visibilities.public)
+            Post.objects.filter(
+                visibility=Post.Visibilities.public, in_reply_to__isnull=True
+            )
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]
