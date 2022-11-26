@@ -26,6 +26,6 @@ jobs:
         run: |
           cd docs && make clean && make html
 
-    - name: Publishing documentation
-      run: |
-        ghp-import -f -n -c docs.jointakahe.org -p docs/build/html
+      - name: Publishing documentation
+        run: |
+          ghp-import -f -n -c docs.jointakahe.org -p docs/build/html
