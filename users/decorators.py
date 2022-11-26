@@ -30,4 +30,6 @@ def identity_required(function):
 
 
 def admin_required(function):
-    return user_passes_test(lambda user: user.admin)(function)
+    return user_passes_test(
+        lambda user: getattr(user, 'admin', False)
+    )(function)
