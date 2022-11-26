@@ -12,7 +12,6 @@ pydantic~=1.10.2
 django-htmx~=1.13.0
 django-storages[google,boto3]~=1.13.1
 whitenoise~=6.2.0
-sphinx~=5.3.0
 sentry-sdk~=1.11.0
 dj_database_url~=1.0.0
 python-dotenv~=0.21.0

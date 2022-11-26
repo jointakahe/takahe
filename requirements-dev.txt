@@ -7,3 +7,5 @@ mock~=4.0.3
 pytest-django~=4.5.2
 pytest-httpx~=0.21
 ghp-import~=2.1.0
+sphinx~=5.3.0
+furo~=2022.9.29
