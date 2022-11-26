@@ -37,16 +37,25 @@ Stator runner.
 What To Run
 -----------
 
-You need to run at least two copies of the `Docker image <https://hub.docker.com/r/jointakahe/takahe>`_:
+You need to run at least one copy of the
+`Docker image <https://hub.docker.com/r/jointakahe/takahe>`_ with no extra
+arguments, in order to serve web traffic.
 
-* One with no command or arguments specified, which will serve web traffic
-* One with the arguments (command) ``python manage.py runstator``, which will
-  run the background worker that handles asynchronous communication with other
-  servers.
+The image has required environment variables before it will boot, and this is
+the only way to configure it - see below.
 
-Both of these can have as many copies run as needed. Note that the image has
-required environment variables before it will boot, and this is the only way
-to configure it - see below.
+You also need to ensure Stator, our background task system, runs regularly.
+You can do this in one of two ways:
+
+* Run another copy of image with the arguments ``python manage.py runstator``,
+  which will run a background worker continuously.
+
+* Call the URL ``/.stator/?token=abc`` periodically (once a minute or more).
+  The token value must be the same as you set in ``TAKAHE_STATOR_TOKEN``.
+
+The background worker will have a lot more throughput, but you can opt for
+either for a small installation. If Stator gets backed up, you can either
+run more workers or call the URL more often to ensure it gets more throughput.
 
 While you can run Takahē directly from a checkout if you like, we're not
 officially supporting that right now, as it increases our support burden by
