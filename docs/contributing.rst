@@ -18,7 +18,7 @@ We have zero tolerance for bigotry or discrimination.
 
 If you feel like someone is breaking the code of conduct, or is making you feel
 unwelcome in a way not explicitly outlined in it, you can email us at
-conduct@jointakahe.com.
+conduct@jointakahe.org.
 
 
 Running Locally
