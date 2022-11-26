@@ -40,7 +40,7 @@ class FanOutStates(StateGraph):
                     )
                 # We might have been mentioned
                 if fan_out.identity.id in mentioned:
-                    TimelineEvent.add_mentioned(
+                    await sync_to_async(TimelineEvent.add_mentioned)(
                         identity=fan_out.identity,
                         post=post,
                     )
