@@ -38,3 +38,6 @@ jobs:
       - name: Run pre-commit
         run: |
           pre-commit run -a --show-diff-on-failure
+      - name: Building documentation
+        run: |
+          cd docs && make clean && make html
