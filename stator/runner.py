@@ -26,6 +26,7 @@ class StatorRunner:
         liveness_file: Optional[str] = None,
         schedule_interval: int = 30,
         lock_expiry: int = 300,
+        run_for: int = 0,
     ):
         self.models = models
         self.runner_id = uuid.uuid4().hex
@@ -34,9 +35,11 @@ class StatorRunner:
         self.liveness_file = liveness_file
         self.schedule_interval = schedule_interval
         self.lock_expiry = lock_expiry
+        self.run_for = run_for
 
     async def run(self):
         self.handled = 0
+        self.started = time.monotonic()
         self.last_clean = time.monotonic() - self.schedule_interval
         self.tasks = []
         # For the first time period, launch tasks
@@ -71,17 +74,21 @@ class StatorRunner:
                             )
                             self.handled += 1
                             space_remaining -= 1
-                # Prevent busylooping
-                await asyncio.sleep(0.1)
-        except KeyboardInterrupt:
-            # Wait for tasks to finish
-            print("Waiting for tasks to complete")
-            while True:
-                self.remove_completed_tasks()
-                if not self.tasks:
+                # Are we in limited run mode?
+                if self.run_for and (time.monotonic() - self.started) > self.run_for:
                     break
                 # Prevent busylooping
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.5)
+        except KeyboardInterrupt:
+            pass
+        # Wait for tasks to finish
+        print("Waiting for tasks to complete")
+        while True:
+            self.remove_completed_tasks()
+            if not self.tasks:
+                break
+            # Prevent busylooping
+            await asyncio.sleep(0.1)
         print("Complete")
         return self.handled
 

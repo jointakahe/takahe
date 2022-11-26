@@ -5,6 +5,7 @@ from django.views.static import serve
 
 from activities.views import posts, search, timelines
 from core import views as core
+from stator import views as stator
 from users.views import activitypub, admin, auth, follows, identity, settings
 
 urlpatterns = [
@@ -121,6 +122,8 @@ urlpatterns = [
     path(".well-known/nodeinfo", activitypub.NodeInfo.as_view()),
     path("nodeinfo/2.0/", activitypub.NodeInfo2.as_view()),
     path("actor/", activitypub.SystemActorView.as_view()),
+    # Stator
+    path(".stator/", stator.RequestRunner.as_view()),
     # Django admin
     path("djadmin/", djadmin.site.urls),
     # Media files
