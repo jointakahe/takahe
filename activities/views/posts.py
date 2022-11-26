@@ -172,6 +172,7 @@ class Compose(FormView):
         visibility = forms.ChoiceField(
             choices=[
                 (Post.Visibilities.public, "Public"),
+                (Post.Visibilities.local_only, "Local Only"),
                 (Post.Visibilities.unlisted, "Unlisted"),
                 (Post.Visibilities.followers, "Followers & Mentioned Only"),
                 (Post.Visibilities.mentioned, "Mentioned Only"),
@@ -207,7 +208,7 @@ class Compose(FormView):
         ] = self.request.identity.config_identity.default_post_visibility
         if self.reply_to:
             initial["reply_to"] = self.reply_to.pk
-            initial["visibility"] = Post.Visibilities.unlisted
+            initial["visibility"] = self.reply_to.visibility
             initial["text"] = f"@{self.reply_to.author.handle} "
         return initial
 
