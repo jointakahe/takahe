@@ -74,10 +74,10 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 
-CONFIG = Settings()
+SETUP = Settings()
 
-SECRET_KEY = CONFIG.SECRET_KEY
-DEBUG = CONFIG.DEBUG
+SECRET_KEY = SETUP.SECRET_KEY
+DEBUG = SETUP.DEBUG
 
 # Application definition
 
@@ -130,7 +130,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "takahe.wsgi.application"
 
-DATABASES = {"default": dj_database_url.parse(CONFIG.DATABASE_URL, conn_max_age=600)}
+DATABASES = {"default": dj_database_url.parse(SETUP.DATABASE_URL, conn_max_age=600)}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -175,40 +175,40 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 STATIC_ROOT = BASE_DIR / "static-collected"
 
-ALLOWED_HOSTS = CONFIG.ALLOWED_HOSTS
+ALLOWED_HOSTS = SETUP.ALLOWED_HOSTS
 
-AUTO_ADMIN_EMAIL = CONFIG.AUTO_ADMIN_EMAIL
+AUTO_ADMIN_EMAIL = SETUP.AUTO_ADMIN_EMAIL
 
-STATOR_TOKEN = CONFIG.STATOR_TOKEN
+STATOR_TOKEN = SETUP.STATOR_TOKEN
 
-CORS_ORIGIN_WHITELIST = CONFIG.CORS_HOSTS
+CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
 CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 604800
 
-CSRF_TRUSTED_ORIGINS = CONFIG.CSRF_HOSTS
+CSRF_TRUSTED_ORIGINS = SETUP.CSRF_HOSTS
 
-MEDIA_URL = CONFIG.MEDIA_URL
-MEDIA_ROOT = CONFIG.MEDIA_ROOT
-MAIN_DOMAIN = CONFIG.MAIN_DOMAIN
+MEDIA_URL = SETUP.MEDIA_URL
+MEDIA_ROOT = SETUP.MEDIA_ROOT
+MAIN_DOMAIN = SETUP.MAIN_DOMAIN
 
-if CONFIG.USE_PROXY_HEADERS:
+if SETUP.USE_PROXY_HEADERS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
-if CONFIG.SENTRY_DSN:
+if SETUP.SENTRY_DSN:
     sentry_sdk.init(
-        dsn=CONFIG.SENTRY_DSN,
+        dsn=SETUP.SENTRY_DSN,
         integrations=[
             DjangoIntegration(),
         ],
         traces_sample_rate=1.0,
         send_default_pii=True,
-        environment=CONFIG.ENVIRONMENT,
+        environment=SETUP.ENVIRONMENT,
     )
 
-SERVER_EMAIL = CONFIG.EMAIL_FROM
-if CONFIG.EMAIL_DSN:
-    parsed = urllib.parse.urlparse(CONFIG.EMAIL_DSN)
+SERVER_EMAIL = SETUP.EMAIL_FROM
+if SETUP.EMAIL_DSN:
+    parsed = urllib.parse.urlparse(SETUP.EMAIL_DSN)
     query = urllib.parse.parse_qs(parsed.query)
     if parsed.scheme == "console":
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -223,8 +223,8 @@ if CONFIG.EMAIL_DSN:
         raise ValueError("Unknown schema for EMAIL_DSN.")
 
 
-if CONFIG.MEDIA_BACKEND:
-    parsed = urllib.parse.urlparse(CONFIG.MEDIA_BACKEND)
+if SETUP.MEDIA_BACKEND:
+    parsed = urllib.parse.urlparse(SETUP.MEDIA_BACKEND)
     query = urllib.parse.parse_qs(parsed.query)
     if parsed.scheme == "gcs":
         DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
@@ -238,5 +238,5 @@ if CONFIG.MEDIA_BACKEND:
         port = parsed.port or 443
         AWS_S3_ENDPOINT_URL = f"{parsed.hostname}:{port}"
 
-if CONFIG.ERROR_EMAILS:
-    ADMINS = [("Admin", e) for e in CONFIG.ERROR_EMAILS]
+if SETUP.ERROR_EMAILS:
+    ADMINS = [("Admin", e) for e in SETUP.ERROR_EMAILS]
