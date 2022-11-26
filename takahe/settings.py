@@ -5,7 +5,14 @@ from typing import List, Literal, Optional, Union
 
 import dj_database_url
 import sentry_sdk
-from pydantic import AnyUrl, BaseSettings, EmailStr, Field, PostgresDsn
+from pydantic import (
+    AnyUrl,
+    BaseSettings,
+    EmailStr,
+    Field,
+    PostgresDsn,
+    validator
+)
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,7 +38,7 @@ class Settings(BaseSettings):
     """
 
     #: The default database.
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: Optional[PostgresDsn]
     #: The currently running environment, used for things such as sentry
     #: error reporting.
     ENVIRONMENT: Environments = "development"
@@ -68,6 +75,18 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = str(BASE_DIR / "MEDIA")
     MEDIA_BACKEND: Optional[AnyUrl] = None
 
+    PGHOST: Optional[str] = None
+    PGPORT: int = 5432
+    PGNAME: str = 'takahe'
+    PGUSER: str = 'postgres'
+    PGPASSWORD: Optional[str] = None
+
+    @validator('PGHOST', always=True)
+    def validate_db(cls, PGHOST, values):  # noqa
+        if not values.get('DATABASE_URL') and not PGHOST:
+            raise ValueError('Either DATABASE_URL or PGHOST are required.')
+        return PGHOST
+
     class Config:
         env_prefix = "TAKAHE_"
         env_file = str(BASE_DIR / ".env")
@@ -75,6 +94,15 @@ class Settings(BaseSettings):
         # Case sensitivity doesn't work on Windows, so might as well be
         # consistent from the get-go.
         case_sensitive = False
+
+        # Override the env_prefix so these fields load without TAKAHE_
+        fields = {
+            'PGHOST': {'env': 'PGHOST'},
+            'PGPORT': {'env': 'PGPORT'},
+            'PGNAME': {'env': 'PGNAME'},
+            'PGUSER': {'env': 'PGUSER'},
+            'PGPASSWORD': {'env': 'PGPASSWORD'}
+        }
 
 
 SETUP = Settings()
@@ -133,7 +161,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "takahe.wsgi.application"
 
-DATABASES = {"default": dj_database_url.parse(SETUP.DATABASE_URL, conn_max_age=600)}
+if SETUP.DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(SETUP.DATABASE_URL, conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "HOST": SETUP.PGHOST,
+            "PORT": SETUP.PGPORT,
+            "NAME": SETUP.PGNAME,
+            "USER": SETUP.PGUSER,
+            "PASSWORD": SETUP.PGPASSWORD
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
