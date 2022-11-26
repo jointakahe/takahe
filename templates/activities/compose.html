@@ -12,12 +12,13 @@
                 {% include "activities/_mini_post.html" with post=reply_to %}
             {% endif %}
             {{ form.reply_to }}
+            {{ form.id }}
             {% include "forms/_field.html" with field=form.text %}
             {% include "forms/_field.html" with field=form.content_warning %}
             {% include "forms/_field.html" with field=form.visibility %}
         </fieldset>
         <div class="buttons">
-            <button>{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+            <button>{% if form.id %}Edit{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
         </div>
     </form>
 {% endblock %}

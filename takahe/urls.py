@@ -100,6 +100,7 @@ urlpatterns = [
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Posts
     path("compose/", posts.Compose.as_view(), name="compose"),
+    path("compose/<int:post_id>/edit/", posts.Compose.as_view(), name="compose-edit"),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
     path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),

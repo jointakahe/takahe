@@ -164,6 +164,10 @@ class Compose(FormView):
     template_name = "activities/compose.html"
 
     class form_class(forms.Form):
+        id = forms.IntegerField(
+            required=False,
+            widget=forms.HiddenInput(),
+        )
 
         text = forms.CharField(
             widget=forms.Textarea(
@@ -206,28 +210,56 @@ class Compose(FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial[
-            "visibility"
-        ] = self.request.identity.config_identity.default_post_visibility
-        if self.reply_to:
-            initial["reply_to"] = self.reply_to.pk
-            initial["visibility"] = self.reply_to.visibility
-            initial["text"] = f"@{self.reply_to.author.handle} "
+        if self.post_obj:
+            initial.update(
+                {
+                    "id": self.post_obj.id,
+                    "reply_to": self.reply_to.pk if self.reply_to else "",
+                    "visibility": self.post_obj.visibility,
+                    "text": self.post_obj.content,
+                    "content_warning": self.post_obj.summary,
+                }
+            )
+        else:
+            initial[
+                "visibility"
+            ] = self.request.identity.config_identity.default_post_visibility
+            if self.reply_to:
+                initial["reply_to"] = self.reply_to.pk
+                initial["visibility"] = self.reply_to.visibility
+                initial["text"] = f"@{self.reply_to.author.handle} "
         return initial
 
     def form_valid(self, form):
-        post = Post.create_local(
-            author=self.request.identity,
-            content=form.cleaned_data["text"],
-            summary=form.cleaned_data.get("content_warning"),
-            visibility=form.cleaned_data["visibility"],
-            reply_to=self.reply_to,
-        )
-        # Add their own timeline event for immediate visibility
-        TimelineEvent.add_post(self.request.identity, post)
+        post_id = form.cleaned_data.get("id")
+        if post_id:
+            post = get_object_or_404(self.request.identity.posts, pk=post_id)
+            post.content = form.cleaned_data["text"]
+            post.summary = form.cleaned_data.get("content_warning")
+            post.visibility = form.cleaned_data["visibility"]
+            post.save()
+
+            # Should there be a timeline event for edits?
+            # E.g. "@user edited #123"
+
+            post.transition_perform(PostStates.edited)
+        else:
+            post = Post.create_local(
+                author=self.request.identity,
+                content=form.cleaned_data["text"],
+                summary=form.cleaned_data.get("content_warning"),
+                visibility=form.cleaned_data["visibility"],
+                reply_to=self.reply_to,
+            )
+            # Add their own timeline event for immediate visibility
+            TimelineEvent.add_post(self.request.identity, post)
         return redirect("/")
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request, post_id=None, *args, **kwargs):
+        self.post_obj = None
+        if post_id:
+            self.post_obj = get_object_or_404(request.identity.posts, pk=post_id)
+
         # Grab the reply-to post info now
         self.reply_to = None
         reply_to_id = self.request.POST.get("reply_to") or self.request.GET.get(

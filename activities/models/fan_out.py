@@ -23,8 +23,8 @@ class FanOutStates(StateGraph):
         fan_out = await instance.afetch_full()
 
         match (fan_out.type, fan_out.identity.local):
-            # Handle creating local posts
-            case (FanOut.Types.post, LOCAL_IDENTITY):
+            # Handle creating/updating local posts
+            case (FanOut.Types.post | FanOut.Types.post_edited, LOCAL_IDENTITY):
                 post = await fan_out.subject_post.afetch_full()
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
@@ -49,7 +49,7 @@ class FanOutStates(StateGraph):
                         post=post,
                     )
 
-            # Handle sending remote posts creation
+            # Handle sending remote posts create
             case (FanOut.Types.post, REMOTE_IDENTITY):
                 post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
@@ -57,6 +57,16 @@ class FanOutStates(StateGraph):
                     method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(post.to_create_ap()),
+                )
+
+            # Handle sending remote posts update
+            case (FanOut.Types.post_edited, REMOTE_IDENTITY):
+                post = await fan_out.subject_post.afetch_full()
+                # Sign it and send it
+                await post.author.signed_request(
+                    method="post",
+                    uri=fan_out.identity.inbox_uri,
+                    body=canonicalise(post.to_update_ap()),
                 )
 
             # Handle deleting local posts
