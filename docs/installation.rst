@@ -57,7 +57,8 @@ The background worker will have a lot more throughput, but you can opt for
 either for a small installation. If Stator gets backed up, you can either
 run more workers or call the URL more often to ensure it gets more throughput.
 
-While you can run Takahē directly from a checkout if you like, we're not
+While you can run Takahē directly from a checkout if you like (rather than
+having to use the Docker image), we're not
 officially supporting that right now, as it increases our support burden by
 having to deal with lots of OS and library versions. It's a standard Django
 app, though, so if you know what you're doing, have at it - just expect us to
@@ -71,21 +72,21 @@ All of these variables are *required* for a working installation, and should
 be provided from the first boot.
 
 * ``TAKAHE_DATABASE_SERVER`` should be a database DSN for your database (you can use
-  the standard ``PG*`` variables too if you want)
+  the standard ``PGHOST``, ``PGUSER``, etc. variables instead if you want)
 
 * ``TAKAHE_SECRET_KEY`` must be a fixed, random value (it's used for internal
   cryptography). Don't change this unless you want to invalidate all sessions.
 
 * ``TAKAHE_MEDIA_BACKEND`` must be a URI starting with ``local://``, ``s3://`` or ``gcs://``.
 
-    * If it is set to ``local://``, you must also provide ``TAKAHE_MEDIA_ROOT``,
-      the path to the local media directory, and ``TAKAHE_MEDIA_URL``, a
-      fully-qualified URL prefix that serves that directory.
+  * If it is set to ``local://``, you must also provide ``TAKAHE_MEDIA_ROOT``,
+    the path to the local media directory, and ``TAKAHE_MEDIA_URL``, a
+    fully-qualified URL prefix that serves that directory.
 
-    * If it is set to ``gcs://``, it must be in the form ``gcs://bucket-name``
-      (note the two slashes if you just want a bucket name)
+  * If it is set to ``gcs://``, it must be in the form ``gcs://bucket-name``
+    (note the two slashes if you just want a bucket name)
 
-    * If it is set to ``s3://``, it must be in the form ``s3://access-key:secret-key@endpoint-url/bucket-name``
+  * If it is set to ``s3://``, it must be in the form ``s3://access-key:secret-key@endpoint-url/bucket-name``
 
 * ``TAKAHE_MAIN_DOMAIN`` should be the domain name (without ``https://``) that
   will be used for default links (such as in emails). It does *not* need to be

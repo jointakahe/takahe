@@ -7,28 +7,25 @@ of a full ActivityPub server.
 Currently, it supports:
 
 * Web UI only (but can be installed as a PWA)
-* Creating posts, with CWs/summaries and visibility
-* Receiving posts, with CWs/summaries, visibility, images
-* Receiving post edits and deletions
-* Creating and receiving boosts
-* Creating and receiving likes
-* Delivering mentions to those mentioned, and notifications for incoming mentions
-* Following and unfollowing
-* Receiving follows and unfollows
+* Creating, editing and deleting posts, with CWs/summaries and visibility
+* Receiving and showing images on posts (cannot be added to posts yet)
+* Handling replies and reply threading
+* Creating and receiving boosts and likes
+* Delivering mentions, and notifications for incoming mentions
+* Following and unfollowing, and you-were-followed notifications
+* Post visibilities, including a local-only option
 * A home timeline, a local timeline, and a federated timeline
 * Profile pages with bios, icons, and header images
 * Searching for users by exact handle
 * Multiple domain support
 * Multiple identity (per user account support)
+* Server defederation (blocking)
 * Signup flow
 * Password reset flow
-* Server defederation (blocking)
 
 Features planned for releases up to 1.0:
 
-* Handling replies and reply threading
 * Adding images to posts, with descriptions
-* Editing and deleting posts
 * A mode where followers must be approved
 * Emoji fetching and display
 * Emoji creation at server level

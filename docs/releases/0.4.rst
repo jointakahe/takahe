@@ -1,0 +1,54 @@
+0.4
+===
+
+*Released: 2022/11/27*
+
+This release brings a whole set of new features during this alpha phase of
+the project:
+
+* Post editing
+* Post deletion
+* View replies under posts
+* Ability to post replies
+* Local-Only visibility for posts
+* Discoverability toggle for identities
+* Server defederation (blocking)
+* Revamped settings system with better validation
+* ARM64 Docker images (in addition to x64)
+
+In addition, bugfixes have been made to post creation, search, fanout, and more.
+
+
+Upgrade Notes
+-------------
+
+Settings
+~~~~~~~~
+
+The settings system has changed, and affected some of our environment variable
+names.
+
+* ``PGHOST``, ``PGUSER`` and similar are still supported, but a new
+  ``TAKAHE_DATABASE_SERVER`` env var is now the recommended way to
+  configure - it takes a URI/DSN.
+
+* ``TAKAHE_EMAIL_HOST`` and ``TAKAHE_SENDGRID_API_KEY`` have been removed, and
+  replaced with ``TAKAHE_EMAIL_SERVER``, that takes ``smtp://`` or ``sendgrid://`` URIs.
+
+* ``TAKAHE_MEDIA_BACKEND`` now expects a URI starting with ``s3://`` or ``gcs://``.
+
+You can see updated instructions of how to set all of these in :doc:`/installation`.
+
+
+Migrations
+~~~~~~~~~~
+
+There is one new database migration - it is backwards-compatible,
+so apply the migration *before* you update your webserver and stator deployments.
+
+
+Stator
+~~~~~~
+
+If you have low traffic, you may now run Stator via periodic fetch of a URL
+rather than a continuous background process. See :doc:`/installation` for more.

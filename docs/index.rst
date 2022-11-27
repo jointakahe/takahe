@@ -16,6 +16,7 @@ in alpha. For more information about Takahē, see
 
    installation
    features
+   contributing
    domains
    stator
-   contributing
+   releases/index

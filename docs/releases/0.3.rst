@@ -1,0 +1,23 @@
+0.3
+===
+
+*Released: 2022/11/24*
+
+This is the initial release of Takahē. It functions, but has limited features:
+
+* Web UI only (but can be installed as a PWA)
+* Creating posts, with CWs/summaries and visibility
+* Receiving posts, with CWs/summaries, visibility, images
+* Receiving post edits and deletions
+* Creating and receiving boosts
+* Creating and receiving likes
+* Delivering mentions to those mentioned, and notifications for incoming mentions
+* Following and unfollowing
+* Receiving follows and unfollows
+* A home timeline, a local timeline, and a federated timeline
+* Profile pages with bios, icons, and header images
+* Searching for users by exact handle
+* Multiple domain support
+* Multiple identity (per user account support)
+* Signup flow
+* Password reset flow
