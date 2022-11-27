@@ -17,11 +17,15 @@ class FanOutStates(StateGraph):
         """
         Sends the fan-out to the right inbox.
         """
+        LOCAL_IDENTITY = True
+        REMOTE_IDENTITY = False
+
         fan_out = await instance.afetch_full()
-        # Handle Posts
-        if fan_out.type == FanOut.Types.post:
-            post = await fan_out.subject_post.afetch_full()
-            if fan_out.identity.local:
+
+        match (fan_out.type, fan_out.identity.local):
+            # Handle creating/updating local posts
+            case (FanOut.Types.post | FanOut.Types.post_edited, LOCAL_IDENTITY):
+                post = await fan_out.subject_post.afetch_full()
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
                 # of the people mentioned.
@@ -44,63 +48,91 @@ class FanOutStates(StateGraph):
                         identity=fan_out.identity,
                         post=post,
                     )
-            else:
+
+            # Handle sending remote posts create
+            case (FanOut.Types.post, REMOTE_IDENTITY):
+                post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
                 await post.author.signed_request(
                     method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(post.to_create_ap()),
                 )
-        # Handle deleting posts
-        elif fan_out.type == FanOut.Types.post_deleted:
-            post = await fan_out.subject_post.afetch_full()
-            if fan_out.identity.local:
-                # Remove all timeline events mentioning it
-                await TimelineEvent.objects.filter(
-                    identity=fan_out.identity,
-                    subject_post=post,
-                ).adelete()
-            else:
+
+            # Handle sending remote posts update
+            case (FanOut.Types.post_edited, REMOTE_IDENTITY):
+                post = await fan_out.subject_post.afetch_full()
+                # Sign it and send it
+                await post.author.signed_request(
+                    method="post",
+                    uri=fan_out.identity.inbox_uri,
+                    body=canonicalise(post.to_update_ap()),
+                )
+
+            # Handle deleting local posts
+            case (FanOut.Types.post_deleted, LOCAL_IDENTITY):
+                post = await fan_out.subject_post.afetch_full()
+                if fan_out.identity.local:
+                    # Remove all timeline events mentioning it
+                    await TimelineEvent.objects.filter(
+                        identity=fan_out.identity,
+                        subject_post=post,
+                    ).adelete()
+
+            # Handle sending remote post deletes
+            case (FanOut.Types.post_deleted, REMOTE_IDENTITY):
+                post = await fan_out.subject_post.afetch_full()
                 # Send it to the remote inbox
                 await post.author.signed_request(
                     method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(post.to_delete_ap()),
                 )
-        # Handle boosts/likes
-        elif fan_out.type == FanOut.Types.interaction:
-            interaction = await fan_out.subject_post_interaction.afetch_full()
-            if fan_out.identity.local:
+
+            # Handle local boosts/likes
+            case (FanOut.Types.interaction, LOCAL_IDENTITY):
+                interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Make a timeline event directly
                 await sync_to_async(TimelineEvent.add_post_interaction)(
                     identity=fan_out.identity,
                     interaction=interaction,
                 )
-            else:
+
+            # Handle sending remote boosts/likes
+            case (FanOut.Types.interaction, REMOTE_IDENTITY):
+                interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send it to the remote inbox
                 await interaction.identity.signed_request(
                     method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(interaction.to_ap()),
                 )
-        # Handle undoing boosts/likes
-        elif fan_out.type == FanOut.Types.undo_interaction:
-            interaction = await fan_out.subject_post_interaction.afetch_full()
-            if fan_out.identity.local:
+
+            # Handle undoing local boosts/likes
+            case (FanOut.Types.undo_interaction, LOCAL_IDENTITY):  # noqa:F841
+                interaction = await fan_out.subject_post_interaction.afetch_full()
+
                 # Delete any local timeline events
                 await sync_to_async(TimelineEvent.delete_post_interaction)(
                     identity=fan_out.identity,
                     interaction=interaction,
                 )
-            else:
+
+            # Handle sending remote undoing boosts/likes
+            case (FanOut.Types.undo_interaction, REMOTE_IDENTITY):  # noqa:F841
+                interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send an undo to the remote inbox
                 await interaction.identity.signed_request(
                     method="post",
                     uri=fan_out.identity.inbox_uri,
                     body=canonicalise(interaction.to_undo_ap()),
                 )
-        else:
-            raise ValueError(f"Cannot fan out with type {fan_out.type}")
+
+            case _:
+                raise ValueError(
+                    f"Cannot fan out with type {fan_out.type} local={fan_out.identity.local}"
+                )
+
         return cls.sent
 
 

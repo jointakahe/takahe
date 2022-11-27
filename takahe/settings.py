@@ -30,6 +30,11 @@ TAKAHE_ENV_FILE = os.environ.get(
 )
 
 
+TAKAHE_ENV_FILE = os.environ.get(
+    "TAKAHE_ENV_FILE", "test.env" if "pytest" in sys.modules else ".env"
+)
+
+
 class Settings(BaseSettings):
     """
     Pydantic-powered settings, to provide consistent error messages, strong

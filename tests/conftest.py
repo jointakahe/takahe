@@ -1,6 +1,9 @@
+import time
+
 import pytest
 
 from core.models import Config
+from stator.runner import StatorModel, StatorRunner
 from users.models import Domain, Identity, User
 
 
@@ -120,3 +123,26 @@ def remote_identity() -> Identity:
         name="Test Remote User",
         local=False,
     )
+
+
+@pytest.fixture
+def stator_runner(config_system) -> StatorRunner:
+    """
+    Return an initialized StatorRunner for tests that need state transitioning
+    to happen.
+
+    Example:
+        # Do some tasks with state side effects
+        async_to_sync(stator_runner.fetch_and_process_tasks)()
+    """
+    runner = StatorRunner(
+        StatorModel.subclasses,
+        concurrency=100,
+        schedule_interval=30,
+    )
+    runner.handled = 0
+    runner.started = time.monotonic()
+    runner.last_clean = time.monotonic() - runner.schedule_interval
+    runner.tasks = []
+
+    return runner

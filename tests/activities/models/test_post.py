@@ -1,7 +1,10 @@
+import asyncio
+
 import pytest
+from asgiref.sync import async_to_sync
 from pytest_httpx import HTTPXMock
 
-from activities.models import Post
+from activities.models import Post, PostStates
 
 
 @pytest.mark.django_db
@@ -112,3 +115,45 @@ def test_linkify_mentions_local(identity, remote_identity):
         local=True,
     )
     assert post.safe_content_local() == "<p>@test@example.com, welcome!</p>"
+
+
+async def stator_process_tasks(stator):
+    """
+    Guarded wrapper to simply async_to_sync and ensure all stator tasks are
+    run to completion without blocking indefinitely.
+    """
+    await asyncio.wait_for(stator.fetch_and_process_tasks(), timeout=1)
+    for _ in range(100):
+        if not stator.tasks:
+            break
+        stator.remove_completed_tasks()
+        await asyncio.sleep(0.01)
+
+
+@pytest.mark.django_db
+def test_post_transitions(identity, stator_runner):
+
+    # Create post
+    post = Post.objects.create(
+        content="<p>Hello!</p>",
+        author=identity,
+        local=False,
+        visibility=Post.Visibilities.mentioned,
+    )
+    # Test: | --> new --> fanned_out
+    assert post.state == str(PostStates.new)
+    async_to_sync(stator_process_tasks)(stator_runner)
+    post = Post.objects.get(id=post.id)
+    assert post.state == str(PostStates.fanned_out)
+
+    # Test: fanned_out --> (forced) edited --> edited_fanned_out
+    Post.transition_perform(post, PostStates.edited)
+    async_to_sync(stator_process_tasks)(stator_runner)
+    post = Post.objects.get(id=post.id)
+    assert post.state == str(PostStates.edited_fanned_out)
+
+    # Test: edited_fanned_out --> (forced) deleted --> deleted_fanned_out
+    Post.transition_perform(post, PostStates.deleted)
+    async_to_sync(stator_process_tasks)(stator_runner)
+    post = Post.objects.get(id=post.id)
+    assert post.state == str(PostStates.deleted_fanned_out)

@@ -18,13 +18,11 @@
         {% elif post.visibility == 4 %}
         <i class="visibility fa-solid fa-link-slash" title="Local Only"></i>
         {% endif %}
-        <a href="{{ post.url }}">
-            {% if post.published %}
-                {{ post.published | timedeltashort }}
-            {% else %}
-                {{ post.created | timedeltashort }}
-            {% endif %}
-        </a>
+        {% if post.published %}
+            <a href="{{ post.url }}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
+        {% else %}
+            <a href="{{ post.url }}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
+        {% endif %}
     </time>
 
     {% if request.identity %}
@@ -32,14 +30,19 @@
         {% include "activities/_reply.html" %}
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
+        {% if post.author == request.identity %}
         <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/>">
             <i class="fa-solid fa-caret-down"></i>
         </a>
         <menu>
+            <a href="{{ post.urls.action_edit }}">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+            </a>
             <a href="{{ post.urls.action_delete }}">
                 <i class="fa-solid fa-trash"></i> Delete
             </a>
         </menu>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -56,6 +59,12 @@
     <div class="content {% if post.summary %}hidden{% endif %}">
         {{ post.safe_content_local }}
     </div>
+
+    {% if post.edited %}
+    <div class="edited" title="{{ post.edited }}">
+        <small>Edited {{ post.edited | timedeltashort }} ago</small>
+    </div>
+    {% endif %}
 
     {% if post.attachments.exists %}
         <div class="attachments">

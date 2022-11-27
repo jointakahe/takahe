@@ -22,9 +22,17 @@ class PostStates(StateGraph):
     deleted = State(try_interval=300)
     deleted_fanned_out = State()
 
+    edited = State(try_interval=300)
+    edited_fanned_out = State(externally_progressed=True)
+
     new.transitions_to(fanned_out)
     fanned_out.transitions_to(deleted)
+    fanned_out.transitions_to(edited)
+
     deleted.transitions_to(deleted_fanned_out)
+    edited.transitions_to(edited_fanned_out)
+    edited_fanned_out.transitions_to(edited)
+    edited_fanned_out.transitions_to(deleted)
 
     @classmethod
     async def handle_new(cls, instance: "Post"):
@@ -55,6 +63,21 @@ class PostStates(StateGraph):
                 subject_post=post,
             )
         return cls.deleted_fanned_out
+
+    @classmethod
+    async def handle_edited(cls, instance: "Post"):
+        """
+        Creates all needed fan-out objects for an edited Post.
+        """
+        post = await instance.afetch_full()
+        # Fan out to each target
+        for follow in await post.aget_targets():
+            await FanOut.objects.acreate(
+                identity=follow,
+                type=FanOut.Types.post_edited,
+                subject_post=post,
+            )
+        return cls.edited_fanned_out
 
 
 class Post(StatorModel):
@@ -140,6 +163,7 @@ class Post(StatorModel):
         action_boost = "{view}boost/"
         action_unboost = "{view}unboost/"
         action_delete = "{view}delete/"
+        action_edit = "{view}edit/"
         action_reply = "/compose/?reply_to={self.id}"
 
         def get_scheme(self, url):
@@ -305,6 +329,8 @@ class Post(StatorModel):
             value["summary"] = self.summary
         if self.in_reply_to:
             value["inReplyTo"] = self.in_reply_to
+        if self.edited:
+            value["updated"] = format_ld_date(self.edited)
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(
@@ -332,6 +358,20 @@ class Post(StatorModel):
             "cc": object.get("cc", []),
             "type": "Create",
             "id": self.object_uri + "#create",
+            "actor": self.author.actor_uri,
+            "object": object,
+        }
+
+    def to_update_ap(self):
+        """
+        Returns the AP JSON to update this object
+        """
+        object = self.to_ap()
+        return {
+            "to": object["to"],
+            "cc": object.get("cc", []),
+            "type": "Update",
+            "id": self.object_uri + "#update",
             "actor": self.author.actor_uri,
             "object": object,
         }
