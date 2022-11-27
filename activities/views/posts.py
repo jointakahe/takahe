@@ -75,7 +75,10 @@ class Individual(TemplateView):
         # If this not a local post, redirect to its canonical URI
         if not self.post_obj.local:
             return redirect(self.post_obj.object_uri)
-        return JsonResponse(canonicalise(self.post_obj.to_ap(), include_security=True))
+        return JsonResponse(
+            canonicalise(self.post_obj.to_ap(), include_security=True),
+            content_type="application/activity+json",
+        )
 
 
 @method_decorator(identity_required, name="dispatch")
