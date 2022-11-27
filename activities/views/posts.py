@@ -253,7 +253,10 @@ class Compose(FormView):
             ] = self.request.identity.config_identity.default_post_visibility
             if self.reply_to:
                 initial["reply_to"] = self.reply_to.pk
-                initial["visibility"] = self.reply_to.visibility
+                if self.reply_to.visibility == Post.Visibilities.public:
+                    initial["visibility"] = Post.Visibilities.unlisted
+                else:
+                    initial["visibility"] = self.reply_to.visibility
                 initial["text"] = f"@{self.reply_to.author.handle} "
         return initial
 
