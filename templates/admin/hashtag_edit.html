@@ -1,0 +1,23 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}{{ hashtag.hashtag }}{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>hashtag Details</legend>
+            {% include "forms/_field.html" with field=form.hashtag %}
+            {% include "forms/_field.html" with field=form.name_override %}
+        </fieldset>
+        <fieldset>
+            <legend>Access Control</legend>
+            {% include "forms/_field.html" with field=form.public %}
+        </fieldset>
+        <div class="buttons">
+            <a href="{{ hashtag.urls.root }}" class="button secondary left">Back</a>
+            <a href="{{ hashtag.urls.delete }}" class="button delete">Delete</a>
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

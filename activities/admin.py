@@ -2,11 +2,19 @@ from django.contrib import admin
 
 from activities.models import (
     FanOut,
+    Hashtag,
     Post,
     PostAttachment,
     PostInteraction,
     TimelineEvent,
 )
+
+
+@admin.register(Hashtag)
+class HashtagAdmin(admin.ModelAdmin):
+    list_display = ["hashtag", "name_override", "state", "stats_updated", "created"]
+
+    readonly_fields = ["created", "updated", "stats_updated"]
 
 
 class PostAttachmentInline(admin.StackedInline):

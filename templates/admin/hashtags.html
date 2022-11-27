@@ -1,0 +1,27 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Hashtags{% endblock %}
+
+{% block content %}
+    <section class="icon-menu">
+        {% for hashtag in hashtags %}
+            <a class="option" href="{{ hashtag.urls.edit }}">
+                <i class="fa-solid fa-hashtag"></i>
+                <span class="handle">
+                    {{ hashtag.display_name }}
+                    <small>
+                        {% if hashtag.public %}Public{% else %}Private{% endif %}
+                    </small>
+                </span>
+                {% if hashtag.aliases %}
+                    <span class="pill">{{ hashtag.aliases }}</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="option empty">You have no hashtags set up.</p>
+        {% endfor %}
+        <a href="{% url "admin_hashtags_create" %}" class="option new">
+            <i class="fa-solid fa-plus"></i> Add a hashtag
+        </a>
+    </section>
+{% endblock %}

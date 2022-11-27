@@ -94,6 +94,24 @@ urlpatterns = [
         admin.Invites.as_view(),
         name="admin_invites",
     ),
+    path(
+        "admin/hashtags/",
+        admin.Hashtags.as_view(),
+        name="admin_hashtags",
+    ),
+    path(
+        "admin/hashtags/create/",
+        admin.HashtagCreate.as_view(),
+        name="admin_hashtags_create",
+    ),
+    path(
+        "admin/hashtags/<hashtag>/",
+        admin.HashtagEdit.as_view(),
+    ),
+    path(
+        "admin/hashtags/<hashtag>/delete/",
+        admin.HashtagDelete.as_view(),
+    ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),

@@ -11,6 +11,12 @@ from users.views.admin.domains import (  # noqa
     Domains,
 )
 from users.views.admin.federation import FederationEdit, FederationRoot  # noqa
+from users.views.admin.hashtags import (  # noqa
+    HashtagCreate,
+    HashtagDelete,
+    HashtagEdit,
+    Hashtags,
+)
 from users.views.admin.settings import BasicSettings  # noqa
 
 
