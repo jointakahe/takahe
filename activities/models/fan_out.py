@@ -26,15 +26,16 @@ class FanOutStates(StateGraph):
                 post = await fan_out.subject_post.afetch_full()
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
-                # of the people mentioned.
+                # of the people mentioned AND the author
                 add = True
                 mentioned = {identity.id for identity in post.mentions.all()}
+                followed = await sync_to_async(set)(
+                    fan_out.identity.outbound_follows.values_list("id", flat=True)
+                )
                 if post.in_reply_to:
-                    add = False
-                    async for follow in fan_out.identity.outbound_follows.all():
-                        if follow.target_id in mentioned:
-                            add = True
-                            break
+                    add = (post.author_id in followed) and bool(
+                        mentioned.intersection(followed)
+                    )
                 if add:
                     await sync_to_async(TimelineEvent.add_post)(
                         identity=fan_out.identity,
