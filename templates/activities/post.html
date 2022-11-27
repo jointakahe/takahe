@@ -4,4 +4,7 @@
 
 {% block content %}
     {% include "activities/_post.html" %}
+    {% for reply in replies %}
+        {% include "activities/_post.html" with post=reply reply=True %}
+    {% endfor %}
 {% endblock %}

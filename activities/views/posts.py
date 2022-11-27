@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import PermissionDenied
+from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
@@ -47,6 +48,26 @@ class Individual(TemplateView):
                 [self.post_obj],
                 self.request.identity,
             ),
+            "replies": Post.objects.filter(
+                models.Q(
+                    visibility__in=[
+                        Post.Visibilities.public,
+                        Post.Visibilities.local_only,
+                        Post.Visibilities.unlisted,
+                    ]
+                )
+                | models.Q(
+                    visibility=Post.Visibilities.followers,
+                    author__inbound_follows__source=self.identity,
+                )
+                | models.Q(
+                    visibility=Post.Visibilities.mentioned,
+                    mentions=self.identity,
+                ),
+                in_reply_to=self.post_obj.object_uri,
+            )
+            .distinct()
+            .order_by("published", "created"),
         }
 
     def serve_object(self):

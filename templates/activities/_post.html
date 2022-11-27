@@ -1,6 +1,6 @@
 {% load static %}
 {% load activity_tags %}
-<div class="post" data-takahe-id="{{ post.id }}">
+<div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}" _="on click go url {{ post.urls.view }}">
 
     <a href="{{ post.author.urls.view }}">
         <img src="{{ post.author.local_icon_url }}" class="icon">

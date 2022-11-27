@@ -695,10 +695,16 @@ h1.identity small {
 .post {
     margin-bottom: 20px;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .post.mini {
     font-size: 14px;
+    cursor: inherit;
+}
+
+.post.reply {
+    margin-left: 32px;
 }
 
 .left-column .post {
@@ -778,7 +784,8 @@ h1.identity small {
     margin-left: 64px;
 }
 
-.post.mini .content, .post.mini .edited {
+.post.mini .content,
+.post.mini .edited {
     margin-left: 0px;
 }
 
