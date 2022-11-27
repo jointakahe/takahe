@@ -1,5 +1,5 @@
 from django import forms
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
@@ -145,6 +145,9 @@ class Delete(TemplateView):
     def dispatch(self, request, handle, post_id):
         self.identity = by_handle_or_404(self.request, handle, local=False)
         self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
+        # Make sure the request identity owns the post!
+        if self.post_obj.author != request.identity:
+            raise Http404("Post author is not requestor")
         return super().dispatch(request)
 
     def get_context_data(self):
