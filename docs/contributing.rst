@@ -97,7 +97,7 @@ Once your session is up and running, you can make yourself a superuser account::
 And you can run the tests inside your container::
 
     docker compose -f docker/docker-compose.yml exec web pytest
-    
+
 
 Coding Guidelines
 -----------------
@@ -117,6 +117,6 @@ mean that we can't have nice JavaScript user interfaces and affordances, but all
 basic functionality *should* be accessible without it.
 
 We use `HTMX <https://htmx.org/>`_ for dynamically loading content, and
-`Hyperscript <https://hyperscript.org/>`_ for most interactions rather than raw 
+`Hyperscript <https://hyperscript.org/>`_ for most interactions rather than raw
 JavaScript. If you can accomplish what you need with these tools, please use them
 rather than adding JS.
