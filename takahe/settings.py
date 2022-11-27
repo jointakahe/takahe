@@ -1,3 +1,4 @@
+import os
 import secrets
 import sys
 import urllib.parse
@@ -23,6 +24,10 @@ def as_bool(v: Optional[Union[str, List[str]]]):
 
 
 Environments = Literal["development", "production", "test"]
+
+TAKAHE_ENV_FILE = os.environ.get(
+    "TAKAHE_ENV_FILE", "test.env" if "pytest" in sys.modules else ".env"
+)
 
 
 class Settings(BaseSettings):
@@ -90,7 +95,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_prefix = "TAKAHE_"
-        env_file = str(BASE_DIR / ".env")
+        env_file = str(BASE_DIR / TAKAHE_ENV_FILE)
         env_file_encoding = "utf-8"
         # Case sensitivity doesn't work on Windows, so might as well be
         # consistent from the get-go.
@@ -106,7 +111,7 @@ class Settings(BaseSettings):
         }
 
 
-SETUP = Settings(_env_file="test.env" if "pytest" in sys.modules else None)
+SETUP = Settings()
 
 SECRET_KEY = SETUP.SECRET_KEY
 DEBUG = SETUP.DEBUG
