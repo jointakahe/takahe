@@ -43,6 +43,17 @@
         </div>
     {% endif %}
 
+    {% if identity.metadata %}
+        <table class="metadata">
+            {% for entry in identity.safe_metadata %}
+                <tr>
+                    <td class="name">{{ entry.name }}</td>
+                    <td class="value">{{ entry.value }}</td>
+                </tr>
+            {% endfor %}
+            </table>
+    {% endif %}
+
     {% if not identity.local %}
         {% if identity.outdated and not identity.name %}
             <p class="system-note">

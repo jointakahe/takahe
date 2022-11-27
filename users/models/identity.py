@@ -12,8 +12,8 @@ from django.utils import timezone
 from django.utils.functional import lazy
 
 from core.exceptions import ActorMismatchError
-from core.html import sanitize_post
-from core.ld import canonicalise, media_type_from_filename
+from core.html import sanitize_post, strip_html
+from core.ld import canonicalise, get_list, media_type_from_filename
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
@@ -73,9 +73,12 @@ class Identity(StatorModel):
 
     profile_uri = models.CharField(max_length=500, blank=True, null=True)
     inbox_uri = models.CharField(max_length=500, blank=True, null=True)
+    shared_inbox_uri = models.CharField(max_length=500, blank=True, null=True)
     outbox_uri = models.CharField(max_length=500, blank=True, null=True)
     icon_uri = models.CharField(max_length=500, blank=True, null=True)
     image_uri = models.CharField(max_length=500, blank=True, null=True)
+    followers_uri = models.CharField(max_length=500, blank=True, null=True)
+    following_uri = models.CharField(max_length=500, blank=True, null=True)
 
     icon = models.ImageField(
         upload_to=partial(upload_namer, "profile_images"), blank=True, null=True
@@ -83,6 +86,12 @@ class Identity(StatorModel):
     image = models.ImageField(
         upload_to=partial(upload_namer, "background_images"), blank=True, null=True
     )
+
+    # Should be a list of {"name":..., "value":...} dicts
+    metadata = models.JSONField(blank=True, null=True)
+
+    # Should be a list of object URIs (we don't want a full M2M here)
+    pinned = models.JSONField(blank=True, null=True)
 
     private_key = models.TextField(null=True, blank=True)
     public_key = models.TextField(null=True, blank=True)
@@ -148,6 +157,18 @@ class Identity(StatorModel):
     @property
     def safe_summary(self):
         return sanitize_post(self.summary)
+
+    @property
+    def safe_metadata(self):
+        if not self.metadata:
+            return []
+        return [
+            {
+                "name": data["name"],
+                "value": strip_html(data["value"]),
+            }
+            for data in self.metadata
+        ]
 
     ### Alternate constructors/fetchers ###
 
@@ -365,6 +386,9 @@ class Identity(StatorModel):
         self.profile_uri = document.get("url")
         self.inbox_uri = document.get("inbox")
         self.outbox_uri = document.get("outbox")
+        self.followers_uri = document.get("followers")
+        self.following_uri = document.get("following")
+        self.shared_inbox_uri = document.get("endpoints", {}).get("sharedInbox")
         self.summary = document.get("summary")
         self.username = document.get("preferredUsername")
         if self.username and "@value" in self.username:
@@ -379,6 +403,20 @@ class Identity(StatorModel):
         self.discoverable = document.get(
             "http://joinmastodon.org/ns#discoverable", True
         )
+        # Profile links/metadata
+        self.metadata = []
+        for attachment in get_list(document, "attachment"):
+            if (
+                attachment["type"] == "http://schema.org#PropertyValue"
+                and "name" in attachment
+                and "http://schema.org#value" in attachment
+            ):
+                self.metadata.append(
+                    {
+                        "name": attachment.get("name"),
+                        "value": strip_html(attachment.get("http://schema.org#value")),
+                    }
+                )
         # Now go do webfinger with that info to see if we can get a canonical domain
         actor_url_parts = urlparse(self.actor_uri)
         get_domain = sync_to_async(Domain.get_remote_domain)

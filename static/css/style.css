@@ -59,7 +59,8 @@ a {
     text-decoration: none;
 }
 
-p a {
+p a,
+td a {
     text-decoration: underline;
 }
 
@@ -689,6 +690,20 @@ h1.identity small {
 .system-note a {
     text-decoration: underline;
 }
+
+table.metadata {
+    margin: -10px 0 0 0;
+}
+
+table.metadata td {
+    padding: 0;
+}
+
+table.metadata td.name {
+    padding-right: 10px;
+    font-weight: bold;
+}
+
 
 /* Posts */
 
