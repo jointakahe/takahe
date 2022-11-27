@@ -1,6 +1,8 @@
 from django import forms
-from django.http import Http404, JsonResponse
+from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
@@ -143,11 +145,11 @@ class Delete(TemplateView):
     template_name = "activities/post_delete.html"
 
     def dispatch(self, request, handle, post_id):
+        # Make sure the request identity owns the post!
+        if handle != request.identity.handle:
+            raise PermissionDenied("Post author is not requestor")
         self.identity = by_handle_or_404(self.request, handle, local=False)
         self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
-        # Make sure the request identity owns the post!
-        if self.post_obj.author != request.identity:
-            raise Http404("Post author is not requestor")
         return super().dispatch(request)
 
     def get_context_data(self):
@@ -234,6 +236,7 @@ class Compose(FormView):
         post_id = form.cleaned_data.get("id")
         if post_id:
             post = get_object_or_404(self.request.identity.posts, pk=post_id)
+            post.edited = timezone.now()
             post.content = form.cleaned_data["text"]
             post.summary = form.cleaned_data.get("content_warning")
             post.visibility = form.cleaned_data["visibility"]
@@ -255,16 +258,18 @@ class Compose(FormView):
             TimelineEvent.add_post(self.request.identity, post)
         return redirect("/")
 
-    def dispatch(self, request, post_id=None, *args, **kwargs):
+    def dispatch(self, request, handle=None, post_id=None, *args, **kwargs):
         self.post_obj = None
-        if post_id:
+        if handle and post_id:
+            # Make sure the request identity owns the post!
+            if handle != request.identity.handle:
+                raise PermissionDenied("Post author is not requestor")
+
             self.post_obj = get_object_or_404(request.identity.posts, pk=post_id)
 
         # Grab the reply-to post info now
         self.reply_to = None
-        reply_to_id = self.request.POST.get("reply_to") or self.request.GET.get(
-            "reply_to"
-        )
+        reply_to_id = request.POST.get("reply_to") or request.GET.get("reply_to")
         if reply_to_id:
             try:
                 self.reply_to = Post.objects.get(pk=reply_to_id)

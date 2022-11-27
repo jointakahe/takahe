@@ -100,13 +100,13 @@ urlpatterns = [
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Posts
     path("compose/", posts.Compose.as_view(), name="compose"),
-    path("compose/<int:post_id>/edit/", posts.Compose.as_view(), name="compose-edit"),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
     path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
     path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
+    path("@<handle>/posts/<int:post_id>/edit/", posts.Compose.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),

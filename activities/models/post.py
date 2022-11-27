@@ -163,8 +163,8 @@ class Post(StatorModel):
         action_boost = "{view}boost/"
         action_unboost = "{view}unboost/"
         action_delete = "{view}delete/"
+        action_edit = "{view}edit/"
         action_reply = "/compose/?reply_to={self.id}"
-        action_edit = "/compose/{self.id}/edit/"
 
         def get_scheme(self, url):
             return "https"
@@ -329,6 +329,8 @@ class Post(StatorModel):
             value["summary"] = self.summary
         if self.in_reply_to:
             value["inReplyTo"] = self.in_reply_to
+        if self.edited:
+            value["updated"] = format_ld_date(self.edited)
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(
