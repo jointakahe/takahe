@@ -22,12 +22,12 @@ Prerequisites
   * Writable local directory (must be accessible by all running copies!)
 
 Note that ActivityPub is a chatty protocol that has a lot of background
-activity, so you will need a platform that can run *background tasks*, in
+activity, so you will need to run *background tasks*, in
 order to fetch profiles, retry delivery of posts, and more.
 
-This means that a "serverless" platform like AWS Lambda or Google Cloud Run is
-not enough by itself; while you can use these to serve the web pages if you
-like, you will need to run the Stator runner somewhere else as well.
+Ideally, you would choose a platform where you can run our worker process in
+the background continuously, but for small installations we have a URL you can
+call periodically instead - see "What To Run", below.
 
 The flagship Takahē instance, `takahe.social <https://takahe.social>`_, runs
 inside of Kubernetes, with one Deployment for the webserver and one for the
