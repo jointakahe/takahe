@@ -1,4 +1,5 @@
 import secrets
+import sys
 import urllib.parse
 from pathlib import Path
 from typing import List, Literal, Optional, Union
@@ -105,7 +106,7 @@ class Settings(BaseSettings):
         }
 
 
-SETUP = Settings()
+SETUP = Settings(_env_file="test.env" if "pytest" in sys.modules else None)
 
 SECRET_KEY = SETUP.SECRET_KEY
 DEBUG = SETUP.DEBUG
