@@ -301,7 +301,7 @@ if SETUP.MEDIA_BACKEND:
         AWS_ACCESS_KEY_ID = parsed.username
         AWS_SECRET_ACCESS_KEY = parsed.password
         port = parsed.port or 443
-        AWS_S3_ENDPOINT_URL = f"{parsed.hostname}:{port}"
+        AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
 
