@@ -694,13 +694,10 @@ h1.identity small {
 
 .post {
     margin-bottom: 20px;
-    overflow: hidden;
-    cursor: pointer;
 }
 
 .post.mini {
     font-size: 14px;
-    cursor: inherit;
 }
 
 .post.reply {
@@ -747,6 +744,7 @@ h1.identity small {
     background-color: var(--color-bg-main);
     border-radius: 3px;
     padding: 3px 3px;
+    cursor: pointer;
 }
 
 .post time i {
@@ -863,6 +861,7 @@ h1.identity small {
 
 .post .actions menu a i {
     margin-right: 4px;
+    width: 16px;
 }
 
 .boost-banner,

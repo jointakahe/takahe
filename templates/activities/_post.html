@@ -1,12 +1,12 @@
 {% load static %}
 {% load activity_tags %}
-<div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}" _="on click go url {{ post.urls.view }}">
+<div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}">
 
     <a href="{{ post.author.urls.view }}">
         <img src="{{ post.author.local_icon_url }}" class="icon">
     </a>
 
-    <time>
+    <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
         {% if post.visibility == 0 %}
             <i class="visibility fa-solid fa-earth-oceania" title="Public"></i>
         {% elif post.visibility == 1 %}
@@ -19,9 +19,9 @@
         <i class="visibility fa-solid fa-link-slash" title="Local Only"></i>
         {% endif %}
         {% if post.published %}
-            <a href="{{ post.url }}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
+            <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
         {% else %}
-            <a href="{{ post.url }}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
+            <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
         {% endif %}
     </time>
 
@@ -30,19 +30,22 @@
         {% include "activities/_reply.html" %}
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
-        {% if post.author == request.identity %}
-        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/>">
+        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt">
             <i class="fa-solid fa-caret-down"></i>
         </a>
         <menu>
+            <a href="{{ post.urls.view }}">
+                <i class="fa-solid fa-comment"></i> View Post &amp; Replies
+            </a>
+            {% if post.author == request.identity %}
             <a href="{{ post.urls.action_edit }}">
                 <i class="fa-solid fa-pen-to-square"></i> Edit
             </a>
             <a href="{{ post.urls.action_delete }}">
                 <i class="fa-solid fa-trash"></i> Delete
             </a>
+            {% endif %}
         </menu>
-        {% endif %}
     </div>
     {% endif %}
 
@@ -51,7 +54,7 @@
     </a>
 
     {% if post.summary %}
-        <div class="summary" _="on click toggle .enabled then  toggle .hidden on the next .content">
+        <div class="summary" _="on click toggle .enabled then  toggle .hidden on the next .content then halt">
             {{ post.summary }}
         </div>
     {% endif %}
@@ -75,4 +78,6 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <a class="whole-box" href="{{ post.urls.view }}"></a>
 </div>

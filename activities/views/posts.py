@@ -48,6 +48,7 @@ class Individual(TemplateView):
                 [self.post_obj],
                 self.request.identity,
             ),
+            "link_original": True,
             "replies": Post.objects.filter(
                 models.Q(
                     visibility__in=[
