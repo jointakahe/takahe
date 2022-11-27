@@ -18,6 +18,9 @@ the project:
 
 In addition, bugfixes have been made to post creation, search, fanout, and more.
 
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.4``.
+
 
 Upgrade Notes
 -------------
