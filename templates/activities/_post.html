@@ -18,14 +18,11 @@
         {% elif post.visibility == 4 %}
         <i class="visibility fa-solid fa-link-slash" title="Local Only"></i>
         {% endif %}
-        <a href="{{ post.url }}" {% if post.edited %}title="Edited {{ post.edited | timedeltashort }}"{% endif %}>
-            {% if post.published %}
-                {{ post.published | timedeltashort }}
-            {% else %}
-                {{ post.created | timedeltashort }}
-            {% endif %}
-            {% if post.edited %}<small>(edited)</small>{% endif %}
-        </a>
+        {% if post.published %}
+            <a href="{{ post.url }}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
+        {% else %}
+            <a href="{{ post.url }}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
+        {% endif %}
     </time>
 
     {% if request.identity %}
@@ -62,6 +59,12 @@
     <div class="content {% if post.summary %}hidden{% endif %}">
         {{ post.safe_content_local }}
     </div>
+
+    {% if post.edited %}
+    <div class="edited" title="{{ post.edited }}">
+        <small>Edited {{ post.edited | timedeltashort }} ago</small>
+    </div>
+    {% endif %}
 
     {% if post.attachments.exists %}
         <div class="attachments">

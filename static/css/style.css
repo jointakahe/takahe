@@ -768,11 +768,17 @@ h1.identity small {
     content: "HIDE";
 }
 
+.post .edited {
+    margin-left: 64px;
+    font-weight: lighter;
+    color: var(--color-text-duller);
+}
+
 .post .content {
     margin-left: 64px;
 }
 
-.post.mini .content {
+.post.mini .content, .post.mini .edited {
     margin-left: 0px;
 }
 
