@@ -33,6 +33,13 @@ class Command(BaseCommand):
             default=30,
             help="How often to run cleaning and scheduling",
         )
+        parser.add_argument(
+            "--run-for",
+            "-r",
+            type=int,
+            default=0,
+            help="How long to run for before exiting (defaults to infinite)",
+        )
         parser.add_argument("model_labels", nargs="*", type=str)
 
     def handle(
@@ -41,6 +48,7 @@ class Command(BaseCommand):
         concurrency: int,
         liveness_file: str,
         schedule_interval: int,
+        run_for: int,
         *args,
         **options
     ):
@@ -60,5 +68,6 @@ class Command(BaseCommand):
             concurrency=concurrency,
             liveness_file=liveness_file,
             schedule_interval=schedule_interval,
+            run_for=run_for,
         )
         async_to_sync(runner.run)()
