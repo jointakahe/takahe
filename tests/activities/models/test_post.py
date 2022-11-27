@@ -122,11 +122,12 @@ async def stator_process_tasks(stator):
     Guarded wrapper to simply async_to_sync and ensure all stator tasks are
     run to completion without blocking indefinitely.
     """
-    async with asyncio.timeout(1):
-        await stator.fetch_and_process_tasks()
-        while stator.tasks:
-            stator.remove_completed_tasks()
-            await asyncio.sleep(0.01)
+    await asyncio.wait_for(stator.fetch_and_process_tasks(), timeout=1)
+    for _ in range(100):
+        if not stator.tasks:
+            break
+        stator.remove_completed_tasks()
+        await asyncio.sleep(0.01)
 
 
 @pytest.mark.django_db
