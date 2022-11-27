@@ -30,6 +30,42 @@ and local posting/follow functionality; to test ActivityPub itself and follow
 other people, your installation **must be accessible from the internet**;
 doing that securely is different enough per person that it is not covered here.
 
+Using Docker Compose is the fastest way to get up and running, and you will
+still be able to make web changes and have them appear in real-time. Direct
+installation is recommended for more advanced developers or those wishing to
+use a PostgreSQL they already have.
+
+These instructions are not suitable for running a production copy; for that,
+see :doc:`installation`.
+
+Docker
+~~~~~~
+
+The docker build process will take care of much of the above, but you just have
+to be sure that you're executing it from the project root.
+
+First, you need to build your image::
+
+    docker compose -f docker/docker-compose.yml build
+
+Then start the ``compose`` session::
+
+    docker compose -f docker/docker-compose.yml up
+
+At this point, you should be able to see the Web UI at http://localhost:8000
+
+Once your session is up and running, you can make yourself a superuser account::
+
+    docker compose -f docker/docker-compose.yml exec web manage.py createsuperuser
+
+And you can run the tests inside your container::
+
+    docker compose -f docker/docker-compose.yml exec web pytest
+
+If you want to change the settings that Takahē is using, you can edit them
+near the top of the docker-compose file; the default set are designed for a
+local installation, though.
+
 
 Direct installation
 ~~~~~~~~~~~~~~~~~~~
@@ -48,7 +84,7 @@ Then install the development requirements::
 
     pip install -r requirements-dev.txt
 
-and enable the git commit hooks to do auto-formatting and linting
+Enable the git commit hooks to do auto-formatting and linting
 (if you don't do this, our CI system will reject your PRs until they match)::
 
     pre-commit install
@@ -73,30 +109,7 @@ And you can run the tests with pytest::
 
     pytest
 
-
-Docker
-~~~~~~
-
-The docker build process will take care of much of the above, but you just have
-to be sure that you're executing it from the project root.
-
-First, you need to build your image::
-
-    docker compose -f docker/docker-compose.yml build
-
-Then start the `compose` session::
-
-    docker compose -f docker/docker-compose.yml up
-
-At this point, you will be able to see the Web UI at http://localhost:8000
-
-Once your session is up and running, you can make yourself a superuser account::
-
-    docker compose -f docker/docker-compose.yml exec web manage.py createsuperuser
-
-And you can run the tests inside your container::
-
-    docker compose -f docker/docker-compose.yml exec web pytest
+If you want to edit settings, you can edit the ``.env`` file.
 
 
 Coding Guidelines
