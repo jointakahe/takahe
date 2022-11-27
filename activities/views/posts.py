@@ -75,11 +75,8 @@ class Individual(TemplateView):
         if not self.post_obj.local:
             return redirect(self.post_obj.object_uri)
         return JsonResponse(
-            canonicalise(
-                self.post_obj.to_ap(),
-                include_security=True
-            ),
-            content_type='application/activity+json'
+            canonicalise(self.post_obj.to_ap(), include_security=True),
+            content_type="application/activity+json",
         )
 
 

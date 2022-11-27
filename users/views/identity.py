@@ -56,11 +56,8 @@ class ViewIdentity(ListView):
         if not identity.local:
             return redirect(identity.actor_uri)
         return JsonResponse(
-            canonicalise(
-                identity.to_ap(),
-                include_security=True
-            ),
-            content_type='application/activity+json'
+            canonicalise(identity.to_ap(), include_security=True),
+            content_type="application/activity+json",
         )
 
     def get_queryset(self):
