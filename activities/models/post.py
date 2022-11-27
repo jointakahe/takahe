@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Set
 
 import httpx
 import urlman
@@ -244,6 +244,12 @@ class Post(StatorModel):
         """
         return self.linkify_mentions(sanitize_post(self.content))
 
+    def safe_content_plain(self):
+        """
+        Returns the content formatted as plain text
+        """
+        return self.linkify_mentions(sanitize_post(self.content))
+
     ### Async helpers ###
 
     async def afetch_full(self):
@@ -256,7 +262,7 @@ class Post(StatorModel):
             .aget(pk=self.pk)
         )
 
-    ### Local creation ###
+    ### Local creation/editing ###
 
     @classmethod
     def create_local(
@@ -269,21 +275,7 @@ class Post(StatorModel):
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
-            mention_hits = cls.mention_regex.findall(content)
-            mentions = set()
-            for precursor, handle in mention_hits:
-                if "@" in handle:
-                    username, domain = handle.split("@", 1)
-                else:
-                    username = handle
-                    domain = author.domain_id
-                identity = Identity.by_username_and_domain(
-                    username=username,
-                    domain=domain,
-                    fetch=True,
-                )
-                if identity is not None:
-                    mentions.add(identity)
+            mentions = cls.mentions_from_content(content, author)
             if reply_to:
                 mentions.add(reply_to.author)
                 # Maintain local-only for replies
@@ -306,6 +298,41 @@ class Post(StatorModel):
             post.mentions.set(mentions)
             post.save()
         return post
+
+    def edit_local(
+        self,
+        content: str,
+        summary: Optional[str] = None,
+        visibility: int = Visibilities.public,
+    ):
+        with transaction.atomic():
+            # Strip all HTML and apply linebreaks filter
+            self.content = linebreaks_filter(strip_html(content))
+            self.summary = summary or None
+            self.sensitive = bool(summary)
+            self.visibility = visibility
+            self.edited = timezone.now()
+            self.mentions.set(self.mentions_from_content(content, self.author))
+            self.save()
+
+    @classmethod
+    def mentions_from_content(cls, content, author) -> Set[Identity]:
+        mention_hits = cls.mention_regex.findall(content)
+        mentions = set()
+        for precursor, handle in mention_hits:
+            if "@" in handle:
+                username, domain = handle.split("@", 1)
+            else:
+                username = handle
+                domain = author.domain_id
+            identity = Identity.by_username_and_domain(
+                username=username,
+                domain=domain,
+                fetch=True,
+            )
+            if identity is not None:
+                mentions.add(identity)
+        return mentions
 
     ### ActivityPub (outbound) ###
 

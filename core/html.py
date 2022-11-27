@@ -38,3 +38,15 @@ def strip_html(post_html: str) -> str:
     """
     cleaner = bleach.Cleaner(tags=[], strip=True, filters=[LinkifyFilter])
     return mark_safe(cleaner.clean(post_html))
+
+
+def html_to_plaintext(post_html: str) -> str:
+    """
+    Tries to do the inverse of the linebreaks filter.
+    """
+    # TODO: Handle HTML entities
+    # Remove all newlines, then replace br with a newline and /p with two (one comes from bleach)
+    post_html = post_html.replace("\n", "").replace("<br>", "\n").replace("</p>", "\n")
+    # Remove all other HTML and return
+    cleaner = bleach.Cleaner(tags=[], strip=True, filters=[])
+    return cleaner.clean(post_html).strip()

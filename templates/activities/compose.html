@@ -18,7 +18,7 @@
             {% include "forms/_field.html" with field=form.visibility %}
         </fieldset>
         <div class="buttons">
-            <button>{% if form.id %}Edit{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+            <button>{% if form.id.value %}Edit{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
         </div>
     </form>
 {% endblock %}

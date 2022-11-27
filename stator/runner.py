@@ -52,7 +52,7 @@ class StatorRunner:
                     Config.system = await Config.aload_system()
                     print(f"{self.handled} tasks processed so far")
                     print("Running cleaning and scheduling")
-                    await self.run_cleanup()
+                    await self.run_scheduling()
 
                 self.remove_completed_tasks()
                 await self.fetch_and_process_tasks()
@@ -75,7 +75,7 @@ class StatorRunner:
         print("Complete")
         return self.handled
 
-    async def run_cleanup(self):
+    async def run_scheduling(self):
         """
         Do any transition cleanup tasks
         """

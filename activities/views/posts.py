@@ -2,7 +2,6 @@ from django import forms
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView, View
 
@@ -13,6 +12,7 @@ from activities.models import (
     PostStates,
     TimelineEvent,
 )
+from core.html import html_to_plaintext
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
@@ -218,7 +218,7 @@ class Compose(FormView):
                     "id": self.post_obj.id,
                     "reply_to": self.reply_to.pk if self.reply_to else "",
                     "visibility": self.post_obj.visibility,
-                    "text": self.post_obj.content,
+                    "text": html_to_plaintext(self.post_obj.content),
                     "content_warning": self.post_obj.summary,
                 }
             )
@@ -236,11 +236,11 @@ class Compose(FormView):
         post_id = form.cleaned_data.get("id")
         if post_id:
             post = get_object_or_404(self.request.identity.posts, pk=post_id)
-            post.edited = timezone.now()
-            post.content = form.cleaned_data["text"]
-            post.summary = form.cleaned_data.get("content_warning")
-            post.visibility = form.cleaned_data["visibility"]
-            post.save()
+            post.edit_local(
+                content=form.cleaned_data["text"],
+                summary=form.cleaned_data.get("content_warning"),
+                visibility=form.cleaned_data["visibility"],
+            )
 
             # Should there be a timeline event for edits?
             # E.g. "@user edited #123"

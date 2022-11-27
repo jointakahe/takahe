@@ -17,14 +17,12 @@ class FanOutStates(StateGraph):
         """
         Sends the fan-out to the right inbox.
         """
-        LOCAL_IDENTITY = True
-        REMOTE_IDENTITY = False
 
         fan_out = await instance.afetch_full()
 
         match (fan_out.type, fan_out.identity.local):
             # Handle creating/updating local posts
-            case (FanOut.Types.post | FanOut.Types.post_edited, LOCAL_IDENTITY):
+            case ((FanOut.Types.post | FanOut.Types.post_edited), True):
                 post = await fan_out.subject_post.afetch_full()
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
@@ -50,7 +48,7 @@ class FanOutStates(StateGraph):
                     )
 
             # Handle sending remote posts create
-            case (FanOut.Types.post, REMOTE_IDENTITY):
+            case (FanOut.Types.post, False):
                 post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
                 await post.author.signed_request(
@@ -60,7 +58,7 @@ class FanOutStates(StateGraph):
                 )
 
             # Handle sending remote posts update
-            case (FanOut.Types.post_edited, REMOTE_IDENTITY):
+            case (FanOut.Types.post_edited, False):
                 post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
                 await post.author.signed_request(
@@ -70,7 +68,7 @@ class FanOutStates(StateGraph):
                 )
 
             # Handle deleting local posts
-            case (FanOut.Types.post_deleted, LOCAL_IDENTITY):
+            case (FanOut.Types.post_deleted, True):
                 post = await fan_out.subject_post.afetch_full()
                 if fan_out.identity.local:
                     # Remove all timeline events mentioning it
@@ -80,7 +78,7 @@ class FanOutStates(StateGraph):
                     ).adelete()
 
             # Handle sending remote post deletes
-            case (FanOut.Types.post_deleted, REMOTE_IDENTITY):
+            case (FanOut.Types.post_deleted, False):
                 post = await fan_out.subject_post.afetch_full()
                 # Send it to the remote inbox
                 await post.author.signed_request(
@@ -90,7 +88,7 @@ class FanOutStates(StateGraph):
                 )
 
             # Handle local boosts/likes
-            case (FanOut.Types.interaction, LOCAL_IDENTITY):
+            case (FanOut.Types.interaction, True):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Make a timeline event directly
                 await sync_to_async(TimelineEvent.add_post_interaction)(
@@ -99,7 +97,7 @@ class FanOutStates(StateGraph):
                 )
 
             # Handle sending remote boosts/likes
-            case (FanOut.Types.interaction, REMOTE_IDENTITY):
+            case (FanOut.Types.interaction, False):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send it to the remote inbox
                 await interaction.identity.signed_request(
@@ -109,7 +107,7 @@ class FanOutStates(StateGraph):
                 )
 
             # Handle undoing local boosts/likes
-            case (FanOut.Types.undo_interaction, LOCAL_IDENTITY):  # noqa:F841
+            case (FanOut.Types.undo_interaction, True):  # noqa:F841
                 interaction = await fan_out.subject_post_interaction.afetch_full()
 
                 # Delete any local timeline events
@@ -119,7 +117,7 @@ class FanOutStates(StateGraph):
                 )
 
             # Handle sending remote undoing boosts/likes
-            case (FanOut.Types.undo_interaction, REMOTE_IDENTITY):  # noqa:F841
+            case (FanOut.Types.undo_interaction, False):  # noqa:F841
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send an undo to the remote inbox
                 await interaction.identity.signed_request(
