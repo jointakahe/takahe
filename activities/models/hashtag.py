@@ -13,10 +13,11 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class HashtagStates(StateGraph):
-    outdated = State(try_interval=300)
-    updated = State(externally_progressed=True)
+    outdated = State(try_interval=300, force_initial=True)
+    updated = State(try_interval=3600, attempt_immediately=False)
 
     outdated.transitions_to(updated)
+    updated.transitions_to(outdated)
 
     @classmethod
     async def handle_outdated(cls, instance: "Hashtag"):
@@ -52,12 +53,15 @@ class HashtagStates(StateGraph):
                     today.strftime("%Y"): total_year,
                 }
             )
-            print(f"Hashtag {instance.hashtag} stats={instance.stats}")
             instance.stats_updated = timezone.now()
             await sync_to_async(instance.save)()
-        else:
-            print(f"Hashtag {instance.hashtag} - No Totals")
+
         return cls.updated
+
+    @classmethod
+    async def handle_updated(cls, instance: "Hashtag"):
+        if instance.state_age > Config.system.hashtag_stats_max_age:
+            return cls.outdated
 
 
 class HashtagQuerySet(models.QuerySet):

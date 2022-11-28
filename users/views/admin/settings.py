@@ -80,7 +80,7 @@ class BasicSettings(AdminSettingsPage):
             "help_text": "Usernames that only admins can register for identities. One per line.",
             "display": "textarea",
         },
-        "unreviewed_hashtags_are_public": {
+        "hashtag_unreviewed_are_public": {
             "title": "Unreviewed Hashtags Are Public",
             "help_text": "Public Hashtags may appear in Trending and have a Tags timeline",
         },
@@ -98,7 +98,7 @@ class BasicSettings(AdminSettingsPage):
         "Posts": [
             "post_length",
             "content_warning_text",
-            "unreviewed_hashtags_are_public",
+            "hashtag_unreviewed_are_public",
         ],
         "Identities": [
             "identity_max_per_user",
