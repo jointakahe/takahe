@@ -1,0 +1,29 @@
+name: Test Documentation Build
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - 'docs/**'
+
+jobs:
+  test_docs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies for docs
+        run: |
+          python -m pip install -r docs/requirements.txt
+      - name: Build documentation
+        run: |
+          cd docs && make clean && make html
