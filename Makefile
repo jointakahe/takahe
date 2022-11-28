@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: image docs compose_build compose_up compose_down
 
 image:
 	docker build -t takahe -f docker/Dockerfile .
