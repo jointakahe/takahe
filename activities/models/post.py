@@ -42,7 +42,7 @@ class PostStates(StateGraph):
         if post.hashtags:
             for hashtag in post.hashtags:
                 hashtag, created = await Hashtag.objects.aget_or_create(
-                    hashtag=hashtag, defaults={"hashtag": hashtag, "public": False}
+                    hashtag=hashtag,
                 )
                 print(f"Hashtag: {hashtag.hashtag}, created={created}")
 

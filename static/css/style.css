@@ -721,6 +721,17 @@ table.metadata td.name {
     font-weight: bold;
 }
 
+/* Named Timelines */
+
+.left-column .timeline-name {
+    margin: 0 0 10px 0;
+    color: var(--color-text-main);
+    font-size: 130%;
+}
+
+.left-column .timeline-name i {
+    margin-right: 10px
+}
 
 /* Posts */
 

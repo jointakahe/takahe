@@ -16,6 +16,7 @@ urlpatterns = [
     path("local/", timelines.Local.as_view(), name="local"),
     path("federated/", timelines.Federated.as_view(), name="federated"),
     path("search/", search.Search.as_view(), name="search"),
+    path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
     path(
         "settings/",
         settings.SettingsRoot.as_view(),
