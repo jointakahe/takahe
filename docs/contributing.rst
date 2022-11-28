@@ -101,7 +101,7 @@ You will need to run Stator in order to have background actions work::
 
     ./manage.py runstator
 
-Make yourself a superuser account in order to log in:
+Make yourself a superuser account in order to log in::
 
     ./manage.py createsuperuser
 
