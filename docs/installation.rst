@@ -119,6 +119,18 @@ be provided from the first boot.
   should get them.
 
 
+Migrations
+----------
+
+You will have to run ``manage.py migrate`` when you first install Takahē in
+order to create the database tables; how you do this is up to you. You can
+shell into a running machine, create a one-off task that uses the Docker image,
+or something else.
+
+You will also have to run this for minor version releases when new migrations
+are present; the release notes for each release will tell you if one is.
+
+
 Making An Admin Account
 -----------------------
 
