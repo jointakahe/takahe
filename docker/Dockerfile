@@ -1,4 +1,7 @@
-FROM python:3.11.0-slim-buster
+ARG IMAGE_HOST=python
+ARG IMAGE_LABEL=3.11.0-slim-buster
+
+FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
 RUN apt-get update && apt-get -y install libpq-dev libxml2-dev libxslt1-dev zlib1g-dev python3-dev build-essential
 
