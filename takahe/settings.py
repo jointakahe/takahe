@@ -272,7 +272,8 @@ if SETUP.EMAIL_SERVER:
         EMAIL_HOST = "smtp.sendgrid.net"
         EMAIL_PORT = 587
         EMAIL_HOST_USER = "apikey"
-        EMAIL_HOST_PASSWORD = parsed.hostname
+        # urlparse will lowercase it
+        EMAIL_HOST_PASSWORD = SETUP.EMAIL_SERVER.split("://")[1]
         EMAIL_USE_TLS = True
     elif parsed.scheme == "smtp":
         EMAIL_HOST = parsed.hostname
