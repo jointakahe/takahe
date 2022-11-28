@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from django.contrib import admin
 
 from activities.models import (
@@ -48,6 +49,7 @@ class PostAdmin(admin.ModelAdmin):
         for instance in queryset:
             instance.hashtags = Hashtag.hashtags_from_content(instance.content) or None
             instance.save()
+            async_to_sync(instance.ensure_hashtags)()
 
     @admin.display(description="ActivityPub JSON")
     def object_json(self, instance):

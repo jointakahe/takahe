@@ -52,7 +52,7 @@ class PostStates(StateGraph):
         """
         post = await instance.afetch_full()
         await cls.targets_fan_out(post, FanOut.Types.post)
-        await post.ensure_hashtags(post)
+        await post.ensure_hashtags()
         return cls.fanned_out
 
     @classmethod
@@ -71,7 +71,7 @@ class PostStates(StateGraph):
         """
         post = await instance.afetch_full()
         await cls.targets_fan_out(post, FanOut.Types.post_edited)
-        await post.ensure_hashtags(post)
+        await post.ensure_hashtags()
         return cls.edited_fanned_out
 
 
@@ -372,15 +372,14 @@ class Post(StatorModel):
                 mentions.add(identity)
         return mentions
 
-    @classmethod
-    async def ensure_hashtags(cls, post: "Post") -> None:
+    async def ensure_hashtags(self) -> None:
         """
         Ensure any of the already parsed hashtags from this Post
         have a corresponding Hashtag record.
         """
         # Ensure hashtags
-        if post.hashtags:
-            for hashtag in post.hashtags:
+        if self.hashtags:
+            for hashtag in self.hashtags:
                 await Hashtag.objects.aget_or_create(
                     hashtag=hashtag,
                 )
