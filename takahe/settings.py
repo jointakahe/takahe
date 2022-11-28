@@ -13,6 +13,11 @@ from sentry_sdk.integrations.django import DjangoIntegration
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+class MediaBackendUrl(AnyUrl):
+    host_required = False
+    allowed_schemes = {'s3', 'gcs', 'local'}
+
+
 def as_bool(v: Optional[Union[str, List[str]]]):
     if v is None:
         return False
@@ -84,7 +89,7 @@ class Settings(BaseSettings):
 
     MEDIA_URL: str = "/media/"
     MEDIA_ROOT: str = str(BASE_DIR / "media")
-    MEDIA_BACKEND: Optional[AnyUrl] = None
+    MEDIA_BACKEND: Optional[MediaBackendUrl] = None
 
     PGHOST: Optional[str] = None
     PGPORT: Optional[int] = 5432
@@ -299,10 +304,12 @@ if SETUP.MEDIA_BACKEND:
     elif parsed.scheme == "s3":
         DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
-        AWS_ACCESS_KEY_ID = parsed.username
-        AWS_SECRET_ACCESS_KEY = parsed.password
-        port = parsed.port or 443
-        AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
+        if parsed.username is not None:
+            AWS_ACCESS_KEY_ID = parsed.username
+            AWS_SECRET_ACCESS_KEY = parsed.password
+        if parsed.hostname is not None:
+            port = parsed.port or 443
+            AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
 
