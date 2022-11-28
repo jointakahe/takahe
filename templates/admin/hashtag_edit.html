@@ -14,6 +14,29 @@
             <legend>Access Control</legend>
             {% include "forms/_field.html" with field=form.public %}
         </fieldset>
+        <fieldset>
+            <legend>Stats</legend>
+            <div class="field stats">
+                {% for stat_month, stat_value in hashtag.usage_months.items|slice:":5" %}
+                {% if forloop.first %}
+                <table>
+                    <tr>
+                        <th>Month</th>
+                        <th>Usage</th>
+                    </tr>
+                {% endif %}
+                    <tr>
+                        <th>{{ stat_month|date:"M Y" }}</th>
+                        <td>{{ stat_value }}</td>
+                    </tr>
+                {% if forloop.last %}
+                </table>
+                {% endif %}
+                {% empty %}
+                <p class="help"></p>Hashtag is either not used or stats have not been computed yet.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
         <div class="buttons">
             <a href="{{ hashtag.urls.root }}" class="button secondary left">Back</a>
             <a href="{{ hashtag.urls.delete }}" class="button delete">Delete</a>

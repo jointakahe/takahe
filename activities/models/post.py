@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from activities.models.fan_out import FanOut
+from activities.models.hashtag import Hashtag
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -35,18 +36,34 @@ class PostStates(StateGraph):
     edited_fanned_out.transitions_to(deleted)
 
     @classmethod
+    async def ensure_hashtags(cls, post: "Post") -> None:
+        # Ensure hashtags
+        print("post.hashtags=", post.hashtags)
+        if post.hashtags:
+            for hashtag in post.hashtags:
+                hashtag, created = await Hashtag.objects.aget_or_create(
+                    hashtag=hashtag, defaults={"hashtag": hashtag, "public": False}
+                )
+                print(f"Hashtag: {hashtag.hashtag}, created={created}")
+
+    @classmethod
+    async def targets_fan_out(cls, post: "Post", type_: str) -> None:
+        # Fan out to each target
+        for follow in await post.aget_targets():
+            await FanOut.objects.acreate(
+                identity=follow,
+                type=type_,
+                subject_post=post,
+            )
+
+    @classmethod
     async def handle_new(cls, instance: "Post"):
         """
         Creates all needed fan-out objects for a new Post.
         """
         post = await instance.afetch_full()
-        # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
-                identity=follow,
-                type=FanOut.Types.post,
-                subject_post=post,
-            )
+        await cls.targets_fan_out(post, FanOut.Types.post)
+        await cls.ensure_hashtags(post)
         return cls.fanned_out
 
     @classmethod
@@ -55,13 +72,7 @@ class PostStates(StateGraph):
         Creates all needed fan-out objects needed to delete a Post.
         """
         post = await instance.afetch_full()
-        # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
-                identity=follow,
-                type=FanOut.Types.post_deleted,
-                subject_post=post,
-            )
+        await cls.targets_fan_out(post, FanOut.Types.post_deleted)
         return cls.deleted_fanned_out
 
     @classmethod
@@ -70,13 +81,8 @@ class PostStates(StateGraph):
         Creates all needed fan-out objects for an edited Post.
         """
         post = await instance.afetch_full()
-        # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
-                identity=follow,
-                type=FanOut.Types.post_edited,
-                subject_post=post,
-            )
+        await cls.targets_fan_out(post, FanOut.Types.post_edited)
+        await cls.ensure_hashtags(post)
         return cls.edited_fanned_out
 
 
@@ -281,6 +287,8 @@ class Post(StatorModel):
                 # Maintain local-only for replies
                 if reply_to.visibility == reply_to.Visibilities.local_only:
                     visibility = reply_to.Visibilities.local_only
+            # Find hashtags in this post
+            hashtags = Hashtag.hashtags_from_content(content) or None
             # Strip all HTML and apply linebreaks filter
             content = linebreaks_filter(strip_html(content))
             # Make the Post object
@@ -291,6 +299,7 @@ class Post(StatorModel):
                 sensitive=bool(summary),
                 local=True,
                 visibility=visibility,
+                hashtags=hashtags,
                 in_reply_to=reply_to.object_uri if reply_to else None,
             )
             post.object_uri = post.urls.object_uri
@@ -312,6 +321,7 @@ class Post(StatorModel):
             self.sensitive = bool(summary)
             self.visibility = visibility
             self.edited = timezone.now()
+            self.hashtags = Hashtag.hashtags_from_content(content) or None
             self.mentions.set(self.mentions_from_content(content, self.author))
             self.save()
 

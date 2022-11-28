@@ -448,6 +448,23 @@ form .field .label-input {
     flex-grow: 1;
 }
 
+form .field.stats {
+    width: 100%;
+}
+form .field.stats table {
+    width: 50%;
+}
+
+form .field.stats table tr th {
+    color: var(--color-text-main);
+}
+
+
+form .field.stats table tbody td {
+    color: var(--color-text-dull);
+    text-align: center;
+}
+
 .right-column form .field {
     margin: 0;
     background: none;

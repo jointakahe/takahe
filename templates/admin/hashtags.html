@@ -13,9 +13,22 @@
                         {% if hashtag.public %}Public{% else %}Private{% endif %}
                     </small>
                 </span>
-                {% if hashtag.aliases %}
-                    <span class="pill">{{ hashtag.aliases }}</span>
+                {% if hashtag.stats %}
+                <span class="handle">
+                    <small>Total:</small>
+                    {{ hashtag.stats.total }}
+                </span>
                 {% endif %}
+                {% if hashtag.aliases %}
+
+                <span class="handle">
+                    <small>Aliases:</small>
+                    {% for alias in hashtag.aliases %}
+                        {{ alias }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </span>
+                {% endif %}
+
             </a>
         {% empty %}
             <p class="option empty">You have no hashtags set up.</p>
