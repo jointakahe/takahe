@@ -6,6 +6,9 @@
         <a href="{% url "notifications" %}" {% if current_page == "notifications" %}class="selected"{% endif %} title="Notifications">
             <i class="fa-solid fa-at"></i> Notifications
         </a>
+        <a href="{% url "explore" %}" {% if current_page == "explore" %}class="selected"{% endif %} title="Explore">
+            <i class="fa-solid fa-hashtag"></i> Explore
+        </a>
         <a href="{% url "local" %}" {% if current_page == "local" %}class="selected"{% endif %} title="Local">
             <i class="fa-solid fa-city"></i> Local
         </a>
@@ -19,12 +22,20 @@
         <a href="{% url "search" %}" {% if top_section == "search" %}class="selected"{% endif %} title="Search">
             <i class="fa-solid fa-search"></i> Search
         </a>
+        {% if current_page == "tag" %}
+        <a href="{% url "tag" hashtag.hashtag %}" class="selected" title="Tag {{ hashtag.display_name }}">
+            <i class="fa-solid fa-hashtag"></i> {{ hashtag.display_name }}
+        </a>
+        {% endif %}
         <a href="{% url "settings" %}" {% if top_section == "settings" %}class="selected"{% endif %} title="Settings">
             <i class="fa-solid fa-gear"></i> Settings
         </a>
-    {% else %}
+        {% else %}
         <a href="{% url "local" %}" {% if current_page == "local" %}class="selected"{% endif %} title="Local Posts">
             <i class="fa-solid fa-city"></i> Local Posts
+        </a>
+        <a href="{% url "explore" %}" {% if current_page == "explore" %}class="selected"{% endif %} title="Explore">
+            <i class="fa-solid fa-hashtag"></i> Explore
         </a>
         <h3></h3>
         {% if config.signup_allowed %}

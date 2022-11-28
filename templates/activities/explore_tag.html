@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}#{{ hashtag.display_name }} Timeline{% endblock %}
+
+{% block content %}
+<div class="timeline-name">Explore Trending Tags</div>
+
+<section class="icon-menu">
+    {% for hashtag in page_obj %}
+    <a class="option" href="{{ hashtag.urls.timeline }}">
+
+        <i class="fa-solid fa-hashtag"></i>
+        <span class="handle">
+            {{ hashtag.display_name }}
+        </span>
+        <span>
+            Post count: {{ hashtag.stats.total }}
+        </span>
+    </a>
+
+    {% empty %}
+        No tags are trending yet.
+    {% endfor %}
+
+</section>
+{% endblock %}

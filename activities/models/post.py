@@ -38,7 +38,6 @@ class PostStates(StateGraph):
     @classmethod
     async def ensure_hashtags(cls, post: "Post") -> None:
         # Ensure hashtags
-        print("post.hashtags=", post.hashtags)
         if post.hashtags:
             for hashtag in post.hashtags:
                 hashtag, created = await Hashtag.objects.aget_or_create(
@@ -84,6 +83,41 @@ class PostStates(StateGraph):
         await cls.targets_fan_out(post, FanOut.Types.post_edited)
         await cls.ensure_hashtags(post)
         return cls.edited_fanned_out
+
+
+class PostQuerySet(models.QuerySet):
+    def local_public(self, include_replies: bool = False):
+        query = self.filter(
+            visibility__in=[
+                Post.Visibilities.public,
+                Post.Visibilities.local_only,
+            ],
+            author__local=True,
+        )
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
+    def tagged_with(self, hashtag: str | Hashtag):
+        if isinstance(hashtag, str):
+            tag_q = models.Q(hashtags__contains=hashtag)
+        else:
+            tag_q = models.Q(hashtags__contains=hashtag.hashtag)
+            if hashtag.aliases:
+                for alias in hashtag.aliases:
+                    tag_q |= models.Q(hashtags__contains=alias)
+        return self.filter(tag_q)
+
+
+class PostManager(models.Manager):
+    def get_queryset(self):
+        return PostQuerySet(self.model, using=self._db)
+
+    def local_public(self, include_replies: bool = False):
+        return self.get_queryset().local_public(include_replies=include_replies)
+
+    def tagged_with(self, hashtag: str | Hashtag):
+        return self.get_queryset().tagged_with(hashtag=hashtag)
 
 
 class Post(StatorModel):
@@ -160,6 +194,8 @@ class Post(StatorModel):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = PostManager()
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"

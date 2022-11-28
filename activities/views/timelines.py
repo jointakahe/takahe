@@ -1,5 +1,4 @@
 from django import forms
-from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
@@ -82,19 +81,9 @@ class Tag(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        q = models.Q(hashtags__contains=self.hashtag.hashtag)
-        for alias in self.hashtag.aliases or []:
-            q |= models.Q(hashtags__contains=alias)
         return (
-            Post.objects.filter(
-                visibility__in=[
-                    Post.Visibilities.public,
-                    Post.Visibilities.local_only,
-                ],
-                author__local=True,
-                in_reply_to__isnull=True,
-            )
-            .filter(q)
+            Post.objects.local_public()
+            .tagged_with(self.hashtag)
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]
@@ -120,11 +109,7 @@ class Local(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.filter(
-                visibility=Post.Visibilities.public,
-                author__local=True,
-                in_reply_to__isnull=True,
-            )
+            Post.objects.local_public()
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]

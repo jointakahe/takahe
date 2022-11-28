@@ -23,12 +23,7 @@ class HashtagStates(StateGraph):
         """
         from .post import Post
 
-        tag_q = models.Q(hashtags__contains=instance.hashtag)
-        if instance.aliases:
-            for alias in instance.aliases:
-                tag_q |= models.Q(hashtags__contains=alias)
-        print("tag_q=", tag_q)
-        posts_query = Post.objects.filter(tag_q)
+        posts_query = Post.objects.local_public().tagged_with(instance)
         total = await posts_query.acount()
 
         today = timezone.now().date()
@@ -93,6 +88,7 @@ class Hashtag(StatorModel):
         create = "/admin/hashtags/create/"
         edit = "/admin/hashtags/{self.hashtag}/"
         delete = "{edit}delete/"
+        timeline = "/tags/{self.hashtag}/"
 
     hashtag_regex = re.compile(r"(?:#)([a-zA-Z0-9(_)]{1,})")
 
@@ -109,8 +105,10 @@ class Hashtag(StatorModel):
     def __str__(self):
         return self.display_name
 
-    @property
-    def usage_months(self) -> Dict[date, int]:
+    def usage_months(self, num: int = 12) -> Dict[date, int]:
+        """
+        Return the most recent num months of stats
+        """
         if not self.stats:
             return {}
         results = {}
@@ -120,7 +118,23 @@ class Hashtag(StatorModel):
                 year = int(parts[0])
                 month = int(parts[1])
                 results[date(year, month, 1)] = val
-        return dict(sorted(results.items(), reverse=True))
+        return dict(sorted(results.items(), reverse=True)[:num])
+
+    def usage_days(self, num: int = 7) -> Dict[date, int]:
+        """
+        Return the most recent num days of stats
+        """
+        if not self.stats:
+            return {}
+        results = {}
+        for key, val in self.stats.items():
+            parts = key.split("-")
+            if len(parts) == 3:
+                year = int(parts[0])
+                month = int(parts[1])
+                day = int(parts[2])
+                results[date(year, month, day)] = val
+        return dict(sorted(results.items(), reverse=True)[:num])
 
     @classmethod
     def hashtags_from_content(cls, content) -> List[str]:

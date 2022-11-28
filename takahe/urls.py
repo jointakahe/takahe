@@ -3,7 +3,7 @@ from django.contrib import admin as djadmin
 from django.urls import path, re_path
 from django.views.static import serve
 
-from activities.views import posts, search, timelines
+from activities.views import explore, posts, search, timelines
 from core import views as core
 from stator import views as stator
 from users.views import activitypub, admin, auth, follows, identity, settings
@@ -17,6 +17,8 @@ urlpatterns = [
     path("federated/", timelines.Federated.as_view(), name="federated"),
     path("search/", search.Search.as_view(), name="search"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
+    path("explore/", explore.Explore.as_view(), name="explore"),
+    path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
     path(
         "settings/",
         settings.SettingsRoot.as_view(),
