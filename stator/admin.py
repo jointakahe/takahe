@@ -14,3 +14,6 @@ class DomainAdmin(admin.ModelAdmin):
         "error",
     ]
     ordering = ["-date"]
+
+    def has_add_permission(self, request, obj=None):
+        return False

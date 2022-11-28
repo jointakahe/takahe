@@ -50,6 +50,9 @@ class TimelineEventAdmin(admin.ModelAdmin):
         "subject_post_interaction",
     ]
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(FanOut)
 class FanOutAdmin(admin.ModelAdmin):
@@ -63,8 +66,14 @@ class FanOutAdmin(admin.ModelAdmin):
         for instance in queryset:
             instance.transition_perform("new")
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(PostInteraction)
 class PostInteractionAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "type", "identity", "post"]
     raw_id_fields = ["identity", "post"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
