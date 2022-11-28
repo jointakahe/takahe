@@ -1,12 +1,6 @@
 name: Test Documentation Build
 
-on:
-  push:
-    paths:
-      - 'docs/**'
-  pull_request:
-    paths:
-      - 'docs/**'
+on: [push, pull_request]
 
 jobs:
   test_docs:
