@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class MediaBackendUrl(AnyUrl):
     host_required = False
-    allowed_schemes = {'s3', 'gcs', 'local'}
+    allowed_schemes = {"s3", "gcs", "local"}
 
 
 def as_bool(v: Optional[Union[str, List[str]]]):
