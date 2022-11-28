@@ -74,6 +74,10 @@ class StatorModel(models.Model):
     def state_graph(cls) -> Type[StateGraph]:
         return cls._meta.get_field("state").graph
 
+    @property
+    def state_age(self) -> int:
+        return (timezone.now() - self.state_changed).total_seconds()
+
     @classmethod
     async def atransition_schedule_due(cls, now=None) -> models.QuerySet:
         """
@@ -184,13 +188,23 @@ class StatorModel(models.Model):
             state = state.name
         if state not in self.state_graph.states:
             raise ValueError(f"Invalid state {state}")
-        self.__class__.objects.filter(pk=self.pk).update(
-            state=state,
-            state_changed=timezone.now(),
-            state_attempted=None,
-            state_locked_until=None,
-            state_ready=True,
-        )
+        # See if it's ready immediately (if not, delay until first try_interval)
+        if self.state_graph.states[state].attempt_immediately:
+            self.__class__.objects.filter(pk=self.pk).update(
+                state=state,
+                state_changed=timezone.now(),
+                state_attempted=None,
+                state_locked_until=None,
+                state_ready=True,
+            )
+        else:
+            self.__class__.objects.filter(pk=self.pk).update(
+                state=state,
+                state_changed=timezone.now(),
+                state_attempted=timezone.now(),
+                state_locked_until=None,
+                state_ready=False,
+            )
 
     atransition_perform = sync_to_async(transition_perform)
 

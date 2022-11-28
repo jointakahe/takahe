@@ -23,19 +23,31 @@ from users.models.system_actor import SystemActor
 
 
 class IdentityStates(StateGraph):
-    outdated = State(try_interval=3600)
-    updated = State()
+    """
+    There are only two states in a cycle.
+    Identities sit in "updated" for up to system.identity_max_age, and then
+    go back to "outdated" for refetching.
+    """
+
+    outdated = State(try_interval=3600, force_initial=True)
+    updated = State(try_interval=86400, attempt_immediately=False)
 
     outdated.transitions_to(updated)
+    updated.transitions_to(outdated)
 
     @classmethod
     async def handle_outdated(cls, identity: "Identity"):
         # Local identities never need fetching
         if identity.local:
-            return "updated"
+            return cls.updated
         # Run the actor fetch and progress to updated if it succeeds
         if await identity.fetch_actor():
-            return "updated"
+            return cls.updated
+
+    @classmethod
+    async def handle_updated(cls, instance: "Identity"):
+        if instance.state_age > Config.system.identity_max_age:
+            return cls.outdated
 
 
 class Identity(StatorModel):

@@ -87,10 +87,14 @@ class State:
         try_interval: Optional[float] = None,
         handler_name: Optional[str] = None,
         externally_progressed: bool = False,
+        attempt_immediately: bool = True,
+        force_initial: bool = False,
     ):
         self.try_interval = try_interval
         self.handler_name = handler_name
         self.externally_progressed = externally_progressed
+        self.attempt_immediately = attempt_immediately
+        self.force_initial = force_initial
         self.parents: Set["State"] = set()
         self.children: Set["State"] = set()
 
@@ -121,7 +125,7 @@ class State:
 
     @property
     def initial(self):
-        return not self.parents
+        return self.force_initial or (not self.parents)
 
     @property
     def terminal(self):
