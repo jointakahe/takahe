@@ -907,6 +907,14 @@ table.metadata td.name {
     width: 16px;
 }
 
+.post a.hashtag, .post.mini a.hashtag {
+    text-decoration: none;
+}
+
+.post a.hashtag:hover, .post.mini a.hashtag:hover {
+    text-decoration: underline;
+}
+
 .boost-banner,
 .mention-banner,
 .follow-banner,

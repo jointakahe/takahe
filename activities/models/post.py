@@ -278,7 +278,9 @@ class Post(StatorModel):
         """
         Returns the content formatted for local display
         """
-        return self.linkify_mentions(sanitize_post(self.content), local=True)
+        return Hashtag.linkify_hashtags(
+            self.linkify_mentions(sanitize_post(self.content), local=True)
+        )
 
     def safe_content_remote(self):
         """

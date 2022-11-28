@@ -6,6 +6,7 @@ import urlman
 from asgiref.sync import sync_to_async
 from django.db import models
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from stator.models import State, StateField, StateGraph, StatorModel
 
@@ -90,7 +91,7 @@ class Hashtag(StatorModel):
         delete = "{edit}delete/"
         timeline = "/tags/{self.hashtag}/"
 
-    hashtag_regex = re.compile(r"(?:#)([a-zA-Z0-9(_)]{1,})")
+    hashtag_regex = re.compile(r"((?:\B#)([a-zA-Z0-9(_)]{1,}\b))")
 
     def save(self, *args, **kwargs):
         self.hashtag = self.hashtag.lstrip("#")
@@ -138,8 +139,18 @@ class Hashtag(StatorModel):
 
     @classmethod
     def hashtags_from_content(cls, content) -> List[str]:
+        """
+        Return a parsed and sanitized of hashtags found in content without
+        leading '#'.
+        """
         hashtag_hits = cls.hashtag_regex.findall(content)
-        hashtags = {tag.lower() for tag in hashtag_hits}
-        print("hashtags=", hashtags)
-        # TODO: stemming?
+        hashtags = sorted({tag[1].lower() for tag in hashtag_hits})
         return list(hashtags)
+
+    @classmethod
+    def linkify_hashtags(cls, content) -> str:
+        def replacer(match):
+            hashtag = match.group()
+            return f'<a class="hashtag" href="/tags/{hashtag.lstrip("#").lower()}/">{hashtag}</a>'
+
+        return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))
