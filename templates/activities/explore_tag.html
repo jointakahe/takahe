@@ -7,17 +7,7 @@
 
 <section class="icon-menu">
     {% for hashtag in page_obj %}
-    <a class="option" href="{{ hashtag.urls.timeline }}">
-
-        <i class="fa-solid fa-hashtag"></i>
-        <span class="handle">
-            {{ hashtag.display_name }}
-        </span>
-        <span>
-            Post count: {{ hashtag.stats.total }}
-        </span>
-    </a>
-
+        {% include "activities/_hashtag.html" %}
     {% empty %}
         No tags are trending yet.
     {% endfor %}

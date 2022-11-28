@@ -67,9 +67,14 @@ class HashtagStates(StateGraph):
 class HashtagQuerySet(models.QuerySet):
     def public(self):
         public_q = models.Q(public=True)
-        if Config.system.unreviewed_hashtags_are_public:
+        if Config.system.hashtag_unreviewed_are_public:
             public_q |= models.Q(public__isnull=True)
         return self.filter(public_q)
+
+    def hashtag_or_alias(self, hashtag: str):
+        return self.filter(
+            models.Q(hashtag=hashtag) | models.Q(aliases__contains=hashtag)
+        )
 
 
 class HashtagManager(models.Manager):
@@ -78,6 +83,9 @@ class HashtagManager(models.Manager):
 
     def public(self):
         return self.get_queryset().public()
+
+    def hashtag_or_alias(self, hashtag: str):
+        return self.get_queryset().hashtag_or_alias(hashtag)
 
 
 class Hashtag(StatorModel):
