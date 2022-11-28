@@ -8,6 +8,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
@@ -59,6 +60,22 @@ class HashtagStates(StateGraph):
         return cls.updated
 
 
+class HashtagQuerySet(models.QuerySet):
+    def public(self):
+        public_q = models.Q(public=True)
+        if Config.system.unreviewed_hashtags_are_public:
+            public_q |= models.Q(public__isnull=True)
+        return self.filter(public_q)
+
+
+class HashtagManager(models.Manager):
+    def get_queryset(self):
+        return HashtagQuerySet(self.model, using=self._db)
+
+    def public(self):
+        return self.get_queryset().public()
+
+
 class Hashtag(StatorModel):
 
     # Normalized hashtag without the '#'
@@ -68,7 +85,7 @@ class Hashtag(StatorModel):
     name_override = models.CharField(max_length=100, null=True, blank=True)
 
     # Should this be shown in the public UI?
-    public = models.BooleanField(default=True)
+    public = models.BooleanField(null=True)
 
     # State of this Hashtag
     state = StateField(HashtagStates)
@@ -83,6 +100,8 @@ class Hashtag(StatorModel):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = HashtagManager()
 
     class urls(urlman.Urls):
         root = "/admin/hashtags/"

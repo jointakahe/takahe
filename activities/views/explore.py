@@ -14,10 +14,11 @@ class ExploreTag(ListView):
 
     def get_queryset(self):
         return (
-            Hashtag.objects.filter(
-                public=True,
+            Hashtag.objects.public()
+            .filter(
                 stats__total__gt=0,
-            ).order_by("-stats__total")
+            )
+            .order_by("-stats__total")
         )[:20]
 
 

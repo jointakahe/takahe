@@ -10,7 +10,7 @@
                 <span class="handle">
                     {{ hashtag.display_name }}
                     <small>
-                        {% if hashtag.public %}Public{% else %}Private{% endif %}
+                        {% if hashtag.public %}Public{% elif hashtag.public is None %}Unreviewed{% else %}Private{% endif %}
                     </small>
                 </span>
                 {% if hashtag.stats %}

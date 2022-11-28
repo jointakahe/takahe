@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                     "name_override",
                     models.CharField(blank=True, max_length=100, null=True),
                 ),
-                ("public", models.BooleanField(default=True)),
+                ("public", models.BooleanField(null=True)),
                 (
                     "state",
                     stator.models.StateField(

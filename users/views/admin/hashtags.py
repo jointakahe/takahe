@@ -33,18 +33,21 @@ class HashtagCreate(FormView):
             help_text="Optional - a more human readable hashtag.",
             required=False,
         )
-        public = forms.BooleanField(
+        public = forms.NullBooleanField(
             help_text="Should this hashtag appear in the UI",
-            widget=forms.Select(choices=[(True, "Public"), (False, "Private")]),
+            widget=forms.Select(
+                choices=[(None, "Unreviewed"), (True, "Public"), (False, "Private")]
+            ),
             required=False,
         )
 
         def clean_hashtag(self):
-            if not Hashtag.hashtag_regex.match(self.cleaned_data["hashtag"]):
+            hashtag = self.cleaned_data["hashtag"].lstrip("#").lower()
+            if not Hashtag.hashtag_regex.match("#" + hashtag):
                 raise forms.ValidationError("This does not look like a hashtag name")
-            if Hashtag.objects.filter(hashtag=self.cleaned_data["hashtag"]):
+            if Hashtag.objects.filter(hashtag=hashtag):
                 raise forms.ValidationError("This hashtag name is already in use")
-            return self.cleaned_data["hashtag"].lower()
+            return hashtag
 
         def clean_name_override(self):
             name_override = self.cleaned_data["name_override"]

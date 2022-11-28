@@ -215,6 +215,8 @@ class Config(models.Model):
         identity_max_age: int = 24 * 60 * 60
         inbox_message_purge_after: int = 24 * 60 * 60
 
+        unreviewed_hashtags_are_public: bool = True
+
         restricted_usernames: str = "admin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
 
     class UserOptions(pydantic.BaseModel):

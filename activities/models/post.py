@@ -36,16 +36,6 @@ class PostStates(StateGraph):
     edited_fanned_out.transitions_to(deleted)
 
     @classmethod
-    async def ensure_hashtags(cls, post: "Post") -> None:
-        # Ensure hashtags
-        if post.hashtags:
-            for hashtag in post.hashtags:
-                hashtag, created = await Hashtag.objects.aget_or_create(
-                    hashtag=hashtag,
-                )
-                print(f"Hashtag: {hashtag.hashtag}, created={created}")
-
-    @classmethod
     async def targets_fan_out(cls, post: "Post", type_: str) -> None:
         # Fan out to each target
         for follow in await post.aget_targets():
@@ -62,7 +52,7 @@ class PostStates(StateGraph):
         """
         post = await instance.afetch_full()
         await cls.targets_fan_out(post, FanOut.Types.post)
-        await cls.ensure_hashtags(post)
+        await post.ensure_hashtags(post)
         return cls.fanned_out
 
     @classmethod
@@ -81,7 +71,7 @@ class PostStates(StateGraph):
         """
         post = await instance.afetch_full()
         await cls.targets_fan_out(post, FanOut.Types.post_edited)
-        await cls.ensure_hashtags(post)
+        await post.ensure_hashtags(post)
         return cls.edited_fanned_out
 
 
@@ -296,7 +286,7 @@ class Post(StatorModel):
 
     ### Async helpers ###
 
-    async def afetch_full(self):
+    async def afetch_full(self) -> "Post":
         """
         Returns a version of the object with all relations pre-loaded
         """
@@ -381,6 +371,19 @@ class Post(StatorModel):
             if identity is not None:
                 mentions.add(identity)
         return mentions
+
+    @classmethod
+    async def ensure_hashtags(cls, post: "Post") -> None:
+        """
+        Ensure any of the already parsed hashtags from this Post
+        have a corresponding Hashtag record.
+        """
+        # Ensure hashtags
+        if post.hashtags:
+            for hashtag in post.hashtags:
+                await Hashtag.objects.aget_or_create(
+                    hashtag=hashtag,
+                )
 
     ### ActivityPub (outbound) ###
 
