@@ -7,10 +7,14 @@ from typing import List, Literal, Optional, Union
 
 import dj_database_url
 import sentry_sdk
-from pydantic import AnyUrl, BaseSettings, EmailStr, Field, PostgresDsn, validator
+from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class ImplicitHostname(AnyUrl):
+    host_required = False
 
 
 def as_bool(v: Optional[Union[str, List[str]]]):
@@ -30,11 +34,6 @@ TAKAHE_ENV_FILE = os.environ.get(
 )
 
 
-TAKAHE_ENV_FILE = os.environ.get(
-    "TAKAHE_ENV_FILE", "test.env" if "pytest" in sys.modules else ".env"
-)
-
-
 class Settings(BaseSettings):
     """
     Pydantic-powered settings, to provide consistent error messages, strong
@@ -42,7 +41,7 @@ class Settings(BaseSettings):
     """
 
     #: The default database.
-    DATABASE_SERVER: Optional[PostgresDsn]
+    DATABASE_SERVER: Optional[ImplicitHostname]
 
     #: The currently running environment, used for things such as sentry
     #: error reporting.
@@ -85,6 +84,10 @@ class Settings(BaseSettings):
     MEDIA_URL: str = "/media/"
     MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: Optional[AnyUrl] = None
+
+    #: If search features like full text search should be enabled.
+    #: (placeholder setting, no effect)
+    SEARCH: bool = True
 
     PGHOST: Optional[str] = None
     PGPORT: Optional[int] = 5432
