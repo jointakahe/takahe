@@ -851,7 +851,7 @@ table.metadata td.name {
 }
 
 .post .attachments a.image img {
-    display: inline-block;
+    display: block;
     max-width: 200px;
     max-height: 200px;
 }
