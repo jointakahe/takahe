@@ -310,6 +310,11 @@ if SETUP.MEDIA_BACKEND:
         if parsed.hostname is not None:
             port = parsed.port or 443
             AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
+    elif parsed.scheme == "local":
+        if not (MEDIA_ROOT and MEDIA_URL):
+            raise ValueError(
+                "You must provide MEDIA_ROOT and MEDIA_URL for a local media backend"
+            )
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
 
