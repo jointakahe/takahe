@@ -8,6 +8,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from core.html import strip_html
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
@@ -174,7 +175,7 @@ class Hashtag(StatorModel):
         Return a parsed and sanitized of hashtags found in content without
         leading '#'.
         """
-        hashtag_hits = cls.hashtag_regex.findall(content)
+        hashtag_hits = cls.hashtag_regex.findall(strip_html(content))
         hashtags = sorted({tag[1].lower() for tag in hashtag_hits})
         return list(hashtags)
 

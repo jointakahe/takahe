@@ -80,7 +80,7 @@ class Tag(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.local_public()
+            Post.objects.public()
             .tagged_with(self.hashtag)
             .select_related("author")
             .prefetch_related("attachments")

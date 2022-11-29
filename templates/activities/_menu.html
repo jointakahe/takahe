@@ -6,9 +6,12 @@
         <a href="{% url "notifications" %}" {% if current_page == "notifications" %}class="selected"{% endif %} title="Notifications">
             <i class="fa-solid fa-at"></i> Notifications
         </a>
+        {% comment %}
+        Not sure we want to show this quite yet
         <a href="{% url "explore" %}" {% if current_page == "explore" %}class="selected"{% endif %} title="Explore">
             <i class="fa-solid fa-hashtag"></i> Explore
         </a>
+        {% endcomment %}
         <a href="{% url "local" %}" {% if current_page == "local" %}class="selected"{% endif %} title="Local">
             <i class="fa-solid fa-city"></i> Local
         </a>
@@ -30,7 +33,7 @@
         <a href="{% url "settings" %}" {% if top_section == "settings" %}class="selected"{% endif %} title="Settings">
             <i class="fa-solid fa-gear"></i> Settings
         </a>
-        {% else %}
+    {% else %}
         <a href="{% url "local" %}" {% if current_page == "local" %}class="selected"{% endif %} title="Local Posts">
             <i class="fa-solid fa-city"></i> Local Posts
         </a>

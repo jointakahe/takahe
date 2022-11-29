@@ -77,6 +77,17 @@ class PostStates(StateGraph):
 
 
 class PostQuerySet(models.QuerySet):
+    def public(self, include_replies: bool = False):
+        query = self.filter(
+            visibility__in=[
+                Post.Visibilities.public,
+                Post.Visibilities.local_only,
+            ],
+        )
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
     def local_public(self, include_replies: bool = False):
         query = self.filter(
             visibility__in=[
@@ -103,6 +114,9 @@ class PostQuerySet(models.QuerySet):
 class PostManager(models.Manager):
     def get_queryset(self):
         return PostQuerySet(self.model, using=self._db)
+
+    def public(self, include_replies: bool = False):
+        return self.get_queryset().public(include_replies=include_replies)
 
     def local_public(self, include_replies: bool = False):
         return self.get_queryset().local_public(include_replies=include_replies)
