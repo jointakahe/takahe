@@ -123,7 +123,7 @@ class Hashtag(StatorModel):
         delete = "{edit}delete/"
         timeline = "/tags/{self.hashtag}/"
 
-    hashtag_regex = re.compile(r"((?:\B#)([a-zA-Z0-9(_)]{1,}\b))")
+    hashtag_regex = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;)")
 
     def save(self, *args, **kwargs):
         self.hashtag = self.hashtag.lstrip("#")
@@ -182,7 +182,7 @@ class Hashtag(StatorModel):
     @classmethod
     def linkify_hashtags(cls, content) -> str:
         def replacer(match):
-            hashtag = match.group()
-            return f'<a class="hashtag" href="/tags/{hashtag.lstrip("#").lower()}/">{hashtag}</a>'
+            hashtag = match.group(1)
+            return f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
 
         return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))
