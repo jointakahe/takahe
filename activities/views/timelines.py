@@ -173,3 +173,23 @@ class Notifications(ListView):
             .order_by("-created")[:50]
             .select_related("subject_post", "subject_post__author", "subject_identity")
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Collapse similar notifications into one
+        events = []
+        for event in context["page_obj"]:
+            if (
+                events
+                and event.type
+                in [
+                    TimelineEvent.Types.liked,
+                    TimelineEvent.Types.boosted,
+                    TimelineEvent.Types.mentioned,
+                ]
+                and event.subject_post_id == events[-1].subject_post_id
+            ):
+                events[-1].collapsed = True
+            events.append(event)
+        context["events"] = events
+        return context
