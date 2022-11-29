@@ -176,7 +176,7 @@ class Hashtag(StatorModel):
         leading '#'.
         """
         hashtag_hits = cls.hashtag_regex.findall(strip_html(content))
-        hashtags = sorted({tag[1].lower() for tag in hashtag_hits})
+        hashtags = sorted({tag.lower() for tag in hashtag_hits})
         return list(hashtags)
 
     @classmethod

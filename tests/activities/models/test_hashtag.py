@@ -9,11 +9,13 @@ def test_hashtag_from_content():
         "with",
     ]
     assert Hashtag.hashtags_from_content("#hashtag.") == ["hashtag"]
-    assert Hashtag.hashtags_from_content("More text\n#one # two ##three #hashtag;") == [
+    assert Hashtag.hashtags_from_content("More text\n#one # two ##three #hashtag!") == [
         "hashtag",
         "one",
         "three",
     ]
+    assert Hashtag.hashtags_from_content("my #html loves &#32; entities") == ["html"]
+    assert Hashtag.hashtags_from_content("<span class='hash'>#</span>tag") == ["tag"]
 
 
 def test_linkify_hashtag():
