@@ -4,6 +4,7 @@ from typing import Dict, Iterable, Optional, Set
 import httpx
 import urlman
 from asgiref.sync import sync_to_async
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
@@ -186,6 +187,11 @@ class Post(StatorModel):
     updated = models.DateTimeField(auto_now=True)
 
     objects = PostManager()
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=["hashtags"], name="hashtags_gin"),
+        ]
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"
