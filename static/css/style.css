@@ -448,6 +448,23 @@ form .field .label-input {
     flex-grow: 1;
 }
 
+form .field.stats {
+    width: 100%;
+}
+form .field.stats table {
+    width: 50%;
+}
+
+form .field.stats table tr th {
+    color: var(--color-text-main);
+}
+
+
+form .field.stats table tbody td {
+    color: var(--color-text-dull);
+    text-align: center;
+}
+
 .right-column form .field {
     margin: 0;
     background: none;
@@ -704,6 +721,17 @@ table.metadata td.name {
     font-weight: bold;
 }
 
+/* Named Timelines */
+
+.left-column .timeline-name {
+    margin: 0 0 10px 0;
+    color: var(--color-text-main);
+    font-size: 130%;
+}
+
+.left-column .timeline-name i {
+    margin-right: 10px
+}
 
 /* Posts */
 
@@ -877,6 +905,14 @@ table.metadata td.name {
 .post .actions menu a i {
     margin-right: 4px;
     width: 16px;
+}
+
+.post a.hashtag, .post.mini a.hashtag {
+    text-decoration: none;
+}
+
+.post a.hashtag:hover, .post.mini a.hashtag:hover {
+    text-decoration: underline;
 }
 
 .boost-banner,
