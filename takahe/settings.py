@@ -284,7 +284,7 @@ if SETUP.EMAIL_SERVER:
         EMAIL_HOST = parsed.hostname
         EMAIL_PORT = parsed.port
         EMAIL_HOST_USER = parsed.username
-        EMAIL_HOST_PASSWORD = parsed.password
+        EMAIL_HOST_PASSWORD = urllib.parse.unquote(parsed.password)
         EMAIL_USE_TLS = as_bool(query.get("tls"))
         EMAIL_USE_SSL = as_bool(query.get("ssl"))
     else:
@@ -306,7 +306,7 @@ if SETUP.MEDIA_BACKEND:
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         if parsed.username is not None:
             AWS_ACCESS_KEY_ID = parsed.username
-            AWS_SECRET_ACCESS_KEY = parsed.password
+            AWS_SECRET_ACCESS_KEY = urllib.parse.unquote(parsed.password)
         if parsed.hostname is not None:
             port = parsed.port or 443
             AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
