@@ -115,8 +115,9 @@ be provided from the first boot.
   ``X-Forwarded-Proto``).
 
 * If you want to receive emails about internal site errors, set
-  ``TAKAHE_ERROR_EMAILS`` to a comma-separated list of email addresses that
-  should get them.
+  ``TAKAHE_ERROR_EMAILS`` to a valid JSON list of emails, such as
+  ``["andrew@aeracode.org"]`` (if you're doing this via shell, be careful
+  about escaping!)
 
 
 Migrations
