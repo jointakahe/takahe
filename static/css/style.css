@@ -1050,3 +1050,19 @@ table.metadata td.name {
         display: none;
     }
 }
+
+/* Copy to clipboard action */
+
+.copy {
+    transition: 0.2s;
+}
+
+.copy:hover {
+    color: var(--color-text-main);
+    cursor: pointer;
+}
+
+.copied, .copied:hover {
+    color: var(--color-highlight);
+    transition: 0.2s;
+}
