@@ -1,10 +1,10 @@
 from django import forms
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
-from activities.models import Post, PostInteraction, TimelineEvent
+from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
 from core.models import Config
 from users.decorators import identity_required
 
@@ -61,6 +61,41 @@ class Home(FormView):
         return redirect(".")
 
 
+class Tag(ListView):
+
+    template_name = "activities/tag.html"
+    extra_context = {
+        "current_page": "tag",
+        "allows_refresh": True,
+    }
+    paginate_by = 50
+
+    def get(self, request, hashtag, *args, **kwargs):
+        tag = hashtag.lower().lstrip("#")
+        if hashtag != tag:
+            # SEO sanitize
+            return redirect(f"/tags/{tag}/", permanent=True)
+        self.hashtag = get_object_or_404(Hashtag.objects.public(), hashtag=tag)
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            Post.objects.public()
+            .tagged_with(self.hashtag)
+            .select_related("author")
+            .prefetch_related("attachments")
+            .order_by("-created")[:50]
+        )
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["hashtag"] = self.hashtag
+        context["interactions"] = PostInteraction.get_post_interactions(
+            context["page_obj"], self.request.identity
+        )
+        return context
+
+
 class Local(ListView):
 
     template_name = "activities/local.html"
@@ -72,11 +107,7 @@ class Local(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.filter(
-                visibility=Post.Visibilities.public,
-                author__local=True,
-                in_reply_to__isnull=True,
-            )
+            Post.objects.local_public()
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")[:50]
@@ -142,3 +173,23 @@ class Notifications(ListView):
             .order_by("-created")[:50]
             .select_related("subject_post", "subject_post__author", "subject_identity")
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Collapse similar notifications into one
+        events = []
+        for event in context["page_obj"]:
+            if (
+                events
+                and event.type
+                in [
+                    TimelineEvent.Types.liked,
+                    TimelineEvent.Types.boosted,
+                    TimelineEvent.Types.mentioned,
+                ]
+                and event.subject_post_id == events[-1].subject_post_id
+            ):
+                events[-1].collapsed = True
+            events.append(event)
+        context["events"] = events
+        return context

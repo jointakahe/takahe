@@ -4,12 +4,14 @@ from typing import Dict, Iterable, Optional, Set
 import httpx
 import urlman
 from asgiref.sync import sync_to_async
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from activities.models.fan_out import FanOut
+from activities.models.hashtag import Hashtag
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -35,18 +37,23 @@ class PostStates(StateGraph):
     edited_fanned_out.transitions_to(deleted)
 
     @classmethod
+    async def targets_fan_out(cls, post: "Post", type_: str) -> None:
+        # Fan out to each target
+        for follow in await post.aget_targets():
+            await FanOut.objects.acreate(
+                identity=follow,
+                type=type_,
+                subject_post=post,
+            )
+
+    @classmethod
     async def handle_new(cls, instance: "Post"):
         """
         Creates all needed fan-out objects for a new Post.
         """
         post = await instance.afetch_full()
-        # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
-                identity=follow,
-                type=FanOut.Types.post,
-                subject_post=post,
-            )
+        await cls.targets_fan_out(post, FanOut.Types.post)
+        await post.ensure_hashtags()
         return cls.fanned_out
 
     @classmethod
@@ -55,13 +62,7 @@ class PostStates(StateGraph):
         Creates all needed fan-out objects needed to delete a Post.
         """
         post = await instance.afetch_full()
-        # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
-                identity=follow,
-                type=FanOut.Types.post_deleted,
-                subject_post=post,
-            )
+        await cls.targets_fan_out(post, FanOut.Types.post_deleted)
         return cls.deleted_fanned_out
 
     @classmethod
@@ -70,14 +71,58 @@ class PostStates(StateGraph):
         Creates all needed fan-out objects for an edited Post.
         """
         post = await instance.afetch_full()
-        # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
-                identity=follow,
-                type=FanOut.Types.post_edited,
-                subject_post=post,
-            )
+        await cls.targets_fan_out(post, FanOut.Types.post_edited)
+        await post.ensure_hashtags()
         return cls.edited_fanned_out
+
+
+class PostQuerySet(models.QuerySet):
+    def public(self, include_replies: bool = False):
+        query = self.filter(
+            visibility__in=[
+                Post.Visibilities.public,
+                Post.Visibilities.local_only,
+            ],
+        )
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
+    def local_public(self, include_replies: bool = False):
+        query = self.filter(
+            visibility__in=[
+                Post.Visibilities.public,
+                Post.Visibilities.local_only,
+            ],
+            author__local=True,
+        )
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
+    def tagged_with(self, hashtag: str | Hashtag):
+        if isinstance(hashtag, str):
+            tag_q = models.Q(hashtags__contains=hashtag)
+        else:
+            tag_q = models.Q(hashtags__contains=hashtag.hashtag)
+            if hashtag.aliases:
+                for alias in hashtag.aliases:
+                    tag_q |= models.Q(hashtags__contains=alias)
+        return self.filter(tag_q)
+
+
+class PostManager(models.Manager):
+    def get_queryset(self):
+        return PostQuerySet(self.model, using=self._db)
+
+    def public(self, include_replies: bool = False):
+        return self.get_queryset().public(include_replies=include_replies)
+
+    def local_public(self, include_replies: bool = False):
+        return self.get_queryset().local_public(include_replies=include_replies)
+
+    def tagged_with(self, hashtag: str | Hashtag):
+        return self.get_queryset().tagged_with(hashtag=hashtag)
 
 
 class Post(StatorModel):
@@ -154,6 +199,13 @@ class Post(StatorModel):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = PostManager()
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=["hashtags"], name="hashtags_gin"),
+        ]
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"
@@ -236,7 +288,9 @@ class Post(StatorModel):
         """
         Returns the content formatted for local display
         """
-        return self.linkify_mentions(sanitize_post(self.content), local=True)
+        return Hashtag.linkify_hashtags(
+            self.linkify_mentions(sanitize_post(self.content), local=True)
+        )
 
     def safe_content_remote(self):
         """
@@ -252,7 +306,7 @@ class Post(StatorModel):
 
     ### Async helpers ###
 
-    async def afetch_full(self):
+    async def afetch_full(self) -> "Post":
         """
         Returns a version of the object with all relations pre-loaded
         """
@@ -281,6 +335,8 @@ class Post(StatorModel):
                 # Maintain local-only for replies
                 if reply_to.visibility == reply_to.Visibilities.local_only:
                     visibility = reply_to.Visibilities.local_only
+            # Find hashtags in this post
+            hashtags = Hashtag.hashtags_from_content(content) or None
             # Strip all HTML and apply linebreaks filter
             content = linebreaks_filter(strip_html(content))
             # Make the Post object
@@ -291,6 +347,7 @@ class Post(StatorModel):
                 sensitive=bool(summary),
                 local=True,
                 visibility=visibility,
+                hashtags=hashtags,
                 in_reply_to=reply_to.object_uri if reply_to else None,
             )
             post.object_uri = post.urls.object_uri
@@ -312,6 +369,7 @@ class Post(StatorModel):
             self.sensitive = bool(summary)
             self.visibility = visibility
             self.edited = timezone.now()
+            self.hashtags = Hashtag.hashtags_from_content(content) or None
             self.mentions.set(self.mentions_from_content(content, self.author))
             self.save()
 
@@ -333,6 +391,18 @@ class Post(StatorModel):
             if identity is not None:
                 mentions.add(identity)
         return mentions
+
+    async def ensure_hashtags(self) -> None:
+        """
+        Ensure any of the already parsed hashtags from this Post
+        have a corresponding Hashtag record.
+        """
+        # Ensure hashtags
+        if self.hashtags:
+            for hashtag in self.hashtags:
+                await Hashtag.objects.aget_or_create(
+                    hashtag=hashtag,
+                )
 
     ### ActivityPub (outbound) ###
 

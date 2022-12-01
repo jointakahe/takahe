@@ -18,4 +18,12 @@
             {% include "activities/_identity.html" %}
         {% endfor %}
     {% endif %}
+    {% if results.hashtags %}
+        <h2>Hashtags</h2>
+        <section class="icon-menu">
+        {% for hashtag in results.hashtags %}
+            {% include "activities/_hashtag.html" with hide_stats=True %}
+        {% endfor %}
+        </section>
+    {% endif %}
 {% endblock %}

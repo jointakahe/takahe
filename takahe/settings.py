@@ -17,6 +17,11 @@ class ImplicitHostname(AnyUrl):
     host_required = False
 
 
+class MediaBackendUrl(AnyUrl):
+    host_required = False
+    allowed_schemes = {"s3", "gcs", "local"}
+
+
 def as_bool(v: Optional[Union[str, List[str]]]):
     if v is None:
         return False
@@ -83,7 +88,7 @@ class Settings(BaseSettings):
 
     MEDIA_URL: str = "/media/"
     MEDIA_ROOT: str = str(BASE_DIR / "media")
-    MEDIA_BACKEND: Optional[AnyUrl] = None
+    MEDIA_BACKEND: Optional[MediaBackendUrl] = None
 
     #: If search features like full text search should be enabled.
     #: (placeholder setting, no effect)
@@ -275,13 +280,14 @@ if SETUP.EMAIL_SERVER:
         EMAIL_HOST = "smtp.sendgrid.net"
         EMAIL_PORT = 587
         EMAIL_HOST_USER = "apikey"
-        EMAIL_HOST_PASSWORD = parsed.hostname
+        # urlparse will lowercase it
+        EMAIL_HOST_PASSWORD = SETUP.EMAIL_SERVER.split("://")[1]
         EMAIL_USE_TLS = True
     elif parsed.scheme == "smtp":
         EMAIL_HOST = parsed.hostname
         EMAIL_PORT = parsed.port
-        EMAIl_HOST_USER = parsed.username
-        EMAIL_HOST_PASSWORD = parsed.password
+        EMAIL_HOST_USER = parsed.username
+        EMAIL_HOST_PASSWORD = urllib.parse.unquote(parsed.password)
         EMAIL_USE_TLS = as_bool(query.get("tls"))
         EMAIL_USE_SSL = as_bool(query.get("ssl"))
     else:
@@ -301,10 +307,17 @@ if SETUP.MEDIA_BACKEND:
     elif parsed.scheme == "s3":
         DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
-        AWS_ACCESS_KEY_ID = parsed.username
-        AWS_SECRET_ACCESS_KEY = parsed.password
-        port = parsed.port or 443
-        AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
+        if parsed.username is not None:
+            AWS_ACCESS_KEY_ID = parsed.username
+            AWS_SECRET_ACCESS_KEY = urllib.parse.unquote(parsed.password)
+        if parsed.hostname is not None:
+            port = parsed.port or 443
+            AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
+    elif parsed.scheme == "local":
+        if not (MEDIA_ROOT and MEDIA_URL):
+            raise ValueError(
+                "You must provide MEDIA_ROOT and MEDIA_URL for a local media backend"
+            )
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
 

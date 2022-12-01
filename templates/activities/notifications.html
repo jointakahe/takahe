@@ -3,10 +3,10 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
-    {% for event in page_obj %}
+    {% for event in events %}
         {% include "activities/_event.html" %}
     {% empty %}
-        No notirications yet.
+        No notifications yet.
     {% endfor %}
 
     {% if page_obj.has_next %}

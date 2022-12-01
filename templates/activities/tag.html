@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}#{{ hashtag.display_name }} Timeline{% endblock %}
+
+{% block content %}
+    <div class="timeline-name"><i class="fa-solid fa-hashtag"></i>{{ hashtag.display_name }}</div>
+    {% for post in page_obj %}
+        {% include "activities/_post.html" %}
+    {% empty %}
+        No posts yet.
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
+    {% endif %}
+{% endblock %}

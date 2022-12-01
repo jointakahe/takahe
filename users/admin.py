@@ -20,11 +20,13 @@ class DomainAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ["email", "created", "last_seen", "admin", "moderator", "banned"]
+    search_fields = ["email"]
 
 
 @admin.register(UserEvent)
 class UserEventAdmin(admin.ModelAdmin):
-    pass
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Identity)
@@ -34,6 +36,7 @@ class IdentityAdmin(admin.ModelAdmin):
     raw_id_fields = ["users"]
     actions = ["force_update"]
     readonly_fields = ["actor_json"]
+    search_fields = ["username", "name"]
 
     @admin.action(description="Force Update")
     def force_update(self, request, queryset):
@@ -45,9 +48,6 @@ class IdentityAdmin(admin.ModelAdmin):
         return instance.to_ap()
 
     def has_add_permission(self, request, obj=None):
-        """
-        Disables admin creation of identities as it will skip steps
-        """
         return False
 
 
@@ -56,11 +56,17 @@ class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
     raw_id_fields = ["source", "target"]
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(PasswordReset)
 class PasswordResetAdmin(admin.ModelAdmin):
     list_display = ["id", "user", "created"]
     raw_id_fields = ["user"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(InboxMessage)
@@ -74,6 +80,9 @@ class InboxMessageAdmin(admin.ModelAdmin):
     def reset_state(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("received")
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Invite)

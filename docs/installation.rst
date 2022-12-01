@@ -115,8 +115,21 @@ be provided from the first boot.
   ``X-Forwarded-Proto``).
 
 * If you want to receive emails about internal site errors, set
-  ``TAKAHE_ERROR_EMAILS`` to a comma-separated list of email addresses that
-  should get them.
+  ``TAKAHE_ERROR_EMAILS`` to a valid JSON list of emails, such as
+  ``["andrew@aeracode.org"]`` (if you're doing this via shell, be careful
+  about escaping!)
+
+
+Migrations
+----------
+
+You will have to run ``manage.py migrate`` when you first install Takahē in
+order to create the database tables; how you do this is up to you. You can
+shell into a running machine, create a one-off task that uses the Docker image,
+or something else.
+
+You will also have to run this for minor version releases when new migrations
+are present; the release notes for each release will tell you if one is.
 
 
 Making An Admin Account

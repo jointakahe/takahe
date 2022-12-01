@@ -22,6 +22,7 @@ Currently, it supports:
 * Server defederation (blocking)
 * Signup flow
 * Password reset flow
+* Hashtag trending system with moderation
 
 Features planned for releases up to 1.0:
 
@@ -40,7 +41,6 @@ Features that may make it into 1.0, or might be further out:
 
 * Creating polls on posts, and handling received polls
 * Filter system for Home timeline
-* Hashtag trending system with moderation
 * Mastodon-compatible account migration target/source
 * Relay support
 

@@ -41,6 +41,10 @@ class Individual(TemplateView):
             return super().get(request)
 
     def get_context_data(self):
+        if self.post_obj.in_reply_to:
+            parent = Post.objects.filter(object_uri=self.post_obj.in_reply_to).first()
+        else:
+            parent = None
         return {
             "identity": self.identity,
             "post": self.post_obj,
@@ -49,6 +53,7 @@ class Individual(TemplateView):
                 self.request.identity,
             ),
             "link_original": True,
+            "parent": parent,
             "replies": Post.objects.filter(
                 models.Q(
                     visibility__in=[
