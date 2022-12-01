@@ -10,10 +10,19 @@ on:
 
 jobs:
   test:
+    name: test py${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]
+        db:
+          - "postgres://postgres:postgres@localhost/postgres"
+          - "sqlite:///takahe.db"
+        include:
+          - db: "sqlite:///takahe.db"
+            search: false
+          - db: "postgres://postgres:postgres@localhost/postgres"
+            search: true
     services:
       postgres:
         image: postgres:15
@@ -22,7 +31,11 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
         ports: ["5432:5432"]
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -35,7 +48,8 @@ jobs:
           python -m pip install -r requirements-dev.txt
       - name: Run pytest
         env:
-          TAKAHE_DATABASE_SERVER: "postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
+          TAKAHE_DATABASE_SERVER: ${{ matrix.db }}
+          TAKAHE_SEARCH: ${{ matrix.search }}
           TAKAHE_ENVIRONMENT: "test"
           TAKAHE_SECRET_KEY: "testing_secret"
           TAKAHE_MAIN_DOMAIN: "example.com"
