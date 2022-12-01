@@ -82,7 +82,18 @@
     {% for post in page_obj %}
         {% include "activities/_post.html" %}
     {% empty %}
-        <span class="empty">No posts yet.</a>
+        <span class="empty">
+            {% if identity.local %}
+                No posts yet.
+            {% else %}
+                No posts have been received/retrieved by this server yet.
+
+                {% if identity.profile_uri %}
+                    You might find historical posts at
+                    <a href="{{ identity.profile_uri }}">their original profile ➔</a>
+                {% endif %}
+            {% endif %}
+        </span>
     {% endfor %}
 
     {% if page_obj.has_next %}
