@@ -304,6 +304,8 @@ if SETUP.MEDIA_BACKEND:
     elif parsed.scheme == "s3":
         DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
+        AWS_QUERYSTRING_AUTH = False
+        AWS_DEFAULT_ACL = "public-read"
         if parsed.username is not None:
             AWS_ACCESS_KEY_ID = parsed.username
             AWS_SECRET_ACCESS_KEY = urllib.parse.unquote(parsed.password)

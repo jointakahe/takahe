@@ -84,9 +84,12 @@ be provided from the first boot.
     fully-qualified URL prefix that serves that directory.
 
   * If it is set to ``gcs://``, it must be in the form ``gcs://bucket-name``
-    (note the two slashes if you just want a bucket name)
+    (note the two slashes if you just want a bucket name). Your bucket must
+    be set to world-readable and have individual object permissions disabled.
 
-  * If it is set to ``s3://``, it must be in the form ``s3://access-key:secret-key@endpoint-url/bucket-name``
+  * If it is set to ``s3://``, it must be in the form
+    ``s3://access-key:secret-key@endpoint-url/bucket-name``. Your bucket must
+    permit publically-readable files to be uploaded.
 
 * ``TAKAHE_MAIN_DOMAIN`` should be the domain name (without ``https://``) that
   will be used for default links (such as in emails). It does *not* need to be
