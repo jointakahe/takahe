@@ -156,6 +156,17 @@ class ImageUpload(FormView):
         image = forms.ImageField()
         description = forms.CharField(required=False)
 
+        def clean_image(self):
+            value = self.cleaned_data["image"]
+            if value.size > 1024 * 1024 * 1:
+                # Erase the file from our data to stop trying to show it again
+                self.files = {}
+                raise forms.ValidationError("File must be 10MB or less")
+            return value
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
     def form_valid(self, form):
         # Make a PostAttachment
         thumbnail_file = resize_image(form.cleaned_data["image"], size=(400, 225))
