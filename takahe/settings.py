@@ -286,7 +286,7 @@ if SETUP.EMAIL_SERVER:
     elif parsed.scheme == "smtp":
         EMAIL_HOST = parsed.hostname
         EMAIL_PORT = parsed.port
-        EMAIL_HOST_USER = parsed.username
+        EMAIL_HOST_USER = urllib.parse.unquote(parsed.username)
         EMAIL_HOST_PASSWORD = urllib.parse.unquote(parsed.password)
         EMAIL_USE_TLS = as_bool(query.get("tls"))
         EMAIL_USE_SSL = as_bool(query.get("ssl"))
