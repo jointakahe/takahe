@@ -1,6 +1,9 @@
 name: Publish Development Image
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 3 * * *"
 
 jobs:
   push_to_registry:
