@@ -8,7 +8,7 @@ Currently, it supports:
 
 * Web UI only (but can be installed as a PWA)
 * Creating, editing and deleting posts, with CWs/summaries and visibility
-* Receiving and showing images on posts (cannot be added to posts yet)
+* Adding and showing images on posts (with image descriptions)
 * Handling replies and reply threading
 * Creating and receiving boosts and likes
 * Delivering mentions, and notifications for incoming mentions
@@ -16,6 +16,7 @@ Currently, it supports:
 * Post visibilities, including a local-only option
 * A home timeline, a local timeline, and a federated timeline
 * Profile pages with bios, icons, and header images
+* Hashtag linking and searching
 * Searching for users by exact handle
 * Multiple domain support
 * Multiple identity (per user account support)
@@ -26,11 +27,9 @@ Currently, it supports:
 
 Features planned for releases up to 1.0:
 
-* Adding images to posts, with descriptions
 * A mode where followers must be approved
 * Emoji fetching and display
 * Emoji creation at server level
-* Searching for hashtags
 * Server announcements system
 * Moderation flagging system and queue
 * IP and email domain banning
