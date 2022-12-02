@@ -25,6 +25,11 @@ class HashtagAdmin(admin.ModelAdmin):
             instance.transition_perform("outdated")
 
 
+@admin.register(PostAttachment)
+class PostAttachmentAdmin(admin.ModelAdmin):
+    list_display = ["id", "post", "created"]
+
+
 class PostAttachmentInline(admin.StackedInline):
     model = PostAttachment
     extra = 0

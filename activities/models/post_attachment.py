@@ -27,15 +27,24 @@ class PostAttachment(StatorModel):
         "activities.post",
         on_delete=models.CASCADE,
         related_name="attachments",
+        blank=True,
+        null=True,
     )
 
     state = StateField(graph=PostAttachmentStates)
 
     mimetype = models.CharField(max_length=200)
 
-    # File may not be populated if it's remote and not cached on our side yet
+    # Files may not be populated if it's remote and not cached on our side yet
     file = models.FileField(
-        upload_to=partial(upload_namer, "attachments"), null=True, blank=True
+        upload_to=partial(upload_namer, "attachments"),
+        null=True,
+        blank=True,
+    )
+    thumbnail = models.ImageField(
+        upload_to=partial(upload_namer, "attachment_thumbnails"),
+        null=True,
+        blank=True,
     )
 
     remote_url = models.CharField(max_length=500, null=True, blank=True)
@@ -49,6 +58,9 @@ class PostAttachment(StatorModel):
     focal_y = models.IntegerField(null=True, blank=True)
     blurhash = models.TextField(null=True, blank=True)
 
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
     def is_image(self):
         return self.mimetype in [
             "image/apng",
@@ -58,3 +70,30 @@ class PostAttachment(StatorModel):
             "image/png",
             "image/webp",
         ]
+
+    def thumbnail_url(self):
+        if self.thumbnail:
+            return self.thumbnail.url
+        elif self.file:
+            return self.file.url
+        else:
+            return self.remote_url
+
+    def full_url(self):
+        if self.file:
+            return self.file.url
+        else:
+            return self.remote_url
+
+    ### ActivityPub ###
+
+    def to_ap(self):
+        return {
+            "url": self.file.url,
+            "name": self.name,
+            "type": "Document",
+            "width": self.width,
+            "height": self.height,
+            "mediaType": self.mimetype,
+            "http://joinmastodon.org/ns#focalPoint": [0.5, 0.5],
+        }

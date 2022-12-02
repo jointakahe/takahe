@@ -17,8 +17,24 @@
             {% include "forms/_field.html" with field=form.content_warning %}
             {% include "forms/_field.html" with field=form.visibility %}
         </fieldset>
+        <fieldset>
+            <legend>Images</legend>
+            {% if post %}
+                {% for attachment in post.attachments.all %}
+                    {% include "activities/_image_uploaded.html" %}
+                {% endfor %}
+            {% endif %}
+            {% if not post or post.attachments.count < 4 %}
+                <a class="button add-image"
+                    hx-get='{% url "compose_image_upload" %}'
+                    hx-target="this"
+                    hx-swap="outerHTML">
+                    Add Image
+                </a>
+            {% endif %}
+        </fieldset>
         <div class="buttons">
-            <button>{% if form.id.value %}Edit{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+            <button>{% if post %}Save Edits{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
         </div>
     </form>
 {% endblock %}

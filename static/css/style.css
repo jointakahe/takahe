@@ -586,6 +586,25 @@ form img.preview {
     align-self: center;
 }
 
+form .uploaded-image {
+    margin: 0 0 10px 0;
+    overflow: hidden;
+}
+
+form .uploaded-image img {
+    max-width: 200px;
+    max-height: 200px;
+    float: left;
+}
+
+form .uploaded-image p {
+    margin-left: 220px;
+}
+
+form .uploaded-image .buttons {
+    margin-left: 220px;
+}
+
 form .buttons {
     text-align: right;
     margin: -20px 0 15px 0;
@@ -593,6 +612,15 @@ form .buttons {
 
 form p+.buttons {
     margin-top: 0;
+}
+
+form .button.add-image {
+    margin: 10px 0 10px 0;
+}
+
+form progress {
+    display: none;
+    width: 100%;
 }
 
 .right-column form .buttons {
@@ -1062,7 +1090,8 @@ table.metadata td.name {
     cursor: pointer;
 }
 
-.copied, .copied:hover {
+.copied,
+.copied:hover {
     color: var(--color-highlight);
     transition: 0.2s;
 }

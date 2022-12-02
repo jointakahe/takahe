@@ -1,0 +1,19 @@
+<div class="uploaded-image">
+    <input type="hidden" name="attachment" value="{{ attachment.pk }}">
+    <img src="{{ attachment.thumbnail_url }}">
+    <p>
+        {{ attachment.name|default:"(no description)" }}
+    </p>
+    <div class="buttons">
+        <a class="button delete left" _="on click remove closest .uploaded_image">Remove</a>
+    </div>
+</div>
+{% if request.htmx %}
+<a class="button add-image"
+    hx-get='{% url "compose_image_upload" %}'
+    hx-target="this"
+    hx-swap="outerHTML"
+    _="on load if beep! length of beep! <.uploaded-image/> > 3 then hide me">
+    Add Image
+</a>
+{% endif %}

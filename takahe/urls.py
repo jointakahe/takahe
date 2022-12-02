@@ -3,7 +3,7 @@ from django.contrib import admin as djadmin
 from django.urls import path, re_path
 from django.views.static import serve
 
-from activities.views import explore, posts, search, timelines
+from activities.views import compose, explore, posts, search, timelines
 from core import views as core
 from stator import views as stator
 from users.views import activitypub, admin, auth, follows, identity, settings
@@ -120,14 +120,19 @@ urlpatterns = [
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     # Posts
-    path("compose/", posts.Compose.as_view(), name="compose"),
+    path("compose/", compose.Compose.as_view(), name="compose"),
+    path(
+        "compose/image_upload/",
+        compose.ImageUpload.as_view(),
+        name="compose_image_upload",
+    ),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
     path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
     path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
-    path("@<handle>/posts/<int:post_id>/edit/", posts.Compose.as_view()),
+    path("@<handle>/posts/<int:post_id>/edit/", compose.Compose.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),

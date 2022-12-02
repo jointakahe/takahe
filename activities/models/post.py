@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Iterable, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 import httpx
 import urlman
@@ -312,7 +312,7 @@ class Post(StatorModel):
         """
         return (
             await Post.objects.select_related("author", "author__domain")
-            .prefetch_related("mentions", "mentions__domain")
+            .prefetch_related("mentions", "mentions__domain", "attachments")
             .aget(pk=self.pk)
         )
 
@@ -326,6 +326,7 @@ class Post(StatorModel):
         summary: Optional[str] = None,
         visibility: int = Visibilities.public,
         reply_to: Optional["Post"] = None,
+        attachments: Optional[List] = None,
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
@@ -353,6 +354,8 @@ class Post(StatorModel):
             post.object_uri = post.urls.object_uri
             post.url = post.absolute_object_uri()
             post.mentions.set(mentions)
+            if attachments:
+                post.attachments.set(attachments)
             post.save()
         return post
 
@@ -361,6 +364,7 @@ class Post(StatorModel):
         content: str,
         summary: Optional[str] = None,
         visibility: int = Visibilities.public,
+        attachments: Optional[List] = None,
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
@@ -371,6 +375,7 @@ class Post(StatorModel):
             self.edited = timezone.now()
             self.hashtags = Hashtag.hashtags_from_content(content) or None
             self.mentions.set(self.mentions_from_content(content, self.author))
+            self.attachments.set(attachments or [])
             self.save()
 
     @classmethod
@@ -421,6 +426,7 @@ class Post(StatorModel):
             "as:sensitive": self.sensitive,
             "url": self.absolute_object_uri(),
             "tag": [],
+            "attachment": [],
         }
         if self.summary:
             value["summary"] = self.summary
@@ -438,11 +444,13 @@ class Post(StatorModel):
                 }
             )
             value["cc"].append(mention.actor_uri)
-        # Remove tag and cc if they're empty
-        if not value["cc"]:
-            del value["cc"]
-        if not value["tag"]:
-            del value["tag"]
+        # Attachments
+        for attachment in self.attachments.all():
+            value["attachment"].append(attachment.to_ap())
+        # Remove fields if they're empty
+        for field in ["cc", "tag", "attachment"]:
+            if not value[field]:
+                del value[field]
         return value
 
     def to_create_ap(self):
