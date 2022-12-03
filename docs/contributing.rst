@@ -82,32 +82,41 @@ Then, ``cd`` into that directory and create and activate a virtual environment
 
 Then install the development requirements::
 
-    pip install -r requirements-dev.txt
+    python3 -m pip install -r requirements-dev.txt
 
 Enable the git commit hooks to do auto-formatting and linting
 (if you don't do this, our CI system will reject your PRs until they match)::
 
-    pre-commit install
+    python3 -m pre_commit install
 
-You will need to set up some development settings (you can edit `.env` later)::
+Create a databse in your local PostgreSQL instance::
+
+    sudo -u postgres createdb takahe
+
+You will need to set up some (i.e. `TAKAHE_DATABASE_SERVER`) development settings
+(you can edit `.env` later)::
 
     cp development.env .env
 
+Now you can apply migrations::
+
+    python3 -m manage migrate
+
 You can run the web interface to see it at http://localhost:8000::
 
-    ./manage.py runserver
+    python3 -m manage runserver
 
 You will need to run Stator in order to have background actions work::
 
-    ./manage.py runstator
+    python3 -m manage runstator
 
 Make yourself a superuser account in order to log in::
 
-    ./manage.py createsuperuser
+    python3 -m manage createsuperuser
 
 And you can run the tests with pytest::
 
-    pytest
+    python3 -m pytest
 
 If you want to edit settings, you can edit the ``.env`` file.
 
@@ -116,8 +125,8 @@ Coding Guidelines
 -----------------
 
 We have linters, typechecking and formatters enabled for the project; ensure these
-are set up locally by running `pre-commit install`, otherwise your pull request
-will fail its testing phase.
+are set up locally by running `python3 -m pre_commit install`, otherwise your pull
+request will fail its testing phase.
 
 Comment anything weird, unusual or complicated; if in doubt, leave a comment.
 
