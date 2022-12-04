@@ -26,9 +26,7 @@ def test_linkify_hashtag():
         linkify('<a href="/url/with#anchor">Text</a>')
         == '<a href="/url/with#anchor">Text</a>'
     )
-    assert (
-        linkify("#HashTag") == '<a class="hashtag" href="/tags/hashtag">#HashTag</a>'
-    )
+    assert linkify("#HashTag") == '<a class="hashtag" href="/tags/hashtag">#HashTag</a>'
     assert (
         linkify(
             """A longer text #bigContent
