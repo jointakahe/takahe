@@ -56,7 +56,7 @@ At this point, you should be able to see the Web UI at http://localhost:8000
 
 Once your session is up and running, you can make yourself a superuser account::
 
-    docker compose -f docker/docker-compose.yml exec web manage.py createsuperuser
+    docker compose -f docker/docker-compose.yml exec web python3 manage.py createsuperuser
 
 And you can run the tests inside your container::
 
