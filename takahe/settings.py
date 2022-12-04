@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     #: An optional Sentry DSN for error reporting.
     SENTRY_DSN: Optional[str] = None
     SENTRY_SAMPLE_RATE: float = 1.0
-    TRACES_SENTRY_SAMPLE_RATE: float = 1.0
+    SENTRY_TRACES_SAMPLE_RATE: float = 1.0
 
     #: Fallback domain for links.
     MAIN_DOMAIN: str = "example.com"
@@ -274,7 +274,7 @@ if SETUP.SENTRY_DSN:
         integrations=[
             DjangoIntegration(),
         ],
-        traces_sample_rate=SETUP.TRACES_SENTRY_SAMPLE_RATE,
+        traces_sample_rate=SETUP.SENTRY_TRACES_SAMPLE_RATE,
         sample_rate=SETUP.SENTRY_SAMPLE_RATE,
         send_default_pii=True,
         environment=SETUP.ENVIRONMENT,
