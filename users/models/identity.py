@@ -30,7 +30,7 @@ class IdentityStates(StateGraph):
     """
 
     outdated = State(try_interval=3600, force_initial=True)
-    updated = State(try_interval=86400, attempt_immediately=False)
+    updated = State(try_interval=86400 * 7, attempt_immediately=False)
 
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
