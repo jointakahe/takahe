@@ -27,5 +27,5 @@ def test_linkify_hashtags_regres():
 
     assert (
         linkify_hashtags("#Takahe")
-        == '<a class="hashtag" href="/tags/takahe/">#Takahe</a>'
+        == '<a class="hashtag" href="/tags/takahe">#Takahe</a>'
     )

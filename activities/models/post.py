@@ -208,14 +208,14 @@ class Post(StatorModel):
         ]
 
     class urls(urlman.Urls):
-        view = "{self.author.urls.view}posts/{self.id}/"
-        object_uri = "{self.author.actor_uri}posts/{self.id}/"
-        action_like = "{view}like/"
-        action_unlike = "{view}unlike/"
-        action_boost = "{view}boost/"
-        action_unboost = "{view}unboost/"
-        action_delete = "{view}delete/"
-        action_edit = "{view}edit/"
+        view = "{self.author.urls.view}posts/{self.id}"
+        object_uri = "{self.author.actor_uri}/posts/{self.id}"
+        action_like = "{view}/like"
+        action_unlike = "{view}/unlike"
+        action_boost = "{view}/boost"
+        action_unboost = "{view}/unboost"
+        action_delete = "{view}/delete"
+        action_edit = "{view}/edit"
         action_reply = "/compose/?reply_to={self.id}"
 
         def get_scheme(self, url):
@@ -236,7 +236,7 @@ class Post(StatorModel):
         other servers.
         """
         if self.local:
-            return self.author.absolute_profile_uri() + f"posts/{self.id}/"
+            return self.author.absolute_profile_uri() + f"posts/{self.id}"
         else:
             return self.object_uri
 

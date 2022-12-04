@@ -10,7 +10,7 @@ from activities.views.compose import Compose
 
 @pytest.mark.django_db
 def test_content_warning_text(identity, user, rf, config_system):
-    request = rf.get("/compose/")
+    request = rf.get("/compose")
     request.user = user
     request.identity = identity
 
@@ -36,7 +36,7 @@ def test_post_edit_security(identity, user, rf, other_identity):
         visibility=Post.Visibilities.public,
     )
 
-    request = rf.get(other_post.get_absolute_url() + "edit/")
+    request = rf.get(other_post.get_absolute_url() + "/edit")
     request.user = user
     request.identity = identity
 

@@ -121,9 +121,9 @@ class Identity(StatorModel):
         unique_together = [("username", "domain")]
 
     class urls(urlman.Urls):
-        view = "/@{self.username}@{self.domain_id}/"
-        action = "{view}action/"
-        activate = "{view}activate/"
+        view = "/@{self.username}@{self.domain_id}"
+        action = "{view}/action"
+        activate = "{view}/activate"
 
         def get_scheme(self, url):
             return "https"
@@ -142,7 +142,7 @@ class Identity(StatorModel):
         other servers.
         """
         if self.local:
-            return f"https://{self.domain.uri_domain}/@{self.username}/"
+            return f"https://{self.domain.uri_domain}/@{self.username}"
         else:
             return self.profile_uri
 
@@ -267,7 +267,7 @@ class Identity(StatorModel):
         response = {
             "id": self.actor_uri,
             "type": "Person",
-            "inbox": self.actor_uri + "inbox/",
+            "inbox": self.actor_uri + "/inbox",
             "preferredUsername": self.username,
             "publicKey": {
                 "id": self.public_key_id,

@@ -82,7 +82,7 @@ def identity(user, domain) -> Identity:
     Creates a basic test identity with a user and domain.
     """
     identity = Identity.objects.create(
-        actor_uri="https://example.com/@test@example.com/",
+        actor_uri="https://example.com/@test@example.com",
         username="test",
         domain=domain,
         name="Test User",
@@ -98,7 +98,7 @@ def other_identity(user, domain) -> Identity:
     Creates a different basic test identity with a user and domain.
     """
     identity = Identity.objects.create(
-        actor_uri="https://example.com/@other@example.com/",
+        actor_uri="https://example.com/@other@example.com",
         username="other",
         domain=domain,
         name="Other User",
@@ -116,8 +116,8 @@ def remote_identity() -> Identity:
     """
     domain = Domain.objects.create(domain="remote.test", local=False)
     return Identity.objects.create(
-        actor_uri="https://remote.test/test-actor/",
-        profile_uri="https://remote.test/@test/",
+        actor_uri="https://remote.test/test-actor",
+        profile_uri="https://remote.test/@test",
         username="test",
         domain=domain,
         name="Test Remote User",

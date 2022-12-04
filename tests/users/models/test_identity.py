@@ -74,7 +74,7 @@ def test_identity_max_per_user(config_system, client):
     # Make an identity for them
     for i in range(Config.system.identity_max_per_user):
         identity = Identity.objects.create(
-            actor_uri=f"https://example.com/@test{i}@example.com/actor/",
+            actor_uri=f"https://example.com/@test{i}@example.com/actor",
             username=f"test{i}",
             domain=domain,
             name=f"Test User{i}",
@@ -102,7 +102,7 @@ def test_fetch_actor(httpx_mock, config_system):
     """
     # Make a shell remote identity
     identity = Identity.objects.create(
-        actor_uri="https://example.com/test-actor/",
+        actor_uri="https://example.com/test-actor",
         local=False,
     )
 
@@ -112,39 +112,39 @@ def test_fetch_actor(httpx_mock, config_system):
         json={
             "subject": "acct:test@example.com",
             "aliases": [
-                "https://example.com/test-actor/",
+                "https://example.com/test-actor",
             ],
             "links": [
                 {
                     "rel": "http://webfinger.net/rel/profile-page",
                     "type": "text/html",
-                    "href": "https://example.com/test-actor/",
+                    "href": "https://example.com/test-actor",
                 },
                 {
                     "rel": "self",
                     "type": "application/activity+json",
-                    "href": "https://example.com/test-actor/",
+                    "href": "https://example.com/test-actor",
                 },
             ],
         },
     )
     httpx_mock.add_response(
-        url="https://example.com/test-actor/",
+        url="https://example.com/test-actor",
         json={
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://w3id.org/security/v1",
             ],
-            "id": "https://example.com/test-actor/",
+            "id": "https://example.com/test-actor",
             "type": "Person",
-            "inbox": "https://example.com/test-actor/inbox/",
+            "inbox": "https://example.com/test-actor/inbox",
             "publicKey": {
                 "id": "https://example.com/test-actor/#main-key",
-                "owner": "https://example.com/test-actor/",
+                "owner": "https://example.com/test-actor",
                 "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nits-a-faaaake\n-----END PUBLIC KEY-----\n",
             },
-            "followers": "https://example.com/test-actor/followers/",
-            "following": "https://example.com/test-actor/following/",
+            "followers": "https://example.com/test-actor/followers",
+            "following": "https://example.com/test-actor/following",
             "icon": {
                 "type": "Image",
                 "mediaType": "image/jpeg",
@@ -160,7 +160,7 @@ def test_fetch_actor(httpx_mock, config_system):
             "preferredUsername": "test",
             "published": "2022-11-02T00:00:00Z",
             "summary": "<p>A test user</p>",
-            "url": "https://example.com/test-actor/view/",
+            "url": "https://example.com/test-actor/view",
         },
     )
     async_to_sync(identity.fetch_actor)()
@@ -170,8 +170,8 @@ def test_fetch_actor(httpx_mock, config_system):
     assert identity.name == "Test User"
     assert identity.username == "test"
     assert identity.domain_id == "example.com"
-    assert identity.profile_uri == "https://example.com/test-actor/view/"
-    assert identity.inbox_uri == "https://example.com/test-actor/inbox/"
+    assert identity.profile_uri == "https://example.com/test-actor/view"
+    assert identity.inbox_uri == "https://example.com/test-actor/inbox"
     assert identity.icon_uri == "https://example.com/icon.jpg"
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"

@@ -52,12 +52,12 @@ class Domain(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class urls(urlman.Urls):
-        root = "/admin/domains/"
-        create = "/admin/domains/create/"
-        edit = "/admin/domains/{self.domain}/"
-        delete = "{edit}delete/"
-        root_federation = "/admin/federation/"
-        edit_federation = "/admin/federation/{self.domain}/"
+        root = "/admin/domains"
+        create = "/admin/domains/create"
+        edit = "/admin/domains/{self.domain}"
+        delete = "{edit}/delete"
+        root_federation = "/admin/federation"
+        edit_federation = "/admin/federation/{self.domain}"
 
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":

@@ -17,9 +17,9 @@ class SystemActor:
     def __init__(self):
         self.private_key = Config.system.system_actor_private_key
         self.public_key = Config.system.system_actor_public_key
-        self.actor_uri = f"https://{settings.MAIN_DOMAIN}/actor/"
+        self.actor_uri = f"https://{settings.MAIN_DOMAIN}/actor"
         self.public_key_id = self.actor_uri + "#main-key"
-        self.profile_uri = f"https://{settings.MAIN_DOMAIN}/about/"
+        self.profile_uri = f"https://{settings.MAIN_DOMAIN}/about"
         self.username = "__system__"
 
     def absolute_profile_uri(self):
@@ -42,7 +42,7 @@ class SystemActor:
         return {
             "id": self.actor_uri,
             "type": "Application",
-            "inbox": self.actor_uri + "inbox/",
+            "inbox": self.actor_uri + "/inbox",
             "preferredUsername": self.username,
             "url": self.profile_uri,
             "as:manuallyApprovesFollowers": True,

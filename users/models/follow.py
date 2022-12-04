@@ -131,7 +131,7 @@ class Follow(StatorModel):
             follow = Follow.objects.get(source=source, target=target)
         except Follow.DoesNotExist:
             follow = Follow.objects.create(source=source, target=target, uri="")
-            follow.uri = source.actor_uri + f"follow/{follow.pk}/"
+            follow.uri = source.actor_uri + f"follow/{follow.pk}"
             # TODO: Local follow approvals
             if target.local:
                 follow.state = FollowStates.accepted

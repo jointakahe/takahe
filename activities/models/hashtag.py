@@ -117,11 +117,11 @@ class Hashtag(StatorModel):
     objects = HashtagManager()
 
     class urls(urlman.Urls):
-        root = "/admin/hashtags/"
-        create = "/admin/hashtags/create/"
-        edit = "/admin/hashtags/{self.hashtag}/"
-        delete = "{edit}delete/"
-        timeline = "/tags/{self.hashtag}/"
+        root = "/admin/hashtags"
+        create = "/admin/hashtags/create"
+        edit = "/admin/hashtags/{self.hashtag}"
+        delete = "{edit}/delete"
+        timeline = "/tags/{self.hashtag}"
 
     hashtag_regex = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;)")
 
@@ -183,6 +183,6 @@ class Hashtag(StatorModel):
     def linkify_hashtags(cls, content) -> str:
         def replacer(match):
             hashtag = match.group(1)
-            return f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
+            return f'<a class="hashtag" href="/tags/{hashtag.lower()}">#{hashtag}</a>'
 
         return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))

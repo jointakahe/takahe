@@ -74,7 +74,7 @@ class Tag(ListView):
         tag = hashtag.lower().lstrip("#")
         if hashtag != tag:
             # SEO sanitize
-            return redirect(f"/tags/{tag}/", permanent=True)
+            return redirect(f"/tags/{tag}", permanent=True)
         self.hashtag = get_object_or_404(Hashtag.objects.public(), hashtag=tag)
         return super().get(request, *args, **kwargs)
 

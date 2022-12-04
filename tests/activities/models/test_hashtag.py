@@ -27,7 +27,7 @@ def test_linkify_hashtag():
         == '<a href="/url/with#anchor">Text</a>'
     )
     assert (
-        linkify("#HashTag") == '<a class="hashtag" href="/tags/hashtag/">#HashTag</a>'
+        linkify("#HashTag") == '<a class="hashtag" href="/tags/hashtag">#HashTag</a>'
     )
     assert (
         linkify(
@@ -36,8 +36,8 @@ with #tags, linebreaks, and
 maybe a few <a href="https://awesome.sauce/about#spicy">links</a>
 #allTheTags #AllTheTags #ALLTHETAGS"""
         )
-        == """A longer text <a class="hashtag" href="/tags/bigcontent/">#bigContent</a>
-with <a class="hashtag" href="/tags/tags/">#tags</a>, linebreaks, and
+        == """A longer text <a class="hashtag" href="/tags/bigcontent">#bigContent</a>
+with <a class="hashtag" href="/tags/tags">#tags</a>, linebreaks, and
 maybe a few <a href="https://awesome.sauce/about#spicy">links</a>
-<a class="hashtag" href="/tags/allthetags/">#allTheTags</a> <a class="hashtag" href="/tags/allthetags/">#AllTheTags</a> <a class="hashtag" href="/tags/allthetags/">#ALLTHETAGS</a>"""
+<a class="hashtag" href="/tags/allthetags">#allTheTags</a> <a class="hashtag" href="/tags/allthetags">#AllTheTags</a> <a class="hashtag" href="/tags/allthetags">#ALLTHETAGS</a>"""
     )

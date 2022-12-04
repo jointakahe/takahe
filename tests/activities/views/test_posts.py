@@ -15,7 +15,7 @@ def test_post_delete_security(identity, user, rf, other_identity):
         visibility=Post.Visibilities.public,
     )
 
-    request = rf.post(other_post.get_absolute_url() + "delete/")
+    request = rf.post(other_post.get_absolute_url() + "delete")
     request.user = user
     request.identity = identity
 

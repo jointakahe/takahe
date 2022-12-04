@@ -48,7 +48,7 @@ def test_linkify_mentions_remote(identity, remote_identity):
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_remote()
-        == '<p>Hello <a href="https://remote.test/@test/">@test</a></p>'
+        == '<p>Hello <a href="https://remote.test/@test">@test</a></p>'
     )
     # Test a full username (local)
     post = Post.objects.create(
@@ -59,7 +59,7 @@ def test_linkify_mentions_remote(identity, remote_identity):
     post.mentions.add(identity)
     assert (
         post.safe_content_remote()
-        == '<p><a href="https://example.com/@test/">@test@example.com</a>, welcome!</p>'
+        == '<p><a href="https://example.com/@test">@test@example.com</a>, welcome!</p>'
     )
     # Test that they don't get touched without a mention
     post = Post.objects.create(
@@ -84,7 +84,7 @@ def test_linkify_mentions_local(identity, remote_identity):
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_local()
-        == '<p>Hello <a href="/@test@remote.test/">@test</a></p>'
+        == '<p>Hello <a href="/@test@remote.test">@test</a></p>'
     )
     # Test a full username (local)
     post = Post.objects.create(
@@ -95,7 +95,7 @@ def test_linkify_mentions_local(identity, remote_identity):
     post.mentions.add(identity)
     assert (
         post.safe_content_local()
-        == '<p><a href="/@test@example.com/">@test@example.com</a>, welcome!</p>'
+        == '<p><a href="/@test@example.com">@test@example.com</a>, welcome!</p>'
     )
     # Test a full username (remote) with no <p>
     post = Post.objects.create(
@@ -106,7 +106,7 @@ def test_linkify_mentions_local(identity, remote_identity):
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_local()
-        == '<a href="/@test@remote.test/">@test@remote.test</a> hello!'
+        == '<a href="/@test@remote.test">@test@remote.test</a> hello!'
     )
     # Test that they don't get touched without a mention
     post = Post.objects.create(
