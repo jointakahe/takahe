@@ -1,6 +1,6 @@
 import base64
 import json
-from typing import Dict, List, Literal, Optional, Tuple, TypedDict
+from typing import Literal, TypedDict
 from urllib.parse import urlparse
 
 import httpx
@@ -35,7 +35,7 @@ class VerificationFormatError(VerificationError):
 
 class RsaKeys:
     @classmethod
-    def generate_keypair(cls) -> Tuple[str, str]:
+    def generate_keypair(cls) -> tuple[str, str]:
         """
         Generates a new RSA keypair
         """
@@ -77,7 +77,7 @@ class HttpSignature:
             raise ValueError(f"Unknown digest algorithm {algorithm}")
 
     @classmethod
-    def headers_from_request(cls, request: HttpRequest, header_names: List[str]) -> str:
+    def headers_from_request(cls, request: HttpRequest, header_names: list[str]) -> str:
         """
         Creates the to-be-signed header payload from a Django request
         """
@@ -170,7 +170,7 @@ class HttpSignature:
     async def signed_request(
         cls,
         uri: str,
-        body: Optional[Dict],
+        body: dict | None,
         private_key: str,
         key_id: str,
         content_type: str = "application/json",
@@ -239,7 +239,7 @@ class HttpSignature:
 
 class HttpSignatureDetails(TypedDict):
     algorithm: str
-    headers: List[str]
+    headers: list[str]
     signature: bytes
     keyid: str
 
@@ -250,7 +250,7 @@ class LDSignature:
     """
 
     @classmethod
-    def verify_signature(cls, document: Dict, public_key: str) -> None:
+    def verify_signature(cls, document: dict, public_key: str) -> None:
         """
         Verifies a document
         """
@@ -285,13 +285,13 @@ class LDSignature:
 
     @classmethod
     def create_signature(
-        cls, document: Dict, private_key: str, key_id: str
-    ) -> Dict[str, str]:
+        cls, document: dict, private_key: str, key_id: str
+    ) -> dict[str, str]:
         """
         Creates the signature for a document
         """
         # Create the options document
-        options: Dict[str, str] = {
+        options: dict[str, str] = {
             "@context": "https://w3id.org/identity/v1",
             "creator": key_id,
             "created": format_ld_date(timezone.now()),

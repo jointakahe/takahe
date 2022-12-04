@@ -1,4 +1,5 @@
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Set, Tuple, Type
+from collections.abc import Callable
+from typing import Any, ClassVar
 
 
 class StateGraph:
@@ -7,11 +8,11 @@ class StateGraph:
     Does not support subclasses of existing graphs yet.
     """
 
-    states: ClassVar[Dict[str, "State"]]
-    choices: ClassVar[List[Tuple[object, str]]]
+    states: ClassVar[dict[str, "State"]]
+    choices: ClassVar[list[tuple[object, str]]]
     initial_state: ClassVar["State"]
-    terminal_states: ClassVar[Set["State"]]
-    automatic_states: ClassVar[Set["State"]]
+    terminal_states: ClassVar[set["State"]]
+    automatic_states: ClassVar[set["State"]]
 
     def __init_subclass__(cls) -> None:
         # Collect state members
@@ -84,8 +85,8 @@ class State:
 
     def __init__(
         self,
-        try_interval: Optional[float] = None,
-        handler_name: Optional[str] = None,
+        try_interval: float | None = None,
+        handler_name: str | None = None,
         externally_progressed: bool = False,
         attempt_immediately: bool = True,
         force_initial: bool = False,
@@ -95,10 +96,10 @@ class State:
         self.externally_progressed = externally_progressed
         self.attempt_immediately = attempt_immediately
         self.force_initial = force_initial
-        self.parents: Set["State"] = set()
-        self.children: Set["State"] = set()
+        self.parents: set["State"] = set()
+        self.children: set["State"] = set()
 
-    def _add_to_graph(self, graph: Type[StateGraph], name: str):
+    def _add_to_graph(self, graph: type[StateGraph], name: str):
         self.graph = graph
         self.name = name
         self.graph.states[name] = self
@@ -132,7 +133,7 @@ class State:
         return not self.children
 
     @property
-    def handler(self) -> Callable[[Any], Optional[str]]:
+    def handler(self) -> Callable[[Any], str | None]:
         # Retrieve it by name off the graph
         if self.handler_name is None:
             raise AttributeError("No handler defined")

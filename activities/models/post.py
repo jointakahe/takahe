@@ -1,5 +1,6 @@
 import re
-from typing import Dict, Iterable, List, Optional, Set
+from collections.abc import Iterable
+from typing import Optional
 
 import httpx
 import urlman
@@ -324,10 +325,10 @@ class Post(StatorModel):
         cls,
         author: Identity,
         content: str,
-        summary: Optional[str] = None,
+        summary: str | None = None,
         visibility: int = Visibilities.public,
         reply_to: Optional["Post"] = None,
-        attachments: Optional[List] = None,
+        attachments: list | None = None,
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
@@ -363,9 +364,9 @@ class Post(StatorModel):
     def edit_local(
         self,
         content: str,
-        summary: Optional[str] = None,
+        summary: str | None = None,
         visibility: int = Visibilities.public,
-        attachments: Optional[List] = None,
+        attachments: list | None = None,
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
@@ -380,7 +381,7 @@ class Post(StatorModel):
             self.save()
 
     @classmethod
-    def mentions_from_content(cls, content, author) -> Set[Identity]:
+    def mentions_from_content(cls, content, author) -> set[Identity]:
         mention_hits = cls.mention_regex.findall(content)
         mentions = set()
         for precursor, handle in mention_hits:
@@ -413,7 +414,7 @@ class Post(StatorModel):
 
     ### ActivityPub (outbound) ###
 
-    def to_ap(self) -> Dict:
+    def to_ap(self) -> dict:
         """
         Returns the AP JSON for this object
         """

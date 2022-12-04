@@ -1,5 +1,5 @@
 from functools import cached_property, partial
-from typing import Dict, Literal, Optional, Tuple
+from typing import Literal
 from urllib.parse import urlparse
 
 import httpx
@@ -334,7 +334,7 @@ class Identity(StatorModel):
     ### Actor/Webfinger fetching ###
 
     @classmethod
-    async def fetch_webfinger(cls, handle: str) -> Tuple[Optional[str], Optional[str]]:
+    async def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
         """
         Given a username@domain handle, returns a tuple of
         (actor uri, canonical handle) or None, None if it does not resolve.
@@ -458,7 +458,7 @@ class Identity(StatorModel):
                     raise ValueError(
                         f"Could not save Identity at end of actor fetch: {e}"
                     )
-                self.pk: Optional[int] = other_row.pk
+                self.pk: int | None = other_row.pk
                 await sync_to_async(self.save)()
         return True
 
@@ -468,7 +468,7 @@ class Identity(StatorModel):
         self,
         method: Literal["get", "post"],
         uri: str,
-        body: Optional[Dict] = None,
+        body: dict | None = None,
     ):
         """
         Performs a signed request on behalf of the System Actor.

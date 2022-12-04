@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional
+from typing import Literal
 
 from django.conf import settings
 
@@ -57,7 +57,7 @@ class SystemActor:
         self,
         method: Literal["get", "post"],
         uri: str,
-        body: Optional[Dict] = None,
+        body: dict | None = None,
     ):
         """
         Performs a signed request on behalf of the System Actor.

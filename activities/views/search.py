@@ -1,5 +1,3 @@
-from typing import Set
-
 import httpx
 from asgiref.sync import async_to_sync
 from django import forms
@@ -32,7 +30,7 @@ class Search(FormView):
 
         # Try to fetch the user by handle
         query = query.lstrip("@")
-        results: Set[Identity] = set()
+        results: set[Identity] = set()
         if "@" in query:
             username, domain = query.split("@", 1)
 
@@ -118,7 +116,7 @@ class Search(FormView):
         if "@" in query or "://" in query:
             return set()
 
-        results: Set[Hashtag] = set()
+        results: set[Hashtag] = set()
         query = query.lstrip("#")
         for hashtag in Hashtag.objects.public().hashtag_or_alias(query)[:10]:
             results.add(hashtag)

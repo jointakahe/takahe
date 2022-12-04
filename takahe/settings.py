@@ -3,7 +3,7 @@ import secrets
 import sys
 import urllib.parse
 from pathlib import Path
-from typing import List, Literal, Optional, Union
+from typing import Literal
 
 import dj_database_url
 import sentry_sdk
@@ -24,7 +24,7 @@ class MediaBackendUrl(AnyUrl):
     allowed_schemes = {"s3", "gcs", "local"}
 
 
-def as_bool(v: Optional[Union[str, List[str]]]):
+def as_bool(v: str | list[str] | None):
     if v is None:
         return False
 
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     """
 
     #: The default database.
-    DATABASE_SERVER: Optional[ImplicitHostname]
+    DATABASE_SERVER: ImplicitHostname | None
 
     #: The currently running environment, used for things such as sentry
     #: error reporting.
@@ -66,19 +66,19 @@ class Settings(BaseSettings):
 
     #: If set, a list of allowed values for the HOST header. The default value
     #: of '*' means any host will be accepted.
-    ALLOWED_HOSTS: List[str] = Field(default_factory=lambda: ["*"])
+    ALLOWED_HOSTS: list[str] = Field(default_factory=lambda: ["*"])
 
     #: If set, a list of hosts to accept for CORS.
-    CORS_HOSTS: List[str] = Field(default_factory=list)
+    CORS_HOSTS: list[str] = Field(default_factory=list)
 
     #: If set, a list of hosts to accept for CSRF.
-    CSRF_HOSTS: List[str] = Field(default_factory=list)
+    CSRF_HOSTS: list[str] = Field(default_factory=list)
 
     #: If enabled, trust the HTTP_X_FORWARDED_FOR header.
     USE_PROXY_HEADERS: bool = False
 
     #: An optional Sentry DSN for error reporting.
-    SENTRY_DSN: Optional[str] = None
+    SENTRY_DSN: str | None = None
     SENTRY_SAMPLE_RATE: float = 1.0
     SENTRY_TRACES_SAMPLE_RATE: float = 1.0
 
@@ -87,12 +87,12 @@ class Settings(BaseSettings):
 
     EMAIL_SERVER: AnyUrl = "console://localhost"
     EMAIL_FROM: EmailStr = "test@example.com"
-    AUTO_ADMIN_EMAIL: Optional[EmailStr] = None
-    ERROR_EMAILS: Optional[List[EmailStr]] = None
+    AUTO_ADMIN_EMAIL: EmailStr | None = None
+    ERROR_EMAILS: list[EmailStr] | None = None
 
     MEDIA_URL: str = "/media/"
     MEDIA_ROOT: str = str(BASE_DIR / "media")
-    MEDIA_BACKEND: Optional[MediaBackendUrl] = None
+    MEDIA_BACKEND: MediaBackendUrl | None = None
 
     #: Maximum filesize when uploading images. Increasing this may increase memory utilization
     #: because all images with a dimension greater than 2000px are resized to meet that limit, which
@@ -107,11 +107,11 @@ class Settings(BaseSettings):
     #: (placeholder setting, no effect)
     SEARCH: bool = True
 
-    PGHOST: Optional[str] = None
-    PGPORT: Optional[int] = 5432
+    PGHOST: str | None = None
+    PGPORT: int | None = 5432
     PGNAME: str = "takahe"
     PGUSER: str = "postgres"
-    PGPASSWORD: Optional[str] = None
+    PGPASSWORD: str | None = None
 
     @validator("PGHOST", always=True)
     def validate_db(cls, PGHOST, values):  # noqa
