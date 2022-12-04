@@ -1,8 +1,8 @@
 *.psql
 *.sqlite3
-notes.md
-.git
-.venv
-.pre-commit-config.yaml
 .env
+.git
+.pre-commit-config.yaml
+.venv
 media
+notes.md
