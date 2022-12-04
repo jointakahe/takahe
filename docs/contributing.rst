@@ -121,6 +121,26 @@ And you can run the tests with pytest::
 If you want to edit settings, you can edit the ``.env`` file.
 
 
+Building Documentation
+----------------------
+
+We are using `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_ and `reStructuredText markup language <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_ to write documentation.
+
+To build documentation, we need to install additional libraries::
+
+    pip install -r docs/requirements.txt
+
+After editing documentation, you can build documentation with the following command::
+
+    make docs
+
+This outputs HTML files under the ``docs/_build/html/`` directory. Let's launch a development server to serve HTML files::
+
+    python -m http.server 8000 --directory docs/_build/html/
+
+Now, you can view the documentation on your browser at http://localhost:8000/.
+
+
 Coding Guidelines
 -----------------
 
