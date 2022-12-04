@@ -2,6 +2,12 @@
 
 {% block title %}{{ identity }}{% endblock %}
 
+{% block extra_head %}
+    {% if identity.local %}
+        <link rel="alternate" type="application/rss+xml" title="RSS feed for {{ identity.name }}" href="rss/" />
+    {% endif %}
+{% endblock %}
+
 {% block body_class %}has-banner{% endblock %}
 
 {% block content %}
