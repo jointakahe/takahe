@@ -11,7 +11,7 @@ class FollowsPage(TemplateView):
     Shows followers/follows.
     """
 
-    template_name = "settings/follows.html"
+    template_name = "activities/follows.html"
 
     def get_context_data(self):
         # Gather all identities with a following relationship with us

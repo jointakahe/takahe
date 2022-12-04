@@ -3,10 +3,10 @@ from django.contrib import admin as djadmin
 from django.urls import path, re_path
 from django.views.static import serve
 
-from activities.views import compose, explore, posts, search, timelines
+from activities.views import compose, explore, follows, posts, search, timelines
 from core import views as core
 from stator import views as stator
-from users.views import activitypub, admin, auth, follows, identity, settings
+from users.views import activitypub, admin, auth, identity, settings
 
 urlpatterns = [
     path("", core.homepage),
@@ -19,6 +19,12 @@ urlpatterns = [
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
     path("explore/", explore.Explore.as_view(), name="explore"),
     path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
+    path(
+        "follows/",
+        follows.FollowsPage.as_view(),
+        name="follows",
+    ),
+    # Settings views
     path(
         "settings/",
         settings.SettingsRoot.as_view(),
@@ -33,11 +39,6 @@ urlpatterns = [
         "settings/profile/",
         settings.ProfilePage.as_view(),
         name="settings_profile",
-    ),
-    path(
-        "settings/follows/",
-        follows.FollowsPage.as_view(),
-        name="settings_follows",
     ),
     path(
         "settings/interface/",

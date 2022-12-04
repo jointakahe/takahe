@@ -18,6 +18,9 @@
         <a href="{% url "federated" %}" {% if current_page == "federated" %}class="selected"{% endif %} title="Federated">
             <i class="fa-solid fa-globe"></i> Federated
         </a>
+        <a href="{% url "follows" %}" {% if section == "follows" %}class="selected"{% endif %} title="Follows">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i> Follows
+        </a>
         <h3></h3>
         <a href="{% url "compose" %}" {% if top_section == "compose" %}class="selected"{% endif %} title="Compose">
             <i class="fa-solid fa-feather"></i> Compose
