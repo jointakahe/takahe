@@ -34,42 +34,37 @@ inside of Kubernetes, with one Deployment for the webserver and one for the
 Stator runner.
 
 
-What To Run
+Preparation
 -----------
 
-You need to run at least one copy of the
-`Docker image <https://hub.docker.com/r/jointakahe/takahe>`_ with no extra
-arguments, in order to serve web traffic.
+You'll need to run two copies of our `Docker image <https://hub.docker.com/r/jointakahe/takahe>`_:
 
-The image has required environment variables before it will boot, and this is
-the only way to configure it - see below.
+* One with no extra arguments (command), which will serve web traffic
 
-You also need to ensure Stator, our background task system, runs regularly.
-You can do this in one of two ways:
+* One with the arguments ``python3 manage.py runstator``, which will run the background worker
 
-* Run another copy of image with the arguments ``python manage.py runstator``,
-  which will run a background worker continuously.
+.. note::
 
-* Call the URL ``/.stator/?token=abc`` periodically (once a minute or more).
-  The token value must be the same as you set in ``TAKAHE_STATOR_TOKEN``.
+    If you cannot run a background worker for some reason, you can instead
+    call the URL ``/.stator/?token=abc`` periodically (once a minute or more).
+    The token value must be the same as you set in the ``TAKAHE_STATOR_TOKEN``
+    environment variable. This pattern is only suitable for very small installs.
 
-The background worker will have a lot more throughput, but you can opt for
-either for a small installation. If Stator gets backed up, you can either
-run more workers or call the URL more often to ensure it gets more throughput.
+While it is possible to install and run Takahē directly from a directory,
+rather than the Docker image, we don't provide support for that method due to
+the difficulty of getting libraries to all match. Takahē is a standard Django
+project, so if you know what you're doing, go for it - but we won't be able
+to give you support.
 
-While you can run Takahē directly from a checkout if you like (rather than
-having to use the Docker image), we're not
-officially supporting that right now, as it increases our support burden by
-having to deal with lots of OS and library versions. It's a standard Django
-app, though, so if you know what you're doing, have at it - just expect us to
-push back if you file tickets about things not working on your OS!
+If you are running on Kubernetes, we recommend that you make one Deployment
+for the webserver and one Deployment for the background worker.
 
 
 Environment Variables
 ---------------------
 
 All of these variables are *required* for a working installation, and should
-be provided from the first boot.
+be provided to the containers from the first boot.
 
 * ``TAKAHE_DATABASE_SERVER`` should be a database DSN for your database (you can use
   the standard ``PGHOST``, ``PGUSER``, etc. variables instead if you want)
@@ -77,30 +72,16 @@ be provided from the first boot.
 * ``TAKAHE_SECRET_KEY`` must be a fixed, random value (it's used for internal
   cryptography). Don't change this unless you want to invalidate all sessions.
 
-* ``TAKAHE_MEDIA_BACKEND`` must be a URI starting with ``local://``, ``s3://`` or ``gcs://``.
+* ``TAKAHE_MEDIA_BACKEND`` must be a URI starting with ``local://``, ``s3://``
+  or ``gcs://``. See :ref:`media_configuration` below for more.
 
-  * If it is set to ``local://``, you must also provide ``TAKAHE_MEDIA_ROOT``,
-    the path to the local media directory, and ``TAKAHE_MEDIA_URL``, a
-    fully-qualified URL prefix that serves that directory.
-
-  * If it is set to ``gcs://``, it must be in the form ``gcs://bucket-name``
-    (note the two slashes if you just want a bucket name). Your bucket must
-    be set to world-readable and have individual object permissions disabled.
-
-  * If it is set to ``s3://``, it must be in the form
-    ``s3://access-key:secret-key@endpoint-url/bucket-name``. Your bucket must
-    permit publically-readable files to be uploaded.
 
 * ``TAKAHE_MAIN_DOMAIN`` should be the domain name (without ``https://``) that
   will be used for default links (such as in emails). It does *not* need to be
   the same as any domain you are hosting user accounts on.
 
-* ``TAKAHE_EMAIL_SERVER`` should be set to an ``smtp://`` or ``sendgrid://`` URI
-
-  * If you are using SMTP, it is ``smtp://username:password@host:port/``. You
-    can also put ``?tls=true`` or ``?ssl=true`` on the end to enable encryption.
-
-  * If you are using SendGrid, you should set the URI to ``sendgrid://api-key``
+* ``TAKAHE_EMAIL_SERVER`` should be set to an ``smtp://`` or ``sendgrid://`` URI.
+  See :ref:`email_configuration` below for more.
 
 * ``TAKAHE_EMAIL_FROM`` is the email address that emails from the system will
   appear to come from.
@@ -123,13 +104,119 @@ be provided from the first boot.
   about escaping!)
 
 
-Migrations
-----------
+.. _media_configuration:
 
-You will have to run ``manage.py migrate`` when you first install Takahē in
-order to create the database tables; how you do this is up to you. You can
-shell into a running machine, create a one-off task that uses the Docker image,
-or something else.
+Media Configuration
+~~~~~~~~~~~~~~~~~~~
+
+Takahē needs somewhere to store uploaded post attachments, profile images
+and more ("media"). We support Amazon S3, Google Cloud Storage and a local
+directory, but we recommend against the local directory unless you know what
+you're doing - media must be accessible from every running container in a
+read-write mode, and this is hard to do with a directory as you scale.
+
+Support for CDN configuration for media is coming soon.
+
+
+Amazon S3
+#########
+
+To use S3, provide a URL in one of these forms:
+
+* ``s3:///bucket-name``
+* ``s3://endpoint-url/bucket-name``
+* ``s3://access-key:secret-key@endpoint-url/bucket-name``
+
+If you omit the keys or the endpoint URL, then Takahē will try to use implicit
+authentication for them.
+
+Your S3 bucket *must* be set to allow publically-readable files, as Takahē will
+set all files it uploads to be ``public-read``. We randomise uploaded file
+names to prevent enumeration attacks.
+
+
+Google Cloud Storage
+####################
+
+To use GCS, provide a URL like:
+
+* ``gcs://bucket-name``
+
+The GCS backend currently only supports implicit authentication (from the
+standard Google authentication environment variables, or machine roles).
+
+Note that the bucket name only has two slashes before it - we will move this to
+be three soon, like the S3 backend, but will notify you in release notes when
+this changes and will allow the existing pattern to work for a while.
+
+Your bucket must be set to world-readable and have individual object
+permissions disabled.
+
+  * If it is set to ``s3://``, it must be in the form
+    ``s3://access-key:secret-key@endpoint-url/bucket-name``. Your bucket must
+    permit publically-readable files to be uploaded.
+
+
+Local Directory
+###############
+
+To use a local directory, specify the media URL as ``local://``.
+
+You must then also specify:
+
+* ``TAKAHE_MEDIA_ROOT``, the file path to the local media Directory
+* ``TAKAHE_MEDIA_URL``, a fully-qualified URL prefix that serves that directory
+
+The media directory must be read-write accessible from every single container
+of Takahē - webserver and workers alike.
+
+
+.. _email_configuration:
+
+Email Configuration
+~~~~~~~~~~~~~~~~~~~
+
+Takahē requires an email server in order to send password reset and other
+account emails. We support either explicit SMTP, or auto-configuration of SMTP
+for SendGrid.
+
+SMTP
+####
+
+Provide a URL in the form ``smtp://username:password@host:port/``
+
+If you are using TLS, add ``?tls=true`` to the end. If you are using
+SSL, add ``?ssl=true`` to the end.
+
+If your username and password have URL-unsafe characters in them, you can
+URLencode them. For example, if I had to use the username ``someone@example.com``
+with the password ``my:password``, it would be represented as::
+
+  smtp://someone%40example.com:my%3Apassword@smtp.example.com:25/
+
+
+SendGrid
+########
+
+If you are using SendGrid, Takahē will auto-configure the SMTP settings for you.
+Simply set the email server to ``sendgrid://api-key``.
+
+
+Database
+--------
+
+Takahē requires a PostgreSQL database at version 14 or above in order to work
+properly. You should create a database within your PostgreSQL server, with its
+own username and password, and provide Takahē with those credentials via
+``TAKAHE_DATABASE_SERVER`` (see above). It will make its own tables and indexes.
+
+You will have to run ``python3 manage.py migrate`` when you first install Takahē in
+order to create the database tables; how you do this is up to you.
+We recommend one of:
+
+* Shell/Exec into a running container (such as the webserver) and run it there.
+
+* Launch a separate container as a one-off with ``python3 manage.py migrate`` as its arguments/command. If you are using Kubernetes, you should use a Job (or a one-off Pod) for this rather than a Deployment
 
 You will also have to run this for minor version releases when new migrations
 are present; the release notes for each release will tell you if one is.
@@ -161,3 +248,11 @@ won't be able to as you will have no domains yet.
 
 You should select the "Domains" link in the sidebar and create one, and then
 you will be able to make your first identity.
+
+
+Scaling
+-------
+
+You can run as many copies of the webserver and workers as you like; the main
+limitation will be your database server's processing power and number of
+allowed connections.
