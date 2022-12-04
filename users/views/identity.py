@@ -2,6 +2,7 @@ import string
 
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.contrib.syndication.views import Feed
 from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
@@ -87,6 +88,47 @@ class ViewIdentity(ListView):
             if reverse_follow and reverse_follow.state in FollowStates.group_active():
                 context["reverse_follow"] = reverse_follow
         return context
+
+
+class IdentityFeed(Feed):
+    """
+    Serves a local user's Public posts as an RSS feed
+    """
+
+    def get_object(self, request, handle):
+        return by_handle_or_404(
+            request,
+            handle,
+            local=True,
+        )
+
+    def title(self, identity: Identity):
+        return identity.name
+
+    def description(self, identity: Identity):
+        return f"Public posts from @{identity.handle}"
+
+    def link(self, identity: Identity):
+        return identity.absolute_profile_uri()
+
+    def items(self, identity: Identity):
+        return (
+            identity.posts.filter(
+                visibility=Post.Visibilities.public,
+            )
+            .select_related("author")
+            .prefetch_related("attachments")
+            .order_by("-created")
+        )
+
+    def item_description(self, item: Post):
+        return item.safe_content_remote()
+
+    def item_link(self, item: Post):
+        return item.absolute_object_uri()
+
+    def item_pubdate(self, item: Post):
+        return item.published
 
 
 @method_decorator(identity_required, name="dispatch")

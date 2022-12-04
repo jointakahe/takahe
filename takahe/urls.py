@@ -120,6 +120,7 @@ urlpatterns = [
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
+    path("@<handle>/rss/", identity.IdentityFeed()),
     # Posts
     path("compose/", compose.Compose.as_view(), name="compose"),
     path(

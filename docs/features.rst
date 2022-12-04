@@ -16,6 +16,7 @@ Currently, it supports:
 * Post visibilities, including a local-only option
 * A home timeline, a local timeline, and a federated timeline
 * Profile pages with bios, icons, and header images
+* RSS feeds for users' public posts
 * Hashtag linking and searching
 * Searching for users by exact handle
 * Multiple domain support
@@ -34,7 +35,6 @@ Features planned for releases up to 1.0:
 * Moderation flagging system and queue
 * IP and email domain banning
 * Mastodon-compatible client API for use with apps
-* RSS feeds for users' public posts
 
 Features that may make it into 1.0, or might be further out:
 
