@@ -26,11 +26,13 @@ if SENTRY_ENABLED:
     push_scope = sentry_sdk.push_scope
     set_context = sentry_sdk.set_context
     set_tag = sentry_sdk.set_tag
+    start_transaction = sentry_sdk.start_transaction
 else:
     configure_scope = noop_context
     push_scope = noop_context
     set_context = noop
     set_tag = noop
+    start_transaction = noop_context
 
 
 def set_takahe_app(name: str):

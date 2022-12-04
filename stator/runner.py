@@ -47,11 +47,9 @@ class StatorRunner:
         print("Running main task loop")
         try:
             with sentry.configure_scope() as scope:
-                sentry.set_transaction_name(scope, "stator.run")
                 while True:
                     # Do we need to do cleaning?
                     if (time.monotonic() - self.last_clean) >= self.schedule_interval:
-                        sentry.set_transaction_name(scope, "stator:run_scheduling")
                         # Refresh the config
                         Config.system = await Config.aload_system()
                         print(f"{self.handled} tasks processed so far")
@@ -61,7 +59,6 @@ class StatorRunner:
                     # Clear the cleaning breadcrumbs/extra for the main part of the loop
                     sentry.scope_clear(scope)
 
-                    sentry.set_transaction_name(scope, "stator.fetch_and_process_tasks")
                     self.remove_completed_tasks()
                     await self.fetch_and_process_tasks()
 
@@ -92,10 +89,11 @@ class StatorRunner:
         """
         Do any transition cleanup tasks
         """
-        for model in self.models:
-            asyncio.create_task(model.atransition_clean_locks())
-            asyncio.create_task(model.atransition_schedule_due())
-        self.last_clean = time.monotonic()
+        with sentry.start_transaction(op="task", name="stator.run_scheduling"):
+            for model in self.models:
+                asyncio.create_task(model.atransition_clean_locks())
+                asyncio.create_task(model.atransition_schedule_due())
+            self.last_clean = time.monotonic()
 
     async def fetch_and_process_tasks(self):
         # Calculate space left for tasks
@@ -119,11 +117,8 @@ class StatorRunner:
         """
         Wrapper for atransition_attempt with fallback error handling
         """
-        with sentry.configure_scope() as scope:
-            sentry.set_transaction_name(
-                scope,
-                f"stator.run_transition:{instance._meta.label_lower}#{{id}} from {instance.state}",
-            )
+        task_name = f"stator.run_transition:{instance._meta.label_lower}#{{id}} from {instance.state}"
+        with sentry.start_transaction(op="task", name=task_name):
             sentry.set_context(
                 "instance",
                 {
