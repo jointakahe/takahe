@@ -79,6 +79,12 @@ class InboxMessageStates(StateGraph):
                             raise ValueError(
                                 f"Cannot handle activity of type delete.{unknown}"
                             )
+            case "add":
+                # We are ignoring these right now (probably pinned items)
+                pass
+            case "remove":
+                # We are ignoring these right now (probably pinned items)
+                pass
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed
