@@ -1,0 +1,46 @@
+0.5
+===
+
+*Released: 2022/12/04*
+
+This release brings Takahē to an almost full implementation of the underlying
+ActivityPub protocol, with only emoji and manual follower approval as high-level
+features we are yet to implement.
+
+Our goal now is to reach an initial "island of stability", where we ensure
+good test coverage and compatibility testing with a suite of other ActivityPub
+servers before we continue down adding main features (though there's still
+plenty of smaller features we'll add).
+
+This release includes:
+
+* Image uploading for posts, with image descriptions
+* Hashtag parsing, search and timeline pages
+* RSS feeds for users' public posts
+* Collapsing of related notifications into one
+* Automatic refetching and cleaning for Identities (profiles) and internal message buffers
+* Mastodon now understands Takahē profile and post URLs in its search box
+* Fixes to search, activitypub parsing, upload naming, email and media settings
+
+We're also aiming at two other big things for our next release apart from "stability":
+
+* Moderation queues and flagging
+* Initial Client App API (Mastodon-compatible)
+
+The goal will be for our next release to be the first one we can recommend that
+*a community can be run on*. This is a relatively high bar for us, and while we
+will still have a lot of work to do afterwards (especially around accessibility and
+internationalisation), it's a milestone we're excited to reach.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.5``.
+
+
+Upgrade Notes
+-------------
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations - they are backwards-compatible,
+so apply the migrations *before* you update your webserver and stator deployments.
