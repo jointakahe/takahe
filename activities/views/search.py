@@ -13,7 +13,8 @@ class Search(FormView):
 
     class form_class(forms.Form):
         query = forms.CharField(
-            help_text="Search for a user by @username@domain or hashtag by #tagname"
+            help_text="Search for a user by @username@domain or hashtag by #tagname",
+            widget=forms.TextInput(attrs={"type": "search", "autofocus": "autofocus"}),
         )
 
     def search_identities(self, query: str):
