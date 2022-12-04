@@ -7,9 +7,11 @@ import httpx
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from django.conf import settings
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.http import http_date, parse_http_date
+from httpx._types import TimeoutTypes
 from pyld import jsonld
 
 from core.ld import format_ld_date
@@ -173,6 +175,7 @@ class HttpSignature:
         key_id: str,
         content_type: str = "application/json",
         method: Literal["get", "post"] = "post",
+        timeout: TimeoutTypes = settings.SETUP.REMOTE_TIMEOUT,
     ):
         """
         Performs an async request to the given path, with a document, signed
@@ -219,7 +222,7 @@ class HttpSignature:
         )
         # Send the request with all those headers except the pseudo one
         del headers["(request-target)"]
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.request(
                 method,
                 uri,
