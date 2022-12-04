@@ -159,7 +159,7 @@ class ImageUpload(FormView):
 
         def clean_image(self):
             value = self.cleaned_data["image"]
-            max_mb = settings.SETUP.POST_MEDIA_UPLOAD_MAX_MB
+            max_mb = settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB
             max_bytes = max_mb * 1024 * 1024
             if value.size > max_bytes:
                 # Erase the file from our data to stop trying to show it again

@@ -90,7 +90,10 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: Optional[MediaBackendUrl] = None
 
-    POST_MEDIA_UPLOAD_MAX_MB: int = 10
+    #: Maximum filesize when uploading images. Increasing this may increase memory utilization
+    #: because all images with a dimension greater than 2000px are resized to meet that limit, which
+    #: is necessary for compatibility with Mastodon’s image proxy.
+    MEDIA_MAX_IMAGE_FILESIZE_MB: int = 10
 
     #: Request timeouts to use when talking to other servers Either
     #: float or tuple of floats for (connect, read, write, pool)
