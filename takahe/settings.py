@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: Optional[MediaBackendUrl] = None
 
+    #: Request timeouts to use when talking to other servers Either
+    #: float or tuple of floats for (connect, read, write, pool)
+    REMOTE_TIMEOUT: float | tuple[float, float, float, float] = 5.0
+
     #: If search features like full text search should be enabled.
     #: (placeholder setting, no effect)
     SEARCH: bool = True

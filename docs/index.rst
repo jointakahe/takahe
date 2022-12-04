@@ -19,4 +19,5 @@ in alpha. For more information about Takahē, see
    contributing
    domains
    stator
+   tuning
    releases/index
