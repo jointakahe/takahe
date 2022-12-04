@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
@@ -158,10 +159,12 @@ class ImageUpload(FormView):
 
         def clean_image(self):
             value = self.cleaned_data["image"]
-            if value.size > 1024 * 1024 * 10:
+            max_mb = settings.SETUP.POST_MEDIA_UPLOAD_MAX_MB
+            max_bytes = max_mb * 1024 * 1024
+            if value.size > max_bytes:
                 # Erase the file from our data to stop trying to show it again
                 self.files = {}
-                raise forms.ValidationError("File must be 10MB or less")
+                raise forms.ValidationError(f"File must be {max_mb}MB or less")
             return value
 
     def form_invalid(self, form):
