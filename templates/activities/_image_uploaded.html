@@ -5,7 +5,7 @@
         {{ attachment.name|default:"(no description)" }}
     </p>
     <div class="buttons">
-        <a class="button delete left" _="on click remove closest .uploaded_image">Remove</a>
+        <a class="button delete left" _="on click remove closest .uploaded-image">Remove</a>
     </div>
 </div>
 {% if request.htmx %}
@@ -13,7 +13,7 @@
     hx-get='{% url "compose_image_upload" %}'
     hx-target="this"
     hx-swap="outerHTML"
-    _="on load if beep! length of beep! <.uploaded-image/> > 3 then hide me">
+    _="on load if length of <.uploaded-image/> > 3 then hide me">
     Add Image
 </a>
 {% endif %}

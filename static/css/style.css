@@ -610,12 +610,17 @@ form .buttons {
     margin: -20px 0 15px 0;
 }
 
-form p+.buttons {
+form p+.buttons,
+form fieldset .buttons {
     margin-top: 0;
 }
 
 form .button.add-image {
     margin: 10px 0 10px 0;
+}
+
+form legend+.button.add-image {
+    margin-top: 0px;
 }
 
 form progress {

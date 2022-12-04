@@ -158,7 +158,7 @@ class ImageUpload(FormView):
 
         def clean_image(self):
             value = self.cleaned_data["image"]
-            if value.size > 1024 * 1024 * 1:
+            if value.size > 1024 * 1024 * 10:
                 # Erase the file from our data to stop trying to show it again
                 self.files = {}
                 raise forms.ValidationError("File must be 10MB or less")
@@ -169,21 +169,30 @@ class ImageUpload(FormView):
 
     def form_valid(self, form):
         # Make a PostAttachment
-        thumbnail_file = resize_image(form.cleaned_data["image"], size=(400, 225))
+        main_file = resize_image(
+            form.cleaned_data["image"],
+            size=(2000, 2000),
+            cover=False,
+        )
+        thumbnail_file = resize_image(
+            form.cleaned_data["image"],
+            size=(400, 225),
+            cover=True,
+        )
         attachment = PostAttachment.objects.create(
             blurhash=blurhash_image(thumbnail_file),
-            mimetype=form.cleaned_data["image"].image.get_format_mimetype(),
-            width=form.cleaned_data["image"].image.width,
-            height=form.cleaned_data["image"].image.height,
+            mimetype="image/webp",
+            width=main_file.image.width,
+            height=main_file.image.height,
             name=form.cleaned_data.get("description"),
             state=PostAttachmentStates.fetched,
         )
         attachment.file.save(
-            form.cleaned_data["image"].name,
-            form.cleaned_data["image"],
+            main_file.name,
+            main_file,
         )
         attachment.thumbnail.save(
-            form.cleaned_data["image"].name,
+            thumbnail_file.name,
             thumbnail_file,
         )
         attachment.save()
