@@ -367,6 +367,7 @@ schemas = {
 }
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_MS_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def builtin_document_loader(url: str, options={}):
@@ -440,9 +441,15 @@ def format_ld_date(value: datetime.datetime) -> str:
 def parse_ld_date(value: Optional[str]) -> Optional[datetime.datetime]:
     if value is None:
         return None
-    return datetime.datetime.strptime(value, DATETIME_FORMAT).replace(
-        tzinfo=datetime.timezone.utc
-    )
+    try:
+        return datetime.datetime.strptime(value, DATETIME_FORMAT).replace(
+            tzinfo=datetime.timezone.utc
+        )
+    except ValueError:
+        return datetime.datetime.strptime(value, DATETIME_MS_FORMAT).replace(
+            tzinfo=datetime.timezone.utc,
+            microsecond=0,
+        )
 
 
 def media_type_from_filename(filename):
