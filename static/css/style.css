@@ -968,6 +968,13 @@ table.metadata td.name {
     margin-right: 4px;
 }
 
+.boost-banner time {
+    float: right;
+    display: block;
+    color: var(--color-text-duller);
+    border-radius: 3px;
+}
+
 .mention-banner::before {
     content: "\0040";
     font: var(--fa-font-solid);
