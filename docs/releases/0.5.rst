@@ -4,8 +4,8 @@
 *Released: 2022/12/04*
 
 This release brings Takahē to an almost full implementation of the underlying
-ActivityPub protocol, with only emoji and manual follower approval as high-level
-features we are yet to implement.
+ActivityPub protocol, with only custom emoji and manual follower approval as
+high-level features we are yet to implement.
 
 Our goal now is to reach an initial "island of stability", where we ensure
 good test coverage and compatibility testing with a suite of other ActivityPub
@@ -27,8 +27,8 @@ We're also aiming at two other big things for our next release apart from "stabi
 * Moderation queues and flagging
 * Initial Client App API (Mastodon-compatible)
 
-The goal will be for our next release to be the first one we can recommend that
-*a community can be run on*. This is a relatively high bar for us, and while we
+The goal will be for our next release to be the first one we can *recommend that*
+*a small community can be run on*. This is a relatively high bar for us, and while we
 will still have a lot of work to do afterwards (especially around accessibility and
 internationalisation), it's a milestone we're excited to reach.
 
