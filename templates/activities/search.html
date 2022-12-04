@@ -26,7 +26,7 @@
         {% endfor %}
         </section>
     {% endif %}
-    {% if not results.identities and not results.hashtags %}
+    {% if results and not results.identities and not results.hashtags %}
         <h2>No results (yet)</h2>
         <p>No results found — not yet, at least. The search swamphens are still
            rooting around behind the scenes and may yet turn something up. If you try your search
