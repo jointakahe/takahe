@@ -31,4 +31,3 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_logo = "../static/img/logo-128.png"
 html_favicon = "../static/img/icon-32.png"
-html_baseurl = "https://docs.jointakahe.org/"
