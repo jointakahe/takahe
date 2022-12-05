@@ -87,6 +87,7 @@ class Compose(FormView):
                 # Build a set of mentions for the content to start as
                 mentioned = {self.reply_to.author}
                 mentioned.update(self.reply_to.mentions.all())
+                mentioned.discard(self.request.identity)
                 initial["text"] = "".join(
                     f"@{identity.handle} " for identity in mentioned
                 )

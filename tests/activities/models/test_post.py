@@ -8,7 +8,7 @@ from activities.models import Post, PostStates
 
 
 @pytest.mark.django_db
-def test_fetch_post(httpx_mock: HTTPXMock):
+def test_fetch_post(httpx_mock: HTTPXMock, config_system):
     """
     Tests that a post we don't have locally can be fetched by by_object_uri
     """
