@@ -36,6 +36,9 @@
     <a href="{% url "admin_hashtags" %}" {% if section == "hashtags" %}class="selected"{% endif %} title="Hashtags">
         <i class="fa-solid fa-hashtag"></i> Hashtags
     </a>
+    <a href="{% url "admin_tuning" %}" {% if section == "tuning" %}class="selected"{% endif %} title="Tuning">
+        <i class="fa-solid fa-wrench"></i> Tuning
+    </a>
     <a href="/djadmin" title="">
         <i class="fa-solid fa-gear"></i> Django Admin
     </a>

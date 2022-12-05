@@ -5,11 +5,13 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
 from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
+from core.decorators import per_identity_cache_page
 from core.models import Config
 from users.decorators import identity_required
 
 
 @method_decorator(identity_required, name="dispatch")
+@method_decorator(per_identity_cache_page(), name="dispatch")
 class Home(FormView):
 
     template_name = "activities/home.html"
@@ -61,6 +63,9 @@ class Home(FormView):
         return redirect(".")
 
 
+@method_decorator(
+    per_identity_cache_page("cache_timeout_page_timeline"), name="dispatch"
+)
 class Tag(ListView):
 
     template_name = "activities/tag.html"
@@ -96,6 +101,9 @@ class Tag(ListView):
         return context
 
 
+@method_decorator(
+    per_identity_cache_page("cache_timeout_page_timeline"), name="dispatch"
+)
 class Local(ListView):
 
     template_name = "activities/local.html"
@@ -122,6 +130,9 @@ class Local(ListView):
 
 
 @method_decorator(identity_required, name="dispatch")
+@method_decorator(
+    per_identity_cache_page("cache_timeout_page_timeline"), name="dispatch"
+)
 class Federated(ListView):
 
     template_name = "activities/federated.html"
@@ -150,6 +161,9 @@ class Federated(ListView):
 
 
 @method_decorator(identity_required, name="dispatch")
+@method_decorator(
+    per_identity_cache_page("cache_timeout_page_timeline"), name="dispatch"
+)
 class Notifications(ListView):
 
     template_name = "activities/notifications.html"

@@ -218,6 +218,11 @@ class Config(models.Model):
         hashtag_unreviewed_are_public: bool = True
         hashtag_stats_max_age: int = 60 * 60
 
+        cache_timeout_page_default: int = 60
+        cache_timeout_page_timeline: int = 60 * 3
+        cache_timeout_page_post: int = 60 * 2
+        cache_timeout_identity_feed: int = 60 * 5
+
         restricted_usernames: str = "admin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
 
     class UserOptions(pydantic.BaseModel):

@@ -1,8 +1,10 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView, View
 
 from activities.views.timelines import Home
+from core.decorators import cache_page
 from users.models import Identity
 
 
@@ -13,6 +15,7 @@ def homepage(request):
         return LoggedOutHomepage.as_view()(request)
 
 
+@method_decorator(cache_page(), name="dispatch")
 class LoggedOutHomepage(TemplateView):
 
     template_name = "index.html"
