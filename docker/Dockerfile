@@ -3,12 +3,24 @@ ARG IMAGE_LABEL=3.11.0-slim-buster
 
 FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
-RUN apt-get update && apt-get -y install libpq-dev libxml2-dev libxslt1-dev zlib1g-dev python3-dev build-essential
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libpq5 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements.txt
 
-RUN pip3 install --upgrade pip \
-    && pip3 install --upgrade -r requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        gcc \
+        libc6-dev \
+        libpq-dev \
+    && python3 -m pip install --upgrade -r requirements.txt \
+    && apt-get purge -y --auto-remove \
+        gcc \
+        libc6-dev \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . /takahe
 
