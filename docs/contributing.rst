@@ -9,6 +9,8 @@ want to contribute we'd love help in the following areas:
 * Visual design & UX (for our default UI, and the project site)
 * Illustration (for the app, project site, and outreach materials)
 * Writing (for our development and user documentation)
+* Moderation (relayed advice and guidelines from those who have done it for Mastodon or others)
+* Compliance, Trust & Safety (professional advice and guidelines on what servers will require)
 
 If you're interested in helping out, join `our Discord server <https://discord.gg/qvQ39tAMvf>`_
 or email contact@jointakahe.org, and mention what you'd like to help with.
