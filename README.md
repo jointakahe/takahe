@@ -29,6 +29,8 @@ all functionality is supported yet.
 
 For a detailed feature breakdown, see [the features page in our docs](https://docs.jointakahe.org/en/latest/features/).
 
+For an idea of what features are currently in flight, see [our project board for the next release](https://github.com/orgs/jointakahe/projects/1/views/1).
+
 
 ## Contributing
 
