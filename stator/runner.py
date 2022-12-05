@@ -7,7 +7,7 @@ from typing import List, Optional, Type
 
 from django.utils import timezone
 
-from core import exceptions
+from core import exceptions, sentry
 from core.models import Config
 from stator.models import StatorModel
 
@@ -38,6 +38,7 @@ class StatorRunner:
         self.run_for = run_for
 
     async def run(self):
+        sentry.set_takahe_app("stator")
         self.handled = 0
         self.started = time.monotonic()
         self.last_clean = time.monotonic() - self.schedule_interval
@@ -45,23 +46,32 @@ class StatorRunner:
         # For the first time period, launch tasks
         print("Running main task loop")
         try:
-            while True:
-                # Do we need to do cleaning?
-                if (time.monotonic() - self.last_clean) >= self.schedule_interval:
-                    # Refresh the config
-                    Config.system = await Config.aload_system()
-                    print(f"{self.handled} tasks processed so far")
-                    print("Running cleaning and scheduling")
-                    await self.run_scheduling()
+            with sentry.configure_scope() as scope:
+                while True:
+                    # Do we need to do cleaning?
+                    if (time.monotonic() - self.last_clean) >= self.schedule_interval:
+                        # Refresh the config
+                        Config.system = await Config.aload_system()
+                        print(f"{self.handled} tasks processed so far")
+                        print("Running cleaning and scheduling")
+                        await self.run_scheduling()
 
-                self.remove_completed_tasks()
-                await self.fetch_and_process_tasks()
+                    # Clear the cleaning breadcrumbs/extra for the main part of the loop
+                    sentry.scope_clear(scope)
 
-                # Are we in limited run mode?
-                if self.run_for and (time.monotonic() - self.started) > self.run_for:
-                    break
-                # Prevent busylooping
-                await asyncio.sleep(0.5)
+                    self.remove_completed_tasks()
+                    await self.fetch_and_process_tasks()
+
+                    # Are we in limited run mode?
+                    if (
+                        self.run_for
+                        and (time.monotonic() - self.started) > self.run_for
+                    ):
+                        break
+                    # Prevent busylooping
+                    await asyncio.sleep(0.5)
+                    # Clear the Sentry breadcrumbs and extra for next loop
+                    sentry.scope_clear(scope)
         except KeyboardInterrupt:
             pass
         # Wait for tasks to finish
@@ -79,10 +89,11 @@ class StatorRunner:
         """
         Do any transition cleanup tasks
         """
-        for model in self.models:
-            asyncio.create_task(model.atransition_clean_locks())
-            asyncio.create_task(model.atransition_schedule_due())
-        self.last_clean = time.monotonic()
+        with sentry.start_transaction(op="task", name="stator.run_scheduling"):
+            for model in self.models:
+                asyncio.create_task(model.atransition_clean_locks())
+                asyncio.create_task(model.atransition_schedule_due())
+            self.last_clean = time.monotonic()
 
     async def fetch_and_process_tasks(self):
         # Calculate space left for tasks
@@ -106,14 +117,26 @@ class StatorRunner:
         """
         Wrapper for atransition_attempt with fallback error handling
         """
-        try:
-            print(
-                f"Attempting transition on {instance._meta.label_lower}#{instance.pk} from state {instance.state}"
+        task_name = f"stator.run_transition:{instance._meta.label_lower}#{{id}} from {instance.state}"
+        with sentry.start_transaction(op="task", name=task_name):
+            sentry.set_context(
+                "instance",
+                {
+                    "model": instance._meta.label_lower,
+                    "pk": instance.pk,
+                    "state": instance.state,
+                    "state_age": instance.state_age,
+                },
             )
-            await instance.atransition_attempt()
-        except BaseException as e:
-            await exceptions.acapture_exception(e)
-            traceback.print_exc()
+
+            try:
+                print(
+                    f"Attempting transition on {instance._meta.label_lower}#{instance.pk} from state {instance.state}"
+                )
+                await instance.atransition_attempt()
+            except BaseException as e:
+                await exceptions.acapture_exception(e)
+                traceback.print_exc()
 
     def remove_completed_tasks(self):
         """

@@ -10,6 +10,8 @@ import sentry_sdk
 from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
 from sentry_sdk.integrations.django import DjangoIntegration
 
+from takahe import __version__
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -77,6 +79,8 @@ class Settings(BaseSettings):
 
     #: An optional Sentry DSN for error reporting.
     SENTRY_DSN: Optional[str] = None
+    SENTRY_SAMPLE_RATE: float = 1.0
+    SENTRY_TRACES_SAMPLE_RATE: float = 1.0
 
     #: Fallback domain for links.
     MAIN_DOMAIN: str = "example.com"
@@ -150,6 +154,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "core.middleware.SentryTaggingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -269,10 +274,12 @@ if SETUP.SENTRY_DSN:
         integrations=[
             DjangoIntegration(),
         ],
-        traces_sample_rate=1.0,
+        traces_sample_rate=SETUP.SENTRY_TRACES_SAMPLE_RATE,
+        sample_rate=SETUP.SENTRY_SAMPLE_RATE,
         send_default_pii=True,
         environment=SETUP.ENVIRONMENT,
     )
+    sentry_sdk.set_tag("takahe.version", __version__)
 
 SERVER_EMAIL = SETUP.EMAIL_FROM
 if SETUP.EMAIL_SERVER:
