@@ -16,8 +16,7 @@ def cache_page(
     timeout can either be the number of seconds or the name of a SystemOptions
     value.
     """
-    if isinstance(timeout, str):
-        timeout = Config.lazy_system_value(timeout)
+    _timeout = timeout
 
     def decorator(function):
         @wraps(function)
@@ -26,10 +25,11 @@ def cache_page(
             if per_identity:
                 identity_id = request.identity.pk if request.identity else "0"
                 prefix = f"{key_prefix or ''}:ident{identity_id}"
-            _timeout = timeout
-            if callable(_timeout):
-                _timeout = _timeout()
-            return dj_cache_page(timeout=_timeout, key_prefix=prefix)(function)(
+            if isinstance(_timeout, str):
+                timeout = getattr(Config.system, _timeout)
+            else:
+                timeout = _timeout
+            return dj_cache_page(timeout=timeout, key_prefix=prefix)(function)(
                 request, *args, **kwargs
             )
 
