@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView, TemplateView, View
 
 from activities.models import Post, PostInteraction
-from core.decorators import per_identity_cache_page
+from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
@@ -18,7 +18,9 @@ from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
 
 
-@method_decorator(per_identity_cache_page(), name="dispatch")
+@method_decorator(
+    cache_page_by_ap_json(public_only=True, key_prefix="asdf"), name="dispatch"
+)
 class ViewIdentity(ListView):
     """
     Shows identity profile pages, and also acts as the Actor endpoint when
@@ -88,7 +90,7 @@ class ViewIdentity(ListView):
 
 
 @method_decorator(
-    per_identity_cache_page("cache_timeout_identity_feed"), name="__call__"
+    cache_page("cache_timeout_identity_feed", public_only=True), name="__call__"
 )
 class IdentityFeed(Feed):
     """

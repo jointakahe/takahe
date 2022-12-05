@@ -18,7 +18,7 @@ def homepage(request):
         return LoggedOutHomepage.as_view()(request)
 
 
-@method_decorator(cache_page(), name="dispatch")
+@method_decorator(cache_page(public_only=True), name="dispatch")
 class LoggedOutHomepage(TemplateView):
 
     template_name = "index.html"
