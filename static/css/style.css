@@ -782,6 +782,10 @@ table.metadata td.name {
     margin-left: 32px;
 }
 
+.post.user {
+    overflow: hidden;
+}
+
 .left-column .post {
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);

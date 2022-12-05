@@ -1,10 +1,11 @@
 from typing import Set
 
+from asgiref.sync import async_to_sync
 from django import forms
 from django.views.generic import FormView
 
 from activities.models import Hashtag
-from users.models import Domain, Identity
+from users.models import Domain, Identity, IdentityStates
 
 
 class Search(FormView):
@@ -37,7 +38,10 @@ class Search(FormView):
                     identity = Identity.by_username_and_domain(
                         username, domain, fetch=True
                     )
-                identity = None
+                    if identity and identity.state == IdentityStates.outdated:
+                        async_to_sync(identity.fetch_actor)()
+                else:
+                    identity = None
             if identity:
                 results.add(identity)
 
