@@ -15,7 +15,7 @@ from activities.models.hashtag import Hashtag
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models.identity import Identity
+from users.models.identity import Identity, IdentityStates
 from users.models.system_actor import SystemActor
 
 
@@ -625,11 +625,15 @@ class Post(StatorModel):
                         f"Error fetching post from {object_uri}: {response.status_code}",
                         {response.content},
                     )
-                return cls.by_ap(
+                post = cls.by_ap(
                     canonicalise(response.json(), include_security=True),
                     create=True,
                     update=True,
                 )
+                # We may need to fetch the author too
+                if post.author.state == IdentityStates.outdated:
+                    async_to_sync(post.author.fetch_actor)()
+                return post
             else:
                 raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
 

@@ -101,11 +101,7 @@ class Search(FormView):
             # Try and retrieve the post by URI
             # (we do not trust the JSON we just got - fetch from source!)
             try:
-                post = Post.by_object_uri(document["id"], fetch=True)
-                # We may need to live-fetch the identity too
-                if post.author.state == IdentityStates.outdated:
-                    async_to_sync(post.author.fetch_actor)()
-                return post
+                return Post.by_object_uri(document["id"], fetch=True)
             except Post.DoesNotExist:
                 return None
 
