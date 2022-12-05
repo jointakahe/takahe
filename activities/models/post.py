@@ -276,7 +276,7 @@ class Post(StatorModel):
 
         def replacer(match):
             precursor = match.group(1)
-            handle = match.group(2)
+            handle = match.group(2).lower()
             if handle in possible_matches:
                 return f'{precursor}<a href="{possible_matches[handle]}">@{handle}</a>'
             else:
@@ -383,6 +383,7 @@ class Post(StatorModel):
         mention_hits = cls.mention_regex.findall(content)
         mentions = set()
         for precursor, handle in mention_hits:
+            handle = handle.lower()
             if "@" in handle:
                 username, domain = handle.split("@", 1)
             else:

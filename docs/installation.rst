@@ -1,11 +1,14 @@
 Installation
 ============
 
-We recommend running using the Docker/OCI image; this contains all of the
-necessary dependencies and static file handling preconfigured for you.
+We've tried to make installing and running Takahē as easy as possible, but
+an ActivityPub server does have a minimum level of complexity, so you should
+be experienced deploying software in order to run it.
 
-All configuration is done via either environment variables, or online through
-the web interface.
+Note that getting the technology running is arguably the easiest piece of
+running a server - you must also be prepared to support your users, moderate,
+defederate, keep on top of security risks, and know how you will
+handle illegal content.
 
 
 Prerequisites
@@ -22,16 +25,15 @@ Prerequisites
   * Writable local directory (must be accessible by all running copies!)
 
 Note that ActivityPub is a chatty protocol that has a lot of background
-activity, so you will need to run *background tasks*, in
-order to fetch profiles, retry delivery of posts, and more.
-
-Ideally, you would choose a platform where you can run our worker process in
-the background continuously, but for small installations we have a URL you can
-call periodically instead - see "What To Run", below.
+activity, so you will need to run *background tasks*, in order to fetch
+profiles, retry delivery of posts, and more - see "Preparation", below.
 
 The flagship Takahē instance, `takahe.social <https://takahe.social>`_, runs
 inside of Kubernetes, with one Deployment for the webserver and one for the
 Stator runner.
+
+All configuration is done via either environment variables, or online through
+the web interface.
 
 
 Preparation

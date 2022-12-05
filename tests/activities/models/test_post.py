@@ -68,6 +68,17 @@ def test_linkify_mentions_remote(identity, remote_identity):
         local=True,
     )
     assert post.safe_content_remote() == "<p>@test@example.com, welcome!</p>"
+    # Test case insensitivity (remote)
+    post = Post.objects.create(
+        content="<p>Hey @TeSt</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(remote_identity)
+    assert (
+        post.safe_content_remote()
+        == '<p>Hey <a href="https://remote.test/@test/">@test</a></p>'
+    )
 
 
 @pytest.mark.django_db

@@ -84,7 +84,12 @@ class Compose(FormView):
                     initial["visibility"] = Post.Visibilities.unlisted
                 else:
                     initial["visibility"] = self.reply_to.visibility
-                initial["text"] = f"@{self.reply_to.author.handle} "
+                # Build a set of mentions for the content to start as
+                mentioned = {self.reply_to.author}
+                mentioned.update(self.reply_to.mentions.all())
+                initial["text"] = "".join(
+                    f"@{identity.handle} " for identity in mentioned
+                )
         return initial
 
     def form_valid(self, form):
