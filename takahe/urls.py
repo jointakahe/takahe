@@ -56,6 +56,11 @@ urlpatterns = [
         name="admin_basic",
     ),
     path(
+        "admin/tuning/",
+        admin.TuningSettings.as_view(),
+        name="admin_tuning",
+    ),
+    path(
         "admin/domains/",
         admin.Domains.as_view(),
         name="admin_domains",

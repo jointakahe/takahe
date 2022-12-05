@@ -1,4 +1,5 @@
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 
 from core.models import Config
 from users.decorators import admin_required
@@ -104,5 +105,53 @@ class BasicSettings(AdminSettingsPage):
             "identity_max_per_user",
             "identity_min_length",
             "restricted_usernames",
+        ],
+    }
+
+
+cache_field_defaults = {
+    "min_value": 0,
+    "max_value": 900,
+    "step_size": 15,
+}
+
+
+class TuningSettings(AdminSettingsPage):
+
+    section = "tuning"
+
+    options = {
+        "cache_timeout_page_default": {
+            **cache_field_defaults,
+            "title": "Default Timeout",
+            "help_text": "The number of seconds to cache a rendered page",
+        },
+        "cache_timeout_page_timeline": {
+            **cache_field_defaults,
+            "title": "Timeline Timeout",
+            "help_text": "The number of seconds to cache a rendered timeline page",
+        },
+        "cache_timeout_page_post": {
+            **cache_field_defaults,
+            "title": "Individual Post Timeout",
+            "help_text": mark_safe(
+                "The number of seconds to cache a rendered individual Post page<br>Note: This includes the JSON responses to other servers"
+            ),
+        },
+        "cache_timeout_identity_feed": {
+            **cache_field_defaults,
+            "title": "Identity Feed Timeout",
+            "help_text": "The number of seconds to cache a rendered Identity RSS feed",
+        },
+    }
+
+    layout = {
+        "Rendered Page Cache": [
+            "cache_timeout_page_default",
+            "cache_timeout_page_timeline",
+            "cache_timeout_page_post",
+        ],
+        "RSS Feeds": [
+            "cache_timeout_identity_feed",
         ],
     }

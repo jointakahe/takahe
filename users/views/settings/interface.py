@@ -21,7 +21,7 @@ class SettingsPage(FormView):
     options_class = Config.IdentityOptions
     template_name = "settings/settings.html"
     section: ClassVar[str]
-    options: dict[str, dict[str, str]]
+    options: dict[str, dict[str, str | int]]
     layout: dict[str, list[str]]
 
     def get_form_class(self):
@@ -51,6 +51,10 @@ class SettingsPage(FormView):
                 choices = details.get("choices")
                 if choices:
                     field_kwargs["widget"] = forms.Select(choices=choices)
+                for int_kwarg in {"min_value", "max_value", "step_size"}:
+                    val = details.get(int_kwarg)
+                    if val:
+                        field_kwargs[int_kwarg] = val
                 form_field = forms.IntegerField
             else:
                 raise ValueError(f"Cannot render settings type {config_field.type_}")

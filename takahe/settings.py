@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 import dj_database_url
+import django_cache_url
 import sentry_sdk
 from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -13,6 +14,11 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from takahe import __version__
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class CacheBackendUrl(AnyUrl):
+    host_required = False
+    allowed_schemes = django_cache_url.BACKENDS.keys()
 
 
 class ImplicitHostname(AnyUrl):
@@ -106,6 +112,9 @@ class Settings(BaseSettings):
     #: If search features like full text search should be enabled.
     #: (placeholder setting, no effect)
     SEARCH: bool = True
+
+    #: Default cache backend
+    CACHES_DEFAULT: CacheBackendUrl | None = None
 
     PGHOST: str | None = None
     PGPORT: int | None = 5432
@@ -338,6 +347,8 @@ if SETUP.MEDIA_BACKEND:
             )
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
+
+CACHES = {"default": django_cache_url.parse(SETUP.CACHES_DEFAULT or "dummy://")}
 
 if SETUP.ERROR_EMAILS:
     ADMINS = [("Admin", e) for e in SETUP.ERROR_EMAILS]

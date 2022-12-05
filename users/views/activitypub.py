@@ -9,6 +9,7 @@ from django.views.generic import View
 
 from activities.models import Post
 from core import exceptions
+from core.decorators import cache_page
 from core.ld import canonicalise
 from core.models import Config
 from core.signatures import (
@@ -61,6 +62,7 @@ class NodeInfo(View):
         )
 
 
+@method_decorator(cache_page(), name="dispatch")
 class NodeInfo2(View):
     """
     Returns the nodeinfo 2.0 response
@@ -87,6 +89,7 @@ class NodeInfo2(View):
         )
 
 
+@method_decorator(cache_page(), name="dispatch")
 class Webfinger(View):
     """
     Services webfinger requests
@@ -189,6 +192,7 @@ class Inbox(View):
         return HttpResponse(status=202)
 
 
+@method_decorator(cache_page(), name="dispatch")
 class SystemActorView(View):
     """
     Special endpoint for the overall system actor
