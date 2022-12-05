@@ -241,9 +241,11 @@ class Identity(StatorModel):
 
     @property
     def handle(self):
+        if self.username is None:
+            return "(unknown user)"
         if self.domain_id:
             return f"{self.username}@{self.domain_id}"
-        return f"{self.username}@unknown.invalid"
+        return f"{self.username}@(unknown server)"
 
     @property
     def data_age(self) -> float:

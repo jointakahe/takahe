@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Optional, Set
 
 import httpx
 import urlman
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
@@ -16,6 +16,7 @@ from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity
+from users.models.system_actor import SystemActor
 
 
 class PostStates(StateGraph):
@@ -609,19 +610,28 @@ class Post(StatorModel):
             return cls.objects.get(object_uri=object_uri)
         except cls.DoesNotExist:
             if fetch:
-                # Go grab the data from the URI
-                response = httpx.get(
-                    object_uri,
-                    headers={"Accept": "application/json"},
-                    follow_redirects=True,
-                )
-                if 200 <= response.status_code < 300:
-                    return cls.by_ap(
-                        canonicalise(response.json(), include_security=True),
-                        create=True,
-                        update=True,
+                try:
+                    response = async_to_sync(SystemActor().signed_request)(
+                        method="get", uri=object_uri
                     )
-            raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
+                except (httpx.RequestError, httpx.ConnectError):
+                    raise cls.DoesNotExist(f"Could not fetch {object_uri}")
+                if response.status_code in [404, 410]:
+                    raise cls.DoesNotExist(f"No post at {object_uri}")
+                if response.status_code >= 500:
+                    raise cls.DoesNotExist(f"Server error fetching {object_uri}")
+                if response.status_code >= 400:
+                    raise cls.DoesNotExist(
+                        f"Error fetching post from {object_uri}: {response.status_code}",
+                        {response.content},
+                    )
+                return cls.by_ap(
+                    canonicalise(response.json(), include_security=True),
+                    create=True,
+                    update=True,
+                )
+            else:
+                raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
 
     @classmethod
     def handle_create_ap(cls, data):
