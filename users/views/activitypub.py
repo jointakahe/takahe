@@ -38,7 +38,7 @@ class HostMeta(View):
             <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
             <Link rel="lrdd" template="https://%s/.well-known/webfinger?resource={uri}"/>
             </XRD>"""
-            % request.META["HTTP_HOST"],
+            % request.headers["host"],
             content_type="application/xml",
         )
 

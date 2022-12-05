@@ -142,19 +142,19 @@ class HttpSignature:
         Verifies that the request has a valid signature for its body
         """
         # Verify body digest
-        if "HTTP_DIGEST" in request.META:
+        if "digest" in request.headers:
             expected_digest = HttpSignature.calculate_digest(request.body)
-            if request.META["HTTP_DIGEST"] != expected_digest:
+            if request.headers["digest"] != expected_digest:
                 raise VerificationFormatError("Digest is incorrect")
         # Verify date header
-        if "HTTP_DATE" in request.META and not skip_date:
-            header_date = parse_http_date(request.META["HTTP_DATE"])
+        if "date" in request.headers and not skip_date:
+            header_date = parse_http_date(request.headers["date"])
             if abs(timezone.now().timestamp() - header_date) > 60:
                 raise VerificationFormatError("Date is too far away")
         # Get the signature details
-        if "HTTP_SIGNATURE" not in request.META:
+        if "signature" not in request.headers:
             raise VerificationFormatError("No signature header present")
-        signature_details = cls.parse_signature(request.META["HTTP_SIGNATURE"])
+        signature_details = cls.parse_signature(request.headers["signature"])
         # Reject unknown algorithms
         if signature_details["algorithm"] != "rsa-sha256":
             raise VerificationFormatError("Unknown signature algorithm")

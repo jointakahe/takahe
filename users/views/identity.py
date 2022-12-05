@@ -42,7 +42,7 @@ class ViewIdentity(ListView):
         ):
             self.identity.transition_perform(IdentityStates.outdated)
         # If they're coming in looking for JSON, they want the actor
-        accept = request.META.get("HTTP_ACCEPT", "text/html").lower()
+        accept = request.headers.get("accept", "text/html").lower()
         if (
             "application/json" in accept
             or "application/ld" in accept

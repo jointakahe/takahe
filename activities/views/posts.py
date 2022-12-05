@@ -21,7 +21,7 @@ class Individual(TemplateView):
         self.identity = by_handle_or_404(self.request, handle, local=False)
         self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
         # If they're coming in looking for JSON, they want the actor
-        accept = request.META.get("HTTP_ACCEPT", "text/html").lower()
+        accept = request.headers.get("accept", "text/html").lower()
         if (
             "application/json" in accept
             or "application/ld" in accept

@@ -9,10 +9,10 @@ def by_handle_or_404(request, handle, local=True, fetch=False) -> Identity:
     Domain-sensitive, so it will understand short handles on alternate domains.
     """
     if "@" not in handle:
-        if "HTTP_HOST" not in request.META:
+        if "host" not in request.headers:
             raise Http404("No hostname available")
         username = handle
-        domain_instance = Domain.get_domain(request.META["HTTP_HOST"])
+        domain_instance = Domain.get_domain(request.headers["host"])
         if domain_instance is None:
             raise Http404("No matching domains found")
         domain = domain_instance.domain

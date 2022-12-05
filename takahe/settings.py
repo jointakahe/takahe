@@ -210,7 +210,7 @@ if SETUP.DATABASE_SERVER:
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "ENGINE": "django.db.backends.postgresql",
             "HOST": SETUP.PGHOST,
             "PORT": SETUP.PGPORT,
             "NAME": SETUP.PGNAME,
