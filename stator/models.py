@@ -1,7 +1,7 @@
 import datetime
 import pprint
 import traceback
-from typing import ClassVar, List, Optional, Type, Union, cast
+from typing import ClassVar, cast
 
 from asgiref.sync import sync_to_async
 from django.db import models, transaction
@@ -17,7 +17,7 @@ class StateField(models.CharField):
     A special field that automatically gets choices from a state graph
     """
 
-    def __init__(self, graph: Type[StateGraph], **kwargs):
+    def __init__(self, graph: type[StateGraph], **kwargs):
         # Sensible default for state length
         kwargs.setdefault("max_length", 100)
         # Add choices and initial
@@ -61,7 +61,7 @@ class StatorModel(models.Model):
     state_locked_until = models.DateTimeField(null=True, blank=True)
 
     # Collection of subclasses of us
-    subclasses: ClassVar[List[Type["StatorModel"]]] = []
+    subclasses: ClassVar[list[type["StatorModel"]]] = []
 
     class Meta:
         abstract = True
@@ -71,7 +71,7 @@ class StatorModel(models.Model):
             cls.subclasses.append(cls)
 
     @classproperty
-    def state_graph(cls) -> Type[StateGraph]:
+    def state_graph(cls) -> type[StateGraph]:
         return cls._meta.get_field("state").graph
 
     @property
@@ -104,7 +104,7 @@ class StatorModel(models.Model):
     @classmethod
     def transition_get_with_lock(
         cls, number: int, lock_expiry: datetime.datetime
-    ) -> List["StatorModel"]:
+    ) -> list["StatorModel"]:
         """
         Returns up to `number` tasks for execution, having locked them.
         """
@@ -124,7 +124,7 @@ class StatorModel(models.Model):
     @classmethod
     async def atransition_get_with_lock(
         cls, number: int, lock_expiry: datetime.datetime
-    ) -> List["StatorModel"]:
+    ) -> list["StatorModel"]:
         return await sync_to_async(cls.transition_get_with_lock)(number, lock_expiry)
 
     @classmethod
@@ -143,7 +143,7 @@ class StatorModel(models.Model):
         self.state_ready = True
         self.save()
 
-    async def atransition_attempt(self) -> Optional[State]:
+    async def atransition_attempt(self) -> State | None:
         """
         Attempts to transition the current state by running its handler(s).
         """
@@ -180,7 +180,7 @@ class StatorModel(models.Model):
         )
         return None
 
-    def transition_perform(self, state: Union[State, str]):
+    def transition_perform(self, state: State | str):
         """
         Transitions the instance to the given state name, forcibly.
         """
@@ -237,7 +237,7 @@ class StatorError(models.Model):
     async def acreate_from_instance(
         cls,
         instance: StatorModel,
-        exception: Optional[BaseException] = None,
+        exception: BaseException | None = None,
     ):
         detail = traceback.format_exc()
         if exception and len(exception.args) > 1:

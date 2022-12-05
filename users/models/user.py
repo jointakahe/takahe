@@ -1,5 +1,3 @@
-from typing import List
-
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
@@ -42,7 +40,7 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"
-    REQUIRED_FIELDS: List[str] = []
+    REQUIRED_FIELDS: list[str] = []
 
     objects = UserManager()
 

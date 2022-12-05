@@ -3,7 +3,6 @@ import datetime
 import time
 import traceback
 import uuid
-from typing import List, Optional, Type
 
 from django.utils import timezone
 
@@ -20,10 +19,10 @@ class StatorRunner:
 
     def __init__(
         self,
-        models: List[Type[StatorModel]],
+        models: list[type[StatorModel]],
         concurrency: int = 50,
         concurrency_per_model: int = 10,
-        liveness_file: Optional[str] = None,
+        liveness_file: str | None = None,
         schedule_interval: int = 30,
         lock_expiry: int = 300,
         run_for: int = 0,

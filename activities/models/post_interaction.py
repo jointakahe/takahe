@@ -1,5 +1,3 @@
-from typing import Dict
-
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -195,7 +193,7 @@ class PostInteraction(StatorModel):
 
     ### ActivityPub (outbound) ###
 
-    def to_ap(self) -> Dict:
+    def to_ap(self) -> dict:
         """
         Returns the AP JSON for this object
         """
@@ -223,7 +221,7 @@ class PostInteraction(StatorModel):
             raise ValueError("Cannot turn into AP")
         return value
 
-    def to_undo_ap(self) -> Dict:
+    def to_undo_ap(self) -> dict:
         """
         Returns the AP JSON to undo this object
         """

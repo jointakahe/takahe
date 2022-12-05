@@ -1,5 +1,5 @@
 from functools import partial
-from typing import ClassVar, Dict, List
+from typing import ClassVar
 
 from django import forms
 from django.core.files import File
@@ -21,8 +21,8 @@ class SettingsPage(FormView):
     options_class = Config.IdentityOptions
     template_name = "settings/settings.html"
     section: ClassVar[str]
-    options: Dict[str, Dict[str, str]]
-    layout: Dict[str, List[str]]
+    options: dict[str, dict[str, str]]
+    layout: dict[str, list[str]]
 
     def get_form_class(self):
         # Create the fields dict from the config object

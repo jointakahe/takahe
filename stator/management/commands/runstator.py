@@ -1,4 +1,4 @@
-from typing import List, Type, cast
+from typing import cast
 
 from asgiref.sync import async_to_sync
 from django.apps import apps
@@ -44,7 +44,7 @@ class Command(BaseCommand):
 
     def handle(
         self,
-        model_labels: List[str],
+        model_labels: list[str],
         concurrency: int,
         liveness_file: str,
         schedule_interval: int,
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         Config.system = Config.load_system()
         # Resolve the models list into names
         models = cast(
-            List[Type[StatorModel]],
+            list[type[StatorModel]],
             [apps.get_model(label) for label in model_labels],
         )
         if not models:

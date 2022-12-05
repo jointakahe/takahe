@@ -1,7 +1,6 @@
 import datetime
 import os
 import urllib.parse as urllib_parse
-from typing import Dict, List, Optional, Union
 
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
@@ -396,7 +395,7 @@ def builtin_document_loader(url: str, options={}):
             )
 
 
-def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
+def canonicalise(json_data: dict, include_security: bool = False) -> dict:
     """
     Given an ActivityPub JSON-LD document, round-trips it through the LD
     systems to end up in a canonicalised, compacted format.
@@ -408,7 +407,7 @@ def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
     """
     if not isinstance(json_data, dict):
         raise ValueError("Pass decoded JSON data into LDDocument")
-    context: Union[str, List[str]]
+    context: str | list[str]
     if include_security:
         context = [
             "https://www.w3.org/ns/activitystreams",
@@ -422,7 +421,7 @@ def canonicalise(json_data: Dict, include_security: bool = False) -> Dict:
     return jsonld.compact(jsonld.expand(json_data), context)
 
 
-def get_list(container, key) -> List:
+def get_list(container, key) -> list:
     """
     Given a JSON-LD value (that can be either a list, or a dict if it's just
     one item), always returns a list"""
@@ -438,7 +437,7 @@ def format_ld_date(value: datetime.datetime) -> str:
     return value.strftime(DATETIME_FORMAT)
 
 
-def parse_ld_date(value: Optional[str]) -> Optional[datetime.datetime]:
+def parse_ld_date(value: str | None) -> datetime.datetime | None:
     if value is None:
         return None
     try:

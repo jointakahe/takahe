@@ -1,6 +1,6 @@
 import re
+from unittest import mock
 
-import mock
 import pytest
 from django.core.exceptions import PermissionDenied
 

@@ -1,6 +1,5 @@
 import re
 from datetime import date, timedelta
-from typing import Dict, List
 
 import urlman
 from asgiref.sync import sync_to_async
@@ -138,7 +137,7 @@ class Hashtag(StatorModel):
     def __str__(self):
         return self.display_name
 
-    def usage_months(self, num: int = 12) -> Dict[date, int]:
+    def usage_months(self, num: int = 12) -> dict[date, int]:
         """
         Return the most recent num months of stats
         """
@@ -153,7 +152,7 @@ class Hashtag(StatorModel):
                 results[date(year, month, 1)] = val
         return dict(sorted(results.items(), reverse=True)[:num])
 
-    def usage_days(self, num: int = 7) -> Dict[date, int]:
+    def usage_days(self, num: int = 7) -> dict[date, int]:
         """
         Return the most recent num days of stats
         """
@@ -170,7 +169,7 @@ class Hashtag(StatorModel):
         return dict(sorted(results.items(), reverse=True)[:num])
 
     @classmethod
-    def hashtags_from_content(cls, content) -> List[str]:
+    def hashtags_from_content(cls, content) -> list[str]:
         """
         Return a parsed and sanitized of hashtags found in content without
         leading '#'.
