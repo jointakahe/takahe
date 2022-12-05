@@ -6,6 +6,7 @@ FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
+        libxslt1.1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements.txt
@@ -15,11 +16,16 @@ RUN apt-get update \
         gcc \
         libc6-dev \
         libpq-dev \
+        # Required to build lxml on arm64.
+        libxslt1-dev \
+        zlib1g-dev \
     && python3 -m pip install --upgrade -r requirements.txt \
     && apt-get purge -y --auto-remove \
         gcc \
         libc6-dev \
         libpq-dev \
+        libxslt1-dev \
+        zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /takahe
