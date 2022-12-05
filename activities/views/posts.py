@@ -34,11 +34,12 @@ class Individual(TemplateView):
             return super().get(request)
 
     def get_context_data(self):
+        parent = None
         if self.post_obj.in_reply_to:
             try:
                 parent = Post.by_object_uri(self.post_obj.in_reply_to, fetch=True)
             except Post.DoesNotExist:
-                parent = None
+                pass
         return {
             "identity": self.identity,
             "post": self.post_obj,
