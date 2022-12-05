@@ -1,6 +1,5 @@
-import re
-
 from django import forms
+from django.core.validators import RegexValidator
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -8,6 +7,27 @@ from django.views.generic import FormView, TemplateView
 
 from users.decorators import admin_required
 from users.models import Domain
+
+
+class DomainValidator(RegexValidator):
+    ul = "\u00a1-\uffff"  # Unicode letters range (must not be a raw string).
+
+    # Host patterns
+    hostname_re = (
+        r"[a-z" + ul + r"0-9](?:[a-z" + ul + r"0-9-]{0,61}[a-z" + ul + r"0-9])?"
+    )
+    # Max length for domain name labels is 63 characters per RFC 1034 sec. 3.1
+    domain_re = r"(?:\.(?!-)[a-z" + ul + r"0-9-]{1,63}(?<!-))*"
+    tld_re = (
+        r"\."  # dot
+        r"(?!-)"  # can't start with a dash
+        r"(?:[a-z" + ul + "-]{2,63}"  # domain label
+        r"|xn--[a-z0-9]{1,59})"  # or punycode label
+        r"(?<!-)"  # can't end with a dash
+        r"\.?"  # may have a trailing dot
+    )
+    regex = "^" + hostname_re + domain_re + tld_re + "$"
+    message = "This does not look like a domain name"
 
 
 @method_decorator(admin_required, name="dispatch")
@@ -31,10 +51,12 @@ class DomainCreate(FormView):
     class form_class(forms.Form):
         domain = forms.CharField(
             help_text="The domain displayed as part of a user's identity.\nCannot be changed after the domain has been created.",
+            validators=[DomainValidator()],
         )
         service_domain = forms.CharField(
             help_text="Optional - a domain that serves Takahē if it is not running on the main domain.\nCannot be changed after the domain has been created.",
             required=False,
+            validators=[DomainValidator()],
         )
         public = forms.BooleanField(
             help_text="If any user on this server can create identities here",
@@ -47,13 +69,7 @@ class DomainCreate(FormView):
             required=False,
         )
 
-        domain_regex = re.compile(
-            r"^((?!-))(xn--)?[a-z0-9][a-z0-9-_]{0,61}[a-z0-9]{0,1}\.(xn--)?([a-z0-9\-]{1,61}|[a-z0-9-]{1,30}\.[a-z]{2,})$"
-        )
-
         def clean_domain(self):
-            if not self.domain_regex.match(self.cleaned_data["domain"]):
-                raise forms.ValidationError("This does not look like a domain name")
             if Domain.objects.filter(
                 models.Q(domain=self.cleaned_data["domain"])
                 | models.Q(service_domain=self.cleaned_data["domain"])
@@ -64,8 +80,6 @@ class DomainCreate(FormView):
         def clean_service_domain(self):
             if not self.cleaned_data["service_domain"]:
                 return None
-            if not self.domain_regex.match(self.cleaned_data["service_domain"]):
-                raise forms.ValidationError("This does not look like a domain name")
             if Domain.objects.filter(
                 models.Q(domain=self.cleaned_data["service_domain"])
                 | models.Q(service_domain=self.cleaned_data["service_domain"])
