@@ -44,6 +44,10 @@
             <a href="{{ post.urls.action_delete }}">
                 <i class="fa-solid fa-trash"></i> Delete
             </a>
+            {% elif not post.local and post.url %}
+              <a href="{{ post.url }}">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
+              </a>
             {% endif %}
         </menu>
     </div>
