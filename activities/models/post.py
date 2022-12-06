@@ -279,8 +279,12 @@ class Post(StatorModel):
         def replacer(match):
             precursor = match.group(1)
             handle = match.group(2).lower()
+            if "@" in handle:
+                short_handle = handle.split("@", 1)[0]
+            else:
+                short_handle = handle
             if handle in possible_matches:
-                return f'{precursor}<a href="{possible_matches[handle]}">@{handle}</a>'
+                return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
             else:
                 return match.group()
 
