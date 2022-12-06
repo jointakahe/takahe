@@ -2,24 +2,35 @@ from django import forms
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, ListView
 
 from users.decorators import admin_required
 from users.models import Domain
 
 
 @method_decorator(admin_required, name="dispatch")
-class FederationRoot(TemplateView):
+class FederationRoot(ListView):
 
     template_name = "admin/federation.html"
+    paginate_by = 50
 
-    def get_context_data(self):
-        return {
-            "domains": Domain.objects.filter(local=False)
-            .annotate(num_users=models.Count("identities"))
-            .order_by("domain"),
+    def get(self, request, *args, **kwargs):
+        self.query = request.GET.get("query")
+        self.extra_context = {
             "section": "federation",
+            "query": self.query or "",
         }
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        domains = (
+            Domain.objects.filter(local=False)
+            .annotate(num_users=models.Count("identities"))
+            .order_by("domain")
+        )
+        if self.query:
+            domains = domains.filter(domain__icontains=self.query)
+        return domains
 
 
 @method_decorator(admin_required, name="dispatch")

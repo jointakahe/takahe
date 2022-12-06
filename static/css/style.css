@@ -428,6 +428,11 @@ form.follow button {
     margin: 0;
 }
 
+form.search {
+    display: flex;
+    margin: 0 0 20px 0;
+}
+
 form h1 {
     margin: 0 0 10px 0;
 }

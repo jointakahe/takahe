@@ -3,8 +3,12 @@
 {% block subtitle %}Federation{% endblock %}
 
 {% block content %}
+    <form action="." class="search">
+        <input type="search" name="query" value="{{ query }}" placeholder="Search by domain">
+        <button><i class="fa-solid fa-search"></i></button>
+    </form>
     <section class="icon-menu">
-        {% for domain in domains %}
+        {% for domain in page_obj %}
             <a class="option" href="{{ domain.urls.edit_federation }}">
                 <i class="fa-solid fa-globe"></i>
                 <span class="handle">
@@ -20,5 +24,13 @@
         {% empty %}
             <p class="option empty">There are no federation links yet.</p>
         {% endfor %}
+        <div class="load-more">
+            {% if page_obj.has_previous %}
+                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+            {% endif %}
+        </div>
     </section>
 {% endblock %}
