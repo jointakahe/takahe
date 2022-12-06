@@ -1048,7 +1048,18 @@ table.metadata td.name {
     }
 
     footer {
-        display: none;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 250px;
+        margin: 0;
+        padding: 5px;
+        text-align: right;
+    }
+
+    footer a {
+        display: block;
+        border: 0;
     }
 
     header .logo {
@@ -1092,6 +1103,10 @@ table.metadata td.name {
 
     .right-column h2,
     .right-column .compose {
+        display: none;
+    }
+
+    footer {
         display: none;
     }
 }
