@@ -145,9 +145,21 @@ class Inbox(View):
         # This ensures that the signature used for the headers matches the actor
         # described in the payload.
         identity = Identity.by_actor_uri(document["actor"], create=True, transient=True)
+        if (
+            document["type"] == "Delete"
+            and document["actor"] == document["object"]
+            and not identity.pk
+        ):
+            # We don't have an Identity record for the user. No-op
+            exceptions.capture_message(
+                f"Inbox: Discarded delete message for unknown actor {document['actor']}"
+            )
+            return HttpResponse(status=202)
+
         if not identity.public_key:
             # See if we can fetch it right now
             async_to_sync(identity.fetch_actor)()
+
         if not identity.public_key:
             exceptions.capture_message(
                 f"Inbox error: cannot fetch actor {document['actor']}"
@@ -160,6 +172,7 @@ class Inbox(View):
                 f"Inbox: Discarded message from {identity.domain}"
             )
             return HttpResponse(status=202)
+
         # If there's a "signature" payload, verify against that
         if "signature" in document:
             try:

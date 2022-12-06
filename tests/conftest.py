@@ -92,6 +92,7 @@ def identity(user, domain) -> Identity:
     """
     identity = Identity.objects.create(
         actor_uri="https://example.com/@test@example.com/",
+        inbox_uri="https://example.com/@test@example.com/inbox/",
         username="test",
         domain=domain,
         name="Test User",
@@ -125,6 +126,7 @@ def other_identity(user, domain) -> Identity:
     """
     identity = Identity.objects.create(
         actor_uri="https://example.com/@other@example.com/",
+        inbox_uri="https://example.com/@other@example.com/inbox/",
         username="other",
         domain=domain,
         name="Other User",
@@ -143,6 +145,7 @@ def remote_identity() -> Identity:
     domain = Domain.objects.create(domain="remote.test", local=False)
     return Identity.objects.create(
         actor_uri="https://remote.test/test-actor/",
+        inbox_uri="https://remote.test/@test/inbox/",
         profile_uri="https://remote.test/@test/",
         username="test",
         domain=domain,

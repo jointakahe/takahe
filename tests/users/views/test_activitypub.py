@@ -31,3 +31,25 @@ def test_webfinger_system_actor(client):
     data = client.get("/actor/", HTTP_ACCEPT="application/ld+json").json()
     assert data["id"] == "https://example.com/actor/"
     assert data["inbox"] == "https://example.com/actor/inbox/"
+
+
+@pytest.mark.django_db
+def test_delete_actor(client, identity):
+    data = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "actor": "https://mastodon.social/users/fakec8b6984105c8f15070a2",
+        "id": "https://mastodon.social/users/fakec8b6984105c8f15070a2#delete",
+        "object": "https://mastodon.social/users/fakec8b6984105c8f15070a2",
+        "signature": {
+            "created": "2022-12-06T03:54:28Z",
+            "creator": "https://mastodon.social/users/fakec8b6984105c8f15070a2#main-key",
+            "signatureValue": "This value doesn't matter",
+            "type": "RsaSignature2017",
+        },
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+        "type": "Delete",
+    }
+    resp = client.post(
+        identity.inbox_uri, data=data, content_type="application/activity+json"
+    )
+    assert resp.status_code == 202
