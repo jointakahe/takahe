@@ -19,7 +19,7 @@ RUN apt-get update \
         # Required to build lxml on arm64.
         libxslt1-dev \
         zlib1g-dev \
-    && python3 -m pip install --upgrade -r requirements.txt \
+    && python3 -m pip install --no-cache-dir --upgrade -r requirements.txt \
     && apt-get purge -y --auto-remove \
         gcc \
         libc6-dev \
