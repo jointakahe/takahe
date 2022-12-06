@@ -20,7 +20,7 @@ def capture_message(message: str):
     """
     Sends the informational message to Sentry if it's configured
     """
-    if settings.SETUP.SENTRY_DSN:
+    if settings.SETUP.SENTRY_DSN and settings.SENTRY_CAPTURE_MESSAGES:
         from sentry_sdk import capture_message
 
         capture_message(message)
