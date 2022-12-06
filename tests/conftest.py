@@ -80,6 +80,12 @@ def domain() -> Domain:
 
 @pytest.fixture
 @pytest.mark.django_db
+def domain2() -> Domain:
+    return Domain.objects.create(domain="example2.com", local=True, public=True)
+
+
+@pytest.fixture
+@pytest.mark.django_db
 def identity(user, domain) -> Identity:
     """
     Creates a basic test identity with a user and domain.
@@ -89,6 +95,23 @@ def identity(user, domain) -> Identity:
         username="test",
         domain=domain,
         name="Test User",
+        local=True,
+    )
+    identity.users.set([user])
+    return identity
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def identity2(user, domain2) -> Identity:
+    """
+    Creates a basic test identity with a user and domain.
+    """
+    identity = Identity.objects.create(
+        actor_uri="https://example2.com/@test@example2.com/",
+        username="test",
+        domain=domain2,
+        name="Test User Domain2",
         local=True,
     )
     identity.users.set([user])
@@ -124,6 +147,23 @@ def remote_identity() -> Identity:
         username="test",
         domain=domain,
         name="Test Remote User",
+        local=False,
+    )
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def remote_identity2() -> Identity:
+    """
+    Creates a basic remote test identity with a domain.
+    """
+    domain = Domain.objects.create(domain="remote2.test", local=False)
+    return Identity.objects.create(
+        actor_uri="https://remote2.test/test-actor/",
+        profile_uri="https://remote2.test/@test/",
+        username="test",
+        domain=domain,
+        name="Test2 Remote User",
         local=False,
     )
 

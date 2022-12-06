@@ -32,7 +32,9 @@ def test_fetch_post(httpx_mock: HTTPXMock, config_system):
 
 
 @pytest.mark.django_db
-def test_linkify_mentions_remote(identity, remote_identity):
+def test_linkify_mentions_remote(
+    identity, identity2, remote_identity, remote_identity2
+):
     """
     Tests that we can linkify post mentions properly for remote use
     """
@@ -77,9 +79,28 @@ def test_linkify_mentions_remote(identity, remote_identity):
         == '<p>Hey <a href="https://remote.test/@test/">@test</a></p>'
     )
 
+    # Test that collapsing only applies to the first unique, short username
+    post = Post.objects.create(
+        content="<p>Hey @TeSt@remote.test and @test@remote2.test</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.set([remote_identity, remote_identity2])
+    assert post.safe_content_remote() == (
+        '<p>Hey <a href="https://remote.test/@test/">@test</a> '
+        'and <a href="https://remote2.test/@test/">@test@remote2.test</a></p>'
+    )
+
+    post.content = "<p>Hey @TeSt, @Test@remote.test and @test</p>"
+    assert post.safe_content_remote() == (
+        '<p>Hey <a href="https://remote2.test/@test/">@test</a>, '
+        '<a href="https://remote.test/@test/">@test@remote.test</a> '
+        'and <a href="https://remote2.test/@test/">@test</a></p>'
+    )
+
 
 @pytest.mark.django_db
-def test_linkify_mentions_local(identity, remote_identity):
+def test_linkify_mentions_local(identity, identity2, remote_identity):
     """
     Tests that we can linkify post mentions properly for local use
     """
@@ -96,14 +117,16 @@ def test_linkify_mentions_local(identity, remote_identity):
     )
     # Test a full username (local)
     post = Post.objects.create(
-        content="<p>@test@example.com, welcome!</p>",
+        content="<p>@test@example.com, welcome! @test@example2.com @test@example.com</p>",
         author=identity,
         local=True,
     )
     post.mentions.add(identity)
-    assert (
-        post.safe_content_local()
-        == '<p><a href="/@test@example.com/">@test</a>, welcome!</p>'
+    post.mentions.add(identity2)
+    assert post.safe_content_local() == (
+        '<p><a href="/@test@example.com/">@test</a>, welcome!'
+        ' <a href="/@test@example2.com/">@test@example2.com</a>'
+        ' <a href="/@test@example.com/">@test</a></p>'
     )
     # Test a full username (remote) with no <p>
     post = Post.objects.create(

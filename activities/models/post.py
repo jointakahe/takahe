@@ -276,6 +276,8 @@ class Post(StatorModel):
             possible_matches[mention.username] = url
             possible_matches[f"{mention.username}@{mention.domain_id}"] = url
 
+        collapse_name: dict[str, str] = {}
+
         def replacer(match):
             precursor = match.group(1)
             handle = match.group(2).lower()
@@ -284,6 +286,10 @@ class Post(StatorModel):
             else:
                 short_handle = handle
             if handle in possible_matches:
+                if short_handle not in collapse_name:
+                    collapse_name[short_handle] = handle
+                elif collapse_name.get(short_handle) != handle:
+                    short_handle = handle
                 return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
             else:
                 return match.group()
