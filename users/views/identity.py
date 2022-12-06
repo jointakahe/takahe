@@ -18,9 +18,7 @@ from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
 
 
-@method_decorator(
-    cache_page_by_ap_json(public_only=True, key_prefix="asdf"), name="dispatch"
-)
+@method_decorator(cache_page_by_ap_json(public_only=True), name="dispatch")
 class ViewIdentity(ListView):
     """
     Shows identity profile pages, and also acts as the Actor endpoint when
