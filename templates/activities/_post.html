@@ -49,6 +49,11 @@
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
               </a>
             {% endif %}
+            {% if request.user.admin %}
+            <a href="{{ post.urls.admin_edit }}">
+                <i class="fa-solid fa-gear"></i> View In Admin
+            </a>
+            {% endif %}
         </menu>
     </div>
     {% endif %}

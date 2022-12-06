@@ -219,6 +219,7 @@ class Post(StatorModel):
         action_delete = "{view}delete/"
         action_edit = "{view}edit/"
         action_reply = "/compose/?reply_to={self.id}"
+        admin_edit = "/djadmin/activities/post/{self.id}/change/"
 
         def get_scheme(self, url):
             return "https"
