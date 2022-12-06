@@ -6,6 +6,25 @@ from core import sentry
 from core.models import Config
 
 
+class AcceptMiddleware:
+    """
+    Detects any Accept headers signifying a fellow AP server is trying to get JSON.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        accept = request.headers.get("accept", "text/html").lower()
+        request.ap_json = (
+            "application/json" in accept
+            or "application/ld" in accept
+            or "application/activity" in accept
+        )
+        response = self.get_response(request)
+        return response
+
+
 class ConfigLoadingMiddleware:
     """
     Caches the system config every request
