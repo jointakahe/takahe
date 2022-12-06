@@ -762,7 +762,7 @@ table.metadata td.name {
     font-weight: bold;
 }
 
-/* Named Timelines */
+/* Timelines */
 
 .left-column .timeline-name {
     margin: 0 0 10px 0;
@@ -772,6 +772,22 @@ table.metadata td.name {
 
 .left-column .timeline-name i {
     margin-right: 10px
+}
+
+.view-options {
+    margin: 0 0 10px 3px;
+}
+
+.view-options a {
+    margin: 0 10px 0 0;
+    padding: 4px 7px;
+    color: var(--color-text-duller);
+    background: var(--color-bg-box);
+    border-radius: 3px;
+}
+
+.view-options a.selected {
+    color: var(--color-text-main);
 }
 
 /* Posts */

@@ -161,9 +161,6 @@ class Federated(ListView):
 
 
 @method_decorator(identity_required, name="dispatch")
-@method_decorator(
-    per_identity_cache_page("cache_timeout_page_timeline"), name="dispatch"
-)
 class Notifications(ListView):
 
     template_name = "activities/notifications.html"
@@ -172,18 +169,30 @@ class Notifications(ListView):
         "allows_refresh": True,
     }
     paginate_by = 50
+    notification_types = {
+        "followed": TimelineEvent.Types.followed,
+        "boosted": TimelineEvent.Types.boosted,
+        "mentioned": TimelineEvent.Types.mentioned,
+        "liked": TimelineEvent.Types.liked,
+    }
 
     def get_queryset(self):
+        # Did they ask to change options?
+        notification_options = self.request.session.get("notification_options", {})
+        for type_name in self.notification_types:
+            notification_options.setdefault(type_name, True)
+            if self.request.GET.get(type_name) == "true":
+                notification_options[type_name] = True
+            elif self.request.GET.get(type_name) == "false":
+                notification_options[type_name] = False
+        self.request.session["notification_options"] = notification_options
+        # Return appropriate events
+        types = []
+        for type_name, type in self.notification_types.items():
+            if notification_options.get(type_name, True):
+                types.append(type)
         return (
-            TimelineEvent.objects.filter(
-                identity=self.request.identity,
-                type__in=[
-                    TimelineEvent.Types.mentioned,
-                    TimelineEvent.Types.boosted,
-                    TimelineEvent.Types.liked,
-                    TimelineEvent.Types.followed,
-                ],
-            )
+            TimelineEvent.objects.filter(identity=self.request.identity, type__in=types)
             .order_by("-created")[:50]
             .select_related("subject_post", "subject_post__author", "subject_identity")
         )
@@ -205,5 +214,7 @@ class Notifications(ListView):
             ):
                 events[-1].collapsed = True
             events.append(event)
+        # Retrieve what kinds of things to show
         context["events"] = events
+        context["notification_options"] = self.request.session["notification_options"]
         return context

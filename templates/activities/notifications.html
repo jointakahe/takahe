@@ -3,6 +3,29 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
+    <div class="view-options">
+        {% if notification_options.followed %}
+            <a href=".?followed=false" class="selected"><i class="fa-solid fa-check"></i> Followers</a>
+        {% else %}
+            <a href=".?followed=true"><i class="fa-solid fa-xmark"></i> Followers</a>
+        {% endif %}
+        {% if notification_options.boosted %}
+            <a href=".?boosted=false" class="selected"><i class="fa-solid fa-check"></i> Boosts</a>
+        {% else %}
+            <a href=".?boosted=true"><i class="fa-solid fa-xmark"></i> Boosts</a>
+        {% endif %}
+        {% if notification_options.liked %}
+            <a href=".?liked=false" class="selected"><i class="fa-solid fa-check"></i> Likes</a>
+        {% else %}
+            <a href=".?liked=true"><i class="fa-solid fa-xmark"></i> Likes</a>
+        {% endif %}
+        {% if notification_options.mentioned %}
+            <a href=".?mentioned=false" class="selected"><i class="fa-solid fa-check"></i> Mentions</a>
+        {% else %}
+            <a href=".?mentioned=true"><i class="fa-solid fa-xmark"></i> Mentions</a>
+        {% endif %}
+    </div>
+
     {% for event in events %}
         {% include "activities/_event.html" %}
     {% empty %}
