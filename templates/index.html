@@ -6,7 +6,7 @@
 {% block content %}
     <div class="about">
         <img class="banner" src="{{ config.site_banner }}">
-        {{ config.site_about|safe|linebreaks }}
+        {{ about }}
     </div>
     <h2>People</h2>
     {% for identity in identities %}

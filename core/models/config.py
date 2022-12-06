@@ -204,6 +204,10 @@ class Config(models.Model):
         site_icon: UploadedImage = static("img/icon-128.png")
         site_banner: UploadedImage = static("img/fjords-banner-600.jpg")
 
+        policy_terms: str = ""
+        policy_privacy: str = ""
+        policy_rules: str = ""
+
         signup_allowed: bool = True
         signup_invite_only: bool = False
         signup_text: str = ""

@@ -60,7 +60,10 @@ def config_system(keypair):
         system_actor_private_key=keypair["private_key"],
         system_actor_public_key=keypair["public_key"],
     )
+    Config.__forced__ = True
     yield Config.system
+    Config.__forced__ = False
+    del Config.system
 
 
 @pytest.fixture
@@ -126,7 +129,7 @@ def remote_identity() -> Identity:
 
 
 @pytest.fixture
-def stator_runner(config_system) -> StatorRunner:
+def stator(config_system) -> StatorRunner:
     """
     Return an initialized StatorRunner for tests that need state transitioning
     to happen.

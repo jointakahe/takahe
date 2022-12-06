@@ -61,6 +61,11 @@ urlpatterns = [
         name="admin_tuning",
     ),
     path(
+        "admin/policies/",
+        admin.PoliciesSettings.as_view(),
+        name="admin_policies",
+    ),
+    path(
         "admin/domains/",
         admin.Domains.as_view(),
         name="admin_domains",
@@ -150,6 +155,27 @@ urlpatterns = [
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
     path("identity/select/", identity.SelectIdentity.as_view()),
     path("identity/create/", identity.CreateIdentity.as_view()),
+    # Flat pages
+    path(
+        "about/",
+        core.FlatPage.as_view(title="About This Server", config_option="site_about"),
+        name="about",
+    ),
+    path(
+        "pages/privacy/",
+        core.FlatPage.as_view(title="Privacy Policy", config_option="policy_privacy"),
+        name="privacy",
+    ),
+    path(
+        "pages/terms/",
+        core.FlatPage.as_view(title="Terms of Service", config_option="policy_terms"),
+        name="terms",
+    ),
+    path(
+        "pages/rules/",
+        core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
+        name="rules",
+    ),
     # Well-known endpoints and system actor
     path(".well-known/webfinger", activitypub.Webfinger.as_view()),
     path(".well-known/host-meta", activitypub.HostMeta.as_view()),

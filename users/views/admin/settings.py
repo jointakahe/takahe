@@ -44,7 +44,7 @@ class BasicSettings(AdminSettingsPage):
         },
         "site_about": {
             "title": "About This Site",
-            "help_text": "Displayed on the homepage and the about page.\nNewlines are preserved; HTML also allowed.",
+            "help_text": "Displayed on the homepage and the about page.\nUse Markdown for formatting.",
             "display": "textarea",
         },
         "site_icon": {
@@ -153,5 +153,36 @@ class TuningSettings(AdminSettingsPage):
         ],
         "RSS Feeds": [
             "cache_timeout_identity_feed",
+        ],
+    }
+
+
+class PoliciesSettings(AdminSettingsPage):
+
+    section = "policies"
+
+    options = {
+        "policy_terms": {
+            "title": "Terms of Service Page",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.",
+            "display": "textarea",
+        },
+        "policy_privacy": {
+            "title": "Privacy Policy Page",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.",
+            "display": "textarea",
+        },
+        "policy_rules": {
+            "title": "Server Rules Page",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.",
+            "display": "textarea",
+        },
+    }
+
+    layout = {
+        "Policies": [
+            "policy_rules",
+            "policy_terms",
+            "policy_privacy",
         ],
     }

@@ -1,10 +1,13 @@
+import markdown_it
 from django.http import JsonResponse
 from django.templatetags.static import static
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView, View
 
 from activities.views.timelines import Home
 from core.decorators import cache_page
+from core.models import Config
 from users.models import Identity
 
 
@@ -22,6 +25,9 @@ class LoggedOutHomepage(TemplateView):
 
     def get_context_data(self):
         return {
+            "about": mark_safe(
+                markdown_it.MarkdownIt().render(Config.system.site_about)
+            ),
             "identities": Identity.objects.filter(
                 local=True,
                 discoverable=True,
@@ -60,3 +66,26 @@ class AppManifest(View):
                 ],
             }
         )
+
+
+class FlatPage(TemplateView):
+    """
+    Serves a "flat page" from a config option,
+    returning 404 if it is empty.
+    """
+
+    template_name = "flatpage.html"
+    config_option = None
+    title = None
+
+    def get_context_data(self):
+        if self.config_option is None:
+            raise ValueError("No config option provided")
+        # Get raw content
+        content = getattr(Config.system, self.config_option)
+        # Render it
+        html = markdown_it.MarkdownIt().render(content)
+        return {
+            "title": self.title,
+            "content": mark_safe(html),
+        }

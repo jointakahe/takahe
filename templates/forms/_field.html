@@ -6,7 +6,7 @@
         </label>
         {% if field.help_text %}
             <p class="help">
-                {{ field.help_text|linebreaksbr }}
+                {{ field.help_text|safe|linebreaksbr }}
             </p>
         {% endif %}
         {{ field.errors }}

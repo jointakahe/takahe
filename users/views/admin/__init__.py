@@ -17,7 +17,11 @@ from users.views.admin.hashtags import (  # noqa
     HashtagEdit,
     Hashtags,
 )
-from users.views.admin.settings import BasicSettings, TuningSettings  # noqa
+from users.views.admin.settings import (  # noqa
+    BasicSettings,
+    PoliciesSettings,
+    TuningSettings,
+)
 
 
 @method_decorator(admin_required, name="dispatch")

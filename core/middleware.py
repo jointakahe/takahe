@@ -11,19 +11,21 @@ class ConfigLoadingMiddleware:
     Caches the system config every request
     """
 
-    refresh_interval: float = 30.0
+    refresh_interval: float = 5.0
 
     def __init__(self, get_response):
         self.get_response = get_response
         self.config_ts: float = 0.0
 
     def __call__(self, request):
-        if (
-            not getattr(Config, "system", None)
-            or (time() - self.config_ts) >= self.refresh_interval
-        ):
-            Config.system = Config.load_system()
-            self.config_ts = time()
+        # Allow test fixtures to force and lock the config
+        if not getattr(Config, "__forced__", False):
+            if (
+                not getattr(Config, "system", None)
+                or (time() - self.config_ts) >= self.refresh_interval
+            ):
+                Config.system = Config.load_system()
+                self.config_ts = time()
         response = self.get_response(request)
         return response
 

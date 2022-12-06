@@ -4,6 +4,7 @@ import time
 import traceback
 import uuid
 
+from asgiref.sync import async_to_sync
 from django.utils import timezone
 
 from core import exceptions, sentry
@@ -142,3 +143,16 @@ class StatorRunner:
         Removes all completed asyncio.Tasks from our local in-progress list
         """
         self.tasks = [t for t in self.tasks if not t.done()]
+
+    async def run_single_cycle(self):
+        """
+        Testing entrypoint to advance things just one cycle
+        """
+        await asyncio.wait_for(self.fetch_and_process_tasks(), timeout=1)
+        for _ in range(100):
+            if not self.tasks:
+                break
+            self.remove_completed_tasks()
+            await asyncio.sleep(0.01)
+
+    run_single_cycle_sync = async_to_sync(run_single_cycle)

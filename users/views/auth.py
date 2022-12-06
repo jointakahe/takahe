@@ -30,9 +30,39 @@ class Signup(FormView):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            # Add the invite field if it's enabled
             if Config.system.signup_invite_only:
                 self.fields["invite_code"] = forms.CharField(
                     help_text="Your invite code from one of our admins"
+                )
+            # Add the policies if they're defined
+            policies = []
+            if Config.system.policy_rules:
+                policies.append("<a href='/pages/rules/'>Server Rules</a>")
+            if Config.system.policy_terms:
+                policies.append("<a href='/pages/terms/'>Terms of Service</a>")
+            if Config.system.policy_privacy:
+                policies.append("<a href='/pages/privacy/'>Privacy Policy</a>")
+            if policies:
+                links = ""
+                for i, policy in enumerate(policies):
+                    if i == 0:
+                        links += policy
+                    elif i == len(policies) - 1:
+                        if len(policies) > 2:
+                            links += ", and "
+                        else:
+                            links += " and "
+                        links += policy
+                    else:
+                        links += ", "
+                        links += policy
+                self.fields["policy"] = forms.BooleanField(
+                    label="Policies",
+                    help_text=f"Have you read the {links}, and agree to them?",
+                    widget=forms.Select(
+                        choices=[(False, "I do not agree"), (True, "I agree")]
+                    ),
                 )
 
         def clean_email(self):
@@ -45,8 +75,13 @@ class Signup(FormView):
 
         def clean_invite_code(self):
             invite_code = self.cleaned_data["invite_code"].lower().strip()
-            if not Invite.objects.filter(token=invite_code).exists():
+            invite = Invite.objects.filter(token=invite_code).first()
+            if not invite:
                 raise forms.ValidationError("That is not a valid invite code")
+            if invite.email and invite.email != self.cleaned_data.get("email"):
+                raise forms.ValidationError(
+                    "That is not a valid invite code for this email address"
+                )
             return invite_code
 
         def clean(self):

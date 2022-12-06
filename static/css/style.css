@@ -127,6 +127,7 @@ footer {
 
 footer a {
     border-bottom: 1px solid var(--color-text-duller);
+    margin-right: 5px;
 }
 
 header {
