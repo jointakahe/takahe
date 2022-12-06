@@ -6,13 +6,15 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView, View
 
 from activities.models import Post, PostInteraction, PostInteractionStates, PostStates
-from core.decorators import per_identity_cache_page
+from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
 from users.decorators import identity_required
 from users.shortcuts import by_handle_or_404
 
 
-@method_decorator(per_identity_cache_page("cache_timeout_page_post"), name="dispatch")
+@method_decorator(
+    cache_page_by_ap_json("cache_timeout_page_post", public_only=True), name="dispatch"
+)
 class Individual(TemplateView):
 
     template_name = "activities/post.html"
