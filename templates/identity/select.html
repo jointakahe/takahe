@@ -18,5 +18,10 @@
         <a href="/identity/create/" class="option new">
             <i class="fa-solid fa-plus"></i> Create a new identity
         </a>
+        {% if request.identity %}
+            <a href="{{ request.identity.urls.view }}" class="option new">
+                <i class="fa-solid fa-eye"></i> View current profile page ({{ request.identity.name }})
+            </a>
+        {% endif %}
     </section>
 {% endblock %}
