@@ -3,7 +3,7 @@
 <div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}">
 
     <a href="{{ post.author.urls.view }}">
-        <img src="{{ post.author.local_icon_url }}" class="icon">
+        <img src="{{ post.author.local_icon_url }}" class="icon" alt="Go to author page {{ poat.author.name_or_handle }}">
     </a>
 
     <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">

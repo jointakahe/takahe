@@ -24,7 +24,7 @@
     <main>
         <header>
             <a class="logo" href="/">
-                <img src="{{ config.site_icon }}" width="32">
+                <img src="{{ config.site_icon }}" width="32" alt="">
                 {{ config.site_name }}
             </a>
             <menu>
@@ -44,10 +44,10 @@
                     <a href="/identity/select/" class="identity">
                         {% if not request.identity %}
                             No Identity
-                            <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
+                            <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected" alt="">
                         {% else %}
                             {{ request.identity.username }}
-                            <img src="{{ request.identity.local_icon_url }}" title="{{ request.identity.handle }}">
+                            <img src="{{ request.identity.local_icon_url }}" title="{{ request.identity.handle }}" alt="">
                         {% endif %}
                     </a>
                 {% else %}

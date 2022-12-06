@@ -13,10 +13,10 @@
 {% block content %}
     <h1 class="identity">
         {% if identity.local_image_url %}
-            <img src="{{ identity.local_image_url }}" class="banner">
+            <img src="{{ identity.local_image_url }}" class="banner" alt="">
         {% endif %}
 
-        <img src="{{ identity.local_icon_url }}" class="icon">
+        <img src="{{ identity.local_icon_url }}" class="icon" alt="">
 
         {% if request.identity %}
             {% if identity == request.identity %}
