@@ -5,6 +5,7 @@ from typing import Optional
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
+from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
@@ -696,7 +697,10 @@ class Post(StatorModel):
         """
         response = httpx.get(
             self.object_uri,
-            headers={"Accept": "application/json"},
+            headers={
+                "Accept": "application/json",
+                "User-Agent": settings.TAKAHE_USER_AGENT,
+            },
             follow_redirects=True,
         )
         if 200 <= response.status_code < 300:
