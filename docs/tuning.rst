@@ -26,8 +26,8 @@ they are with other servers.
 Caching is configured by specifying a cache DSN in the environment variable
 ``TAKAHE_CACHES_DEFAULT``. The DSN format can be any supported by
 `django-cache-url <https://github.com/epicserve/django-cache-url>`_, but
-some cache backends will require additional Python pacakages not required
-by Takahē.
+some cache backends will require additional Python packages not installed
+by default with Takahē.
 
 **Examples**
 
