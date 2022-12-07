@@ -70,22 +70,24 @@
 
     <div class="content {% if post.summary %}hidden{% endif %}">
         {{ post.safe_content_local }}
+
+        {% if post.attachments.exists %}
+          <div class="attachments">
+            {% for attachment in post.attachments.all %}
+              {% if attachment.is_image %}
+                <a href="{{ attachment.full_url }}" class="image">
+                  <img src="{{ attachment.thumbnail_url }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" />
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
     </div>
 
     {% if post.edited %}
     <div class="edited" title="{{ post.edited }}">
         <small>Edited {{ post.edited | timedeltashort }} ago</small>
     </div>
-    {% endif %}
-
-    {% if post.attachments.exists %}
-        <div class="attachments">
-            {% for attachment in post.attachments.all %}
-                {% if attachment.is_image %}
-                    <a href="{{ attachment.full_url }}" class="image"><img src="{{ attachment.thumbnail_url }}" title="{{ attachment.name }}"></a>
-                {% endif %}
-            {% endfor %}
-        </div>
     {% endif %}
 
     <a class="whole-box" href="{{ post.urls.view }}" tabindex="-1"></a>
