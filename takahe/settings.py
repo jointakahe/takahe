@@ -7,6 +7,7 @@ from typing import Literal
 
 import dj_database_url
 import django_cache_url
+import httpx
 import sentry_sdk
 from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -354,3 +355,8 @@ CACHES = {"default": django_cache_url.parse(SETUP.CACHES_DEFAULT or "dummy://")}
 
 if SETUP.ERROR_EMAILS:
     ADMINS = [("Admin", e) for e in SETUP.ERROR_EMAILS]
+
+TAKAHE_USER_AGENT = (
+    f"python-httpx/{httpx.__version__} "
+    f"(Takahe/{__version__}; +https://{SETUP.MAIN_DOMAIN}/)"
+)

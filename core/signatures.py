@@ -220,6 +220,10 @@ class HttpSignature:
                 "algorithm": "rsa-sha256",
             }
         )
+
+        # Announce ourselves with an agent similar to Mastodon
+        headers["User-Agent"] = settings.TAKAHE_USER_AGENT
+
         # Send the request with all those headers except the pseudo one
         del headers["(request-target)"]
         async with httpx.AsyncClient(timeout=timeout) as client:
