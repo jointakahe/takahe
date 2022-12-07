@@ -8,15 +8,15 @@
 
     <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
         {% if post.visibility == 0 %}
-            <i class="visibility fa-solid fa-earth-oceania" title="Public"></i>
+            <i class="visibility fa-solid fa-earth-oceania" title="Public" aria-label="public"></i>
         {% elif post.visibility == 1 %}
-            <i class="visibility fa-solid fa-lock-open" title="Unlisted"></i>
+            <i class="visibility fa-solid fa-lock-open" title="Unlisted" aria-label="unlisted"></i>
         {% elif post.visibility == 2 %}
-            <i class="visibility fa-solid fa-lock" title="Followers Only"></i>
+            <i class="visibility fa-solid fa-lock" title="Followers Only" aria-label="followers only"></i>
         {% elif post.visibility == 3 %}
-            <i class="visibility fa-solid fa-at" title="Mentioned Only"></i>
+            <i class="visibility fa-solid fa-at" title="Mentioned Only" aria-label="mentioned only"></i>
         {% elif post.visibility == 4 %}
-        <i class="visibility fa-solid fa-link-slash" title="Local Only"></i>
+        <i class="visibility fa-solid fa-link-slash" title="Local Only" aria-label="local only"></i>
         {% endif %}
         {% if post.published %}
             <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
