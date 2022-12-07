@@ -1,7 +1,9 @@
 {% load activity_tags %}
 <div class="post user">
 
-    <img src="{{ identity.local_icon_url }}" class="icon" alt="Avatar for {{ identity.name_or_handle }}">
+    <a href="{{ identity.urls.view }}">
+        <img src="{{ identity.local_icon_url }}" class="icon" alt="Avatar for {{ identity.name_or_handle }}">
+    </a>
 
     {% if created %}
     <time>
