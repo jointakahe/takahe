@@ -1,8 +1,8 @@
 {% load static %}
 {% load activity_tags %}
-<div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}">
+<div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
 
-    <a href="{{ post.author.urls.view }}">
+    <a href="{{ post.author.urls.view }}" tabindex="-1">
         <img src="{{ post.author.local_icon_url }}" class="icon">
     </a>
 
@@ -26,31 +26,31 @@
     </time>
 
     {% if request.identity %}
-    <div class="actions">
+    <div class="actions" role="menubar">
         {% include "activities/_reply.html" %}
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
-        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt">
+        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu">
             <i class="fa-solid fa-caret-down"></i>
         </a>
         <menu>
-            <a href="{{ post.urls.view }}">
+            <a href="{{ post.urls.view }}" role="menuitem">
                 <i class="fa-solid fa-comment"></i> View Post &amp; Replies
             </a>
             {% if post.author == request.identity %}
-            <a href="{{ post.urls.action_edit }}">
+            <a href="{{ post.urls.action_edit }}" role="menuitem">
                 <i class="fa-solid fa-pen-to-square"></i> Edit
             </a>
-            <a href="{{ post.urls.action_delete }}">
+            <a href="{{ post.urls.action_delete }}" role="menuitem">
                 <i class="fa-solid fa-trash"></i> Delete
             </a>
             {% elif not post.local and post.url %}
-              <a href="{{ post.url }}">
+              <a href="{{ post.url }}" role="menuitem">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
               </a>
             {% endif %}
             {% if request.user.admin %}
-            <a href="{{ post.urls.admin_edit }}">
+            <a href="{{ post.urls.admin_edit }}" role="menuitem">
                 <i class="fa-solid fa-gear"></i> View In Admin
             </a>
             {% endif %}
@@ -88,5 +88,5 @@
         </div>
     {% endif %}
 
-    <a class="whole-box" href="{{ post.urls.view }}"></a>
+    <a class="whole-box" href="{{ post.urls.view }}" tabindex="-1"></a>
 </div>
