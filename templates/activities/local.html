@@ -4,7 +4,7 @@
 
 {% block content %}
     {% for post in page_obj %}
-        {% include "activities/_post.html" %}
+        {% include "activities/_post.html" with feedindex=forloop.counter %}
     {% empty %}
         No posts yet.
     {% endfor %}

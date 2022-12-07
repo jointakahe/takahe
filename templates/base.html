@@ -20,7 +20,8 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-
+    <a id='skip-to-main' class='screenreader-text' href='#main-content'>Skip to Content</a>
+    <a id='skip-to-nav' class='screenreader-text' href='#side-navigation'>Skip to Navigation</a>
     <main>
         <header>
             <a class="logo" href="/">
@@ -29,19 +30,19 @@
             </a>
             <menu>
                 {% if user.is_authenticated %}
-                    <a href="{% url "compose" %}" title="Compose" {% if top_section == "compose" %}class="selected"{% endif %}>
+                    <a href="{% url "compose" %}" title="Compose" role="menuitem" {% if top_section == "compose" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-feather"></i>
                     </a>
-                    <a href="{% url "search" %}" title="Search" {% if top_section == "search" %}class="selected"{% endif %}>
+                    <a href="{% url "search" %}" title="Search" role="menuitem" {% if top_section == "search" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-search"></i>
                     </a>
                     {% if allows_refresh %}
-                        <a href="." title="Refresh" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s">
+                        <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s">
                             <i class="fa-solid fa-rotate"></i>
                         </a>
                     {% endif %}
                     <div class="gap"></div>
-                    <a href="/identity/select/" class="identity">
+                    <a href="/identity/select/" role="menuitem" class="identity">
                         {% if not request.identity %}
                             No Identity
                             <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
@@ -52,7 +53,7 @@
                     </a>
                 {% else %}
                     <div class="gap"></div>
-                    <a href="/auth/login/" class="identity"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+                    <a href="/auth/login/" role="menuitem" class="identity"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
                 {% endif %}
             </menu>
         </header>
@@ -61,11 +62,11 @@
             {% block pre_content %}
             {% endblock %}
             <div class="columns">
-                <div class="left-column">
+                <div class="left-column" id="main-content">
                     {% block content %}
                     {% endblock %}
                 </div>
-                <div class="right-column">
+                <div class="right-column" id="side-navigation">
                     {% block right_content %}
                         {% include "activities/_menu.html" %}
                     {% endblock %}
