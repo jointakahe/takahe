@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
 from activities.models import (
     FanOut,
@@ -11,9 +12,33 @@ from activities.models import (
 )
 
 
+class IdentityLocalFilter(admin.SimpleListFilter):
+    title = _("Local Identity")
+    parameter_name = "islocal"
+
+    identity_field_name = "identity"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("1", _("Yes")),
+            ("0", _("No")),
+        )
+
+    def queryset(self, request, queryset):
+        match self.value():
+            case "1":
+                return queryset.filter(**{f"{self.identity_field_name}__local": True})
+            case "0":
+                return queryset.filter(**{f"{self.identity_field_name}__local": False})
+            case _:
+                return queryset
+
+
 @admin.register(Hashtag)
 class HashtagAdmin(admin.ModelAdmin):
     list_display = ["hashtag", "name_override", "state", "stats_updated", "created"]
+    list_filter = ("public", "state", "stats_updated")
+    search_fields = ["hashtag", "aliases"]
 
     readonly_fields = ["created", "updated", "stats_updated"]
 
@@ -38,6 +63,7 @@ class PostAttachmentInline(admin.StackedInline):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "author", "created"]
+    list_filter = ("local", "visibility", "state", "created")
     raw_id_fields = ["to", "mentions", "author"]
     actions = ["force_fetch", "reparse_hashtags"]
     search_fields = ["content"]
@@ -70,6 +96,7 @@ class PostAdmin(admin.ModelAdmin):
 @admin.register(TimelineEvent)
 class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ["id", "identity", "created", "type"]
+    list_filter = (IdentityLocalFilter, "type")
     readonly_fields = ["created"]
     raw_id_fields = [
         "identity",
@@ -85,6 +112,7 @@ class TimelineEventAdmin(admin.ModelAdmin):
 @admin.register(FanOut)
 class FanOutAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "type", "identity"]
+    list_filter = (IdentityLocalFilter, "type", "state", "state_attempted")
     raw_id_fields = ["identity", "subject_post", "subject_post_interaction"]
     readonly_fields = ["created", "updated"]
     actions = ["force_execution"]
@@ -101,6 +129,7 @@ class FanOutAdmin(admin.ModelAdmin):
 @admin.register(PostInteraction)
 class PostInteractionAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "type", "identity", "post"]
+    list_filter = (IdentityLocalFilter, "type", "state")
     raw_id_fields = ["identity", "post"]
 
     def has_add_permission(self, request, obj=None):
