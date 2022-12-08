@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
+from activities.admin import IdentityLocalFilter
 from users.models import (
     Domain,
     Follow,
@@ -15,12 +17,15 @@ from users.models import (
 @admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
     list_display = ["domain", "service_domain", "local", "blocked", "public"]
+    list_filter = ("local", "blocked")
+    search_fields = ("domain", "service_domain")
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ["email", "created", "last_seen", "admin", "moderator", "banned"]
     search_fields = ["email"]
+    list_filter = ("admin", "moderator", "banned")
 
 
 @admin.register(UserEvent)
@@ -32,7 +37,7 @@ class UserEventAdmin(admin.ModelAdmin):
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
     list_display = ["id", "handle", "actor_uri", "state", "local"]
-    list_filter = ["local"]
+    list_filter = ("local", "state", "discoverable")
     raw_id_fields = ["users"]
     actions = ["force_update"]
     readonly_fields = ["actor_json"]
@@ -51,9 +56,22 @@ class IdentityAdmin(admin.ModelAdmin):
         return False
 
 
+class LocalSourceFilter(IdentityLocalFilter):
+    title = _("Local Source Identity")
+    parameter_name = "srclocal"
+    identity_field_name = "source"
+
+
+class LocalTargetFilter(IdentityLocalFilter):
+    title = _("Local Target Identity")
+    parameter_name = "tgtlocal"
+    identity_field_name = "target"
+
+
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
+    list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
     raw_id_fields = ["source", "target"]
 
     def has_add_permission(self, request, obj=None):
@@ -72,6 +90,7 @@ class PasswordResetAdmin(admin.ModelAdmin):
 @admin.register(InboxMessage)
 class InboxMessageAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_changed", "message_type", "message_actor"]
+    list_filter = ("state",)
     search_fields = ["message"]
     actions = ["reset_state"]
     readonly_fields = ["state_changed"]

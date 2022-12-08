@@ -13,6 +13,7 @@ class DomainAdmin(admin.ModelAdmin):
         "state",
         "error",
     ]
+    list_filter = ["model_label", "date"]
     ordering = ["-date"]
 
     def has_add_permission(self, request, obj=None):
