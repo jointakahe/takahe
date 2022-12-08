@@ -27,6 +27,7 @@ class Compose(FormView):
         text = forms.CharField(
             widget=forms.Textarea(
                 attrs={
+                    "maxlength": Config.lazy_system_value("post_length"),
                     "placeholder": "What's on your mind?",
                 },
             )
