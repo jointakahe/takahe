@@ -900,7 +900,7 @@ table.metadata td.name {
 }
 
 .post .attachments {
-    margin: 10px 0 10px 64px;
+    padding-top: 4px;
 }
 
 .post .attachments a.image {
