@@ -1,7 +1,10 @@
 import io
 
 import blurhash
+import httpx
+from django.conf import settings
 from django.core.files import File
+from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
 
 
@@ -37,3 +40,28 @@ def blurhash_image(file) -> str:
     Returns the blurhash for an image
     """
     return blurhash.encode(file, 4, 4)
+
+
+async def get_remote_file(
+    url: str,
+    *,
+    timeout: float = settings.SETUP.REMOTE_TIMEOUT,
+    max_size: int | None = None,
+) -> tuple[File | None, str | None]:
+    """
+    Download a URL and return the File and content-type.
+    """
+    async with httpx.AsyncClient() as client:
+        async with client.stream("GET", url, timeout=timeout) as stream:
+            allow_download = max_size is None
+            if max_size:
+                try:
+                    content_length = int(stream.headers["content-length"])
+                    allow_download = content_length <= max_size
+                except TypeError:
+                    pass
+            if allow_download:
+                file = ContentFile(await stream.aread(), name=url)
+                return file, stream.headers["content-type"]
+
+    return None, None

@@ -98,8 +98,8 @@ class Local(ListView):
     def get_queryset(self):
         return (
             Post.objects.local_public()
-            .select_related("author")
-            .prefetch_related("attachments", "mentions")
+            .select_related("author", "author__domain")
+            .prefetch_related("attachments", "mentions", "emojis")
             .order_by("-created")[:50]
         )
 
@@ -126,8 +126,8 @@ class Federated(ListView):
             Post.objects.filter(
                 visibility=Post.Visibilities.public, in_reply_to__isnull=True
             )
-            .select_related("author")
-            .prefetch_related("attachments", "mentions")
+            .select_related("author", "author__domain")
+            .prefetch_related("attachments", "mentions", "emojis")
             .order_by("-created")[:50]
         )
 
@@ -173,7 +173,13 @@ class Notifications(ListView):
         return (
             TimelineEvent.objects.filter(identity=self.request.identity, type__in=types)
             .order_by("-created")[:50]
-            .select_related("subject_post", "subject_post__author", "subject_identity")
+            .select_related(
+                "subject_post",
+                "subject_post__author",
+                "subject_post__author__domain",
+                "subject_identity",
+            )
+            .prefetch_related("subject_post__emojis")
         )
 
     def get_context_data(self, **kwargs):

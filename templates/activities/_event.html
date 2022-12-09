@@ -3,14 +3,14 @@
 {% if event.type == "followed" %}
     <div class="follow-banner">
         <a href="{{ event.subject_identity.urls.view }}">
-            {{ event.subject_identity.name_or_handle }}
+            {{ event.subject_identity.html_name_or_handle }}
         </a> followed you
     </div>
     {% include "activities/_identity.html" with identity=event.subject_identity created=event.created %}
 {% elif event.type == "liked" %}
     <div class="like-banner">
         <a href="{{ event.subject_identity.urls.view }}">
-            {{ event.subject_identity.name_or_handle }}
+            {{ event.subject_identity.html_name_or_handle }}
         </a> liked your post
     </div>
     {% if not event.collapsed %}
@@ -19,7 +19,7 @@
 {% elif event.type == "mentioned" %}
     <div class="mention-banner">
         <a href="{{ event.subject_identity.urls.view }}">
-            {{ event.subject_identity.name_or_handle }}
+            {{ event.subject_identity.html_name_or_handle }}
         </a> mentioned you
     </div>
     {% if not event.collapsed %}
@@ -28,7 +28,7 @@
 {% elif event.type == "boosted" %}
     <div class="boost-banner">
         <a href="{{ event.subject_identity.urls.view }}">
-            {{ event.subject_identity.name_or_handle }}
+            {{ event.subject_identity.html_name_or_handle }}
         </a> boosted your post
     </div>
     {% if not event.collapsed %}

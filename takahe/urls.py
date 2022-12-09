@@ -194,6 +194,11 @@ urlpatterns = [
         mediaproxy.PostAttachmentCacheView.as_view(),
         name="proxy_post_attachment",
     ),
+    path(
+        "proxy/emoji/<emoji_id>/",
+        mediaproxy.EmojiCacheView.as_view(),
+        name="proxy_emoji",
+    ),
     # Well-known endpoints and system actor
     path(".well-known/webfinger", activitypub.Webfinger.as_view()),
     path(".well-known/host-meta", activitypub.HostMeta.as_view()),

@@ -85,6 +85,10 @@ class BasicSettings(AdminSettingsPage):
             "title": "Unreviewed Hashtags Are Public",
             "help_text": "Public Hashtags may appear in Trending and have a Tags timeline",
         },
+        "emoji_unreviewed_are_public": {
+            "title": "Unreviewed Emoji Are Public",
+            "help_text": "Public Emoji may appear as images, instead of shortcodes",
+        },
     }
 
     layout = {
@@ -100,6 +104,7 @@ class BasicSettings(AdminSettingsPage):
             "post_length",
             "content_warning_text",
             "hashtag_unreviewed_are_public",
+            "emoji_unreviewed_are_public",
         ],
         "Identities": [
             "identity_max_per_user",

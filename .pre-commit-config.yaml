@@ -46,4 +46,4 @@ repos:
     rev: v0.991
     hooks:
       - id: mypy
-        additional_dependencies: [types-pyopenssl, types-bleach, types-mock]
+        additional_dependencies: [types-pyopenssl, types-bleach, types-mock, types-cachetools]

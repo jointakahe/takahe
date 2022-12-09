@@ -358,6 +358,10 @@ nav a i {
     width: auto;
 }
 
+.icon-menu .option img.emoji {
+    height: 22px;
+}
+
 .icon-menu .option i {
     display: inline-block;
     text-align: center;
@@ -740,6 +744,10 @@ h1.identity .icon {
     margin: 0 20px 0 0;
 }
 
+h1.identity .emoji {
+    height: 22px;
+}
+
 h1.identity small {
     display: block;
     font-size: 60%;
@@ -750,6 +758,10 @@ h1.identity small {
 
 .bio {
     margin: 0 0 20px 0;
+}
+
+.bio .emoji {
+    height: 22px;
 }
 
 .system-note {
@@ -787,6 +799,10 @@ table.metadata td.name {
     display: flex;
     justify-content: start;
     gap: 1em;
+}
+
+table.metadata td .emoji {
+    height: 22px;
 }
 
 /* Timelines */
@@ -855,6 +871,10 @@ table.metadata td.name {
     height: 28px;
     width: auto;
     float: left;
+}
+
+.post .emoji {
+    height: 22px;
 }
 
 .post .handle {
@@ -1012,6 +1032,13 @@ table.metadata td.name {
 .follow-banner,
 .like-banner {
     padding: 0 0 3px 5px;
+}
+
+.boost-banner .emoji,
+.mention-banner .emoji,
+.follow-banner .emoji,
+.like-banner .emoji {
+    height: 22px;
 }
 
 .boost-banner a,

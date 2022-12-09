@@ -67,6 +67,8 @@ class Individual(TemplateView):
                 in_reply_to=self.post_obj.object_uri,
             )
             .distinct()
+            .select_related("author__domain")
+            .prefetch_related("emojis")
             .order_by("published", "created"),
         }
 

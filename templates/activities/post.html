@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Post by {{ post.author.name_or_handle }}{% endblock %}
+{% block title %}Post by {{ post.author.html_name_or_handle }}{% endblock %}
 
 {% block content %}
     {% if parent %}

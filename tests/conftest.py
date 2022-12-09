@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from activities.models import Emoji
 from api.models import Application, Token
 from core.models import Config
 from stator.runner import StatorModel, StatorRunner
@@ -65,6 +66,16 @@ def config_system(keypair):
     yield Config.system
     Config.__forced__ = False
     del Config.system
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def emoji_locals():
+    Emoji.locals = Emoji.load_locals()
+    Emoji.__forced__ = True
+    yield Emoji.locals
+    Emoji.__forced__ = False
+    del Emoji.locals
 
 
 @pytest.fixture

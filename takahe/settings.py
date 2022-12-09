@@ -107,6 +107,11 @@ class Settings(BaseSettings):
     #: is necessary for compatibility with Mastodon’s image proxy.
     MEDIA_MAX_IMAGE_FILESIZE_MB: int = 10
 
+    #: Maximum filesize for Emoji. Attempting to upload Local Emoji larger than this size will be
+    #: blocked. Remote Emoji larger than this size will not be fetched and served from media, but
+    #: served through the image proxy.
+    EMOJI_MAX_IMAGE_FILESIZE_KB: int = 200
+
     #: Request timeouts to use when talking to other servers Either
     #: float or tuple of floats for (connect, read, write, pool)
     REMOTE_TIMEOUT: float | tuple[float, float, float, float] = 5.0
@@ -194,6 +199,7 @@ MIDDLEWARE = [
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
+    "activities.middleware.EmojiDefaultsLoadingMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"

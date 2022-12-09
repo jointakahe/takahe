@@ -5,7 +5,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
 
-from activities.models import PostAttachment
+from activities.models import Emoji, PostAttachment
 from users.models import Identity
 
 
@@ -54,6 +54,21 @@ class BaseCacheView(View):
 
     def get_remote_url(self):
         raise NotImplementedError()
+
+
+class EmojiCacheView(BaseCacheView):
+    """
+    Caches Emoji
+    """
+
+    item_timeout = 86400 * 7  # One week
+
+    def get_remote_url(self):
+        self.emoji = get_object_or_404(Emoji, pk=self.kwargs["emoji_id"])
+
+        if not self.emoji.remote_url:
+            raise Http404()
+        return self.emoji.remote_url
 
 
 class IdentityIconCacheView(BaseCacheView):

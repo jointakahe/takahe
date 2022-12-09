@@ -169,16 +169,20 @@ class Identity(StatorModel):
 
     @property
     def safe_summary(self):
-        return sanitize_post(self.summary)
+        from activities.templatetags.emoji_tags import imageify_emojis
+
+        return imageify_emojis(sanitize_post(self.summary), self.domain)
 
     @property
     def safe_metadata(self):
+        from activities.templatetags.emoji_tags import imageify_emojis
+
         if not self.metadata:
             return []
         return [
             {
                 "name": data["name"],
-                "value": strip_html(data["value"]),
+                "value": imageify_emojis(strip_html(data["value"]), self.domain),
             }
             for data in self.metadata
         ]
@@ -239,6 +243,15 @@ class Identity(StatorModel):
     @property
     def name_or_handle(self):
         return self.name or self.handle
+
+    @cached_property
+    def html_name_or_handle(self):
+        """
+        Return the name_or_handle with any HTML substitutions made
+        """
+        from activities.templatetags.emoji_tags import imageify_emojis
+
+        return imageify_emojis(self.name_or_handle, self.domain)
 
     @property
     def handle(self):
@@ -302,6 +315,17 @@ class Identity(StatorModel):
                 "sharedInbox": f"https://{self.domain.uri_domain}/inbox/",
             }
         return response
+
+    def to_ap_tag(self):
+        """
+        Return this Identity as an ActivityPub Tag
+        http://joinmastodon.org/ns#Mention
+        """
+        return {
+            "href": self.actor_uri,
+            "name": "@" + self.handle,
+            "type": "Mention",
+        }
 
     ### ActivityPub (inbound) ###
 
@@ -470,7 +494,15 @@ class Identity(StatorModel):
     ### Mastodon Client API ###
 
     def to_mastodon_json(self):
+        from activities.models import Emoji
+
         header_image = self.local_image_url()
+        metadata_value_text = (
+            " ".join([m["value"] for m in self.metadata]) if self.metadata else ""
+        )
+        emojis = Emoji.emojis_from_content(
+            f"{self.name} {self.summary} {metadata_value_text}", self.domain
+        )
         return {
             "id": self.pk,
             "username": self.username,
@@ -491,7 +523,7 @@ class Identity(StatorModel):
                 if self.metadata
                 else []
             ),
-            "emojis": [],
+            "emojis": [emoji.to_mastodon_json() for emoji in emojis],
             "bot": False,
             "group": False,
             "discoverable": self.discoverable,
