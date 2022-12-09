@@ -213,4 +213,8 @@ class Notifications(ListView):
         # Retrieve what kinds of things to show
         context["events"] = events
         context["notification_options"] = self.request.session["notification_options"]
+        context["interactions"] = PostInteraction.get_event_interactions(
+            context["page_obj"],
+            self.request.identity,
+        )
         return context
