@@ -28,6 +28,19 @@ class Compose(FormView):
             widget=forms.Textarea(
                 attrs={
                     "placeholder": "What's on your mind?",
+                    "_": f"""
+                    on load or input
+                        set characters to my.value.trim().length
+                        put { Config.system.post_length } - characters into #character-counter
+
+                        if characters > { Config.system.post_length } then
+                            set #character-counter's style.color to 'var(--color-text-error)'
+                            add [@disabled=] to #post-button
+                        else
+                            set #character-counter's style.color to ''
+                            remove @disabled from #post-button
+                        end
+                    """,
                 },
             )
         )
