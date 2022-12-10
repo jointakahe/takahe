@@ -43,6 +43,9 @@ class SystemActor:
             "id": self.actor_uri,
             "type": "Application",
             "inbox": self.actor_uri + "inbox/",
+            "endpoints": {
+                "sharedInbox": f"https://{settings.MAIN_DOMAIN}/inbox/",
+            },
             "preferredUsername": self.username,
             "url": self.profile_uri,
             "as:manuallyApprovesFollowers": True,

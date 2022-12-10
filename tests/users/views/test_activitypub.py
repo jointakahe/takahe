@@ -14,6 +14,7 @@ def test_webfinger_actor(client, identity):
     # Fetch their actor
     data = client.get("/@test@example.com/", HTTP_ACCEPT="application/ld+json").json()
     assert data["id"] == "https://example.com/@test@example.com/"
+    assert data["endpoints"]["sharedInbox"] == "https://example.com/inbox/"
 
 
 @pytest.mark.django_db
@@ -31,6 +32,7 @@ def test_webfinger_system_actor(client):
     data = client.get("/actor/", HTTP_ACCEPT="application/ld+json").json()
     assert data["id"] == "https://example.com/actor/"
     assert data["inbox"] == "https://example.com/actor/inbox/"
+    assert data["endpoints"]["sharedInbox"] == "https://example.com/inbox/"
 
 
 @pytest.mark.django_db

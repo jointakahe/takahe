@@ -296,6 +296,10 @@ class Identity(StatorModel):
                 "mediaType": media_type_from_filename(self.image.name),
                 "url": self.image.url,
             }
+        if self.local:
+            response["endpoints"] = {
+                "sharedInbox": f"https://{self.domain.uri_domain}/inbox/",
+            }
         return response
 
     ### ActivityPub (inbound) ###

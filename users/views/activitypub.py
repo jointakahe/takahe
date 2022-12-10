@@ -138,7 +138,7 @@ class Inbox(View):
     AP Inbox endpoint
     """
 
-    def post(self, request, handle):
+    def post(self, request, handle=None):
         # Load the LD
         document = canonicalise(json.loads(request.body), include_security=True)
         # Find the Identity by the actor on the incoming item

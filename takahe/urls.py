@@ -199,6 +199,8 @@ urlpatterns = [
     path(".well-known/nodeinfo", activitypub.NodeInfo.as_view()),
     path("nodeinfo/2.0/", activitypub.NodeInfo2.as_view()),
     path("actor/", activitypub.SystemActorView.as_view()),
+    path("actor/inbox/", activitypub.Inbox.as_view()),
+    path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
     # Stator
     path(".stator/", stator.RequestRunner.as_view()),
     # Django admin
