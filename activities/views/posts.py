@@ -3,6 +3,7 @@ from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView, View
 
 from activities.models import Post, PostInteraction, PostInteractionStates, PostStates
@@ -15,6 +16,7 @@ from users.shortcuts import by_handle_or_404
 @method_decorator(
     cache_page_by_ap_json("cache_timeout_page_post", public_only=True), name="dispatch"
 )
+@method_decorator(vary_on_headers("Accept"), name="dispatch")
 class Individual(TemplateView):
 
     template_name = "activities/post.html"

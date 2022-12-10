@@ -118,6 +118,12 @@ class Settings(BaseSettings):
     #: Default cache backend
     CACHES_DEFAULT: CacheBackendUrl | None = None
 
+    #: User icon (avatar) caching backend
+    CACHES_AVATARS: CacheBackendUrl | None = None
+
+    #: Media caching backend
+    CACHES_MEDIA: CacheBackendUrl | None = None
+
     PGHOST: str | None = None
     PGPORT: int | None = 5432
     PGNAME: str = "takahe"
@@ -167,6 +173,7 @@ INSTALLED_APPS = [
     "activities",
     "users",
     "stator",
+    "mediaproxy",
 ]
 
 MIDDLEWARE = [
@@ -351,7 +358,11 @@ if SETUP.MEDIA_BACKEND:
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
 
-CACHES = {"default": django_cache_url.parse(SETUP.CACHES_DEFAULT or "dummy://")}
+CACHES = {
+    "default": django_cache_url.parse(SETUP.CACHES_DEFAULT or "dummy://"),
+    "avatars": django_cache_url.parse(SETUP.CACHES_AVATARS or "dummy://"),
+    "media": django_cache_url.parse(SETUP.CACHES_MEDIA or "dummy://"),
+}
 
 if SETUP.ERROR_EMAILS:
     ADMINS = [("Admin", e) for e in SETUP.ERROR_EMAILS]

@@ -5,6 +5,7 @@ from django.views.static import serve
 
 from activities.views import compose, explore, follows, posts, search, timelines
 from core import views as core
+from mediaproxy import views as mediaproxy
 from stator import views as stator
 from users.views import activitypub, admin, auth, identity, settings
 
@@ -175,6 +176,22 @@ urlpatterns = [
         "pages/rules/",
         core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
         name="rules",
+    ),
+    # Media/image proxy
+    path(
+        "proxy/identity_icon/<identity_id>/",
+        mediaproxy.IdentityIconCacheView.as_view(),
+        name="proxy_identity_icon",
+    ),
+    path(
+        "proxy/identity_image/<identity_id>/",
+        mediaproxy.IdentityImageCacheView.as_view(),
+        name="proxy_identity_image",
+    ),
+    path(
+        "proxy/post_attachment/<attachment_id>/",
+        mediaproxy.PostAttachmentCacheView.as_view(),
+        name="proxy_post_attachment",
     ),
     # Well-known endpoints and system actor
     path(".well-known/webfinger", activitypub.Webfinger.as_view()),

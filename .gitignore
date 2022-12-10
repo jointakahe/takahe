@@ -8,6 +8,7 @@
 .vscode
 /*.env
 /build
+/cache/
 /docs/_build
 /media/
 /static-collected

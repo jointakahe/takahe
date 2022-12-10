@@ -5,6 +5,39 @@ This page contains a collection of tips and settings that can be used to
 tune your server based upon its users and the other servers it federates
 with.
 
+Scaling
+-------
+
+The only bottleneck, and single point of failure in a Takahē installation is
+its database; no permanent state is stored elsewhere.
+
+Provided your database is happy (and PostgreSQL does a very good job of just
+using more resources if you give them to it), you can:
+
+* Run more webserver containers to handle a higher request load (requests
+  come from both users and other ActivityPub servers trying to forward you
+  messages). Consider setting up the DEFAULT cache under high request load, too.
+
+* Run more Stator worker containers to handle a higher processing load (Stator
+  handles pulling profiles, fanning out messages to followers, and processing
+  stats, among others). You'll generally see Stator load climb roughly in
+  relation to the sum of the number of followers each user in your instance has;
+  a "celebrity" or other popular account will give Stator a lot of work as it
+  has to send a copy of each of their posts to every follower, separately.
+
+As you scale up the number of containers, keep the PostgreSQL connection limit
+in mind; this is generally the first thing that will fail, as Stator workers in
+particular are quite connection-hungry (the parallel nature of their internal
+processing means they might be working on 50 different objects at once). It's
+generally a good idea to set it as high as your PostgreSQL server will take
+(consult PostgreSQL tuning guides for the effect changing that settting has
+on memory usage, specifically).
+
+If you end up having a large server that is running into database performance
+problems, please get in touch with us and discuss it; Takahē is young enough
+that we need data and insight from those installations to help optimise it more.
+
+
 Federating
 ----------
 
@@ -17,22 +50,115 @@ Environment Variable:
 
 
 Caching
---------
+-------
 
 By default Takakē has caching disabled. The caching needs of a server can
 varying drastically based upon the number of users and how interconnected
 they are with other servers.
 
-Caching is configured by specifying a cache DSN in the environment variable
-``TAKAHE_CACHES_DEFAULT``. The DSN format can be any supported by
+There are multiple ways Takahē uses caches:
+
+* For caching rendered pages and responses, like user profile information.
+  These caches reduce database load on your server and improve performance.
+
+* For proxying and caching remote user images and post images. These must be
+  proxied to protect your users' privacy; also caching these reduces
+  your server's consumed bandwidth and improves users' loading times.
+
+The exact caches you can configure are:
+
+* ``TAKAHE_CACHES_DEFAULT``: Rendered page and response caching
+
+* ``TAKAHE_CACHES_MEDIA``: Remote post images and user profile header pictures
+
+* ``TAKAHE_CACHES_AVATARS``: Remote user avatars ("icons") only
+
+We recommend you set up ``TAKAHE_CACHES_MEDIA`` and ``TAKAHE_CACHES_AVATARS``
+at a bare minimum - proxying these all the time without caching will eat into
+your server's bandwidth.
+
+All caches are configured the same way - with a custom cache URI/URL. We
+support anything that is available as part of
 `django-cache-url <https://github.com/epicserve/django-cache-url>`_, but
 some cache backends will require additional Python packages not installed
-by default with Takahē.
+by default with Takahē. More discussion on backend is below.
 
-**Examples**
+All items in the cache come with an expiry set - usually one week - but you
+can also configure a maximum cache size on dedicated cache datastores like
+Memcache. The key names used by the caches do not overlap, so there is
+no need to configure different key prefixes for each of Takahē's caches.
 
-* LocMem cache for a small server: ``locmem://default``
-* Memcache cache for a service named ``memcache``  in a docker compose file:
-  ``memcached://memcache:11211?key_prefix=takahe``
-* Multiple memcache cache servers:
-  ``memcached://server1:11211,server2:11211``
+
+Backends
+~~~~~~~~
+
+Redis
+#####
+
+Examples::
+  redis://redis:6379/0
+  redis://user:password@redis:6379/0
+  rediss://user:password@redis:6379/0
+
+A Redis-protocol server. Use ``redis://`` for unencrypted communication and
+``rediss://`` for TLS.
+
+Redis has a large item size limit and is suitable for all caches. We recommend
+that you keep the DEFAULT cache separate from the MEDIA and AVATARS caches, and
+set the ``maxmemory`` on both to appropriate values (the proxying caches will
+need more memory than the DEFAULT cache).
+
+
+
+Memcache
+########
+
+Examples::
+  memcached://memcache:11211?key_prefix=takahe
+  memcached://server1:11211,server2:11211
+
+A remote Memcache-protocol server (or set of servers).
+
+Memcached has a 1MB limit per key by default, so this is only suitable for the
+DEFAULT cache and not the AVATARS or MEDIA cache.
+
+
+Filesystem
+##########
+
+Examples::
+  file:///var/cache/takahe/
+
+A cache on the local disk.
+
+This *will* work with any of the cache backends, but is probably more suitable
+for MEDIA and AVATARS.
+
+Note that if you are running Takahē in a cluster, this cache will not be shared
+across different machines. This is not quite as bad as it first seems; it just
+means you will have more potential uncached requests until all machines have
+a cached copy.
+
+
+Local Memory
+############
+
+Examples::
+  locmem://default
+
+A local memory cache, inside the Python process. This will consume additional
+memory for the process, and should not be used with the MEDIA or AVATARS caches.
+
+
+CDNs
+----
+
+You can use Takahē with a "read through" CDN that takes over your site's main
+domain serving and passes some requests through to Takahē as a backend.
+
+Takahē sets the appropriate ``Vary`` headers to ensure that cache leakage does
+not happen, and ``Last-Modified`` and ``ETag`` headers to allow the CDN to
+correctly expire cache items.
+
+Takahē does not yet support offloading local media URLs (such as profile images
+and post images) to a *separate* CDN URL; this will be coming in the future.

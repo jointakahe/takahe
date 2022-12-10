@@ -252,9 +252,8 @@ You should select the "Domains" link in the sidebar and create one, and then
 you will be able to make your first identity.
 
 
-Scaling
--------
+Tuning and Scaling
+------------------
 
-You can run as many copies of the webserver and workers as you like; the main
-limitation will be your database server's processing power and number of
-allowed connections.
+See :doc:`/tuning` for all the things you should tweak as your server gains
+users. We recommend setting up caches early on!

@@ -77,13 +77,13 @@ class PostAttachment(StatorModel):
         elif self.file:
             return self.file.url
         else:
-            return self.remote_url
+            return f"/proxy/post_attachment/{self.pk}/"
 
     def full_url(self):
         if self.file:
             return self.file.url
         else:
-            return self.remote_url
+            return f"/proxy/post_attachment/{self.pk}/"
 
     ### ActivityPub ###
 

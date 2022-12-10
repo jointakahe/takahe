@@ -153,7 +153,7 @@ class Identity(StatorModel):
         if self.icon:
             return self.icon.url
         elif self.icon_uri:
-            return self.icon_uri
+            return f"/proxy/identity_icon/{self.pk}/"
         else:
             return static("img/unknown-icon-128.png")
 
@@ -164,7 +164,7 @@ class Identity(StatorModel):
         if self.image:
             return self.image.url
         elif self.image_uri:
-            return self.image_uri
+            return f"/proxy/identity_image/{self.pk}/"
 
     @property
     def safe_summary(self):

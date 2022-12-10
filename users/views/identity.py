@@ -7,6 +7,7 @@ from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView, View
 
 from activities.models import Post, PostInteraction
@@ -18,6 +19,7 @@ from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
 from users.shortcuts import by_handle_or_404
 
 
+@method_decorator(vary_on_headers("Accept"), name="dispatch")
 @method_decorator(cache_page_by_ap_json(public_only=True), name="dispatch")
 class ViewIdentity(ListView):
     """
