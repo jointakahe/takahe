@@ -5,6 +5,7 @@ This page contains a collection of tips and settings that can be used to
 tune your server based upon its users and the other servers it federates
 with.
 
+
 Scaling
 -------
 
@@ -38,15 +39,26 @@ problems, please get in touch with us and discuss it; Takahē is young enough
 that we need data and insight from those installations to help optimise it more.
 
 
-Federating
+Federation
 ----------
 
-Environment Variable:
+ActivityPub, as a federated protocol, involves talking to a lot of other
+servers. Sometimes, those servers may be under heavy load and not respond
+when Takahē tries to go and fetch user details, posts, or images.
 
-* ``TAKAHE_REMOTE_TIMEOUT`` is the number of seconds Takahē will allow when
-  making remote requests to other Fediverse instances. This may also be a
-  tuple of four floats to set the timeouts for connect, read, write, and
-  pool. Example ``TAKAHE_REMOTE_TIMEOUT='[0.5, 1.0, 1.0, 0.5]'``
+There is a ``TAKAHE_REMOTE_TIMEOUT`` setting to specify the number of seconds
+Takahē will wait when making remote requests to other Fediverse instances; it
+is set to 5 seconds by default. We recommend you keep this relatively low,
+unless for some reason your server is on a very slow internet link.
+
+This may also be a tuple of four floats to set the timeouts for
+connect, read, write, and pool timeouts::
+
+  TAKAHE_REMOTE_TIMEOUT='[0.5, 1.0, 1.0, 0.5]'
+
+Note that if your server is unreachable (including being so slow that other
+servers' timeouts make the connection fail) for more than about a week, some
+servers may consider it permanently unreachable and stop sending posts.
 
 
 Caching
@@ -96,6 +108,7 @@ Redis
 #####
 
 Examples::
+
   redis://redis:6379/0
   redis://user:password@redis:6379/0
   rediss://user:password@redis:6379/0
@@ -114,6 +127,7 @@ Memcache
 ########
 
 Examples::
+
   memcached://memcache:11211?key_prefix=takahe
   memcached://server1:11211,server2:11211
 
@@ -127,6 +141,7 @@ Filesystem
 ##########
 
 Examples::
+
   file:///var/cache/takahe/
 
 A cache on the local disk.
@@ -144,6 +159,7 @@ Local Memory
 ############
 
 Examples::
+
   locmem://default
 
 A local memory cache, inside the Python process. This will consume additional
