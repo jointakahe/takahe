@@ -804,6 +804,7 @@ class Post(StatorModel):
                     "acct": mention.handle,
                 }
                 for mention in self.mentions.all()
+                if mention.username
             ],
             "tags": (
                 [{"name": tag, "url": "/tag/{tag}/"} for tag in self.hashtags]
