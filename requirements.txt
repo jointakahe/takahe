@@ -22,3 +22,4 @@ sphinx~=5.3.0
 urlman~=2.0.1
 uvicorn~=0.19
 whitenoise~=6.2.0
+redis~=4.4.0
