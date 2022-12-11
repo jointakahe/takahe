@@ -262,7 +262,7 @@ class Post(StatorModel):
         r"(^|[^\w\d\-_])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
     )
 
-    def linkify_mentions(self, content, local=False):
+    def linkify_mentions(self, content: str, local: bool = False) -> str:
         """
         Links mentions _in the context of the post_ - as in, using the mentions
         property as the only source (as we might be doing this without other

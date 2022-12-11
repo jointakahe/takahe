@@ -5,10 +5,10 @@ from core.models import Config
 from takahe import __version__
 from users.models import Domain, Identity
 
-from .base import api
+from .base import api_router
 
 
-@api.get("/v1/instance")
+@api_router.get("/v1/instance")
 def instance_info(request):
     return {
         "uri": request.headers.get("host", settings.SETUP.MAIN_DOMAIN),
@@ -16,7 +16,7 @@ def instance_info(request):
         "short_description": "",
         "description": "",
         "email": "",
-        "version": __version__,
+        "version": f"takahe/{__version__}",
         "urls": {},
         "stats": {
             "user_count": Identity.objects.filter(local=True).count(),
