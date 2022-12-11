@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Authorize {{ application.name }}{% endblock %}
+
+{% block content %}
+    {% if not identities %}
+        <p>
+            You cannot give access to {{ application.name }} as you
+            have no identities yet. Log in via the website and create
+            at least one identity, then retry this process.
+        </p>
+    {% else %}
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset>
+                <legend>Authorize</legend>
+                <div class="field">
+                    <div class="label-input">
+                        <label for="identity">Select Identity</label>
+                        <select name="identity" id="identity">
+                            {% for identity in identities %}
+                                <option value="{{ identity.pk }}">{{ identity.handle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <p>Do you want to give {{ application.name }} access to this identity?</p>
+                <p>It will have permission to: {{ scope }}</p>
+                <input type="hidden" name="client_id" value="{{ application.client_id }}">
+                <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+                <input type="hidden" name="scope" value="{{ scope }}">
+            </fieldset>
+            <div class="buttons">
+                <a href="#" class="secondary button left">Deny</a>
+                <button>Allow</button>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

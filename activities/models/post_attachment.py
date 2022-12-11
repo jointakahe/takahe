@@ -95,5 +95,5 @@ class PostAttachment(StatorModel):
             "width": self.width,
             "height": self.height,
             "mediaType": self.mimetype,
-            "http://joinmastodon.org/ns#focalPoint": [0.5, 0.5],
+            "http://joinmastodon.org/ns#focalPoint": [0, 0],
         }
