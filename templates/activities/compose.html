@@ -34,7 +34,8 @@
             {% endif %}
         </fieldset>
         <div class="buttons">
-            <button>{% if post %}Save Edits{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+            <span id="character-counter">{{ config.post_length }}</span>
+            <button id="post-button">{% if post %}Save Edits{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
         </div>
     </form>
 {% endblock %}
