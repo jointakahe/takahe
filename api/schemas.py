@@ -106,3 +106,57 @@ class Status(Schema):
     muted: bool | None
     bookmarked: bool | None
     pinned: bool | None
+
+
+class Conversation(Schema):
+    id: str
+    unread: bool
+    accounts: list[Account]
+    last_status: Status | None = Field(...)
+
+
+class Notification(Schema):
+    id: str
+    type: Literal[
+        "mention",
+        "status",
+        "reblog",
+        "follow",
+        "follow_request",
+        "favourite",
+        "poll",
+        "update",
+        "admin.sign_up",
+        "admin.report",
+    ]
+    created_at: str
+    account: Account
+    status: Status | None
+
+
+class Tag(Schema):
+    name: str
+    url: str
+    history: dict
+
+
+class Search(Schema):
+    accounts: list[Account]
+    statuses: list[Status]
+    hashtags: list[Tag]
+
+
+class Relationship(Schema):
+    id: str
+    following: bool
+    followed_by: bool
+    showing_reblogs: bool
+    notifying: bool
+    blocking: bool
+    blocked_by: bool
+    muting: bool
+    muting_notifications: bool
+    requested: bool
+    domain_blocking: bool
+    endorsed: bool
+    note: str
