@@ -1,4 +1,4 @@
-from activities.models import PostInteraction, TimelineEvent
+from activities.models import Post, PostInteraction, TimelineEvent
 from api import schemas
 from api.decorators import identity_required
 from api.views.base import api_router
@@ -38,16 +38,16 @@ def notifications(
         .select_related("subject_post", "subject_post__author", "subject_identity")
     )
     if max_id:
-        anchor_event = TimelineEvent.objects.get(pk=max_id)
-        events = events.filter(created__lt=anchor_event.created)
+        anchor_post = Post.objects.get(pk=max_id)
+        events = events.filter(created__lt=anchor_post.created)
     if since_id:
-        anchor_event = TimelineEvent.objects.get(pk=since_id)
-        events = events.filter(created__gt=anchor_event.created)
+        anchor_post = Post.objects.get(pk=since_id)
+        events = events.filter(created__gt=anchor_post.created)
     if min_id:
         # Min ID requires LIMIT events _immediately_ newer than specified, so we
         # invert the ordering to accomodate
-        anchor_event = TimelineEvent.objects.get(pk=min_id)
-        events = events.filter(created__gt=anchor_event.created).order_by("created")
+        anchor_post = Post.objects.get(pk=min_id)
+        events = events.filter(created__gt=anchor_post.created).order_by("created")
     events = list(events[:limit])
     interactions = PostInteraction.get_event_interactions(events, request.identity)
     return [
