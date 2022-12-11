@@ -30,19 +30,6 @@ class Compose(FormView):
                     "autofocus": "autofocus",
                     "maxlength": Config.lazy_system_value("post_length"),
                     "placeholder": "What's on your mind?",
-                    "_": f"""
-                    on load or input
-                        set characters to my.value.trim().length
-                        put { Config.system.post_length } - characters into #character-counter
-
-                        if characters > { Config.system.post_length } then
-                            set #character-counter's style.color to 'var(--color-text-error)'
-                            add [@disabled=] to #post-button
-                        else
-                            set #character-counter's style.color to ''
-                            remove @disabled from #post-button
-                        end
-                    """,
                 },
             )
         )
@@ -66,6 +53,24 @@ class Compose(FormView):
             help_text="Optional - Post will be hidden behind this text until clicked",
         )
         reply_to = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields["text"].widget.attrs[
+                "_"
+            ] = f"""
+                on load or input
+                set characters to my.value.trim().length
+                put {Config.system.post_length} - characters into #character-counter
+
+                if characters > {Config.system.post_length} then
+                    set #character-counter's style.color to 'var(--color-text-error)'
+                    add [@disabled=] to #post-button
+                else
+                    set #character-counter's style.color to ''
+                    remove @disabled from #post-button
+                end
+            """
 
         def clean_text(self):
             text = self.cleaned_data.get("text")

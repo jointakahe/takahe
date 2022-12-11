@@ -1,4 +1,3 @@
-from django import forms
 from django.shortcuts import get_object_or_404, redirect
 from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
@@ -6,8 +5,9 @@ from django.views.generic import FormView, ListView
 
 from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
 from core.decorators import cache_page
-from core.models import Config
 from users.decorators import identity_required
+
+from .compose import Compose
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -15,37 +15,7 @@ class Home(FormView):
 
     template_name = "activities/home.html"
 
-    class form_class(forms.Form):
-        text = forms.CharField(
-            widget=forms.Textarea(
-                attrs={
-                    "placeholder": "What's on your mind?",
-                    "_": f"""
-                    on load or input
-                        set characters to my.value.trim().length
-                        put { Config.system.post_length } - characters into #character-counter
-
-                        if characters > { Config.system.post_length } then
-                            set #character-counter's style.color to 'var(--color-text-error)'
-                            add [@disabled=] to #post-button
-                        else
-                            set #character-counter's style.color to ''
-                            remove @disabled from #post-button
-                        end
-                    """,
-                },
-            )
-        )
-        content_warning = forms.CharField(
-            required=False,
-            label=Config.lazy_system_value("content_warning_text"),
-            widget=forms.TextInput(
-                attrs={
-                    "class": "hidden",
-                    "placeholder": Config.lazy_system_value("content_warning_text"),
-                },
-            ),
-        )
+    form_class = Compose.form_class
 
     def get_context_data(self):
         context = super().get_context_data()
