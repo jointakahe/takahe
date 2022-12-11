@@ -66,7 +66,6 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
 class TokenView(View):
     def post(self, request):
         grant_type = request.POST["grant_type"]
-        scopes = set(self.request.POST.get("scope", "read").split())
         try:
             application = Application.objects.get(
                 client_id=self.request.POST["client_id"]
@@ -84,9 +83,6 @@ class TokenView(View):
                 token = Token.objects.get(code=code, application=application)
             except Token.DoesNotExist:
                 return JsonResponse({"error": "invalid_code"}, status=400)
-            # Verify the scopes match the token
-            if scopes != set(token.scopes):
-                return JsonResponse({"error": "invalid_scope"}, status=400)
             # Update the token to remove its code
             token.code = None
             token.save()

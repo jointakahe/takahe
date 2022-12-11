@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from api.models import Application, Token
 from core.models import Config
 from stator.runner import StatorModel, StatorRunner
 from users.models import Domain, Identity, User
@@ -168,6 +169,26 @@ def remote_identity2() -> Identity:
         domain=domain,
         name="Test2 Remote User",
         local=False,
+    )
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def api_token(identity) -> Token:
+    """
+    Creates an API application, an identity, and a token for that identity
+    """
+    application = Application.objects.create(
+        name="Test App",
+        client_id="tk-test",
+        client_secret="mytestappsecret",
+    )
+    return Token.objects.create(
+        application=application,
+        user=identity.users.first(),
+        identity=identity,
+        token="mytestapitoken",
+        scopes=["read", "write", "follow", "push"],
     )
 
 

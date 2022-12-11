@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
+from django.conf import settings
 from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
@@ -13,7 +14,7 @@ from django.utils.functional import lazy
 
 from core.exceptions import ActorMismatchError
 from core.html import sanitize_post, strip_html
-from core.ld import canonicalise, get_list, media_type_from_filename
+from core.ld import canonicalise, format_ld_date, get_list, media_type_from_filename
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
@@ -153,7 +154,7 @@ class Identity(StatorModel):
         if self.icon:
             return self.icon.url
         elif self.icon_uri:
-            return f"/proxy/identity_icon/{self.pk}/"
+            return f"https://{settings.MAIN_DOMAIN}/proxy/identity_icon/{self.pk}/"
         else:
             return static("img/unknown-icon-128.png")
 
@@ -164,7 +165,7 @@ class Identity(StatorModel):
         if self.image:
             return self.image.url
         elif self.image_uri:
-            return f"/proxy/identity_image/{self.pk}/"
+            return f"https://{settings.MAIN_DOMAIN}/proxy/identity_image/{self.pk}/"
 
     @property
     def safe_summary(self):
@@ -465,6 +466,44 @@ class Identity(StatorModel):
                 self.pk: int | None = other_row.pk
                 await sync_to_async(self.save)()
         return True
+
+    ### Mastodon Client API ###
+
+    def to_mastodon_json(self):
+        return {
+            "id": self.pk,
+            "username": self.username,
+            "acct": self.username if self.local else self.handle,
+            "url": self.absolute_profile_uri(),
+            "display_name": self.name,
+            "note": self.summary or "",
+            "avatar": self.local_icon_url(),
+            "avatar_static": self.local_icon_url(),
+            "header": self.local_image_url() or "",
+            "header_static": self.local_image_url() or "",
+            "locked": False,
+            "fields": (
+                [
+                    {"name": m["name"], "value": m["value"], "verified_at": None}
+                    for m in self.metadata
+                ]
+                if self.metadata
+                else []
+            ),
+            "emojis": [],
+            "bot": False,
+            "group": False,
+            "discoverable": self.discoverable,
+            "suspended": False,
+            "limited": False,
+            "created_at": format_ld_date(
+                self.created.replace(hour=0, minute=0, second=0, microsecond=0)
+            ),
+            "last_status_at": None,  # TODO: populate
+            "statuses_count": self.posts.count(),
+            "followers_count": self.inbound_follows.count(),
+            "following_count": self.outbound_follows.count(),
+        }
 
     ### Cryptography ###
 

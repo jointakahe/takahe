@@ -192,6 +192,7 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "core.middleware.AcceptMiddleware",
     "core.middleware.ConfigLoadingMiddleware",
+    "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
 ]
 

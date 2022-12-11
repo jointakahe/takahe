@@ -9,7 +9,6 @@ from .base import api
 
 
 @api.get("/v1/instance")
-@api.get("/v1/instance/")
 def instance_info(request):
     return {
         "uri": request.headers.get("host", settings.SETUP.MAIN_DOMAIN),
