@@ -1736,7 +1736,7 @@ form .post {
 }
 
 .screenreader-text:focus {
-    color: black;
+    color: var(--color-text-main);
     display: inline-block;
     height: auto;
     width: auto;
