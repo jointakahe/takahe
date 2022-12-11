@@ -66,7 +66,7 @@ class IdentityIconCacheView(BaseCacheView):
 
     def get_remote_url(self):
         self.identity = get_object_or_404(Identity, pk=self.kwargs["identity_id"])
-        if self.identity.local or not self.identity.image_uri:
+        if self.identity.local or not self.identity.icon_uri:
             raise Http404()
         return self.identity.icon_uri
 
