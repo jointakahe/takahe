@@ -1,5 +1,6 @@
 from functools import partial
 
+from django.conf import settings
 from django.db import models
 
 from core.uploads import upload_namer
@@ -77,13 +78,13 @@ class PostAttachment(StatorModel):
         elif self.file:
             return self.file.url
         else:
-            return f"/proxy/post_attachment/{self.pk}/"
+            return f"https://{settings.MAIN_DOMAIN}/proxy/post_attachment/{self.pk}/"
 
     def full_url(self):
         if self.file:
             return self.file.url
         else:
-            return f"/proxy/post_attachment/{self.pk}/"
+            return f"https://{settings.MAIN_DOMAIN}/proxy/post_attachment/{self.pk}/"
 
     ### ActivityPub ###
 
@@ -96,4 +97,29 @@ class PostAttachment(StatorModel):
             "height": self.height,
             "mediaType": self.mimetype,
             "http://joinmastodon.org/ns#focalPoint": [0, 0],
+        }
+
+    ### Mastodon Client API ###
+
+    def to_mastodon_json(self):
+        return {
+            "id": self.pk,
+            "type": "image" if self.is_image() else "unknown",
+            "url": self.full_url(),
+            "preview_url": self.thumbnail_url(),
+            "remote_url": None,
+            "meta": {
+                "original": {
+                    "width": self.width,
+                    "height": self.height,
+                    "size": f"{self.width}x{self.height}",
+                    "aspect": self.width / self.height,
+                },
+                "focus": {
+                    "x": self.focal_x or 0,
+                    "y": self.focal_y or 0,
+                },
+            },
+            "description": self.name,
+            "blurhash": self.blurhash,
         }

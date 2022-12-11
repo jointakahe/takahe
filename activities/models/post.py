@@ -708,3 +708,50 @@ class Post(StatorModel):
                 canonicalise(response.json(), include_security=True),
                 update=True,
             )
+
+    ### Mastodon API ###
+
+    def to_mastodon_json(self):
+        reply_parent = None
+        if self.in_reply_to:
+            reply_parent = Post.objects.filter(object_uri=self.in_reply_to).first()
+        return {
+            "id": self.pk,
+            "uri": self.object_uri,
+            "created_at": format_ld_date(self.published),
+            "account": self.author.to_mastodon_json(),
+            "content": self.safe_content_remote(),
+            "visibility": "public",
+            "sensitive": self.sensitive,
+            "spoiler_text": self.summary or "",
+            "media_attachments": [
+                attachment.to_mastodon_json() for attachment in self.attachments.all()
+            ],
+            "mentions": [
+                {
+                    "id": mention.id,
+                    "username": mention.username,
+                    "url": mention.absolute_profile_uri(),
+                    "acct": mention.handle,
+                }
+                for mention in self.mentions.all()
+            ],
+            "tags": (
+                [{"name": tag, "url": "/tag/{tag}/"} for tag in self.hashtags]
+                if self.hashtags
+                else []
+            ),
+            "emojis": [],
+            "reblogs_count": self.interactions.filter(type="boost").count(),
+            "favourites_count": self.interactions.filter(type="like").count(),
+            "replies_count": 0,
+            "url": self.absolute_object_uri(),
+            "in_reply_to_id": reply_parent.pk if reply_parent else None,
+            "in_reply_to_account_id": reply_parent.author.pk if reply_parent else None,
+            "reblog": None,
+            "poll": None,
+            "card": None,
+            "language": None,
+            "text": self.safe_content_plain(),
+            "edited_at": format_ld_date(self.edited) if self.edited else None,
+        }

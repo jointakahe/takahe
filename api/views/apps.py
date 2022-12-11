@@ -1,7 +1,8 @@
 import secrets
 
-from ninja import Field, Schema
+from ninja import Schema
 
+from .. import schemas
 from ..models import Application
 from .base import api
 
@@ -13,16 +14,7 @@ class CreateApplicationSchema(Schema):
     website: None | str = None
 
 
-class ApplicationSchema(Schema):
-    id: str
-    name: str
-    website: str | None
-    client_id: str
-    client_secret: str
-    redirect_uri: str = Field(alias="redirect_uris")
-
-
-@api.post("/v1/apps", response=ApplicationSchema)
+@api.post("/v1/apps", response=schemas.Application)
 def add_app(request, details: CreateApplicationSchema):
     client_id = "tk-" + secrets.token_urlsafe(16)
     client_secret = secrets.token_urlsafe(40)
