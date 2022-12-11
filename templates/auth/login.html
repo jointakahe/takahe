@@ -11,6 +11,7 @@
                 {% include "forms/_field.html" %}
             {% endfor %}
         </fieldset>
+        <input type="hidden" name="next" value="{{ next }}" />
         <div class="buttons">
             <a href="{% url "trigger_reset" %}" class="secondary button left">Forgot Password</a>
             <button>Login</button>
