@@ -1,0 +1,9 @@
+from api.views.base import api_router
+
+from ..decorators import identity_required
+
+
+@api_router.get("/v1/filters")
+@identity_required
+def status(request):
+    return []

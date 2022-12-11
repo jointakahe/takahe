@@ -2,6 +2,7 @@ from typing import Literal
 
 from ninja import Field
 
+from activities.models import PostInteraction
 from activities.search import Searcher
 from api import schemas
 from api.decorators import identity_required
@@ -38,5 +39,11 @@ def search(
     if type is None or type == "hashtag":
         result["hashtag"] = [h.to_mastodon_json() for h in search_result["hashtags"]]
     if type is None or type == "statuses":
-        result["statuses"] = [p.to_mastodon_json() for p in search_result["posts"]]
+        interactions = PostInteraction.get_post_interactions(
+            search_result["posts"], request.identity
+        )
+        result["statuses"] = [
+            p.to_mastodon_json(interactions=interactions)
+            for p in search_result["posts"]
+        ]
     return result

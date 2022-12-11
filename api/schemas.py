@@ -160,3 +160,8 @@ class Relationship(Schema):
     domain_blocking: bool
     endorsed: bool
     note: str
+
+
+class Context(Schema):
+    ancestors: list[Status]
+    descendants: list[Status]

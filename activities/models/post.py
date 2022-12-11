@@ -80,6 +80,12 @@ class PostStates(StateGraph):
 
 
 class PostQuerySet(models.QuerySet):
+    def not_hidden(self):
+        query = self.exclude(
+            state__in=[PostStates.deleted, PostStates.deleted_fanned_out]
+        )
+        return query
+
     def public(self, include_replies: bool = False):
         query = self.filter(
             visibility__in=[
@@ -103,6 +109,18 @@ class PostQuerySet(models.QuerySet):
             return query.filter(in_reply_to__isnull=True)
         return query
 
+    def unlisted(self, include_replies: bool = False):
+        query = self.filter(
+            visibility__in=[
+                Post.Visibilities.public,
+                Post.Visibilities.local_only,
+                Post.Visibilities.unlisted,
+            ],
+        )
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
     def tagged_with(self, hashtag: str | Hashtag):
         if isinstance(hashtag, str):
             tag_q = models.Q(hashtags__contains=hashtag)
@@ -118,11 +136,17 @@ class PostManager(models.Manager):
     def get_queryset(self):
         return PostQuerySet(self.model, using=self._db)
 
+    def not_hidden(self):
+        return self.get_queryset().not_hidden()
+
     def public(self, include_replies: bool = False):
         return self.get_queryset().public(include_replies=include_replies)
 
     def local_public(self, include_replies: bool = False):
         return self.get_queryset().local_public(include_replies=include_replies)
+
+    def unlisted(self, include_replies: bool = False):
+        return self.get_queryset().unlisted(include_replies=include_replies)
 
     def tagged_with(self, hashtag: str | Hashtag):
         return self.get_queryset().tagged_with(hashtag=hashtag)
@@ -248,6 +272,8 @@ class Post(StatorModel):
         """
         Returns the actual Post object we're replying to, if we can find it
         """
+        if self.in_reply_to is None:
+            return None
         return (
             Post.objects.filter(object_uri=self.in_reply_to)
             .select_related("author")
@@ -338,6 +364,7 @@ class Post(StatorModel):
         author: Identity,
         content: str,
         summary: str | None = None,
+        sensitive: bool = False,
         visibility: int = Visibilities.public,
         reply_to: Optional["Post"] = None,
         attachments: list | None = None,
@@ -359,7 +386,7 @@ class Post(StatorModel):
                 author=author,
                 content=content,
                 summary=summary or None,
-                sensitive=bool(summary),
+                sensitive=bool(summary) or sensitive,
                 local=True,
                 visibility=visibility,
                 hashtags=hashtags,
@@ -423,6 +450,48 @@ class Post(StatorModel):
                 await Hashtag.objects.aget_or_create(
                     hashtag=hashtag,
                 )
+
+    ### Actions ###
+
+    def interact_as(self, identity, type):
+        from activities.models import PostInteraction, PostInteractionStates
+
+        interaction = PostInteraction.objects.get_or_create(
+            type=type, identity=identity, post=self
+        )[0]
+        if interaction.state in [
+            PostInteractionStates.undone,
+            PostInteractionStates.undone_fanned_out,
+        ]:
+            interaction.transition_perform(PostInteractionStates.new)
+
+    def uninteract_as(self, identity, type):
+        from activities.models import PostInteraction, PostInteractionStates
+
+        for interaction in PostInteraction.objects.filter(
+            type=type, identity=identity, post=self
+        ):
+            interaction.transition_perform(PostInteractionStates.undone)
+
+    def like_as(self, identity):
+        from activities.models import PostInteraction
+
+        self.interact_as(identity, PostInteraction.Types.like)
+
+    def unlike_as(self, identity):
+        from activities.models import PostInteraction
+
+        self.uninteract_as(identity, PostInteraction.Types.like)
+
+    def boost_as(self, identity):
+        from activities.models import PostInteraction
+
+        self.interact_as(identity, PostInteraction.Types.boost)
+
+    def unboost_as(self, identity):
+        from activities.models import PostInteraction
+
+        self.uninteract_as(identity, PostInteraction.Types.boost)
 
     ### ActivityPub (outbound) ###
 
@@ -711,11 +780,11 @@ class Post(StatorModel):
 
     ### Mastodon API ###
 
-    def to_mastodon_json(self):
+    def to_mastodon_json(self, interactions=None):
         reply_parent = None
         if self.in_reply_to:
             reply_parent = Post.objects.filter(object_uri=self.in_reply_to).first()
-        return {
+        value = {
             "id": self.pk,
             "uri": self.object_uri,
             "created_at": format_ld_date(self.published),
@@ -755,3 +824,7 @@ class Post(StatorModel):
             "text": self.safe_content_plain(),
             "edited_at": format_ld_date(self.edited) if self.edited else None,
         }
+        if interactions:
+            value["favourited"] = self.pk in interactions.get("like", [])
+            value["reblogged"] = self.pk in interactions.get("boost", [])
+        return value

@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView, View
 
-from activities.models import Post, PostInteraction, PostInteractionStates, PostStates
+from activities.models import Post, PostInteraction, PostStates
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
 from users.decorators import identity_required
@@ -94,20 +94,9 @@ class Like(View):
             identity.posts.prefetch_related("attachments"), pk=post_id
         )
         if self.undo:
-            # Undo any likes on the post
-            for interaction in PostInteraction.objects.filter(
-                type=PostInteraction.Types.like,
-                identity=request.identity,
-                post=post,
-            ):
-                interaction.transition_perform(PostInteractionStates.undone)
+            post.unlike_as(self.request.identity)
         else:
-            # Make a like on this post if we didn't already
-            PostInteraction.objects.get_or_create(
-                type=PostInteraction.Types.like,
-                identity=request.identity,
-                post=post,
-            )
+            post.like_as(self.request.identity)
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(
@@ -133,20 +122,9 @@ class Boost(View):
         identity = by_handle_or_404(self.request, handle, local=False)
         post = get_object_or_404(identity.posts, pk=post_id)
         if self.undo:
-            # Undo any boosts on the post
-            for interaction in PostInteraction.objects.filter(
-                type=PostInteraction.Types.boost,
-                identity=request.identity,
-                post=post,
-            ):
-                interaction.transition_perform(PostInteractionStates.undone)
+            post.unboost_as(request.identity)
         else:
-            # Make a boost on this post if we didn't already
-            PostInteraction.objects.get_or_create(
-                type=PostInteraction.Types.boost,
-                identity=request.identity,
-                post=post,
-            )
+            post.boost_as(request.identity)
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(
