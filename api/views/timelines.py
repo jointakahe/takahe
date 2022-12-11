@@ -1,4 +1,4 @@
-from activities.models import Post, TimelineEvent
+from activities.models import Post, PostInteraction, TimelineEvent
 
 from .. import schemas
 from ..decorators import identity_required
@@ -36,7 +36,12 @@ def home(
         # invert the ordering to accomodate
         anchor_post = Post.objects.get(pk=min_id)
         events = events.filter(created__gt=anchor_post.created).order_by("created")
-    return [event.subject_post.to_mastodon_json() for event in events[:limit]]
+    events = list(events[:limit])
+    interactions = PostInteraction.get_event_interactions(events, request.identity)
+    return [
+        event.subject_post.to_mastodon_json(interactions=interactions)
+        for event in events
+    ]
 
 
 @api_router.get("/v1/timelines/public", response=list[schemas.Status])
@@ -76,7 +81,9 @@ def public(
         # invert the ordering to accomodate
         anchor_post = Post.objects.get(pk=min_id)
         posts = posts.filter(created__gt=anchor_post.created).order_by("created")
-    return [post.to_mastodon_json() for post in posts[:limit]]
+    posts = list(posts[:limit])
+    interactions = PostInteraction.get_post_interactions(posts, request.identity)
+    return [post.to_mastodon_json(interactions=interactions) for post in posts]
 
 
 @api_router.get("/v1/timelines/tag/{hashtag}", response=list[schemas.Status])
@@ -115,7 +122,9 @@ def hashtag(
         # invert the ordering to accomodate
         anchor_post = Post.objects.get(pk=min_id)
         posts = posts.filter(created__gt=anchor_post.created).order_by("created")
-    return [post.to_mastodon_json() for post in posts[:limit]]
+    posts = list(posts[:limit])
+    interactions = PostInteraction.get_post_interactions(posts, request.identity)
+    return [post.to_mastodon_json(interactions=interactions) for post in posts]
 
 
 @api_router.get("/v1/conversations", response=list[schemas.Status])

@@ -62,9 +62,8 @@ class ViewIdentity(ListView):
 
     def get_queryset(self):
         return (
-            self.identity.posts.filter(
-                visibility__in=[Post.Visibilities.public, Post.Visibilities.unlisted],
-            )
+            self.identity.posts.not_hidden()
+            .unlisted(include_replies=True)
             .select_related("author")
             .prefetch_related("attachments")
             .order_by("-created")

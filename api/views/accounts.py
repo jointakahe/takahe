@@ -1,11 +1,10 @@
 from django.shortcuts import get_object_or_404
 
-from activities.models import Post
+from activities.models import Post, PostInteraction
 from api import schemas
+from api.decorators import identity_required
 from api.views.base import api_router
 from users.models import Identity
-
-from ..decorators import identity_required
 
 
 @api_router.get("/v1/accounts/verify_credentials", response=schemas.Account)
@@ -69,7 +68,8 @@ def account_statuses(
 ):
     identity = get_object_or_404(Identity, pk=id)
     posts = (
-        identity.posts.public()
+        identity.posts.not_hidden()
+        .unlisted(include_replies=not exclude_replies)
         .select_related("author")
         .prefetch_related("attachments")
         .order_by("-created")
@@ -91,4 +91,6 @@ def account_statuses(
         # invert the ordering to accomodate
         anchor_post = Post.objects.get(pk=min_id)
         posts = posts.filter(created__gt=anchor_post.created).order_by("created")
-    return [post.to_mastodon_json() for post in posts[:limit]]
+    posts = list(posts[:limit])
+    interactions = PostInteraction.get_post_interactions(posts, request.identity)
+    return [post.to_mastodon_json(interactions=interactions) for post in posts]

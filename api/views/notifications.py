@@ -1,8 +1,7 @@
-from activities.models import TimelineEvent
-
-from .. import schemas
-from ..decorators import identity_required
-from .base import api_router
+from activities.models import PostInteraction, TimelineEvent
+from api import schemas
+from api.decorators import identity_required
+from api.views.base import api_router
 
 
 @api_router.get("/v1/notifications", response=list[schemas.Notification])
@@ -49,4 +48,9 @@ def notifications(
         # invert the ordering to accomodate
         anchor_event = TimelineEvent.objects.get(pk=min_id)
         events = events.filter(created__gt=anchor_event.created).order_by("created")
-    return [event.to_mastodon_notification_json() for event in events[:limit]]
+    events = list(events[:limit])
+    interactions = PostInteraction.get_event_interactions(events, request.identity)
+    return [
+        event.to_mastodon_notification_json(interactions=interactions)
+        for event in events
+    ]

@@ -32,8 +32,8 @@ def resize_image(
         return file
 
 
-def blurhash_image(image) -> str:
+def blurhash_image(file) -> str:
     """
     Returns the blurhash for an image
     """
-    return blurhash.encode(image, 4, 4)
+    return blurhash.encode(file, 4, 4)

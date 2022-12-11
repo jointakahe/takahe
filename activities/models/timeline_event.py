@@ -148,7 +148,7 @@ class TimelineEvent(models.Model):
 
     ### Mastodon Client API ###
 
-    def to_mastodon_notification_json(self):
+    def to_mastodon_notification_json(self, interactions=None):
         result = {
             "id": self.pk,
             "created_at": format_ld_date(self.created),
@@ -156,13 +156,19 @@ class TimelineEvent(models.Model):
         }
         if self.type == self.Types.liked:
             result["type"] = "favourite"
-            result["status"] = self.subject_post.to_mastodon_json()
+            result["status"] = self.subject_post.to_mastodon_json(
+                interactions=interactions
+            )
         elif self.type == self.Types.boosted:
             result["type"] = "reblog"
-            result["status"] = self.subject_post.to_mastodon_json()
+            result["status"] = self.subject_post.to_mastodon_json(
+                interactions=interactions
+            )
         elif self.type == self.Types.mentioned:
             result["type"] = "mention"
-            result["status"] = self.subject_post.to_mastodon_json()
+            result["status"] = self.subject_post.to_mastodon_json(
+                interactions=interactions
+            )
         elif self.type == self.Types.followed:
             result["type"] = "follow"
         else:
