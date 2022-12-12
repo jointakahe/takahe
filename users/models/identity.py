@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
-from django.conf import settings
 from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
 from django.templatetags.static import static
@@ -18,6 +17,7 @@ from core.ld import canonicalise, format_ld_date, get_list, media_type_from_file
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
+from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
 from users.models.system_actor import SystemActor
@@ -147,25 +147,26 @@ class Identity(StatorModel):
         else:
             return self.profile_uri
 
-    def local_icon_url(self):
+    def local_icon_url(self) -> RelativeAbsoluteUrl:
         """
-        Returns an icon for us, with fallbacks to a placeholder
+        Returns an icon for use by us, with fallbacks to a placeholder
         """
         if self.icon:
-            return self.icon.url
+            return RelativeAbsoluteUrl(self.icon.url)
         elif self.icon_uri:
-            return f"https://{settings.MAIN_DOMAIN}/proxy/identity_icon/{self.pk}/"
+            return AutoAbsoluteUrl(f"/proxy/identity_icon/{self.pk}/")
         else:
-            return static("img/unknown-icon-128.png")
+            return RelativeAbsoluteUrl(static("img/unknown-icon-128.png"))
 
-    def local_image_url(self):
+    def local_image_url(self) -> RelativeAbsoluteUrl | None:
         """
         Returns a background image for us, returning None if there isn't one
         """
         if self.image:
-            return self.image.url
+            return RelativeAbsoluteUrl(self.image.url)
         elif self.image_uri:
-            return f"https://{settings.MAIN_DOMAIN}/proxy/identity_image/{self.pk}/"
+            return AutoAbsoluteUrl(f"/proxy/identity_image/{self.pk}/")
+        return None
 
     @property
     def safe_summary(self):
@@ -470,6 +471,7 @@ class Identity(StatorModel):
     ### Mastodon Client API ###
 
     def to_mastodon_json(self):
+        header_image = self.local_image_url()
         return {
             "id": self.pk,
             "username": self.username,
@@ -477,10 +479,10 @@ class Identity(StatorModel):
             "url": self.absolute_profile_uri(),
             "display_name": self.name,
             "note": self.summary or "",
-            "avatar": self.local_icon_url(),
-            "avatar_static": self.local_icon_url(),
-            "header": self.local_image_url() or "",
-            "header_static": self.local_image_url() or "",
+            "avatar": self.local_icon_url().absolute,
+            "avatar_static": self.local_icon_url().absolute,
+            "header": header_image.absolute if header_image else None,
+            "header_static": header_image.absolute if header_image else None,
             "locked": False,
             "fields": (
                 [
