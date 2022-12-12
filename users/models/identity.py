@@ -82,6 +82,7 @@ class Identity(StatorModel):
     summary = models.TextField(blank=True, null=True)
     manually_approves_followers = models.BooleanField(blank=True, null=True)
     discoverable = models.BooleanField(default=True)
+    visible_follows = models.BooleanField(default=True)
 
     profile_uri = models.CharField(max_length=500, blank=True, null=True)
     inbox_uri = models.CharField(max_length=500, blank=True, null=True)

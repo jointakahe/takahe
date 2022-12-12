@@ -769,6 +769,18 @@ table.metadata td.name {
     font-weight: bold;
 }
 
+.stats {
+    margin: 0 0 20px 0;
+}
+
+.stats ul {
+    padding: 0;
+    list-style: none;
+    display: flex;
+    justify-content: start;
+    gap: 1em;
+}
+
 /* Timelines */
 
 .left-column .timeline-name {

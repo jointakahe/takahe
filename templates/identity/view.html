@@ -72,6 +72,15 @@
             </table>
     {% endif %}
 
+    {% if identity.visible_follows %}
+      <div class="stats">
+        <ul>
+          <li><strong>{{ following_count }}</strong> following</li>
+          <li><strong>{{ followers_count }}</strong> followers</li>
+        </ul>
+      </div>
+    {% endif %}
+
     {% if not identity.local %}
         {% if identity.outdated and not identity.name %}
             <p class="system-note">
