@@ -1,9 +1,9 @@
 from functools import partial
 
-from django.conf import settings
 from django.db import models
 
 from core.uploads import upload_namer
+from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
@@ -72,19 +72,19 @@ class PostAttachment(StatorModel):
             "image/webp",
         ]
 
-    def thumbnail_url(self):
+    def thumbnail_url(self) -> RelativeAbsoluteUrl:
         if self.thumbnail:
-            return self.thumbnail.url
+            return RelativeAbsoluteUrl(self.thumbnail.url)
         elif self.file:
-            return self.file.url
+            return RelativeAbsoluteUrl(self.file.url)
         else:
-            return f"https://{settings.MAIN_DOMAIN}/proxy/post_attachment/{self.pk}/"
+            return AutoAbsoluteUrl(f"/proxy/post_attachment/{self.pk}/")
 
     def full_url(self):
         if self.file:
-            return self.file.url
+            return RelativeAbsoluteUrl(self.file.url)
         else:
-            return f"https://{settings.MAIN_DOMAIN}/proxy/post_attachment/{self.pk}/"
+            return AutoAbsoluteUrl(f"/proxy/post_attachment/{self.pk}/")
 
     ### ActivityPub ###
 
@@ -105,8 +105,8 @@ class PostAttachment(StatorModel):
         return {
             "id": self.pk,
             "type": "image" if self.is_image() else "unknown",
-            "url": self.full_url(),
-            "preview_url": self.thumbnail_url(),
+            "url": self.full_url().absolute,
+            "preview_url": self.thumbnail_url().absolute,
             "remote_url": None,
             "meta": {
                 "original": {
