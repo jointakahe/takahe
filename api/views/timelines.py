@@ -1,8 +1,8 @@
 from activities.models import Post, PostInteraction, TimelineEvent
-
-from .. import schemas
-from ..decorators import identity_required
-from .base import api_router
+from api import schemas
+from api.decorators import identity_required
+from api.pagination import MastodonPaginator
+from api.views.base import api_router
 
 
 @api_router.get("/v1/timelines/home", response=list[schemas.Status])
@@ -14,9 +14,8 @@ def home(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    if limit > 40:
-        limit = 40
-    events = (
+    paginator = MastodonPaginator(Post)
+    queryset = (
         TimelineEvent.objects.filter(
             identity=request.identity,
             type__in=[TimelineEvent.Types.post],
@@ -25,18 +24,13 @@ def home(
         .prefetch_related("subject_post__attachments")
         .order_by("-created")
     )
-    if max_id:
-        anchor_post = Post.objects.get(pk=max_id)
-        events = events.filter(created__lt=anchor_post.created)
-    if since_id:
-        anchor_post = Post.objects.get(pk=since_id)
-        events = events.filter(created__gt=anchor_post.created)
-    if min_id:
-        # Min ID requires LIMIT events _immediately_ newer than specified, so we
-        # invert the ordering to accomodate
-        anchor_post = Post.objects.get(pk=min_id)
-        events = events.filter(created__gt=anchor_post.created).order_by("created")
-    events = list(events[:limit])
+    events = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
     interactions = PostInteraction.get_event_interactions(events, request.identity)
     return [
         event.subject_post.to_mastodon_json(interactions=interactions)
@@ -56,32 +50,26 @@ def public(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    if limit > 40:
-        limit = 40
-    posts = (
+    queryset = (
         Post.objects.public()
         .select_related("author")
         .prefetch_related("attachments")
         .order_by("-created")
     )
     if local:
-        posts = posts.filter(local=True)
+        queryset = queryset.filter(local=True)
     elif remote:
-        posts = posts.filter(local=False)
+        queryset = queryset.filter(local=False)
     if only_media:
-        posts = posts.filter(attachments__id__isnull=True)
-    if max_id:
-        anchor_post = Post.objects.get(pk=max_id)
-        posts = posts.filter(created__lt=anchor_post.created)
-    if since_id:
-        anchor_post = Post.objects.get(pk=since_id)
-        posts = posts.filter(created__gt=anchor_post.created)
-    if min_id:
-        # Min ID requires LIMIT posts _immediately_ newer than specified, so we
-        # invert the ordering to accomodate
-        anchor_post = Post.objects.get(pk=min_id)
-        posts = posts.filter(created__gt=anchor_post.created).order_by("created")
-    posts = list(posts[:limit])
+        queryset = queryset.filter(attachments__id__isnull=True)
+    paginator = MastodonPaginator(Post)
+    posts = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
     interactions = PostInteraction.get_post_interactions(posts, request.identity)
     return [post.to_mastodon_json(interactions=interactions) for post in posts]
 
@@ -100,7 +88,7 @@ def hashtag(
 ):
     if limit > 40:
         limit = 40
-    posts = (
+    queryset = (
         Post.objects.public()
         .tagged_with(hashtag)
         .select_related("author")
@@ -108,21 +96,17 @@ def hashtag(
         .order_by("-created")
     )
     if local:
-        posts = posts.filter(local=True)
+        queryset = queryset.filter(local=True)
     if only_media:
-        posts = posts.filter(attachments__id__isnull=True)
-    if max_id:
-        anchor_post = Post.objects.get(pk=max_id)
-        posts = posts.filter(created__lt=anchor_post.created)
-    if since_id:
-        anchor_post = Post.objects.get(pk=since_id)
-        posts = posts.filter(created__gt=anchor_post.created)
-    if min_id:
-        # Min ID requires LIMIT posts _immediately_ newer than specified, so we
-        # invert the ordering to accomodate
-        anchor_post = Post.objects.get(pk=min_id)
-        posts = posts.filter(created__gt=anchor_post.created).order_by("created")
-    posts = list(posts[:limit])
+        queryset = queryset.filter(attachments__id__isnull=True)
+    paginator = MastodonPaginator(Post)
+    posts = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
     interactions = PostInteraction.get_post_interactions(posts, request.identity)
     return [post.to_mastodon_json(interactions=interactions) for post in posts]
 
