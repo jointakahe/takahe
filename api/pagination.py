@@ -1,3 +1,6 @@
+from django.db import models
+
+
 class MastodonPaginator:
     """
     Paginates in the Mastodon style (max_id, min_id, etc)
@@ -5,7 +8,7 @@ class MastodonPaginator:
 
     def __init__(
         self,
-        anchor_model,
+        anchor_model: type[models.Model],
         sort_attribute: str = "created",
         default_limit: int = 20,
         max_limit: int = 40,
@@ -24,19 +27,28 @@ class MastodonPaginator:
         limit: int | None,
     ):
         if max_id:
-            anchor = self.anchor_model.objects.get(pk=max_id)
+            try:
+                anchor = self.anchor_model.objects.get(pk=max_id)
+            except self.anchor_model.DoesNotExist:
+                return []
             queryset = queryset.filter(
                 **{self.sort_attribute + "__lt": getattr(anchor, self.sort_attribute)}
             )
         if since_id:
-            anchor = self.anchor_model.objects.get(pk=since_id)
+            try:
+                anchor = self.anchor_model.objects.get(pk=since_id)
+            except self.anchor_model.DoesNotExist:
+                return []
             queryset = queryset.filter(
                 **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
             )
         if min_id:
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accomodate
-            anchor = self.anchor_model.objects.get(pk=min_id)
+            try:
+                anchor = self.anchor_model.objects.get(pk=min_id)
+            except self.anchor_model.DoesNotExist:
+                return []
             queryset = queryset.filter(
                 **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
             ).order_by(self.sort_attribute)

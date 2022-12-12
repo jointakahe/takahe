@@ -46,8 +46,8 @@ def test_post_targets_simple(identity, other_identity, remote_identity):
     post.local = False
     post.save()
     targets = async_to_sync(post.aget_targets)()
-    # Only targets locals
-    assert targets == {identity, other_identity}
+    # Only targets locals who are mentioned
+    assert targets == {other_identity}
 
 
 @pytest.mark.django_db
@@ -87,11 +87,11 @@ def test_post_followers(identity, other_identity, remote_identity):
     targets = async_to_sync(post.aget_targets)()
     assert targets == {identity, other_identity, remote_identity}
 
-    # Remote post only targets local followers
+    # Remote post only targets local followers, not the author
     post.local = False
     post.save()
     targets = async_to_sync(post.aget_targets)()
-    assert targets == {identity, other_identity}
+    assert targets == {other_identity}
 
     # Local Only post only targets local followers
     post.local = True
