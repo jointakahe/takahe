@@ -35,8 +35,8 @@ class Account(Schema):
     note: str
     avatar: str
     avatar_static: str
-    header: str
-    header_static: str
+    header: str | None = Field(...)
+    header_static: str | None = Field(...)
     locked: bool
     fields: list[AccountField]
     emojis: list[CustomEmoji]
