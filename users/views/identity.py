@@ -6,6 +6,7 @@ from django.contrib.syndication.views import Feed
 from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
+from django.utils import feedgenerator
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView, View
@@ -127,6 +128,18 @@ class IdentityFeed(Feed):
 
     def item_pubdate(self, item: Post):
         return item.published
+
+    def item_enclosures(self, item: Post):
+        attachment = item.attachments.first()
+        if attachment is None:
+            return []
+
+        enc = feedgenerator.Enclosure(
+            url=attachment.full_url().absolute,
+            length=str(attachment.file.size),
+            mime_type=attachment.mimetype,
+        )
+        return [enc]
 
 
 class IdentityFollows(ListView):
