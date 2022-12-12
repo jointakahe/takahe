@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from activities.models import Post, PostInteraction
 from api import schemas
 from api.decorators import identity_required
+from api.pagination import MastodonPaginator
 from api.views.base import api_router
 from users.models import Identity
 
@@ -67,7 +68,7 @@ def account_statuses(
     limit: int = 20,
 ):
     identity = get_object_or_404(Identity, pk=id)
-    posts = (
+    queryset = (
         identity.posts.not_hidden()
         .unlisted(include_replies=not exclude_replies)
         .select_related("author")
@@ -77,20 +78,16 @@ def account_statuses(
     if pinned:
         return []
     if only_media:
-        posts = posts.filter(attachments__pk__isnull=False)
+        queryset = queryset.filter(attachments__pk__isnull=False)
     if tagged:
-        posts = posts.tagged_with(tagged)
-    if max_id:
-        anchor_post = Post.objects.get(pk=max_id)
-        posts = posts.filter(created__lt=anchor_post.created)
-    if since_id:
-        anchor_post = Post.objects.get(pk=since_id)
-        posts = posts.filter(created__gt=anchor_post.created)
-    if min_id:
-        # Min ID requires LIMIT posts _immediately_ newer than specified, so we
-        # invert the ordering to accomodate
-        anchor_post = Post.objects.get(pk=min_id)
-        posts = posts.filter(created__gt=anchor_post.created).order_by("created")
-    posts = list(posts[:limit])
+        queryset = queryset.tagged_with(tagged)
+    paginator = MastodonPaginator(Post)
+    posts = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
     interactions = PostInteraction.get_post_interactions(posts, request.identity)
-    return [post.to_mastodon_json(interactions=interactions) for post in posts]
+    return [post.to_mastodon_json(interactions=interactions) for post in queryset]

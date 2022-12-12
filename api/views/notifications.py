@@ -1,6 +1,7 @@
-from activities.models import Post, PostInteraction, TimelineEvent
+from activities.models import PostInteraction, TimelineEvent
 from api import schemas
 from api.decorators import identity_required
+from api.pagination import MastodonPaginator
 from api.views.base import api_router
 
 
@@ -14,8 +15,6 @@ def notifications(
     limit: int = 20,
     account_id: str | None = None,
 ):
-    if limit > 40:
-        limit = 40
     # Types/exclude_types use weird syntax so we have to handle them manually
     base_types = {
         "favourite": TimelineEvent.Types.liked,
@@ -29,7 +28,7 @@ def notifications(
         requested_types = set(base_types.keys())
     requested_types.difference_update(excluded_types)
     # Use that to pull relevant events
-    events = (
+    queryset = (
         TimelineEvent.objects.filter(
             identity=request.identity,
             type__in=[base_types[r] for r in requested_types],
@@ -37,18 +36,14 @@ def notifications(
         .order_by("-created")
         .select_related("subject_post", "subject_post__author", "subject_identity")
     )
-    if max_id:
-        anchor_post = Post.objects.get(pk=max_id)
-        events = events.filter(created__lt=anchor_post.created)
-    if since_id:
-        anchor_post = Post.objects.get(pk=since_id)
-        events = events.filter(created__gt=anchor_post.created)
-    if min_id:
-        # Min ID requires LIMIT events _immediately_ newer than specified, so we
-        # invert the ordering to accomodate
-        anchor_post = Post.objects.get(pk=min_id)
-        events = events.filter(created__gt=anchor_post.created).order_by("created")
-    events = list(events[:limit])
+    paginator = MastodonPaginator(TimelineEvent)
+    events = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
     interactions = PostInteraction.get_event_interactions(events, request.identity)
     return [
         event.to_mastodon_notification_json(interactions=interactions)
