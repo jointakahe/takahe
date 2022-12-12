@@ -7,7 +7,6 @@ import urlman
 from asgiref.sync import async_to_sync, sync_to_async
 from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
-from django.templatetags.static import static
 from django.utils import timezone
 from django.utils.functional import lazy
 
@@ -17,7 +16,7 @@ from core.ld import canonicalise, format_ld_date, get_list, media_type_from_file
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
-from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl
+from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl, StaticAbsoluteUrl
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
 from users.models.system_actor import SystemActor
@@ -156,7 +155,7 @@ class Identity(StatorModel):
         elif self.icon_uri:
             return AutoAbsoluteUrl(f"/proxy/identity_icon/{self.pk}/")
         else:
-            return RelativeAbsoluteUrl(static("img/unknown-icon-128.png"))
+            return StaticAbsoluteUrl("img/unknown-icon-128.png")
 
     def local_image_url(self) -> RelativeAbsoluteUrl | None:
         """

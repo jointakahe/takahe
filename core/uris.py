@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.templatetags.static import static
 
 
 class RelativeAbsoluteUrl:
@@ -32,3 +33,18 @@ class AutoAbsoluteUrl(RelativeAbsoluteUrl):
         else:
             absolute_prefix = f"https://{settings.MAIN_DOMAIN}/"
         self.absolute = urljoin(absolute_prefix, self.relative)
+
+
+class StaticAbsoluteUrl(RelativeAbsoluteUrl):
+    """
+    Creates static URLs given only the static-relative path
+    """
+
+    def __init__(self, path: str):
+        static_url = static(path)
+        if "://" in static_url:
+            super().__init__(static_url)
+        else:
+            super().__init__(
+                urljoin(f"https://{settings.MAIN_DOMAIN}/", static_url), static_url
+            )
