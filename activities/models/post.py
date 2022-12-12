@@ -784,13 +784,20 @@ class Post(StatorModel):
         reply_parent = None
         if self.in_reply_to:
             reply_parent = Post.objects.filter(object_uri=self.in_reply_to).first()
+        visibility_mapping = {
+            self.Visibilities.public: "public",
+            self.Visibilities.unlisted: "unlisted",
+            self.Visibilities.followers: "private",
+            self.Visibilities.mentioned: "direct",
+            self.Visibilities.local_only: "public",
+        }
         value = {
             "id": self.pk,
             "uri": self.object_uri,
             "created_at": format_ld_date(self.published),
             "account": self.author.to_mastodon_json(),
             "content": self.safe_content_remote(),
-            "visibility": "public",
+            "visibility": visibility_mapping[self.visibility],
             "sensitive": self.sensitive,
             "spoiler_text": self.summary or "",
             "media_attachments": [
