@@ -237,3 +237,4 @@ class Config(models.Model):
 
         toot_mode: bool = False
         default_post_visibility: int = 0  # Post.Visibilities.public
+        visible_follows: bool = True

@@ -47,6 +47,11 @@ urlpatterns = [
         name="settings_interface",
     ),
     path(
+        "settings/privacy/",
+        settings.PrivacyPage.as_view(),
+        name="settings_privacy",
+    ),
+    path(
         "admin/",
         admin.AdminRoot.as_view(),
         name="admin",

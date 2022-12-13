@@ -38,12 +38,6 @@ class ProfilePage(FormView):
             ),
             required=False,
         )
-        visible_follows = forms.BooleanField(
-            help_text="Whether or not to show your following and follower counts in your profile.",
-            initial=True,
-            widget=forms.Select(choices=[(True, "Visible"), (False, "Hidden")]),
-            required=False,
-        )
 
     def get_initial(self):
         identity = self.request.identity
@@ -53,7 +47,6 @@ class ProfilePage(FormView):
             "icon": identity.icon and identity.icon.url,
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,
-            "visible_follows": identity.visible_follows,
         }
 
     def form_valid(self, form):
@@ -62,7 +55,6 @@ class ProfilePage(FormView):
         identity.name = form.cleaned_data["name"]
         identity.summary = form.cleaned_data["summary"]
         identity.discoverable = form.cleaned_data["discoverable"]
-        identity.visible_follows = form.cleaned_data["visible_follows"]
         # Resize images
         icon = form.cleaned_data.get("icon")
         image = form.cleaned_data.get("image")

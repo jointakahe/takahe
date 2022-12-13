@@ -79,7 +79,7 @@ class ViewIdentity(ListView):
             context["page_obj"],
             self.request.identity,
         )
-        if self.identity.visible_follows:
+        if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
                 state__in=FollowStates.group_active()
             ).count()
@@ -212,12 +212,6 @@ class CreateIdentity(FormView):
             ),
             required=False,
         )
-        visible_follows = forms.BooleanField(
-            help_text="Whether or not to show your following and follower counts in your profile",
-            initial=True,
-            widget=forms.Select(choices=[(True, "Visible"), (False, "Hidden")]),
-            required=False,
-        )
 
         def __init__(self, user, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -288,7 +282,6 @@ class CreateIdentity(FormView):
             name=form.cleaned_data["name"],
             local=True,
             discoverable=form.cleaned_data["discoverable"],
-            visible_follows=form.cleaned_data["visible_follows"],
         )
         new_identity.users.add(self.request.user)
         new_identity.generate_keypair()

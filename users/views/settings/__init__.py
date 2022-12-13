@@ -3,6 +3,7 @@ from django.views.generic import RedirectView
 
 from users.decorators import identity_required
 from users.views.settings.interface import InterfacePage, SettingsPage  # noqa
+from users.views.settings.privacy import PrivacyPage  # noqa
 from users.views.settings.profile import ProfilePage  # noqa
 from users.views.settings.security import SecurityPage  # noqa
 
