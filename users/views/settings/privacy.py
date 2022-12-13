@@ -3,7 +3,7 @@ from users.views.settings.settings_page import SettingsPage
 
 class PrivacyPage(SettingsPage):
 
-    section = "PrivacyPage"
+    section = "privacy"
 
     options = {
         "visible_follows": {
