@@ -25,7 +25,7 @@ class Home(FormView):
                 type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
             )
             .select_related("subject_post", "subject_post__author")
-            .prefetch_related("subject_post__attachments")
+            .prefetch_related("subject_post__attachments", "subject_post__mentions")
             .order_by("-created")[:50]
         )
         context["interactions"] = PostInteraction.get_event_interactions(
@@ -70,7 +70,7 @@ class Tag(ListView):
             Post.objects.public()
             .tagged_with(self.hashtag)
             .select_related("author")
-            .prefetch_related("attachments")
+            .prefetch_related("attachments", "mentions")
             .order_by("-created")[:50]
         )
 
@@ -99,7 +99,7 @@ class Local(ListView):
         return (
             Post.objects.local_public()
             .select_related("author")
-            .prefetch_related("attachments")
+            .prefetch_related("attachments", "mentions")
             .order_by("-created")[:50]
         )
 
@@ -127,7 +127,7 @@ class Federated(ListView):
                 visibility=Post.Visibilities.public, in_reply_to__isnull=True
             )
             .select_related("author")
-            .prefetch_related("attachments")
+            .prefetch_related("attachments", "mentions")
             .order_by("-created")[:50]
         )
 
