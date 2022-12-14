@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
 from core.files import resize_image
+from core.models.config import Config
 from users.decorators import identity_required
 
 
@@ -38,6 +39,11 @@ class ProfilePage(FormView):
             ),
             required=False,
         )
+        visible_follows = forms.BooleanField(
+            help_text="Whether or not to show your following and follower counts in your profile.",
+            widget=forms.Select(choices=[(True, "Visible"), (False, "Hidden")]),
+            required=False,
+        )
 
     def get_initial(self):
         identity = self.request.identity
@@ -47,6 +53,7 @@ class ProfilePage(FormView):
             "icon": identity.icon and identity.icon.url,
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,
+            "visible_follows": identity.config_identity.visible_follows,
         }
 
     def form_valid(self, form):
@@ -69,4 +76,8 @@ class ProfilePage(FormView):
                 resize_image(image, size=(1500, 500)),
             )
         identity.save()
+        # Save profile-specific identity Config
+        Config.set_identity(
+            identity, "visible_follows", form.cleaned_data["visible_follows"]
+        )
         return redirect(".")

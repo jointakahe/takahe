@@ -78,6 +78,13 @@ class ViewIdentity(ListView):
             context["page_obj"],
             self.request.identity,
         )
+        if self.identity.config_identity.visible_follows:
+            context["followers_count"] = self.identity.inbound_follows.filter(
+                state__in=FollowStates.group_active()
+            ).count()
+            context["following_count"] = self.identity.outbound_follows.filter(
+                state__in=FollowStates.group_active()
+            ).count()
         if self.request.identity:
             follow = Follow.maybe_get(self.request.identity, self.identity)
             if follow and follow.state in FollowStates.group_active():
