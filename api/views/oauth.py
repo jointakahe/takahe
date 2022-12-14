@@ -47,10 +47,32 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
         post_data = FormOrJsonParser().parse_body(request)
         # Grab the application and other details again
         redirect_uri = post_data["redirect_uri"]
-        scope = post_data["scope"]
-        application = Application.objects.get(client_id=post_data["client_id"])
+        scope = post_data["scope"] or "read"
+        try:
+            application = Application.objects.get(client_id=post_data["client_id"])
+        except Application.DoesNotExist:
+            return JsonResponse(
+                {
+                    "error": "invalid_client",
+                    "error_description": "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method.",
+                },
+                status=401,
+            )
+
+        if not application.is_scope_subset(scope):
+            return JsonResponse(
+                {
+                    "error": "invalid_scope",
+                    "error_description": "The requested scope is invalid, unknown, or malformed.",
+                },
+                status=400,
+            )
+
         # Get the identity
         identity = self.request.user.identities.get(pk=post_data["identity"])
+
+        # TODO: prevent blocked identity sign-in
+
         # Make a token
         token = Token.objects.create(
             application=application,
@@ -73,7 +95,7 @@ class TokenView(View):
         try:
             application = Application.objects.get(client_id=post_data["client_id"])
         except (Application.DoesNotExist, KeyError):
-            return JsonResponse({"error": "invalid_client_id"}, status=400)
+            return JsonResponse({"error": "invalid_client_id"}, status=401)
         # TODO: Implement client credentials flow
         if grant_type == "client_credentials":
             return JsonResponse({"error": "invalid_grant_type"}, status=400)
