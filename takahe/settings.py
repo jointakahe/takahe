@@ -346,7 +346,8 @@ if SETUP.MEDIA_BACKEND:
             GS_BUCKET_NAME = parsed.hostname
         GS_QUERYSTRING_AUTH = False
     elif parsed.scheme == "s3":
-        DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+        # DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+        DEFAULT_FILE_STORAGE = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
         AWS_DEFAULT_ACL = "public-read"

@@ -216,6 +216,7 @@ class ImageUpload(FormView):
             name=form.cleaned_data.get("description"),
             state=PostAttachmentStates.fetched,
         )
+
         attachment.file.save(
             main_file.name,
             main_file,
