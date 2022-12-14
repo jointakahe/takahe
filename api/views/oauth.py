@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
 
 from api.models import Application, Token
+from api.parser import FormOrJsonParser
 
 
 class OauthRedirect(HttpResponseRedirect):
@@ -43,12 +44,13 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
         }
 
     def post(self, request):
+        post_data = FormOrJsonParser().parse_body(request)
         # Grab the application and other details again
-        redirect_uri = self.request.POST["redirect_uri"]
-        scope = self.request.POST["scope"]
-        application = Application.objects.get(client_id=self.request.POST["client_id"])
+        redirect_uri = post_data["redirect_uri"]
+        scope = post_data["scope"]
+        application = Application.objects.get(client_id=post_data["client_id"])
         # Get the identity
-        identity = self.request.user.identities.get(pk=self.request.POST["identity"])
+        identity = self.request.user.identities.get(pk=post_data["identity"])
         # Make a token
         token = Token.objects.create(
             application=application,
@@ -65,18 +67,18 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class TokenView(View):
     def post(self, request):
-        grant_type = request.POST["grant_type"]
+        post_data = FormOrJsonParser().parse_body(request)
+        grant_type = post_data["grant_type"]
+
         try:
-            application = Application.objects.get(
-                client_id=self.request.POST["client_id"]
-            )
+            application = Application.objects.get(client_id=post_data["client_id"])
         except (Application.DoesNotExist, KeyError):
             return JsonResponse({"error": "invalid_client_id"}, status=400)
         # TODO: Implement client credentials flow
         if grant_type == "client_credentials":
             return JsonResponse({"error": "invalid_grant_type"}, status=400)
         elif grant_type == "authorization_code":
-            code = request.POST["code"]
+            code = post_data["code"]
             # Retrieve the token by code
             # TODO: Check code expiry based on created date
             try:
