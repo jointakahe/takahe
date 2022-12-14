@@ -19,7 +19,7 @@ class TakaheS3Storage(S3Boto3Storage):
     def get_object_parameters(self, name: str):
         params = self.object_parameters.copy()
 
-        if name.endswith('.webp'):
+        if name.endswith(".webp"):
             params["ContentDisposition"] = "inline"
             params["ContentType"] = "image/webp"
 
