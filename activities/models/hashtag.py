@@ -185,3 +185,10 @@ class Hashtag(StatorModel):
             return f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
 
         return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))
+
+    def to_mastodon_json(self):
+        return {
+            "name": self.hashtag,
+            "url": self.urls.view.full(),
+            "history": [],
+        }

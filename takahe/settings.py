@@ -169,16 +169,19 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_htmx",
+    "corsheaders",
     "core",
     "activities",
-    "users",
-    "stator",
+    "api",
     "mediaproxy",
+    "stator",
+    "users",
 ]
 
 MIDDLEWARE = [
     "core.middleware.SentryTaggingMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -189,6 +192,7 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "core.middleware.AcceptMiddleware",
     "core.middleware.ConfigLoadingMiddleware",
+    "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
 ]
 
@@ -278,6 +282,7 @@ AUTO_ADMIN_EMAIL = SETUP.AUTO_ADMIN_EMAIL
 
 STATOR_TOKEN = SETUP.STATOR_TOKEN
 
+CORS_ORIGIN_ALLOW_ALL = True  # Temporary
 CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
 CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 604800
@@ -287,6 +292,7 @@ CSRF_TRUSTED_ORIGINS = SETUP.CSRF_HOSTS
 MEDIA_URL = SETUP.MEDIA_URL
 MEDIA_ROOT = SETUP.MEDIA_ROOT
 MAIN_DOMAIN = SETUP.MAIN_DOMAIN
+
 
 if SETUP.USE_PROXY_HEADERS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -340,7 +346,8 @@ if SETUP.MEDIA_BACKEND:
             GS_BUCKET_NAME = parsed.hostname
         GS_QUERYSTRING_AUTH = False
     elif parsed.scheme == "s3":
-        DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+        # DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+        DEFAULT_FILE_STORAGE = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
         AWS_DEFAULT_ACL = "public-read"

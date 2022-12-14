@@ -13,15 +13,21 @@ class IdentityMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        identity_id = request.session.get("identity_id")
-        if not identity_id:
-            request.identity = None
-        else:
-            try:
-                request.identity = Identity.objects.get(id=identity_id)
-                User.objects.filter(pk=request.user.pk).update(last_seen=timezone.now())
-            except Identity.DoesNotExist:
+        # The API middleware might have set identity already
+        if not hasattr(request, "identity"):
+            # See if we have one in the session
+            identity_id = request.session.get("identity_id")
+            if not identity_id:
                 request.identity = None
+            else:
+                # Pull it out of the DB and assign it
+                try:
+                    request.identity = Identity.objects.get(id=identity_id)
+                    User.objects.filter(pk=request.user.pk).update(
+                        last_seen=timezone.now()
+                    )
+                except Identity.DoesNotExist:
+                    request.identity = None
 
         response = self.get_response(request)
         return response

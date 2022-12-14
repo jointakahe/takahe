@@ -48,7 +48,7 @@
                             <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
                         {% else %}
                             {{ request.identity.username }}
-                            <img src="{{ request.identity.local_icon_url }}" title="{{ request.identity.handle }}">
+                            <img src="{{ request.identity.local_icon_url.relative }}" title="{{ request.identity.handle }}">
                         {% endif %}
                     </a>
                 {% else %}
