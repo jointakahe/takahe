@@ -1,8 +1,10 @@
 from django import forms
 from django.conf import settings
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import get_object_or_404, render
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
 
 from core.models import Config
@@ -10,6 +12,11 @@ from users.models import Invite, PasswordReset, User
 
 
 class Login(LoginView):
+    class form_class(AuthenticationForm):
+        error_messages = {
+            "invalid_login": _("No account was found with that email and password."),
+            "inactive": _("This account is inactive."),
+        }
 
     template_name = "auth/login.html"
 

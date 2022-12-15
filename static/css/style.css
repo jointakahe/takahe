@@ -221,6 +221,10 @@ header menu a.identity {
     width: 250px;
 }
 
+body.no-sidebar header menu a.identity {
+    display: none;
+}
+
 header menu a.identity i {
     display: inline-block;
     vertical-align: middle;
@@ -289,11 +293,13 @@ nav a i {
 .columns {
     display: flex;
     align-items: stretch;
+    justify-content: center;
 }
 
 .left-column {
     flex-grow: 1;
     width: 300px;
+    max-width: 700px;
     padding: 15px;
 }
 
@@ -313,6 +319,10 @@ nav a i {
     width: 250px;
     background: var(--color-bg-menu);
     border-radius: 0 0 5px 0;
+}
+
+body.no-sidebar .right-column {
+    display: none;
 }
 
 .right-column h2 {
