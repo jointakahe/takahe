@@ -190,7 +190,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
-    "core.middleware.AcceptMiddleware",
+    "core.middleware.HeadersMiddleware",
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
@@ -273,6 +273,10 @@ STATICFILES_FINDERS = [
 ]
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
+WHITENOISE_MAX_AGE = 3600
 
 STATIC_ROOT = BASE_DIR / "static-collected"
 

@@ -49,6 +49,7 @@ class BaseCacheView(View):
             cached_content["content"],
             headers={
                 "Content-Type": cached_content["mimetype"],
+                "Cache-Control": "public, max-age=3600",
             },
         )
 

@@ -1,7 +1,7 @@
 from urllib.parse import urljoin
 
 from django.conf import settings
-from django.templatetags.static import static
+from django.contrib.staticfiles.storage import staticfiles_storage
 
 
 class RelativeAbsoluteUrl:
@@ -41,7 +41,7 @@ class StaticAbsoluteUrl(RelativeAbsoluteUrl):
     """
 
     def __init__(self, path: str):
-        static_url = static(path)
+        static_url = staticfiles_storage.url(path)
         if "://" in static_url:
             super().__init__(static_url)
         else:

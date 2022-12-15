@@ -6,9 +6,9 @@ from core import sentry
 from core.models import Config
 
 
-class AcceptMiddleware:
+class HeadersMiddleware:
     """
-    Detects any Accept headers signifying a fellow AP server is trying to get JSON.
+    Deals with Accept request headers, and Cache-Control response ones.
     """
 
     def __init__(self, get_response):
@@ -22,6 +22,8 @@ class AcceptMiddleware:
             or "application/activity" in accept
         )
         response = self.get_response(request)
+        if "Cache-Control" not in response.headers:
+            response.headers["Cache-Control"] = "private, max-age=0"
         return response
 
 

@@ -5,10 +5,10 @@ import pydantic
 from asgiref.sync import sync_to_async
 from django.core.files import File
 from django.db import models
-from django.templatetags.static import static
 from django.utils.functional import lazy
 
 from core.uploads import upload_namer
+from core.uris import StaticAbsoluteUrl
 from takahe import __version__
 
 
@@ -201,8 +201,10 @@ class Config(models.Model):
         site_name: str = "Takahē"
         highlight_color: str = "#449c8c"
         site_about: str = "<h2>Welcome!</h2>\n\nThis is a community running Takahē."
-        site_icon: UploadedImage = static("img/icon-128.png")
-        site_banner: UploadedImage = static("img/fjords-banner-600.jpg")
+        site_icon: UploadedImage = StaticAbsoluteUrl("img/icon-128.png").relative  # type: ignore
+        site_banner: UploadedImage = StaticAbsoluteUrl(
+            "img/fjords-banner-600.jpg"
+        ).relative  # type: ignore
 
         policy_terms: str = ""
         policy_privacy: str = ""
