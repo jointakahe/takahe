@@ -1,12 +1,12 @@
 from activities.models import PostInteraction, TimelineEvent
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
 
 
 @api_router.get("/v1/notifications", response=list[schemas.Notification])
-@identity_required
+@scope_required("read")
 def notifications(
     request,
     max_id: str | None = None,

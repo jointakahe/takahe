@@ -23,5 +23,6 @@ class ApiTokenMiddleware:
             request.user = token.user
             request.identity = token.identity
             request.session = None
+            request.token_scopes = set(token.scopes)
         response = self.get_response(request)
         return response

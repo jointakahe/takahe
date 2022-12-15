@@ -59,15 +59,6 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
                 status=401,
             )
 
-        if not application.is_scope_subset(scope):
-            return JsonResponse(
-                {
-                    "error": "invalid_scope",
-                    "error_description": "The requested scope is invalid, unknown, or malformed.",
-                },
-                status=400,
-            )
-
         # Get the identity
         identity = self.request.user.identities.get(pk=post_data["identity"])
 

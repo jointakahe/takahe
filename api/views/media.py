@@ -7,7 +7,7 @@ from api import schemas
 from api.views.base import api_router
 from core.files import blurhash_image, resize_image
 
-from ..decorators import identity_required
+from ..decorators import scope_required
 
 
 class UploadMediaSchema(Schema):
@@ -17,7 +17,7 @@ class UploadMediaSchema(Schema):
 
 @api_router.post("/v1/media", response=schemas.MediaAttachment)
 @api_router.post("/v2/media", response=schemas.MediaAttachment)
-@identity_required
+@scope_required("write")
 def upload_media(
     request,
     file: UploadedFile = File(...),
@@ -54,7 +54,7 @@ def upload_media(
 
 
 @api_router.get("/v1/media/{id}", response=schemas.MediaAttachment)
-@identity_required
+@scope_required("read")
 def get_media(
     request,
     id: str,
@@ -64,7 +64,7 @@ def get_media(
 
 
 @api_router.put("/v1/media/{id}", response=schemas.MediaAttachment)
-@identity_required
+@scope_required("write")
 def update_media(
     request,
     id: str,

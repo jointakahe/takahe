@@ -5,12 +5,12 @@ from ninja import Field
 from activities.models import PostInteraction
 from activities.search import Searcher
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.views.base import api_router
 
 
 @api_router.get("/v2/search", response=schemas.Search)
-@identity_required
+@scope_required("read")
 def search(
     request,
     q: str,

@@ -1,11 +1,13 @@
-from api.models import Application
+from api.models import has_required_scopes
 
 
-def test_scope_subset():
-    app = Application(scopes="read")
-    assert app.is_scope_subset("read")
-    assert app.is_scope_subset("")
+def test_has_required_scopes():
+    assert has_required_scopes("read", required="")
+    assert has_required_scopes("read", required=None)
+    assert has_required_scopes("read", required="read")
+    assert has_required_scopes("read", required={"read"})
+    assert has_required_scopes({"read"}, required="read")
+    assert has_required_scopes({"read"}, required={"read"})
 
-    app.scopes = "read write follow push"
-    app.is_scope_subset("read write")
-    app.is_scope_subset("read push")
+    assert has_required_scopes("read write follow push", required="read write")
+    assert has_required_scopes("read write follow push", required="write push")

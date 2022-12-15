@@ -1,12 +1,12 @@
 from activities.models import Post, PostInteraction, TimelineEvent
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
 
 
 @api_router.get("/v1/timelines/home", response=list[schemas.Status])
-@identity_required
+@scope_required("read")
 def home(
     request,
     max_id: str | None = None,
@@ -39,7 +39,7 @@ def home(
 
 
 @api_router.get("/v1/timelines/public", response=list[schemas.Status])
-@identity_required
+@scope_required("read")
 def public(
     request,
     local: bool = False,
@@ -75,7 +75,7 @@ def public(
 
 
 @api_router.get("/v1/timelines/tag/{hashtag}", response=list[schemas.Status])
-@identity_required
+@scope_required("read")
 def hashtag(
     request,
     hashtag: str,
@@ -112,7 +112,7 @@ def hashtag(
 
 
 @api_router.get("/v1/conversations", response=list[schemas.Status])
-@identity_required
+@scope_required("read")
 def conversations(
     request,
     max_id: str | None = None,

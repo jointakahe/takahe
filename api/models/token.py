@@ -1,5 +1,22 @@
 from django.db import models
 
+TokenScope = set[str] | str
+
+
+def has_required_scopes(scope: TokenScope, *, required: TokenScope) -> bool:
+    """
+    Returns True if scope contains all required scopes
+    """
+    if isinstance(scope, str):
+        scopes = set(scope.split())
+    else:
+        scopes = scope
+    if isinstance(required, str):
+        required_scopes = set(required.split())
+    else:
+        required_scopes = required or set()
+    return (scopes & required_scopes) == required_scopes
+
 
 class Token(models.Model):
     """

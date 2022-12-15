@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 
 from activities.models import Post, PostInteraction
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import identity_required, scope_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
 from users.models import Identity
@@ -15,7 +15,7 @@ def verify_credentials(request):
 
 
 @api_router.get("/v1/accounts/relationships", response=list[schemas.Relationship])
-@identity_required
+@scope_required("read")
 def account_relationships(request):
     ids = request.GET.getlist("id[]")
     result = []
@@ -46,14 +46,14 @@ def account_relationships(request):
 
 
 @api_router.get("/v1/accounts/{id}", response=schemas.Account)
-@identity_required
+@scope_required("read")
 def account(request, id: str):
     identity = get_object_or_404(Identity, pk=id)
     return identity.to_mastodon_json()
 
 
 @api_router.get("/v1/accounts/{id}/statuses", response=list[schemas.Status])
-@identity_required
+@scope_required("read")
 def account_statuses(
     request,
     id: str,

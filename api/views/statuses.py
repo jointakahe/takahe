@@ -15,7 +15,7 @@ from api import schemas
 from api.views.base import api_router
 from core.models import Config
 
-from ..decorators import identity_required
+from ..decorators import scope_required
 
 
 class PostStatusSchema(Schema):
@@ -30,7 +30,7 @@ class PostStatusSchema(Schema):
 
 
 @api_router.post("/v1/statuses", response=schemas.Status)
-@identity_required
+@scope_required("write")
 def post_status(request, details: PostStatusSchema):
     # Check text length
     if len(details.status) > Config.system.post_length:
@@ -67,7 +67,7 @@ def post_status(request, details: PostStatusSchema):
 
 
 @api_router.get("/v1/statuses/{id}", response=schemas.Status)
-@identity_required
+@scope_required("read")
 def status(request, id: str):
     post = get_object_or_404(Post, pk=id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -75,7 +75,7 @@ def status(request, id: str):
 
 
 @api_router.delete("/v1/statuses/{id}", response=schemas.Status)
-@identity_required
+@scope_required("write")
 def delete_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
     post.transition_perform(PostStates.deleted)
@@ -84,7 +84,7 @@ def delete_status(request, id: str):
 
 
 @api_router.get("/v1/statuses/{id}/context", response=schemas.Context)
-@identity_required
+@scope_required("read")
 def status_context(request, id: str):
     post = get_object_or_404(Post, pk=id)
     parent = post.in_reply_to_post()
@@ -104,7 +104,7 @@ def status_context(request, id: str):
 
 
 @api_router.post("/v1/statuses/{id}/favourite", response=schemas.Status)
-@identity_required
+@scope_required("write")
 def favourite_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
     post.like_as(request.identity)
@@ -113,7 +113,7 @@ def favourite_status(request, id: str):
 
 
 @api_router.post("/v1/statuses/{id}/unfavourite", response=schemas.Status)
-@identity_required
+@scope_required("write")
 def unfavourite_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
     post.unlike_as(request.identity)
@@ -122,7 +122,7 @@ def unfavourite_status(request, id: str):
 
 
 @api_router.post("/v1/statuses/{id}/reblog", response=schemas.Status)
-@identity_required
+@scope_required("write")
 def reblog_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
     post.boost_as(request.identity)
@@ -131,7 +131,7 @@ def reblog_status(request, id: str):
 
 
 @api_router.post("/v1/statuses/{id}/unreblog", response=schemas.Status)
-@identity_required
+@scope_required("write")
 def unreblog_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
     post.unboost_as(request.identity)
