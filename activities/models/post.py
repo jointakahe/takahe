@@ -12,8 +12,10 @@ from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
 from activities.models.hashtag import Hashtag
+from activities.templatetags.emoji_tags import imageify_emojis
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -218,6 +220,12 @@ class Post(StatorModel):
     # Hashtags in the post
     hashtags = models.JSONField(blank=True, null=True)
 
+    emojis = models.ManyToManyField(
+        "activities.Emoji",
+        related_name="posts_using_emoji",
+        blank=True,
+    )
+
     # When the post was originally created (as opposed to when we received it)
     published = models.DateTimeField(default=timezone.now)
 
@@ -328,8 +336,11 @@ class Post(StatorModel):
         """
         Returns the content formatted for local display
         """
-        return Hashtag.linkify_hashtags(
-            self.linkify_mentions(sanitize_post(self.content), local=True)
+        return imageify_emojis(
+            Hashtag.linkify_hashtags(
+                self.linkify_mentions(sanitize_post(self.content), local=True)
+            ),
+            self.author.domain,
         )
 
     def safe_content_remote(self):
@@ -379,6 +390,8 @@ class Post(StatorModel):
                     visibility = reply_to.Visibilities.local_only
             # Find hashtags in this post
             hashtags = Hashtag.hashtags_from_content(content) or None
+            # Find emoji in this post
+            emojis = Emoji.emojis_from_content(content, author.domain)
             # Strip all HTML and apply linebreaks filter
             content = linebreaks_filter(strip_html(content))
             # Make the Post object
@@ -395,6 +408,7 @@ class Post(StatorModel):
             post.object_uri = post.urls.object_uri
             post.url = post.absolute_object_uri()
             post.mentions.set(mentions)
+            post.emojis.set(emojis)
             if attachments:
                 post.attachments.set(attachments)
             post.save()
@@ -416,6 +430,7 @@ class Post(StatorModel):
             self.edited = timezone.now()
             self.hashtags = Hashtag.hashtags_from_content(content) or None
             self.mentions.set(self.mentions_from_content(content, self.author))
+            self.emojis.set(Emoji.emojis_from_content(content, self.author.domain))
             self.attachments.set(attachments or [])
             self.save()
 
@@ -520,14 +535,11 @@ class Post(StatorModel):
             value["updated"] = format_ld_date(self.edited)
         # Mentions
         for mention in self.mentions.all():
-            value["tag"].append(
-                {
-                    "href": mention.actor_uri,
-                    "name": "@" + mention.handle,
-                    "type": "Mention",
-                }
-            )
+            value["tag"].append(mention.to_ap_tag())
             value["cc"].append(mention.actor_uri)
+        # Emoji
+        for emoji in self.emojis.all():
+            value["tag"].append(emoji.to_ap_tag())
         # Attachments
         for attachment in self.attachments.all():
             value["attachment"].append(attachment.to_ap())
@@ -616,7 +628,9 @@ class Post(StatorModel):
         # Do we have one with the right ID?
         created = False
         try:
-            post = cls.objects.get(object_uri=data["id"])
+            post = cls.objects.select_related("author__domain").get(
+                object_uri=data["id"]
+            )
         except cls.DoesNotExist:
             if create:
                 # Resolve the author
@@ -645,10 +659,10 @@ class Post(StatorModel):
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
                 elif tag["type"].lower() == "as:hashtag":
-                    post.hashtags.append(tag["name"].lstrip("#"))
+                    post.hashtags.append(tag["name"].lower().lstrip("#"))
                 elif tag["type"].lower() == "http://joinmastodon.org/ns#emoji":
-                    # TODO: Handle incoming emoji
-                    pass
+                    emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
+                    post.emojis.add(emoji)
                 else:
                     raise ValueError(f"Unknown tag type {tag['type']}")
             # Visibility and to
@@ -818,7 +832,7 @@ class Post(StatorModel):
                 if self.hashtags
                 else []
             ),
-            "emojis": [],
+            "emojis": [emoji.to_mastodon_json() for emoji in self.emojis.usable()],
             "reblogs_count": self.interactions.filter(type="boost").count(),
             "favourites_count": self.interactions.filter(type="like").count(),
             "replies_count": 0,

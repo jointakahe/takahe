@@ -184,8 +184,14 @@ class FanOut(StatorModel):
         """
         Returns a version of the object with all relations pre-loaded
         """
-        return await FanOut.objects.select_related(
-            "identity",
-            "subject_post",
-            "subject_post_interaction",
-        ).aget(pk=self.pk)
+        return (
+            await FanOut.objects.select_related(
+                "identity",
+                "subject_post",
+                "subject_post_interaction",
+            )
+            .prefetch_related(
+                "subject_post__emojis",
+            )
+            .aget(pk=self.pk)
+        )

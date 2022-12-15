@@ -224,6 +224,8 @@ class Config(models.Model):
         hashtag_unreviewed_are_public: bool = True
         hashtag_stats_max_age: int = 60 * 60
 
+        emoji_unreviewed_are_public: bool = False
+
         cache_timeout_page_default: int = 60
         cache_timeout_page_timeline: int = 60 * 3
         cache_timeout_page_post: int = 60 * 2

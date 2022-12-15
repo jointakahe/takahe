@@ -1,8 +1,10 @@
 from asgiref.sync import async_to_sync
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from activities.models import (
+    Emoji,
     FanOut,
     Hashtag,
     Post,
@@ -48,6 +50,46 @@ class HashtagAdmin(admin.ModelAdmin):
     def force_execution(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("outdated")
+
+
+@admin.register(Emoji)
+class EmojiAdmin(admin.ModelAdmin):
+    list_display = (
+        "shortcode",
+        "preview",
+        "local",
+        "domain",
+        "public",
+        "state",
+        "created",
+    )
+    list_filter = ("local", "public", "state")
+    search_fields = ("shortcode",)
+
+    readonly_fields = ("preview", "created", "updated")
+
+    actions = ["force_execution", "approve_emoji", "reject_emoji"]
+
+    @admin.action(description="Force Execution")
+    def force_execution(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("outdated")
+
+    @admin.action(description="Approve Emoji")
+    def approve_emoji(self, request, queryset):
+        queryset.update(public=True)
+
+    @admin.action(description="Reject Emoji")
+    def reject_emoji(self, request, queryset):
+        queryset.update(public=False)
+
+    @admin.display(description="Emoji Preview")
+    def preview(self, instance):
+        if instance.public is False:
+            return mark_safe(f'<a href="{instance.full_url().relative}">Preview</a>')
+        return mark_safe(
+            f'<img src="{instance.full_url().relative}" style="height: 22px">'
+        )
 
 
 @admin.register(PostAttachment)
