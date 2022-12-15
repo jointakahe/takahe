@@ -56,6 +56,11 @@ kwIDAQAB
     }
 
 
+@pytest.fixture(autouse=True)
+def _test_settings(settings):
+    settings.STATICFILES_STORAGE = None
+
+
 @pytest.fixture
 def config_system(keypair):
     Config.system = Config.SystemOptions(
