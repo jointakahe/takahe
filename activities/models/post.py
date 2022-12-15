@@ -643,7 +643,7 @@ class Post(StatorModel):
                 )
                 created = True
             else:
-                raise KeyError(f"No post with ID {data['id']}", data)
+                raise cls.DoesNotExist(f"No post with ID {data['id']}", data)
         if update or created:
             post.content = data["content"]
             post.summary = data.get("summary")
@@ -755,7 +755,11 @@ class Post(StatorModel):
             if data["actor"] != data["object"]["attributedTo"]:
                 raise ValueError("Create actor does not match its Post object", data)
             # Find it and update it
-            cls.by_ap(data["object"], create=False, update=True)
+            try:
+                cls.by_ap(data["object"], create=False, update=True)
+            except cls.DoesNotExist:
+                # We don't have a copy - assume we got a delete first and ignore.
+                pass
 
     @classmethod
     def handle_delete_ap(cls, data):
