@@ -1,20 +1,15 @@
 from django.contrib import admin
 
-from stator.models import StatorError
+from stator.models import Stats
 
 
-@admin.register(StatorError)
+@admin.register(Stats)
 class DomainAdmin(admin.ModelAdmin):
     list_display = [
-        "id",
-        "date",
         "model_label",
-        "instance_pk",
-        "state",
-        "error",
+        "updated",
     ]
-    list_filter = ["model_label", "date"]
-    ordering = ["-date"]
+    ordering = ["model_label"]
 
     def has_add_permission(self, request, obj=None):
         return False

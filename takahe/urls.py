@@ -127,6 +127,11 @@ urlpatterns = [
         "admin/hashtags/<hashtag>/delete/",
         admin.HashtagDelete.as_view(),
     ),
+    path(
+        "admin/stator/",
+        admin.Stator.as_view(),
+        name="admin_stator",
+    ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),

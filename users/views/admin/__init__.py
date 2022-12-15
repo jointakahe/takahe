@@ -22,6 +22,7 @@ from users.views.admin.settings import (  # noqa
     PoliciesSettings,
     TuningSettings,
 )
+from users.views.admin.stator import Stator  # noqa
 
 
 @method_decorator(admin_required, name="dispatch")

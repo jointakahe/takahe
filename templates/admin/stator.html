@@ -1,0 +1,13 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Stator{% endblock %}
+
+{% block content %}
+    {% for model, stats in model_stats.items %}
+        <fieldset>
+            <legend>{{ model }}</legend>
+            <p><b>Pending:</b> {{ stats.most_recent_queued }}</p>
+            <p><b>Processed today:</b> {{ stats.most_recent_handled.1 }}</p>
+        </fieldset>
+    {% endfor %}
+{% endblock %}
