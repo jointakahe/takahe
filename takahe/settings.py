@@ -338,15 +338,14 @@ if SETUP.EMAIL_SERVER:
 if SETUP.MEDIA_BACKEND:
     parsed = urllib.parse.urlparse(SETUP.MEDIA_BACKEND)
     query = urllib.parse.parse_qs(parsed.query)
-    if parsed.scheme == "gcs":
-        DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-        if parsed.path.lstrip("/"):
-            GS_BUCKET_NAME = parsed.path.lstrip("/")
-        else:
-            GS_BUCKET_NAME = parsed.hostname
+    if parsed.scheme == "gs":
+        DEFAULT_FILE_STORAGE = "core.uploads.TakaheGoogleCloudStorage"
+        GS_BUCKET_NAME = parsed.path.lstrip("/")
         GS_QUERYSTRING_AUTH = False
+        if parsed.hostname is not None:
+            port = parsed.port or 443
+            GS_CUSTOM_ENDPOINT = f"https://{parsed.hostname}:{port}"
     elif parsed.scheme == "s3":
-        # DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
         DEFAULT_FILE_STORAGE = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
