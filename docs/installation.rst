@@ -74,6 +74,14 @@ be provided to the containers from the first boot.
 * ``TAKAHE_SECRET_KEY`` must be a fixed, random value (it's used for internal
   cryptography). Don't change this unless you want to invalidate all sessions.
 
+  .. warning::
+
+    You **must** keep the value of ``TAKAHE_SECRET_KEY`` unique and secret. Anyone
+    with this value can modify their session to impersonate any user, including
+    admins. It should be kept even more secure than your admin passwords, and
+    should be long, random and completely unguessable. We recommend that it is
+    at least 64 characters.
+
 * ``TAKAHE_MEDIA_BACKEND`` must be a URI starting with ``local://``, ``s3://``
   or ``gcs://``. See :ref:`media_configuration` below for more.
 
