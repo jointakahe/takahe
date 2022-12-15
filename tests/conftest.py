@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from django.conf import settings
 
 from activities.models import Emoji
 from api.models import Application, Token
@@ -71,6 +72,19 @@ def config_system(keypair):
     yield Config.system
     Config.__forced__ = False
     del Config.system
+
+
+@pytest.fixture
+def client_with_identity(client, identity, user):
+    """
+    Provides a logged-in test client with an identity selected
+    """
+    client.force_login(user)
+    session = client.session
+    session["identity_id"] = identity.id
+    session.save()
+    client.cookies[settings.SESSION_COOKIE_NAME] = session.session_key
+    return client
 
 
 @pytest.fixture

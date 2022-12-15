@@ -5,7 +5,10 @@ from django.utils import timezone
 from activities.templatetags.activity_tags import linkify_hashtags, timedeltashort
 
 
-def test_timedeltashort_regress():
+def test_timedeltashort():
+    """
+    Tests that timedeltashort works correctly
+    """
     assert timedeltashort(None) == ""
     assert timedeltashort("") == ""
 
@@ -21,7 +24,11 @@ def test_timedeltashort_regress():
     assert timedeltashort(value - timedelta(days=366)) == "1y"
 
 
-def test_linkify_hashtags_regres():
+def test_linkify_hashtags():
+    """
+    Tests that linkify_hashtags works correctly
+    """
+
     assert linkify_hashtags(None) == ""
     assert linkify_hashtags("") == ""
 

@@ -1,46 +1,58 @@
-import re
-from unittest import mock
-
 import pytest
-from django.core.exceptions import PermissionDenied
+from django.test.client import Client
+from pytest_django.asserts import assertContains
 
 from activities.models import Post
-from activities.views.compose import Compose
+from core.models import Config
+from users.models import Identity
 
 
 @pytest.mark.django_db
-def test_content_warning_text(identity, user, rf, config_system):
-    request = rf.get("/compose/")
-    request.user = user
-    request.identity = identity
-
+def test_content_warning_text(
+    client_with_identity: Client,
+    config_system: Config.SystemOptions,
+):
+    """
+    Tests that changing the content warning name works
+    """
     config_system.content_warning_text = "Content Summary"
-    with mock.patch("core.models.Config.load_system", return_value=config_system):
-        view = Compose.as_view()
-        resp = view(request)
-        assert resp.status_code == 200
-        content = str(resp.rendered_content)
-        assert 'placeholder="Content Summary"' in content
-        assert re.search(
-            r"<label.*>\s*Content Summary\s*</label>", content, flags=re.MULTILINE
-        )
+    response = client_with_identity.get("/compose/")
+    assertContains(response, 'placeholder="Content Summary"', status_code=200)
+    assertContains(
+        response, "<label for='id_content_warning'>Content Summary</label>", html=True
+    )
 
 
 @pytest.mark.django_db
-def test_post_edit_security(identity, user, rf, other_identity):
-    # Create post
+def test_post_edit_security(client_with_identity: Client, other_identity: Identity):
+    """
+    Tests that you can't edit other users' posts with URL fiddling
+    """
     other_post = Post.objects.create(
         content="<p>OTHER POST!</p>",
         author=other_identity,
         local=True,
         visibility=Post.Visibilities.public,
     )
+    response = client_with_identity.get(other_post.urls.action_edit)
+    assert response.status_code == 403
 
-    request = rf.get(other_post.get_absolute_url() + "edit/")
-    request.user = user
-    request.identity = identity
 
-    view = Compose.as_view()
-    with pytest.raises(PermissionDenied) as ex:
-        view(request, handle=other_identity.handle.lstrip("@"), post_id=other_post.id)
-    assert str(ex.value) == "Post author is not requestor"
+@pytest.mark.django_db
+def test_rate_limit(identity: Identity, client_with_identity: Client):
+    """
+    Tests that the posting rate limit comes into force
+    """
+    # First post should go through
+    assert identity.posts.count() == 0
+    response = client_with_identity.post(
+        "/compose/", data={"text": "post 1", "visibility": "0"}
+    )
+    assert response.status_code == 302
+    assert identity.posts.count() == 1
+    # Second should not
+    response = client_with_identity.post(
+        "/compose/", data={"text": "post 2", "visibility": "0"}
+    )
+    assertContains(response, "You must wait at least", status_code=200)
+    assert identity.posts.count() == 1

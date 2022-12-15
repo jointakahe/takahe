@@ -38,6 +38,10 @@ class BasicSettings(AdminSettingsPage):
             "title": "Maximum Post Length",
             "help_text": "The maximum number of characters allowed per post",
         },
+        "post_minimum_interval": {
+            "title": "Minimum Posting Interval",
+            "help_text": "The minimum number of seconds a user must wait between posts",
+        },
         "content_warning_text": {
             "title": "Content Warning Feature Name",
             "help_text": "What the feature that lets users provide post summaries is called",
@@ -102,6 +106,7 @@ class BasicSettings(AdminSettingsPage):
         "Signups": ["signup_allowed", "signup_invite_only", "signup_text"],
         "Posts": [
             "post_length",
+            "post_minimum_interval",
             "content_warning_text",
             "hashtag_unreviewed_are_public",
             "emoji_unreviewed_are_public",

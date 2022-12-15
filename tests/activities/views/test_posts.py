@@ -1,25 +1,20 @@
 import pytest
-from django.core.exceptions import PermissionDenied
+from django.test.client import Client
 
 from activities.models import Post
-from activities.views.posts import Delete
+from users.models import Identity
 
 
 @pytest.mark.django_db
-def test_post_delete_security(identity, user, rf, other_identity):
-    # Create post
+def test_post_delete_security(client_with_identity: Client, other_identity: Identity):
+    """
+    Tests that you can't delete other users' posts with URL fiddling
+    """
     other_post = Post.objects.create(
         content="<p>OTHER POST!</p>",
         author=other_identity,
         local=True,
         visibility=Post.Visibilities.public,
     )
-
-    request = rf.post(other_post.get_absolute_url() + "delete/")
-    request.user = user
-    request.identity = identity
-
-    view = Delete.as_view()
-    with pytest.raises(PermissionDenied) as ex:
-        view(request, handle=other_identity.handle.lstrip("@"), post_id=other_post.id)
-    assert str(ex.value) == "Post author is not requestor"
+    response = client_with_identity.get(other_post.urls.action_delete)
+    assert response.status_code == 403

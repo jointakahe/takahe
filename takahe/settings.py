@@ -282,6 +282,8 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+
 WHITENOISE_MAX_AGE = 3600
 
 STATIC_ROOT = BASE_DIR / "static-collected"

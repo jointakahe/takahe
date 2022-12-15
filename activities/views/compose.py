@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
@@ -54,8 +55,9 @@ class Compose(FormView):
         )
         reply_to = forms.CharField(widget=forms.HiddenInput(), required=False)
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, request, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            self.request = request
             self.fields["text"].widget.attrs[
                 "_"
             ] = f"""
@@ -74,14 +76,29 @@ class Compose(FormView):
 
         def clean_text(self):
             text = self.cleaned_data.get("text")
+            # Check minimum interval
+            last_post = self.request.identity.posts.order_by("-created").first()
+            if (
+                last_post
+                and (timezone.now() - last_post.created).total_seconds()
+                < Config.system.post_minimum_interval
+            ):
+                raise forms.ValidationError(
+                    f"You must wait at least {Config.system.post_minimum_interval} seconds between posts"
+                )
+            print(last_post)
             if not text:
                 return text
+            # Check post length
             length = len(text)
             if length > Config.system.post_length:
                 raise forms.ValidationError(
                     f"Maximum post length is {Config.system.post_length} characters (you have {length})"
                 )
             return text
+
+    def get_form(self, form_class=None):
+        return self.form_class(request=self.request, **self.get_form_kwargs())
 
     def get_initial(self):
         initial = super().get_initial()
