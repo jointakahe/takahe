@@ -1,5 +1,6 @@
 from .accounts import *  # noqa
 from .apps import *  # noqa
+from .emoji import *  # noqa
 from .filters import *  # noqa
 from .instance import *  # noqa
 from .media import *  # noqa

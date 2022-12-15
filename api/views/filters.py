@@ -1,6 +1,5 @@
+from api.decorators import identity_required
 from api.views.base import api_router
-
-from ..decorators import identity_required
 
 
 @api_router.get("/v1/filters")
