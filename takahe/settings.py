@@ -28,7 +28,7 @@ class ImplicitHostname(AnyUrl):
 
 class MediaBackendUrl(AnyUrl):
     host_required = False
-    allowed_schemes = {"s3", "gcs", "local"}
+    allowed_schemes = {"s3", "gs", "local"}
 
 
 def as_bool(v: str | list[str] | None):
