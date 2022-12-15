@@ -223,7 +223,7 @@ def stator(config_system) -> StatorRunner:
         concurrency=100,
         schedule_interval=30,
     )
-    runner.handled = 0
+    runner.handled = {}
     runner.started = time.monotonic()
     runner.last_clean = time.monotonic() - runner.schedule_interval
     runner.tasks = []
