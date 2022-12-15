@@ -5,6 +5,30 @@ This page contains a collection of tips and settings that can be used to
 tune your server based upon its users and the other servers it federates
 with.
 
+We recommend that all installations are run behind a CDN, and
+have caches configured. See below for more details on each.
+
+
+CDNs
+----
+
+Takahē is *designed to be run behind a CDN*. It serves most static files directly
+from its main webservers, which is inefficient if called directly, but they
+have ``Cache-Control`` headers set so that the CDN can do the heavy lifting -
+more efficiently than offloading all files to something like S3.
+
+If you don't run behind a CDN, things will still work, but even a medium
+level of traffic might put the webservers under a lot of load.
+
+If you do run behind a CDN, ensure that your CDN is set to respect
+``Cache-Control`` headers from the origin. Some CDNs go purely off of file
+extensions by default, which will not capture all of the proxy views Takahē
+uses to show remote images without leaking user information.
+
+If you don't want to use a CDN but still want a performance improvement, a
+read-through cache that respects ``Cache-Control``, like Varnish, will
+also help if placed in front of Takahē.
+
 
 Scaling
 -------
@@ -165,16 +189,3 @@ Examples::
 A local memory cache, inside the Python process. This will consume additional
 memory for the process, and should not be used with the MEDIA or AVATARS caches.
 
-
-CDNs
-----
-
-You can use Takahē with a "read through" CDN that takes over your site's main
-domain serving and passes some requests through to Takahē as a backend.
-
-Takahē sets the appropriate ``Vary`` headers to ensure that cache leakage does
-not happen, and ``Last-Modified`` and ``ETag`` headers to allow the CDN to
-correctly expire cache items.
-
-Takahē does not yet support offloading local media URLs (such as profile images
-and post images) to a *separate* CDN URL; this will be coming in the future.
