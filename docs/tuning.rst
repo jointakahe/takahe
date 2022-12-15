@@ -188,4 +188,3 @@ Examples::
 
 A local memory cache, inside the Python process. This will consume additional
 memory for the process, and should not be used with the MEDIA or AVATARS caches.
-
