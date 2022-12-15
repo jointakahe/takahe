@@ -1079,6 +1079,12 @@ table.metadata td .emoji {
     margin-right: 4px;
 }
 
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+}
+
 .load-more {
     margin: 10px 0;
     text-align: center;

@@ -10,7 +10,13 @@
         No posts yet.
     {% endfor %}
 
-    {% if page_obj.has_next %}
-        <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
-    {% endif %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <div class="load-more"><a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a></div>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+            <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
+        {% endif %}
+    </div>
 {% endblock %}
