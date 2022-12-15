@@ -106,7 +106,7 @@ class PostAttachmentInline(admin.StackedInline):
 class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "author", "created"]
     list_filter = ("local", "visibility", "state", "created")
-    raw_id_fields = ["to", "mentions", "author"]
+    raw_id_fields = ["to", "mentions", "author", "emojis"]
     actions = ["force_fetch", "reparse_hashtags"]
     search_fields = ["content"]
     inlines = [PostAttachmentInline]

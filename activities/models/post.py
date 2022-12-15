@@ -363,7 +363,7 @@ class Post(StatorModel):
         """
         return (
             await Post.objects.select_related("author", "author__domain")
-            .prefetch_related("mentions", "mentions__domain", "attachments")
+            .prefetch_related("mentions", "mentions__domain", "attachments", "emojis")
             .aget(pk=self.pk)
         )
 
@@ -391,7 +391,7 @@ class Post(StatorModel):
             # Find hashtags in this post
             hashtags = Hashtag.hashtags_from_content(content) or None
             # Find emoji in this post
-            emojis = Emoji.emojis_from_content(content, author.domain)
+            emojis = Emoji.emojis_from_content(content, None)
             # Strip all HTML and apply linebreaks filter
             content = linebreaks_filter(strip_html(content))
             # Make the Post object
@@ -430,7 +430,7 @@ class Post(StatorModel):
             self.edited = timezone.now()
             self.hashtags = Hashtag.hashtags_from_content(content) or None
             self.mentions.set(self.mentions_from_content(content, self.author))
-            self.emojis.set(Emoji.emojis_from_content(content, self.author.domain))
+            self.emojis.set(Emoji.emojis_from_content(content, None))
             self.attachments.set(attachments or [])
             self.save()
 

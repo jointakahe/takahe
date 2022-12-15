@@ -45,15 +45,16 @@ class EmojiStates(StateGraph):
 
 class EmojiQuerySet(models.QuerySet):
     def usable(self, domain: Domain | None = None):
-        public_q = models.Q(public=True)
-        if Config.system.emoji_unreviewed_are_public:
-            public_q |= models.Q(public__isnull=True)
+        if domain is None or domain.local:
+            visible_q = models.Q(local=True)
+        else:
+            visible_q = models.Q(public=True)
+            if Config.system.emoji_unreviewed_are_public:
+                visible_q |= models.Q(public__isnull=True)
 
-        qs = self.filter(public_q)
+        qs = self.filter(visible_q)
         if domain:
-            if domain.local:
-                qs = qs.filter(local=True)
-            else:
+            if not domain.local:
                 qs = qs.filter(domain=domain)
         return qs
 
@@ -194,7 +195,7 @@ class Emoji(StatorModel):
         return mark_safe(Emoji.emoji_regex.sub(replacer, content))
 
     @classmethod
-    def emojis_from_content(cls, content: str, domain: Domain) -> list[str]:
+    def emojis_from_content(cls, content: str, domain: Domain | None) -> list[str]:
         """
         Return a parsed and sanitized of emoji found in content without
         the surrounding ':'.
@@ -202,7 +203,7 @@ class Emoji(StatorModel):
         emoji_hits = cls.emoji_regex.findall(strip_html(content))
         emojis = sorted({emoji.lower() for emoji in emoji_hits})
         return list(
-            cls.objects.filter(local=domain is None)
+            cls.objects.filter(local=(domain is None) or domain.local)
             .usable(domain)
             .filter(shortcode__in=emojis)
         )
@@ -213,7 +214,7 @@ class Emoji(StatorModel):
         http://joinmastodon.org/ns#Emoji
         """
         return {
-            "id": self.object_uri,
+            "id": self.object_uri or f"https://{settings.MAIN_DOMAIN}/emoji/{self.pk}/",
             "type": "Emoji",
             "name": self.shortcode,
             "icon": {
