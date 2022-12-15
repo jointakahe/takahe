@@ -1,7 +1,6 @@
 from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
 from django.urls import path, re_path
-from django.views.static import serve
 
 from activities.views import compose, explore, follows, posts, search, timelines
 from api.views import api_router, oauth
@@ -219,7 +218,7 @@ urlpatterns = [
     # Media files
     re_path(
         r"^media/(?P<path>.*)$",
-        serve,
+        core.custom_static_serve,
         kwargs={"document_root": djsettings.MEDIA_ROOT},
     ),
 ]
