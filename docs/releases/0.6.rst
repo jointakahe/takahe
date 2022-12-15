@@ -1,0 +1,40 @@
+0.6
+===
+
+*Not Yet Released*
+
+This is a placeholder release note.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.6``.
+
+
+Upgrade Notes
+-------------
+
+Signed Cookie Sessions
+~~~~~~~~~~~~~~~~~~~~~~
+
+As of version 0.6, Takahē uses signed cookies for sessions rather than a
+database table. As part of this change, when you upgrade, all users will be
+signed out, but no data will be lost - they just need to sign in again.
+
+
+Storage Settings
+~~~~~~~~~~~~~~~~
+
+If you use Google Cloud for storage, the URI format has changed - before it was
+``gcs://bucketname``, and now it is ``gs:///bucketname``.
+
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations, but for once, they are not fully
+backwards-compatible, as we've deleted the unneeded ``stator_errors`` table.
+
+To apply these migrations, you should:
+
+* Stop all Stator processes (it's fine to leave webservers going)
+* Apply the migrations
+* Start new Stator processes

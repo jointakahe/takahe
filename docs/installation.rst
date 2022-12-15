@@ -142,21 +142,13 @@ Google Cloud Storage
 
 To use GCS, provide a URL like:
 
-* ``gcs://bucket-name``
+* ``gs:///bucket-name``
 
 The GCS backend currently only supports implicit authentication (from the
 standard Google authentication environment variables, or machine roles).
 
-Note that the bucket name only has two slashes before it - we will move this to
-be three soon, like the S3 backend, but will notify you in release notes when
-this changes and will allow the existing pattern to work for a while.
-
 Your bucket must be set to world-readable and have individual object
 permissions disabled.
-
-  * If it is set to ``s3://``, it must be in the form
-    ``s3://access-key:secret-key@endpoint-url/bucket-name``. Your bucket must
-    permit publically-readable files to be uploaded.
 
 
 Local Directory
