@@ -4,6 +4,7 @@ from django.templatetags.static import static
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView, View
+from django.views.static import serve
 
 from activities.views.timelines import Home
 from core.decorators import cache_page
@@ -89,3 +90,14 @@ class FlatPage(TemplateView):
             "title": self.title,
             "content": mark_safe(html),
         }
+
+
+def custom_static_serve(*args, **keywords):
+    """
+    Set the correct `Content-Type` header for static WebP images
+    since Django cannot guess the MIME type of WebP images.
+    """
+    response = serve(*args, **keywords)
+    if keywords["path"].endswith(".webp"):
+        response.headers["Content-Type"] = "image/webp"
+    return response
