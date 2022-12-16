@@ -48,7 +48,7 @@ class SystemActor:
             },
             "preferredUsername": self.username,
             "url": self.profile_uri,
-            "as:manuallyApprovesFollowers": True,
+            "manuallyApprovesFollowers": True,
             "publicKey": {
                 "id": self.public_key_id,
                 "owner": self.actor_uri,

@@ -89,7 +89,13 @@ class PasswordResetAdmin(admin.ModelAdmin):
 
 @admin.register(InboxMessage)
 class InboxMessageAdmin(admin.ModelAdmin):
-    list_display = ["id", "state", "state_changed", "message_type", "message_actor"]
+    list_display = [
+        "id",
+        "state",
+        "state_changed",
+        "message_type_full",
+        "message_actor",
+    ]
     list_filter = ("state",)
     search_fields = ["message"]
     actions = ["reset_state"]

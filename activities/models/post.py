@@ -659,7 +659,7 @@ class Post(StatorModel):
         if update or created:
             post.content = data["content"]
             post.summary = data.get("summary")
-            post.sensitive = data.get("as:sensitive", False)
+            post.sensitive = data.get("sensitive", False)
             post.url = data.get("url")
             post.published = parse_ld_date(data.get("published"))
             post.edited = parse_ld_date(data.get("updated"))
@@ -670,7 +670,7 @@ class Post(StatorModel):
                 if tag["type"].lower() == "mention":
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
-                elif tag["type"].lower() == "as:hashtag":
+                elif tag["type"].lower() == "hashtag":
                     post.hashtags.append(tag["name"].lower().lstrip("#"))
                 elif tag["type"].lower() == "http://joinmastodon.org/ns#emoji":
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)

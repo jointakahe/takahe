@@ -1,0 +1,36 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}{{ user.email }}{% endblock %}
+
+{% block content %}
+    <h1>{{ editing_user.email }}</h1>
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Permissions</legend>
+            {% include "forms/_field.html" with field=form.status %}
+            {% if same_user %}
+            <ul class="errorlist">
+                <li>You cannot edit your own permission status!</li>
+            </ul>
+            {% endif %}
+        </fieldset>
+        <fieldset>
+            <legend>Identities</legend>
+            {% for identity in editing_user.identities.all %}
+                {% include "activities/_identity.html" %}
+            {% empty %}
+                <p>This user has no identities yet.</p>
+            {% endfor %}
+        </fieldset>
+        <fieldset>
+            <legend>Dates</legend>
+            <p>Last seen: <time title="{{ editing_user.last_seen }} UTC">{{ editing_user.last_seen | timesince }} ago</time></p>
+            <p>Created: <time title="{{ editing_user.created }} UTC">{{ editing_user.created | timesince }} ago</time></p>
+        </fieldset>
+        <div class="buttons">
+            <a href="{{ editing_user.urls.admin }}" class="button secondary left">Back</a>
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

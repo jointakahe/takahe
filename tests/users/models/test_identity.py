@@ -155,7 +155,7 @@ def test_fetch_actor(httpx_mock, config_system):
                 "mediaType": "image/jpeg",
                 "url": "https://example.com/image.jpg",
             },
-            "as:manuallyApprovesFollowers": False,
+            "manuallyApprovesFollowers": False,
             "name": "Test User",
             "preferredUsername": "test",
             "published": "2022-11-02T00:00:00Z",

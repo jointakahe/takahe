@@ -438,7 +438,7 @@ class Identity(StatorModel):
             self.username = self.username["@value"]
         if self.username:
             self.username = self.username.lower()
-        self.manually_approves_followers = document.get("as:manuallyApprovesFollowers")
+        self.manually_approves_followers = document.get("manuallyApprovesFollowers")
         self.public_key = document.get("publicKey", {}).get("publicKeyPem")
         self.public_key_id = document.get("publicKey", {}).get("id")
         self.icon_uri = document.get("icon", {}).get("url")

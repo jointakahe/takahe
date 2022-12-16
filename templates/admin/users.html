@@ -3,7 +3,40 @@
 {% block subtitle %}Users{% endblock %}
 
 {% block content %}
-    <p>
-        Please use the <a href="/djadmin/users/user/">Django Admin</a> for now.
-    </p>
+    <form action="." class="search">
+        <input type="search" name="query" value="{{ query }}" placeholder="Search by email">
+        <button><i class="fa-solid fa-search"></i></button>
+    </form>
+    <section class="icon-menu">
+        {% for user in page_obj %}
+            <a class="option" href="{{ user.urls.admin_edit }}">
+                <i class="fa-solid fa-user"></i>
+                <span class="handle">
+                    {{ user.email }}
+                    <small>
+                        {{ user.num_identities }} identit{{ user.num_identities|pluralize:"y,ies" }}
+                    </small>
+                </span>
+                {% if user.banned %}
+                    <span class="pill bad">Banned</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="option empty">
+                {% if query %}
+                    No users match your query.
+                {% else %}
+                    There are no users yet.
+                {% endif %}
+            </p>
+        {% endfor %}
+        <div class="load-more">
+            {% if page_obj.has_previous %}
+                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+            {% endif %}
+        </div>
+    </section>
 {% endblock %}

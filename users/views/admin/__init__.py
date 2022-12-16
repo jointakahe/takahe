@@ -3,7 +3,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, RedirectView, TemplateView
 
 from users.decorators import admin_required
-from users.models import Identity, User
+from users.models import Identity
 from users.views.admin.domains import (  # noqa
     DomainCreate,
     DomainDelete,
@@ -23,23 +23,12 @@ from users.views.admin.settings import (  # noqa
     TuningSettings,
 )
 from users.views.admin.stator import Stator  # noqa
+from users.views.admin.users import UserEdit, UsersRoot  # noqa
 
 
 @method_decorator(admin_required, name="dispatch")
 class AdminRoot(RedirectView):
     pattern_name = "admin_basic"
-
-
-@method_decorator(admin_required, name="dispatch")
-class Users(TemplateView):
-
-    template_name = "admin/users.html"
-
-    def get_context_data(self):
-        return {
-            "users": User.objects.order_by("email"),
-            "section": "users",
-        }
 
 
 @method_decorator(admin_required, name="dispatch")

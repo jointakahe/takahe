@@ -415,6 +415,7 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
             "votersCount": "toot:votersCount",
             "Hashtag": "as:Hashtag",
             "Public": "as:Public",
+            "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
         },
     ]
     if include_security:

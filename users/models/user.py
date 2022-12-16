@@ -1,3 +1,4 @@
+import urlman
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
@@ -43,6 +44,10 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS: list[str] = []
 
     objects = UserManager()
+
+    class urls(urlman.Urls):
+        admin = "/admin/users/"
+        admin_edit = "{admin}{self.pk}/"
 
     @property
     def is_active(self):
