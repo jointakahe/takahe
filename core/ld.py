@@ -407,14 +407,18 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
     """
     if not isinstance(json_data, dict):
         raise ValueError("Pass decoded JSON data into LDDocument")
-    context: str | list[str]
+    context = [
+        "https://www.w3.org/ns/activitystreams",
+        {
+            "sensitive": "as:sensitive",
+            "toot": "http://joinmastodon.org/ns#",
+            "votersCount": "toot:votersCount",
+            "Hashtag": "as:Hashtag",
+            "Public": "as:Public",
+        },
+    ]
     if include_security:
-        context = [
-            "https://www.w3.org/ns/activitystreams",
-            "https://w3id.org/security/v1",
-        ]
-    else:
-        context = "https://www.w3.org/ns/activitystreams"
+        context.append("https://w3id.org/security/v1")
     if "@context" not in json_data:
         json_data["@context"] = context
 

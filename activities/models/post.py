@@ -347,7 +347,9 @@ class Post(StatorModel):
         """
         Returns the content formatted for remote consumption
         """
-        return self.linkify_mentions(sanitize_post(self.content))
+        return Hashtag.linkify_hashtags(
+            self.linkify_mentions(sanitize_post(self.content))
+        )
 
     def safe_content_plain(self):
         """
@@ -515,14 +517,14 @@ class Post(StatorModel):
         Returns the AP JSON for this object
         """
         value = {
-            "to": "as:Public",
+            "to": "Public",
             "cc": [],
             "type": "Note",
             "id": self.object_uri,
             "published": format_ld_date(self.published),
             "attributedTo": self.author.actor_uri,
             "content": self.safe_content_remote(),
-            "as:sensitive": self.sensitive,
+            "sensitive": self.sensitive,
             "url": self.absolute_object_uri(),
             "tag": [],
             "attachment": [],
@@ -543,7 +545,7 @@ class Post(StatorModel):
                 {
                     "href": f"https://{self.author.domain.uri_domain}/tags/{hashtag}/",
                     "name": f"#{hashtag}",
-                    "type": "as:Hashtag",
+                    "type": "Hashtag",
                 }
             )
         # Emoji
