@@ -537,6 +537,15 @@ class Post(StatorModel):
         for mention in self.mentions.all():
             value["tag"].append(mention.to_ap_tag())
             value["cc"].append(mention.actor_uri)
+        # Hashtags
+        for hashtag in self.hashtags or []:
+            value["tag"].append(
+                {
+                    "href": f"https://{self.author.domain.uri_domain}/tags/{hashtag}/",
+                    "name": f"#{hashtag}",
+                    "type": "as:Hashtag",
+                }
+            )
         # Emoji
         for emoji in self.emojis.all():
             value["tag"].append(emoji.to_ap_tag())
