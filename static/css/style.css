@@ -1087,6 +1087,20 @@ table.metadata td .emoji {
     text-decoration: underline;
 }
 
+/* Special Type Posts */
+.typed-post a:hover {
+    text-decoration: underline;
+}
+
+.typed-post.type-question h3 small {
+    font-weight: lighter;
+    font-size: small;
+}
+.type-question ul li .votes {
+    margin-left: 10px;
+    font-size: small;
+}
+
 .boost-banner,
 .mention-banner,
 .follow-banner,

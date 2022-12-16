@@ -1,0 +1,10 @@
+{% load activity_tags %}
+
+<h3>Options: {% if post.type_data.mode == "oneOf" %}<small>(choose one)</small>{% endif %}</h3>
+{% for item in post.type_data.options %}
+{% if forloop.first %}<ul>{% endif %}
+    <li>{{ item.name }}{% if item.votes %}<small class="votes">(votes: {{ item.votes }})</small>{% endif %}
+{% if forloop.last %}</ul>{% endif %}
+{% endfor %}
+{% if post.type_data.voter_count %}<div class="votes">{{ post.type_data.voter_count }} people have voted</div>{% endif %}
+<p>Voting ends at {{ post.type_data.end_time }}</p>

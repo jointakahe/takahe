@@ -15,6 +15,7 @@ from django.utils.safestring import mark_safe
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
 from activities.models.hashtag import Hashtag
+from activities.models.post_types import PostTypeData
 from activities.templatetags.emoji_tags import imageify_emojis
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
@@ -166,6 +167,16 @@ class Post(StatorModel):
         followers = 2
         mentioned = 3
 
+    class Types(models.TextChoices):
+        article = "Article"
+        audio = "Audio"
+        event = "Event"
+        image = "Image"
+        note = "Note"
+        page = "Page"
+        question = "Question"
+        video = "Video"
+
     # The author (attributedTo) of the post
     author = models.ForeignKey(
         "users.Identity",
@@ -190,6 +201,13 @@ class Post(StatorModel):
 
     # The main (HTML) content
     content = models.TextField()
+
+    type = models.CharField(
+        max_length=20,
+        choices=Types.choices,
+        default=Types.note,
+    )
+    type_data = models.JSONField(blank=True, null=True)
 
     # If the contents of the post are sensitive, and the summary (content
     # warning) to show if it is
@@ -292,6 +310,8 @@ class Post(StatorModel):
     ain_reply_to_post = sync_to_async(in_reply_to_post)
 
     ### Content cleanup and extraction ###
+    def clean_type_data(self, value):
+        PostTypeData.parse_obj(value)
 
     mention_regex = re.compile(
         r"(^|[^\w\d\-_])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
@@ -660,11 +680,16 @@ class Post(StatorModel):
                     author=author,
                     content=data["content"],
                     local=False,
+                    type=data["type"],
                 )
                 created = True
             else:
                 raise cls.DoesNotExist(f"No post with ID {data['id']}", data)
         if update or created:
+            post.type = data["type"]
+            if post.type in (cls.Types.article, cls.Types.question):
+                type_data = PostTypeData(__root__=data)
+                post.type_data = type_data.json()
             post.content = data["content"]
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)

@@ -74,6 +74,15 @@
     <div class="content {% if post.summary %}hidden{% endif %}">
         {{ post.safe_content_local }}
 
+        {% if post.type != "Note" %}
+            <div class="typed-post type-{{ post.type|lower }}">
+            {% if post.type_data and post.type == "Question" %}
+            {% include "activities/_type_question.html" %}
+            {% endif %}
+            <small>Takahe has limited support for this type: <a href="{{ post.url }}">See Original {{ post.type }}</a></small>
+            </div>
+        {% endif %}
+
         {% if post.attachments.exists %}
           <div class="attachments">
             {% for attachment in post.attachments.all %}
