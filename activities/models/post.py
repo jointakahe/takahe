@@ -348,7 +348,8 @@ class Post(StatorModel):
         Returns the content formatted for remote consumption
         """
         return Hashtag.linkify_hashtags(
-            self.linkify_mentions(sanitize_post(self.content))
+            self.linkify_mentions(sanitize_post(self.content)),
+            domain=self.author.domain,
         )
 
     def safe_content_plain(self):
@@ -835,9 +836,9 @@ class Post(StatorModel):
             "mentions": [
                 {
                     "id": mention.id,
-                    "username": mention.username,
-                    "url": mention.absolute_profile_uri(),
-                    "acct": mention.handle,
+                    "username": mention.username or "",
+                    "url": mention.absolute_profile_uri() or "",
+                    "acct": mention.handle or "",
                 }
                 for mention in self.mentions.all()
                 if mention.username

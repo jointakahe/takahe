@@ -179,10 +179,15 @@ class Hashtag(StatorModel):
         return list(hashtags)
 
     @classmethod
-    def linkify_hashtags(cls, content) -> str:
+    def linkify_hashtags(cls, content, domain=None) -> str:
         def replacer(match):
             hashtag = match.group(1)
-            return f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
+            if domain:
+                return f'<a class="hashtag" href="https://{domain.uri_domain}/tags/{hashtag.lower()}/">#{hashtag}</a>'
+            else:
+                return (
+                    f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
+                )
 
         return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))
 
