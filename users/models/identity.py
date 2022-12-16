@@ -505,10 +505,10 @@ class Identity(StatorModel):
         )
         return {
             "id": self.pk,
-            "username": self.username,
+            "username": self.username or "",
             "acct": self.username if self.local else self.handle,
             "url": self.absolute_profile_uri(),
-            "display_name": self.name,
+            "display_name": self.name or "",
             "note": self.summary or "",
             "avatar": self.local_icon_url().absolute,
             "avatar_static": self.local_icon_url().absolute,
