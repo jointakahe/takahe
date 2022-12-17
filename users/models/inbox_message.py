@@ -75,6 +75,8 @@ class InboxMessageStates(StateGraph):
                     match instance.message_object_type:
                         case "tombstone":
                             await sync_to_async(Post.handle_delete_ap)(instance.message)
+                        case "note":
+                            await sync_to_async(Post.handle_delete_ap)(instance.message)
                         case unknown:
                             raise ValueError(
                                 f"Cannot handle activity of type delete.{unknown}"
