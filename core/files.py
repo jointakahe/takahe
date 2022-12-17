@@ -58,7 +58,7 @@ async def get_remote_file(
                 try:
                     content_length = int(stream.headers["content-length"])
                     allow_download = content_length <= max_size
-                except TypeError:
+                except (KeyError, TypeError):
                     pass
             if allow_download:
                 file = ContentFile(await stream.aread(), name=url)
