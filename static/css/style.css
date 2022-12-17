@@ -345,6 +345,16 @@ img.emoji {
     height: 0.8em;
 }
 
+/* Generic markdown styling */
+
+.markdown p {
+    margin: 4px 0 10px 0;
+}
+
+.markdown li {
+    margin: 4px 0 10px 0;
+}
+
 /* Icon menus */
 
 .icon-menu .option {
