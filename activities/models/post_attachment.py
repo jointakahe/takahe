@@ -102,19 +102,13 @@ class PostAttachment(StatorModel):
     ### Mastodon Client API ###
 
     def to_mastodon_json(self):
-        return {
+        value = {
             "id": self.pk,
             "type": "image" if self.is_image() else "unknown",
             "url": self.full_url().absolute,
             "preview_url": self.thumbnail_url().absolute,
             "remote_url": None,
             "meta": {
-                "original": {
-                    "width": self.width,
-                    "height": self.height,
-                    "size": f"{self.width}x{self.height}",
-                    "aspect": self.width / self.height,
-                },
                 "focus": {
                     "x": self.focal_x or 0,
                     "y": self.focal_y or 0,
@@ -123,3 +117,11 @@ class PostAttachment(StatorModel):
             "description": self.name,
             "blurhash": self.blurhash,
         }
+        if self.width and self.height:
+            value["meta"]["original"] = {
+                "width": self.width,
+                "height": self.height,
+                "size": f"{self.width}x{self.height}",
+                "aspect": self.width / self.height,
+            }
+        return value
