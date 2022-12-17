@@ -396,6 +396,12 @@ body.no-sidebar .right-column {
     background: var(--color-delete);
 }
 
+.icon-menu .option time {
+    float: right;
+    color: var(--color-text-duller);
+    margin: 14px 0 0 0;
+}
+
 .handle {
     vertical-align: middle;
     display: inline-block;

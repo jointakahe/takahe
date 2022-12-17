@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load activity_tags %}
 
 {% block subtitle %}Follows{% endblock %}
 
@@ -27,6 +28,7 @@
                 {% if identity.id in inbound_ids %}
                     <span class="pill">Follows You</span>
                 {% endif %}
+                <time>{{ identity.follow_date | timedeltashort }} ago</time>
             </a>
         {% empty %}
             <p class="option empty">You have no follows.</p>
