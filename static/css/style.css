@@ -341,6 +341,10 @@ body.no-sidebar .right-column {
     text-transform: uppercase;
 }
 
+img.emoji {
+    height: 0.8em;
+}
+
 /* Icon menus */
 
 .icon-menu .option {
@@ -377,7 +381,7 @@ body.no-sidebar .right-column {
 }
 
 .icon-menu .option img.emoji {
-    height: 22px;
+    height: 20px;
 }
 
 .icon-menu .option i {

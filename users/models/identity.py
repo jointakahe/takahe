@@ -429,6 +429,8 @@ class Identity(StatorModel):
         Fetches the user's actor information, as well as their domain from
         webfinger if it's available.
         """
+        from activities.models import Emoji
+
         if self.local:
             raise ValueError("Cannot fetch local identities")
         try:
@@ -501,6 +503,11 @@ class Identity(StatorModel):
                 self.domain = await get_domain(actor_url_parts.hostname)
         else:
             self.domain = await get_domain(actor_url_parts.hostname)
+        # Emojis (we need the domain so we do them here)
+        for tag in get_list(document, "tag"):
+            if tag["type"].lower() == "toot:emoji":
+                await sync_to_async(Emoji.by_ap_tag)(self.domain, tag, create=True)
+        # Mark as fetched
         self.fetched = timezone.now()
         try:
             await sync_to_async(self.save)()
