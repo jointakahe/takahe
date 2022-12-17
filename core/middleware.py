@@ -23,7 +23,7 @@ class HeadersMiddleware:
         )
         response = self.get_response(request)
         if "Cache-Control" not in response.headers:
-            response.headers["Cache-Control"] = "private, max-age=0"
+            response.headers["Cache-Control"] = "no-store, max-age=0"
         return response
 
 
