@@ -174,17 +174,17 @@ class PoliciesSettings(AdminSettingsPage):
     options = {
         "policy_terms": {
             "title": "Terms of Service Page",
-            "help_text": "Will only be shown if it has content. Use Markdown for formatting.",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.\nIf you would like to redirect elsewhere, enter just a URL.",
             "display": "textarea",
         },
         "policy_privacy": {
             "title": "Privacy Policy Page",
-            "help_text": "Will only be shown if it has content. Use Markdown for formatting.",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.\nIf you would like to redirect elsewhere, enter just a URL.",
             "display": "textarea",
         },
         "policy_rules": {
             "title": "Server Rules Page",
-            "help_text": "Will only be shown if it has content. Use Markdown for formatting.",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.\nIf you would like to redirect elsewhere, enter just a URL.",
             "display": "textarea",
         },
     }

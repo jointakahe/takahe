@@ -1,5 +1,6 @@
 import markdown_it
 from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.templatetags.static import static
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
@@ -79,13 +80,21 @@ class FlatPage(TemplateView):
     config_option = None
     title = None
 
-    def get_context_data(self):
+    def get(self, request, *args, **kwargs):
         if self.config_option is None:
             raise ValueError("No config option provided")
-        # Get raw content
-        content = getattr(Config.system, self.config_option)
-        # Render it
-        html = markdown_it.MarkdownIt().render(content)
+        self.content = getattr(Config.system, self.config_option)
+        # If the content is a plain URL, then redirect to it instead
+        if (
+            "\n" not in self.content
+            and " " not in self.content
+            and "://" in self.content
+        ):
+            return redirect(self.content)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self):
+        html = markdown_it.MarkdownIt().render(self.content)
         return {
             "title": self.title,
             "content": mark_safe(html),
