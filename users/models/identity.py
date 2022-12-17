@@ -14,7 +14,13 @@ from django.utils.functional import lazy
 from core.exceptions import ActorMismatchError
 from core.files import get_remote_file
 from core.html import sanitize_post, strip_html
-from core.ld import canonicalise, format_ld_date, get_list, media_type_from_filename
+from core.ld import (
+    canonicalise,
+    format_ld_date,
+    get_first_image_url,
+    get_list,
+    media_type_from_filename,
+)
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
@@ -487,8 +493,8 @@ class Identity(StatorModel):
         self.manually_approves_followers = document.get("manuallyApprovesFollowers")
         self.public_key = document.get("publicKey", {}).get("publicKeyPem")
         self.public_key_id = document.get("publicKey", {}).get("id")
-        self.icon_uri = document.get("icon", {}).get("url")
-        self.image_uri = document.get("image", {}).get("url")
+        self.icon_uri = get_first_image_url(document.get("icon", None))
+        self.image_uri = get_first_image_url(document.get("image", None))
         self.discoverable = document.get("toot:discoverable", True)
         # Profile links/metadata
         self.metadata = []
