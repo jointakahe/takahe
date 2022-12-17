@@ -2,6 +2,7 @@ import re
 from functools import partial
 from typing import ClassVar, cast
 
+import httpx
 import urlman
 from asgiref.sync import sync_to_async
 from django.conf import settings
@@ -30,11 +31,14 @@ class EmojiStates(StateGraph):
         Fetches remote emoji and uploads to file for local caching
         """
         if instance.remote_url and not instance.file:
-            file, mimetype = await get_remote_file(
-                instance.remote_url,
-                timeout=settings.SETUP.REMOTE_TIMEOUT,
-                max_size=settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB * 1024,
-            )
+            try:
+                file, mimetype = await get_remote_file(
+                    instance.remote_url,
+                    timeout=settings.SETUP.REMOTE_TIMEOUT,
+                    max_size=settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB * 1024,
+                )
+            except httpx.RequestError:
+                return
             if file:
                 instance.file = file
                 instance.mimetype = mimetype

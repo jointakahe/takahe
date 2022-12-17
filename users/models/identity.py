@@ -46,11 +46,15 @@ class IdentityStates(StateGraph):
         if await identity.fetch_actor():
             # Also stash their icon if we can
             if identity.icon_uri:
-                file, mimetype = await get_remote_file(
-                    identity.icon_uri,
-                    timeout=settings.SETUP.REMOTE_TIMEOUT,
-                    max_size=settings.SETUP.AVATAR_MAX_IMAGE_FILESIZE_KB * 1024,
-                )
+                try:
+                    file, mimetype = await get_remote_file(
+                        identity.icon_uri,
+                        timeout=settings.SETUP.REMOTE_TIMEOUT,
+                        max_size=settings.SETUP.AVATAR_MAX_IMAGE_FILESIZE_KB * 1024,
+                    )
+                except httpx.RequestError:
+                    # We've still got enough info to consider ourselves updated
+                    return cls.updated
                 if file:
                     identity.icon = file
                     await sync_to_async(identity.save)()
