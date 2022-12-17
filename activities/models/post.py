@@ -679,7 +679,7 @@ class Post(StatorModel):
                     post.mentions.add(mention_identity)
                 elif tag["type"].lower() == "hashtag":
                     post.hashtags.append(tag["name"].lower().lstrip("#"))
-                elif tag["type"].lower() == "toot:emoji":
+                elif tag["type"].lower() in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
                 else:

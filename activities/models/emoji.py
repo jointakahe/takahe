@@ -214,7 +214,7 @@ class Emoji(StatorModel):
         """
         return {
             "id": self.object_uri or f"https://{settings.MAIN_DOMAIN}/emoji/{self.pk}/",
-            "type": "Emoji",
+            "type": "toot:Emoji",
             "name": self.shortcode,
             "icon": {
                 "type": "Image",
