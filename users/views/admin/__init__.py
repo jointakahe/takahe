@@ -17,6 +17,7 @@ from users.views.admin.hashtags import (  # noqa
     Hashtags,
 )
 from users.views.admin.identities import IdentitiesRoot, IdentityEdit  # noqa
+from users.views.admin.reports import ReportsRoot, ReportView  # noqa
 from users.views.admin.settings import (  # noqa
     BasicSettings,
     PoliciesSettings,

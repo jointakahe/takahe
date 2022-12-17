@@ -709,7 +709,9 @@ button,
 }
 
 button.delete,
-.button.delete {
+.button.delete,
+button.danger,
+.button.danger {
     background: var(--color-delete);
 }
 
@@ -831,6 +833,20 @@ table.metadata td {
 table.metadata th {
     padding: 0 10px 0 0;
     font-weight: bold;
+}
+
+table.buttons {
+    margin: -10px 0 10px 0;
+    text-align: left;
+}
+
+table.buttons th {
+    padding: 5px 20px 5px 0;
+    text-align: center;
+}
+
+table.buttons th button {
+    width: 100%;
 }
 
 .stats {

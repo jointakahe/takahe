@@ -1,0 +1,84 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Report {{ report.pk }}{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Report</legend>
+            <label>Report about</label>
+            {% if report.subject_post %}
+                {% include "activities/_mini_post.html" with post=report.subject_post %}
+            {% else %}
+                {% include "activities/_identity.html" with identity=report.subject_identity %}
+            {% endif %}
+            <label>Reported by</label>
+            {% if report.source_identity %}
+                {% include "activities/_identity.html" with identity=report.source_identity %}
+            {% else %}
+                <p>Remote server {{ report.source_domain.domain }}</p>
+            {% endif %}
+            <label>Complaint</label>
+            <p>{{ report.complaint|linebreaks }}</p>
+            {% if report.resolved %}
+                <label>Resolved</label>
+                <p>
+                    {{ report.resolved|timesince }} ago by
+                    <a href="{{ report.moderator.urls.view }}">{{ report.moderator.name_or_handle }}</a>
+                </p>
+            {% endif %}
+        </fieldset>
+        <fieldset>
+            <legend>Moderator Notes</legend>
+            {% include "forms/_field.html" with field=form.notes %}
+        </fieldset>
+        <fieldset>
+            <legend>Resolution Options</legend>
+            <table class="buttons">
+                <tr>
+                    {% if report.resolved and report.valid %}
+                        <th><button disabled="true">Resolve Valid</button></th>
+                        <td>Report is already resolved as valid</td>
+                    {% else %}
+                        <th><button name="valid">Resolve Valid</button></th>
+                        <td>Mark report against the identity but take no further action</td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    {% if report.resolved and not report.valid %}
+                        <th><button disabled="true">Resolve Invalid</button></th>
+                        <td>Report is already resolved as invalid</td>
+                    {% else %}
+                        <th><button name="invalid">Resolve Invalid</button></th>
+                        <td>Mark report as invalid and take no action</td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    {% if report.subject_identity.limited %}
+                        <th><button class="danger" disabled="true">Limit</button></th>
+                        <td>User is already limited</td>
+                    {% else %}
+                        <th><button class="danger" name="limit">Limit</button></th>
+                        <td>Make them less visible on this server</td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    {% if report.subject_identity.blocked %}
+                        <th><button class="danger" disabled="true">Block</button></th>
+                        <td>User is already blocked</td>
+                    {% else %}
+                        <th><button class="danger" name="block">Block</button></th>
+                        <td>Remove their existence entirely from this server</td>
+                    {% endif %}
+                </tr>
+            </table>
+        </fieldset>
+        <div class="buttons">
+            <a href="{{ report.urls.admin }}" class="button secondary left">Back</a>
+            <a href="{{ report.subject_identity.urls.view }}" class="button secondary">View Profile</a>
+            <a href="{{ report.subject_identity.urls.admin_edit }}" class="button secondary">Identity Admin</a>
+            <button>Save Notes</button>
+        </div>
+    </form>
+{% endblock %}

@@ -251,6 +251,7 @@ class Post(StatorModel):
         action_unboost = "{view}unboost/"
         action_delete = "{view}delete/"
         action_edit = "{view}edit/"
+        action_report = "{view}report/"
         action_reply = "/compose/?reply_to={self.id}"
         admin_edit = "/djadmin/activities/post/{self.id}/change/"
 

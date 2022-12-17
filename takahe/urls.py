@@ -7,7 +7,7 @@ from api.views import api_router, oauth
 from core import views as core
 from mediaproxy import views as mediaproxy
 from stator import views as stator
-from users.views import activitypub, admin, auth, identity, settings
+from users.views import activitypub, admin, auth, identity, report, settings
 
 urlpatterns = [
     path("", core.homepage),
@@ -115,6 +115,16 @@ urlpatterns = [
         name="admin_identity_edit",
     ),
     path(
+        "admin/reports/",
+        admin.ReportsRoot.as_view(),
+        name="admin_reports",
+    ),
+    path(
+        "admin/reports/<id>/",
+        admin.ReportView.as_view(),
+        name="admin_report_view",
+    ),
+    path(
         "admin/invites/",
         admin.Invites.as_view(),
         name="admin_invites",
@@ -147,6 +157,7 @@ urlpatterns = [
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     path("@<handle>/rss/", identity.IdentityFeed()),
+    path("@<handle>/report/", report.SubmitReport.as_view()),
     # Posts
     path("compose/", compose.Compose.as_view(), name="compose"),
     path(
@@ -160,6 +171,7 @@ urlpatterns = [
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
     path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
+    path("@<handle>/posts/<int:post_id>/report/", report.SubmitReport.as_view()),
     path("@<handle>/posts/<int:post_id>/edit/", compose.Compose.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view(), name="login"),

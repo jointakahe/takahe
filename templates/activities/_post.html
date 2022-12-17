@@ -37,6 +37,9 @@
             <a href="{{ post.urls.view }}" role="menuitem">
                 <i class="fa-solid fa-comment"></i> View Post &amp; Replies
             </a>
+            <a href="{{ post.urls.action_report }}" role="menuitem">
+                <i class="fa-solid fa-flag"></i> Report
+            </a>
             {% if post.author == request.identity %}
             <a href="{{ post.urls.action_edit }}" role="menuitem">
                 <i class="fa-solid fa-pen-to-square"></i> Edit

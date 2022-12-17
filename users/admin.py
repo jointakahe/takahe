@@ -9,6 +9,7 @@ from users.models import (
     InboxMessage,
     Invite,
     PasswordReset,
+    Report,
     User,
     UserEvent,
 )
@@ -113,3 +114,8 @@ class InboxMessageAdmin(admin.ModelAdmin):
 @admin.register(Invite)
 class InviteAdmin(admin.ModelAdmin):
     list_display = ["id", "created", "token", "note"]
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ["id", "created", "resolved", "type", "subject_identity"]

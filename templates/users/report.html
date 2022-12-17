@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Report{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Report</legend>
+            <label>Reporting</label>
+            {% if post %}
+                {% include "activities/_mini_post.html" %}
+            {% else %}
+                {% include "activities/_identity.html" %}
+            {% endif %}
+            {% include "forms/_field.html" with field=form.type %}
+            {% include "forms/_field.html" with field=form.complaint %}
+            {% if not identity.local %}
+                {% include "forms/_field.html" with field=form.forward %}
+            {% endif %}
+        </fieldset>
+
+        <div class="buttons">
+            <button>Send Report</button>
+        </div>
+    </form>
+{% endblock %}

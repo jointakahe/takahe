@@ -1,0 +1,43 @@
+{% extends "settings/base.html" %}
+{% load activity_tags %}
+
+{% block subtitle %}Reports{% endblock %}
+
+{% block content %}
+    <div class="view-options">
+        {% if all %}
+            <a href="." class="selected"><i class="fa-solid fa-check"></i> Show Resolved</a>
+        {% else %}
+            <a href=".?all=true"><i class="fa-solid fa-xmark"></i> Show Resolved</a>
+        {% endif %}
+    </div>
+    <section class="icon-menu">
+        {% for report in page_obj %}
+            <a class="option" href="{{ report.urls.admin_view }}">
+                <img src="{{ report.subject_identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ report.subject_identity.name_or_handle }}">
+                <span class="handle">
+                    {{ report.subject_identity.html_name_or_handle }}
+                    {% if report.subject_post %}
+                        (post {{ report.subject_post.pk }})
+                    {% endif %}
+                    <small>
+                        {{ report.type|title }}
+                    </small>
+                </span>
+                <time>{{ report.created|timedeltashort }} ago</time>
+            </a>
+        {% empty %}
+            <p class="option empty">
+                There are no {% if all %}reports yet{% else %}unresolved reports{% endif %}.
+            </p>
+        {% endfor %}
+        <div class="load-more">
+            {% if page_obj.has_previous %}
+                <a class="button" href=".?page={{ page_obj.previous_page_number }}{% if all %}&amp;all=true{% endif %}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="button" href=".?page={{ page_obj.next_page_number }}{% if all %}&amp;all=true{% endif %}">Next Page</a>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
