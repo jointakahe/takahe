@@ -3,18 +3,28 @@
 {% block subtitle %}Follows{% endblock %}
 
 {% block content %}
+    <div class="view-options">
+        {% if inbound %}
+            <a href=".?outbound=true">Your Follows</a>
+            <a href=".?outbound=true" class="selected">Follows You</a>
+        {% else %}
+            <a href=".?inbound=true" class="selected">Your Follows</a>
+            <a href=".?inbound=true">Follows You</a>
+        {% endif %}
+    </div>
+
     <section class="icon-menu">
-        {% for identity, follow_type in page_obj %}
+        {% for identity in page_obj %}
             <a class="option" href="{{ identity.urls.view }}">
                 <img src="{{ identity.local_icon_url.relative }}">
                 <span class="handle">
                     {{ identity.html_name_or_handle }}
                     <small>@{{ identity.handle }}</small>
                 </span>
-                {% if follow_type == "outbound" %}
+                {% if identity.id in outbound_ids %}
                     <span class="pill">Following</span>
                 {% endif %}
-                {% if follow_type == "inbound" %}
+                {% if identity.id in inbound_ids %}
                     <span class="pill">Follows You</span>
                 {% endif %}
             </a>
@@ -25,11 +35,11 @@
 
     <div class="pagination">
         {% if page_obj.has_previous %}
-            <div class="load-more"><a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a></div>
+            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
         {% endif %}
 
         {% if page_obj.has_next %}
-            <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
+            <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
         {% endif %}
     </div>
 {% endblock %}
