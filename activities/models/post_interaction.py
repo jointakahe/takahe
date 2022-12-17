@@ -271,7 +271,7 @@ class PostInteraction(StatorModel):
                     type=type,
                 )
             else:
-                raise KeyError(f"No post with ID {data['id']}", data)
+                raise cls.DoesNotExist(f"No interaction with ID {data['id']}", data)
         return boost
 
     @classmethod
@@ -301,7 +301,11 @@ class PostInteraction(StatorModel):
         """
         with transaction.atomic():
             # Find it
-            interaction = cls.by_ap(data["object"])
+            try:
+                interaction = cls.by_ap(data["object"])
+            except cls.DoesNotExist:
+                # Well I guess we don't need to undo it do we
+                return
             # Verify the actor matches
             if data["actor"] != interaction.identity.actor_uri:
                 raise ValueError("Actor mismatch on interaction undo")
