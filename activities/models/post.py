@@ -618,6 +618,13 @@ class Post(StatorModel):
         reply_post = await self.ain_reply_to_post()
         if reply_post:
             targets.add(reply_post.author)
+            # And if it's a reply to one of our own, we have to re-fan-out to
+            # the original author's followers
+            if reply_post.author.local:
+                async for follower in reply_post.author.inbound_follows.select_related(
+                    "source"
+                ):
+                    targets.add(follower.source)
         # If this is a remote post or local-only, filter to only include
         # local identities
         if not self.local or self.visibility == Post.Visibilities.local_only:
