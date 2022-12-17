@@ -219,5 +219,6 @@ class SystemActorView(View):
             canonicalise(
                 SystemActor().to_ap(),
                 include_security=True,
-            )
+            ),
+            content_type="application/activity+json",
         )

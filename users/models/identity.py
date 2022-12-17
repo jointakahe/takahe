@@ -398,10 +398,10 @@ class Identity(StatorModel):
         """
         domain = handle.split("@")[1].lower()
         try:
-            response = await SystemActor().signed_request(
-                method="get",
-                uri=f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
+                )
         except (httpx.RequestError, httpx.ConnectError):
             return None, None
         if response.status_code in [404, 410]:

@@ -84,7 +84,7 @@ class HttpSignature:
         headers = {}
         for header_name in header_names:
             if header_name == "(request-target)":
-                value = f"post {request.path}"
+                value = f"{request.method.lower()} {request.path}"
             elif header_name == "content-type":
                 value = request.META["CONTENT_TYPE"]
             else:

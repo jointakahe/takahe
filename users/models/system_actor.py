@@ -49,6 +49,7 @@ class SystemActor:
             "preferredUsername": self.username,
             "url": self.profile_uri,
             "manuallyApprovesFollowers": True,
+            "toot:discoverable": False,
             "publicKey": {
                 "id": self.public_key_id,
                 "owner": self.actor_uri,
