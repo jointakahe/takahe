@@ -66,7 +66,7 @@ class EmojiAdmin(admin.ModelAdmin):
     list_filter = ("local", "public", "state")
     search_fields = ("shortcode",)
 
-    readonly_fields = ("preview", "created", "updated")
+    readonly_fields = ["preview", "created", "updated", "to_ap_tag"]
 
     actions = ["force_execution", "approve_emoji", "reject_emoji"]
 
