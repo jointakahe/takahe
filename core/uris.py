@@ -1,3 +1,4 @@
+import sys
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -41,7 +42,15 @@ class StaticAbsoluteUrl(RelativeAbsoluteUrl):
     """
 
     def __init__(self, path: str):
-        static_url = staticfiles_storage.url(path)
+        try:
+            static_url = staticfiles_storage.url(path)
+        except ValueError:
+            # Suppress static issues during the first collectstatic
+            # Yes, I know it's a big hack! Pull requests welcome :)
+            if "collectstatic" in sys.argv:
+                super().__init__("https://example.com/")
+                return
+            raise
         if "://" in static_url:
             super().__init__(static_url)
         else:
