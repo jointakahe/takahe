@@ -22,7 +22,7 @@ urlpatterns = [
     path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
     path(
         "follows/",
-        follows.FollowsPage.as_view(),
+        follows.Follows.as_view(),
         name="follows",
     ),
     # Settings views
