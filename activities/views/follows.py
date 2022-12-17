@@ -53,4 +53,12 @@ class Follows(ListView):
                 target=self.request.identity, source_id__in=identity_ids
             ).values_list("source_id", flat=True)
         context["inbound"] = self.inbound
+        context["num_inbound"] = Follow.objects.filter(
+            target=self.request.identity,
+            state__in=FollowStates.group_active(),
+        ).count()
+        context["num_outbound"] = Follow.objects.filter(
+            source=self.request.identity,
+            state__in=FollowStates.group_active(),
+        ).count()
         return context

@@ -5,11 +5,11 @@
 {% block content %}
     <div class="view-options">
         {% if inbound %}
-            <a href=".?outbound=true">Your Follows</a>
-            <a href=".?outbound=true" class="selected">Follows You</a>
+            <a href=".">Your Follows ({{ num_outbound }})</a>
+            <a href="." class="selected">Follows You ({{ num_inbound }})</a>
         {% else %}
-            <a href=".?inbound=true" class="selected">Your Follows</a>
-            <a href=".?inbound=true">Follows You</a>
+            <a href=".?inbound=true" class="selected">Your Follows ({{ num_outbound }})</a>
+            <a href=".?inbound=true">Follows You ({{ num_inbound }})</a>
         {% endif %}
     </div>
 
@@ -35,11 +35,11 @@
 
     <div class="pagination">
         {% if page_obj.has_previous %}
-            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+            <a class="button" href=".?page={{ page_obj.previous_page_number }}{% if inbound %}&amp;inbound=true{% endif %}">Previous Page</a>
         {% endif %}
 
         {% if page_obj.has_next %}
-            <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+            <a class="button" href=".?page={{ page_obj.next_page_number }}{% if inbound %}&amp;inbound=true{% endif %}">Next Page</a>
         {% endif %}
     </div>
 {% endblock %}
