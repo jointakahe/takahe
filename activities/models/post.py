@@ -727,7 +727,7 @@ class Post(StatorModel):
                     response = async_to_sync(SystemActor().signed_request)(
                         method="get", uri=object_uri
                     )
-                except (httpx.RequestError, httpx.ConnectError):
+                except httpx.RequestError:
                     raise cls.DoesNotExist(f"Could not fetch {object_uri}")
                 if response.status_code in [404, 410]:
                     raise cls.DoesNotExist(f"No post at {object_uri}")

@@ -1,3 +1,4 @@
+import httpx
 from asgiref.sync import sync_to_async
 from django.db import models
 
@@ -52,21 +53,27 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.post, False):
                 post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
-                await post.author.signed_request(
-                    method="post",
-                    uri=fan_out.identity.inbox_uri,
-                    body=canonicalise(post.to_create_ap()),
-                )
+                try:
+                    await post.author.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(post.to_create_ap()),
+                    )
+                except httpx.RequestError:
+                    return
 
             # Handle sending remote posts update
             case (FanOut.Types.post_edited, False):
                 post = await fan_out.subject_post.afetch_full()
                 # Sign it and send it
-                await post.author.signed_request(
-                    method="post",
-                    uri=fan_out.identity.inbox_uri,
-                    body=canonicalise(post.to_update_ap()),
-                )
+                try:
+                    await post.author.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(post.to_update_ap()),
+                    )
+                except httpx.RequestError:
+                    return
 
             # Handle deleting local posts
             case (FanOut.Types.post_deleted, True):
@@ -82,11 +89,14 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.post_deleted, False):
                 post = await fan_out.subject_post.afetch_full()
                 # Send it to the remote inbox
-                await post.author.signed_request(
-                    method="post",
-                    uri=fan_out.identity.inbox_uri,
-                    body=canonicalise(post.to_delete_ap()),
-                )
+                try:
+                    await post.author.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(post.to_delete_ap()),
+                    )
+                except httpx.RequestError:
+                    return
 
             # Handle local boosts/likes
             case (FanOut.Types.interaction, True):
@@ -101,11 +111,14 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.interaction, False):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send it to the remote inbox
-                await interaction.identity.signed_request(
-                    method="post",
-                    uri=fan_out.identity.inbox_uri,
-                    body=canonicalise(interaction.to_ap()),
-                )
+                try:
+                    await interaction.identity.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(interaction.to_ap()),
+                    )
+                except httpx.RequestError:
+                    return
 
             # Handle undoing local boosts/likes
             case (FanOut.Types.undo_interaction, True):  # noqa:F841
@@ -121,11 +134,14 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.undo_interaction, False):  # noqa:F841
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send an undo to the remote inbox
-                await interaction.identity.signed_request(
-                    method="post",
-                    uri=fan_out.identity.inbox_uri,
-                    body=canonicalise(interaction.to_undo_ap()),
-                )
+                try:
+                    await interaction.identity.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(interaction.to_undo_ap()),
+                    )
+                except httpx.RequestError:
+                    return
 
             case _:
                 raise ValueError(

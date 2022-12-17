@@ -33,7 +33,7 @@ class BaseCacheView(View):
                     follow_redirects=True,
                     timeout=settings.SETUP.REMOTE_TIMEOUT,
                 )
-            except (httpx.ConnectError, httpx.RequestError):
+            except httpx.RequestError:
                 return HttpResponse(status=502)
             if remote_response.status_code >= 400:
                 return HttpResponse(status=502)

@@ -1,5 +1,6 @@
 from typing import Optional
 
+import httpx
 from django.db import models, transaction
 
 from core.ld import canonicalise
@@ -37,11 +38,14 @@ class FollowStates(StateGraph):
         if not follow.source.local:
             return cls.remote_requested
         # Sign it and send it
-        await follow.source.signed_request(
-            method="post",
-            uri=follow.target.inbox_uri,
-            body=canonicalise(follow.to_ap()),
-        )
+        try:
+            await follow.source.signed_request(
+                method="post",
+                uri=follow.target.inbox_uri,
+                body=canonicalise(follow.to_ap()),
+            )
+        except httpx.RequestError:
+            return
         return cls.local_requested
 
     @classmethod
@@ -56,11 +60,14 @@ class FollowStates(StateGraph):
         source server.
         """
         follow = await instance.afetch_full()
-        await follow.target.signed_request(
-            method="post",
-            uri=follow.source.inbox_uri,
-            body=canonicalise(follow.to_accept_ap()),
-        )
+        try:
+            await follow.target.signed_request(
+                method="post",
+                uri=follow.source.inbox_uri,
+                body=canonicalise(follow.to_accept_ap()),
+            )
+        except httpx.RequestError:
+            return
         return cls.accepted
 
     @classmethod
@@ -69,11 +76,14 @@ class FollowStates(StateGraph):
         Delivers the Undo object to the target server
         """
         follow = await instance.afetch_full()
-        await follow.source.signed_request(
-            method="post",
-            uri=follow.target.inbox_uri,
-            body=canonicalise(follow.to_undo_ap()),
-        )
+        try:
+            await follow.source.signed_request(
+                method="post",
+                uri=follow.target.inbox_uri,
+                body=canonicalise(follow.to_undo_ap()),
+            )
+        except httpx.RequestError:
+            return
         return cls.undone_remotely
 
 

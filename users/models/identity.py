@@ -402,7 +402,7 @@ class Identity(StatorModel):
                 response = await client.get(
                     f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
                 )
-        except (httpx.RequestError, httpx.ConnectError):
+        except httpx.RequestError:
             return None, None
         if response.status_code in [404, 410]:
             return None, None
@@ -438,7 +438,7 @@ class Identity(StatorModel):
                 method="get",
                 uri=self.actor_uri,
             )
-        except (httpx.ConnectError, httpx.RequestError):
+        except httpx.RequestError:
             return False
         if response.status_code == 410:
             # Their account got deleted, so let's do the same.

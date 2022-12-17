@@ -74,7 +74,7 @@ class Searcher:
                 method="get",
                 uri=self.query,
             )
-        except (httpx.RequestError, httpx.ConnectError):
+        except httpx.RequestError:
             return None
         if response.status_code >= 400:
             return None
