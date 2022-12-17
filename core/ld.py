@@ -456,6 +456,20 @@ def parse_ld_date(value: str | None) -> datetime.datetime | None:
         )
 
 
+def get_first_image_url(data) -> str | None:
+    """
+    'icon' and 'image' fields might be a dict or a list. Return the first
+    'url' for something that looks to be for an image.
+    """
+    if isinstance(data, list):
+        for itm in data:
+            if isinstance(itm, dict) and "url" in itm:
+                return itm["url"]
+    elif isinstance(data, dict):
+        return data.get("url")
+    return None
+
+
 def media_type_from_filename(filename):
     _, extension = os.path.splitext(filename)
     if extension == ".png":
