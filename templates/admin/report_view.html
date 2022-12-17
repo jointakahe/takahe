@@ -19,6 +19,8 @@
             {% else %}
                 <p>Remote server {{ report.source_domain.domain }}</p>
             {% endif %}
+            <label>Complaint Type</label>
+            <p>{{ report.type|title }}</p>
             <label>Complaint</label>
             <p>{{ report.complaint|linebreaks }}</p>
             {% if report.resolved %}

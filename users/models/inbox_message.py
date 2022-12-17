@@ -16,7 +16,7 @@ class InboxMessageStates(StateGraph):
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
         from activities.models import Post, PostInteraction
-        from users.models import Follow, Identity
+        from users.models import Follow, Identity, Report
 
         match instance.message_type:
             case "follow":
@@ -29,6 +29,8 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "note":
                         await sync_to_async(Post.handle_create_ap)(instance.message)
+                    case "question":
+                        pass  # Drop for now
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type create.{unknown}"
@@ -39,6 +41,8 @@ class InboxMessageStates(StateGraph):
                         await sync_to_async(Post.handle_update_ap)(instance.message)
                     case "person":
                         await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "question":
+                        pass  # Drop for now
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type update.{unknown}"
@@ -87,6 +91,9 @@ class InboxMessageStates(StateGraph):
             case "remove":
                 # We are ignoring these right now (probably pinned items)
                 pass
+            case "flag":
+                # Received reports
+                await sync_to_async(Report.handle_ap)(instance.message)
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed

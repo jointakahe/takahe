@@ -1,10 +1,12 @@
+from urllib.parse import urlparse
+
 import httpx
 import urlman
 from django.db import models
 
-from core.ld import canonicalise
+from core.ld import canonicalise, get_list
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models import SystemActor
+from users.models import Domain
 
 
 class ReportStates(StateGraph):
@@ -18,6 +20,8 @@ class ReportStates(StateGraph):
         """
         Sends the report to the remote server if we need to
         """
+        from users.models import SystemActor
+
         report = await instance.afetch_full()
         if report.forward and not report.subject_identity.domain.local:
             system_actor = SystemActor()
@@ -111,7 +115,41 @@ class Report(StatorModel):
             "subject_post",
         ).aget(pk=self.pk)
 
+    @classmethod
+    def handle_ap(cls, data):
+        """
+        Handles an incoming flag
+        """
+        from activities.models import Post
+        from users.models import Identity
+
+        # Fetch the system actor
+        domain_id = urlparse(data["actor"]).hostname
+        # Resolve the objects into items
+        objects = get_list(data, "object")
+        subject_identity = None
+        subject_post = None
+        for object in objects:
+            identity = Identity.objects.filter(local=True, actor_uri=object).first()
+            post = Post.objects.filter(local=True, object_uri=object).first()
+            if identity:
+                subject_identity = identity
+            if post:
+                subject_post = post
+        if subject_identity is None:
+            raise ValueError("Cannot handle flag: no identity object")
+        # Make a report object
+        cls.objects.create(
+            subject_identity=subject_identity,
+            subject_post=subject_post,
+            source_domain=Domain.get_remote_domain(domain_id),
+            type="remote",
+            complaint=data.get("content"),
+        )
+
     def to_ap(self):
+        from users.models import SystemActor
+
         system_actor = SystemActor()
         if self.subject_post:
             objects = [
