@@ -3,7 +3,7 @@
 <div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
 
     <a href="{{ post.author.urls.view }}" tabindex="-1">
-        <img src="{{ post.author.local_icon_url.relative }}" class="icon">
+        <img src="{{ post.author.local_icon_url.relative }}" class="icon" loading="lazy">
     </a>
 
     <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
@@ -79,7 +79,7 @@
             {% for attachment in post.attachments.all %}
               {% if attachment.is_image %}
                 <a href="{{ attachment.full_url.relative }}" class="image">
-                  <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" />
+                  <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" loading="lazy" />
                 </a>
               {% endif %}
             {% endfor %}
