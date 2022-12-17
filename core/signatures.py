@@ -237,6 +237,7 @@ class HttpSignature:
             if (
                 method == "post"
                 and response.status_code >= 400
+                and response.status_code < 500
                 and response.status_code != 404
             ):
                 raise ValueError(
