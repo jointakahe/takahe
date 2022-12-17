@@ -672,7 +672,7 @@ class Post(StatorModel):
                     post.mentions.add(mention_identity)
                 elif tag["type"].lower() == "hashtag":
                     post.hashtags.append(tag["name"].lower().lstrip("#"))
-                elif tag["type"].lower() == "http://joinmastodon.org/ns#emoji":
+                elif tag["type"].lower() == "toot:emoji":
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
                 else:
@@ -689,10 +689,8 @@ class Post(StatorModel):
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
-                if "http://joinmastodon.org/ns#focalPoint" in attachment:
-                    focal_x, focal_y = attachment[
-                        "http://joinmastodon.org/ns#focalPoint"
-                    ]["@list"]
+                if "toot:focalPoint" in attachment:
+                    focal_x, focal_y = attachment["toot:focalPoint"]["@list"]
                 else:
                     focal_x, focal_y = None, None
                 post.attachments.create(
@@ -701,7 +699,7 @@ class Post(StatorModel):
                     name=attachment.get("name"),
                     width=attachment.get("width"),
                     height=attachment.get("height"),
-                    blurhash=attachment.get("http://joinmastodon.org/ns#blurhash"),
+                    blurhash=attachment.get("toot:blurhash"),
                     focal_x=focal_x,
                     focal_y=focal_y,
                 )

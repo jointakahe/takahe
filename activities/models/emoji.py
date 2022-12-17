@@ -211,7 +211,6 @@ class Emoji(StatorModel):
     def to_ap_tag(self):
         """
         Return this Emoji as an ActivityPub Tag
-        http://joinmastodon.org/ns#Emoji
         """
         return {
             "id": self.object_uri or f"https://{settings.MAIN_DOMAIN}/emoji/{self.pk}/",

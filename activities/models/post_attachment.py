@@ -96,7 +96,7 @@ class PostAttachment(StatorModel):
             "width": self.width,
             "height": self.height,
             "mediaType": self.mimetype,
-            "http://joinmastodon.org/ns#focalPoint": [0, 0],
+            "toot:focalPoint": [0, 0],
         }
 
     ### Mastodon Client API ###

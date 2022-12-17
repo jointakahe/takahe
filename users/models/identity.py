@@ -321,7 +321,7 @@ class Identity(StatorModel):
             },
             "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "url": self.absolute_profile_uri(),
-            "http://joinmastodon.org/ns#discoverable": self.discoverable,
+            "toot:discoverable": self.discoverable,
         }
         if self.name:
             response["name"] = self.name
@@ -348,7 +348,6 @@ class Identity(StatorModel):
     def to_ap_tag(self):
         """
         Return this Identity as an ActivityPub Tag
-        http://joinmastodon.org/ns#Mention
         """
         return {
             "href": self.actor_uri,
@@ -472,9 +471,7 @@ class Identity(StatorModel):
         self.public_key_id = document.get("publicKey", {}).get("id")
         self.icon_uri = document.get("icon", {}).get("url")
         self.image_uri = document.get("image", {}).get("url")
-        self.discoverable = document.get(
-            "http://joinmastodon.org/ns#discoverable", True
-        )
+        self.discoverable = document.get("toot:discoverable", True)
         # Profile links/metadata
         self.metadata = []
         for attachment in get_list(document, "attachment"):
