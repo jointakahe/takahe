@@ -2,7 +2,7 @@
 <div class="post user">
 
     <a href="{{ identity.urls.view }}">
-        <img src="{{ identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ identity.name_or_handle }}">
+        <img src="{{ identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ identity.name_or_handle }}" loading="lazy">
     </a>
 
     {% if created %}
