@@ -107,6 +107,10 @@ class Settings(BaseSettings):
     #: is necessary for compatibility with Mastodon’s image proxy.
     MEDIA_MAX_IMAGE_FILESIZE_MB: int = 10
 
+    #: Maximum filesize for Avatars. Remote avatars larger than this size will
+    #: not be fetched and served from media, but served through the image proxy.
+    AVATAR_MAX_IMAGE_FILESIZE_KB: int = 1000
+
     #: Maximum filesize for Emoji. Attempting to upload Local Emoji larger than this size will be
     #: blocked. Remote Emoji larger than this size will not be fetched and served from media, but
     #: served through the image proxy.

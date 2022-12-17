@@ -5,12 +5,14 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
+from django.conf import settings
 from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.functional import lazy
 
 from core.exceptions import ActorMismatchError
+from core.files import get_remote_file
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, media_type_from_filename
 from core.models import Config
@@ -42,6 +44,16 @@ class IdentityStates(StateGraph):
             return cls.updated
         # Run the actor fetch and progress to updated if it succeeds
         if await identity.fetch_actor():
+            # Also stash their icon if we can
+            if identity.icon_uri:
+                file, mimetype = await get_remote_file(
+                    identity.icon_uri,
+                    timeout=settings.SETUP.REMOTE_TIMEOUT,
+                    max_size=settings.SETUP.AVATAR_MAX_IMAGE_FILESIZE_KB * 1024,
+                )
+                if file:
+                    identity.icon = file
+                    await sync_to_async(identity.save)()
             return cls.updated
 
     @classmethod
