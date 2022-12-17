@@ -110,7 +110,7 @@ class PostAdmin(admin.ModelAdmin):
     actions = ["force_fetch", "reparse_hashtags"]
     search_fields = ["content"]
     inlines = [PostAttachmentInline]
-    readonly_fields = ["created", "updated", "object_json"]
+    readonly_fields = ["created", "updated", "state_changed", "object_json"]
 
     @admin.action(description="Force Fetch")
     def force_fetch(self, request, queryset):
@@ -153,11 +153,12 @@ class TimelineEventAdmin(admin.ModelAdmin):
 
 @admin.register(FanOut)
 class FanOutAdmin(admin.ModelAdmin):
-    list_display = ["id", "state", "state_attempted", "type", "identity"]
+    list_display = ["id", "state", "created", "state_attempted", "type", "identity"]
     list_filter = (IdentityLocalFilter, "type", "state", "state_attempted")
     raw_id_fields = ["identity", "subject_post", "subject_post_interaction"]
-    readonly_fields = ["created", "updated"]
+    readonly_fields = ["created", "updated", "state_changed"]
     actions = ["force_execution"]
+    search_fields = ["identity__username"]
 
     @admin.action(description="Force Execution")
     def force_execution(self, request, queryset):
