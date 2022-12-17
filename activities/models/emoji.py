@@ -255,7 +255,11 @@ class Emoji(StatorModel):
             "shortcode": self.shortcode,
             "url": url,
             "static_url": self.remote_url or url,
-            "visible_in_picker": self.public,
+            "visible_in_picker": (
+                Config.system.emoji_unreviewed_are_public
+                if self.public is None
+                else self.public
+            ),
             "category": self.category or "",
         }
         return data
