@@ -27,6 +27,8 @@ class Individual(TemplateView):
         if self.identity.blocked:
             raise Http404("Blocked user")
         self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
+        if self.post_obj.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
+            raise Http404("Deleted post")
         # If they're coming in looking for JSON, they want the actor
         if request.ap_json:
             # Return post JSON
