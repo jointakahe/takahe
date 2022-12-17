@@ -66,11 +66,11 @@
         <table class="metadata">
             {% for entry in identity.safe_metadata %}
                 <tr>
-                    <td class="name">{{ entry.name }}</td>
-                    <td class="value">{{ entry.value }}</td>
+                    <th>{{ entry.name }}</td>
+                    <td>{{ entry.value }}</td>
                 </tr>
             {% endfor %}
-            </table>
+        </table>
     {% endif %}
 
     {% if identity.config_identity.visible_follows %}

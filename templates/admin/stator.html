@@ -6,8 +6,20 @@
     {% for model, stats in model_stats.items %}
         <fieldset>
             <legend>{{ model }}</legend>
-            <p><b>Pending:</b> {{ stats.most_recent_queued }}</p>
-            <p><b>Processed today:</b> {{ stats.most_recent_handled.1 }}</p>
+            <table class="metadata">
+                <tr>
+                    <th>Pending</td>
+                    <td>{{ stats.most_recent_queued }}</td>
+                </tr>
+                <tr>
+                    <th>Processed today</td>
+                    <td>{{ stats.most_recent_handled.1 }}</td>
+                </tr>
+                <tr>
+                    <th>This month</td>
+                    <td>{{ stats.most_recent_handled.2 }}</td>
+                </tr>
+            </table>
         </fieldset>
     {% endfor %}
 {% endblock %}

@@ -1,9 +1,8 @@
 from django import forms
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, RedirectView, TemplateView
+from django.views.generic import FormView, RedirectView
 
 from users.decorators import admin_required
-from users.models import Identity
 from users.views.admin.domains import (  # noqa
     DomainCreate,
     DomainDelete,
@@ -17,6 +16,7 @@ from users.views.admin.hashtags import (  # noqa
     HashtagEdit,
     Hashtags,
 )
+from users.views.admin.identities import IdentitiesRoot, IdentityEdit  # noqa
 from users.views.admin.settings import (  # noqa
     BasicSettings,
     PoliciesSettings,
@@ -29,18 +29,6 @@ from users.views.admin.users import UserEdit, UsersRoot  # noqa
 @method_decorator(admin_required, name="dispatch")
 class AdminRoot(RedirectView):
     pattern_name = "admin_basic"
-
-
-@method_decorator(admin_required, name="dispatch")
-class Identities(TemplateView):
-
-    template_name = "admin/identities.html"
-
-    def get_context_data(self):
-        return {
-            "identities": Identity.objects.order_by("username"),
-            "section": "identities",
-        }
 
 
 @method_decorator(admin_required, name="dispatch")

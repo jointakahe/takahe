@@ -1,0 +1,123 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}{{ identity.name_or_handle }}{% endblock %}
+
+{% block content %}
+    <h1>{{ identity.html_name_or_handle }} <small>{{ identity.handle }}</small></h1>
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Stats</legend>
+            <table class="metadata">
+                <tr>
+                    <th>Status</td>
+                    <td>
+                        {% if identity.limited %}
+                            Limited
+                        {% elif identity.blocked %}
+                            Blocked
+                        {% else %}
+                            Normal
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if identity.local %}
+                    <tr>
+                        <th>Type</td>
+                        <td>Local Identity</td>
+                    </tr>
+                    <tr>
+                        <th>Followers</td>
+                        <td>{{ identity.inbound_follows.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>Following</td>
+                        <td>{{ identity.outbound_follows.count }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <th>Type</td>
+                        <td>Remote Identity</td>
+                    </tr>
+                    <tr>
+                        <th>Local Followers</td>
+                        <td>{{ identity.inbound_follows.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>Following Locals</td>
+                        <td>{{ identity.outbound_follows.count }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <th>Posts</td>
+                    <td>{{ identity.posts.count }}</td>
+                </tr>
+                <tr>
+                    <th>First Seen</td>
+                    <td>{{ identity.created|timesince }} ago</td>
+                </tr>
+            </table>
+        </fieldset>
+        {% if identity.local %}
+        <fieldset>
+            <legend>Users</legend>
+            <p>
+                {% for user in identity.users.all %}
+                    <a href="{{ user.urls.admin_edit }}">{{ user.email }}</a>{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        </fieldset>
+        {% endif %}
+        <fieldset>
+            <legend>Technical</legend>
+            <table class="metadata">
+                {% if not identity.local %}
+                    <tr>
+                        <th>Last Fetched</td>
+                        <td>{{ identity.fetched|timesince }} ago</td>
+                    </tr>
+                    {% if identity.state == "outdated" %}
+                        <tr>
+                            <th>Attempting Fetch Since</td>
+                            <td>{{ identity.state_changed|timesince }} ago</td>
+                        </tr>
+                    {% endif %}
+                {% endif %}
+                <tr>
+                    <th>Actor URI</td>
+                    <td>{{ identity.actor_uri }}</td>
+                </tr>
+                {% if not identity.local %}
+                    <tr>
+                        <th>Inbox URI</td>
+                        <td>{{ identity.inbox_uri }}</td>
+                    </tr>
+                {% endif %}
+            </table>
+        </fieldset>
+        <fieldset>
+            <legend>Admin Notes</legend>
+            {% include "forms/_field.html" with field=form.notes %}
+        </fieldset>
+        <div class="buttons">
+            {% if not identity.local %}
+                <button class="left" name="fetch">Force Fetch</a>
+            {% endif %}
+            {% if identity.limited %}
+                <button class="left delete" name="unlimit">Unlimit</a>
+            {% else %}
+                <button class="left delete" name="limit">Limit</a>
+            {% endif %}
+            {% if identity.blocked %}
+                <button class="left delete" name="unblock">Unblock</a>
+            {% else %}
+                <button class="left delete" name="block">Block</a>
+            {% endif %}
+        </div>
+        <div class="buttons">
+            <a href="{{ identity.urls.admin }}" class="button secondary left">Back</a>
+            <a href="{{ identity.urls.view }}" class="button secondary">View Profile</a>
+            <button>Save Notes</button>
+        </div>
+    </form>
+{% endblock %}

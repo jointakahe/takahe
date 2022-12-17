@@ -1,6 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.db import models
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
@@ -10,6 +10,7 @@ from activities.models import Post, PostInteraction, PostStates
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
 from users.decorators import identity_required
+from users.models import Identity
 from users.shortcuts import by_handle_or_404
 
 
@@ -23,6 +24,8 @@ class Individual(TemplateView):
 
     def get(self, request, handle, post_id):
         self.identity = by_handle_or_404(self.request, handle, local=False)
+        if self.identity.blocked:
+            raise Http404("Blocked user")
         self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
         # If they're coming in looking for JSON, they want the actor
         if request.ap_json:
@@ -66,6 +69,7 @@ class Individual(TemplateView):
                 ),
                 in_reply_to=self.post_obj.object_uri,
             )
+            .exclude(author__restriction=Identity.Restriction.blocked)
             .distinct()
             .select_related("author__domain")
             .prefetch_related("emojis")

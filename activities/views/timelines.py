@@ -7,6 +7,7 @@ from django.views.generic import FormView, ListView
 from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
 from core.decorators import cache_page
 from users.decorators import identity_required
+from users.models import Identity
 
 from .compose import Compose
 
@@ -75,6 +76,7 @@ class Tag(ListView):
     def get_queryset(self):
         return (
             Post.objects.public()
+            .filter(author__restriction=Identity.Restriction.none)
             .tagged_with(self.hashtag)
             .select_related("author")
             .prefetch_related("attachments", "mentions")
@@ -105,6 +107,7 @@ class Local(ListView):
     def get_queryset(self):
         return (
             Post.objects.local_public()
+            .filter(author__restriction=Identity.Restriction.none)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions", "emojis")
             .order_by("-created")
@@ -133,6 +136,7 @@ class Federated(ListView):
             Post.objects.filter(
                 visibility=Post.Visibilities.public, in_reply_to__isnull=True
             )
+            .filter(author__restriction=Identity.Restriction.none)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions", "emojis")
             .order_by("-created")

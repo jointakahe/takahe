@@ -55,6 +55,11 @@ class Identity(StatorModel):
     Represents both local and remote Fediverse identities (actors)
     """
 
+    class Restriction(models.IntegerChoices):
+        none = 0
+        limited = 1
+        blocked = 2
+
     # The Actor URI is essentially also a PK - we keep the default numeric
     # one around as well for making nice URLs etc.
     actor_uri = models.CharField(max_length=500, unique=True)
@@ -105,6 +110,13 @@ class Identity(StatorModel):
     # Should be a list of object URIs (we don't want a full M2M here)
     pinned = models.JSONField(blank=True, null=True)
 
+    # Admin-only moderation fields
+    sensitive = models.BooleanField(default=False)
+    restriction = models.IntegerField(
+        choices=Restriction.choices, default=Restriction.none
+    )
+    admin_notes = models.TextField(null=True, blank=True)
+
     private_key = models.TextField(null=True, blank=True)
     public_key = models.TextField(null=True, blank=True)
     public_key_id = models.TextField(null=True, blank=True)
@@ -124,6 +136,8 @@ class Identity(StatorModel):
         view = "/@{self.username}@{self.domain_id}/"
         action = "{view}action/"
         activate = "{view}activate/"
+        admin = "/admin/identities/"
+        admin_edit = "{admin}{self.pk}/"
 
         def get_scheme(self, url):
             return "https"
@@ -197,9 +211,16 @@ class Identity(StatorModel):
         domain = domain.lower()
         try:
             if local:
-                return cls.objects.get(username=username, domain_id=domain, local=True)
+                return cls.objects.get(
+                    username=username,
+                    domain_id=domain,
+                    local=True,
+                )
             else:
-                return cls.objects.get(username=username, domain_id=domain)
+                return cls.objects.get(
+                    username=username,
+                    domain_id=domain,
+                )
         except cls.DoesNotExist:
             if fetch and not local:
                 actor_uri, handle = async_to_sync(cls.fetch_webfinger)(
@@ -276,6 +297,14 @@ class Identity(StatorModel):
     def outdated(self) -> bool:
         # TODO: Setting
         return self.data_age > 60 * 24 * 24
+
+    @property
+    def blocked(self) -> bool:
+        return self.restriction == self.Restriction.blocked
+
+    @property
+    def limited(self) -> bool:
+        return self.restriction == self.Restriction.limited
 
     ### ActivityPub (outbound) ###
 

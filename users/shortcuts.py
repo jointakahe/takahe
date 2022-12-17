@@ -31,4 +31,6 @@ def by_handle_or_404(request, handle, local=True, fetch=False) -> Identity:
     )
     if identity is None:
         raise Http404(f"No identity for handle {handle}")
+    if identity.blocked:
+        raise Http404("Blocked user")
     return identity

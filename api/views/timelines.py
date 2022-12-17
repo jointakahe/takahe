@@ -3,6 +3,7 @@ from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
+from users.models import Identity
 
 
 @api_router.get("/v1/timelines/home", response=list[schemas.Status])
@@ -52,6 +53,7 @@ def public(
 ):
     queryset = (
         Post.objects.public()
+        .filter(author__restriction=Identity.Restriction.none)
         .select_related("author")
         .prefetch_related("attachments")
         .order_by("-created")
@@ -90,6 +92,7 @@ def hashtag(
         limit = 40
     queryset = (
         Post.objects.public()
+        .filter(author__restriction=Identity.Restriction.none)
         .tagged_with(hashtag)
         .select_related("author")
         .prefetch_related("attachments")

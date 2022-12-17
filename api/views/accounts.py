@@ -48,7 +48,9 @@ def account_relationships(request):
 @api_router.get("/v1/accounts/{id}", response=schemas.Account)
 @identity_required
 def account(request, id: str):
-    identity = get_object_or_404(Identity, pk=id)
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
     return identity.to_mastodon_json()
 
 
@@ -67,7 +69,9 @@ def account_statuses(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    identity = get_object_or_404(Identity, pk=id)
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
     queryset = (
         identity.posts.not_hidden()
         .unlisted(include_replies=not exclude_replies)

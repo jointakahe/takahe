@@ -106,8 +106,13 @@ urlpatterns = [
     ),
     path(
         "admin/identities/",
-        admin.Identities.as_view(),
+        admin.IdentitiesRoot.as_view(),
         name="admin_identities",
+    ),
+    path(
+        "admin/identities/<id>/",
+        admin.IdentityEdit.as_view(),
+        name="admin_identity_edit",
     ),
     path(
         "admin/invites/",

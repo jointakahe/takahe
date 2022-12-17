@@ -307,6 +307,14 @@ nav a i {
     margin: 0 0 10px 0;
 }
 
+.left-column h1 small {
+    font-size: 60%;
+    color: var(--color-text-dull);
+    display: block;
+    margin: -10px 0 0 0;
+    padding: 0;
+}
+
 .left-column h2 {
     margin: 10px 0 10px 0;
 }
@@ -642,8 +650,13 @@ form .uploaded-image .buttons {
 }
 
 form .buttons {
+    clear: both;
     text-align: right;
     margin: -20px 0 15px 0;
+}
+
+form .buttons:nth-of-type(2) {
+    padding-top: 15px;
 }
 
 form p+.buttons,
@@ -794,14 +807,15 @@ h1.identity small {
 
 table.metadata {
     margin: -10px 0 0 0;
+    text-align: left;
 }
 
 table.metadata td {
     padding: 0;
 }
 
-table.metadata td.name {
-    padding-right: 10px;
+table.metadata th {
+    padding: 0 10px 0 0;
     font-weight: bold;
 }
 

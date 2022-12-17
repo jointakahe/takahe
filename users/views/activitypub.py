@@ -165,11 +165,12 @@ class Inbox(View):
                 f"Inbox error: cannot fetch actor {document['actor']}"
             )
             return HttpResponseBadRequest("Cannot retrieve actor")
-        # See if it's from a blocked domain
-        if identity.domain.blocked:
+
+        # See if it's from a blocked user or domain
+        if identity.blocked or identity.domain.blocked:
             # I love to lie! Throw it away!
             exceptions.capture_message(
-                f"Inbox: Discarded message from {identity.domain}"
+                f"Inbox: Discarded message from {identity.actor_uri}"
             )
             return HttpResponse(status=202)
 
@@ -185,6 +186,7 @@ class Inbox(View):
             except VerificationError:
                 exceptions.capture_message("Inbox error: Bad LD signature")
                 return HttpResponseUnauthorized("Bad signature")
+
         # Otherwise, verify against the header (assuming it's the same actor)
         else:
             try:
@@ -200,6 +202,7 @@ class Inbox(View):
             except VerificationError:
                 exceptions.capture_message("Inbox error: Bad HTTP signature")
                 return HttpResponseUnauthorized("Bad signature")
+
         # Hand off the item to be processed by the queue
         InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)

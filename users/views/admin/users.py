@@ -12,7 +12,7 @@ from users.models import User
 class UsersRoot(ListView):
 
     template_name = "admin/users.html"
-    paginate_by = 50
+    paginate_by = 30
 
     def get(self, request, *args, **kwargs):
         self.query = request.GET.get("query")
