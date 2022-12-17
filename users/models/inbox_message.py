@@ -32,9 +32,12 @@ class InboxMessageStates(StateGraph):
                     case "question":
                         pass  # Drop for now
                     case unknown:
-                        raise ValueError(
-                            f"Cannot handle activity of type create.{unknown}"
-                        )
+                        if unknown in Post.Types.names:
+                            await sync_to_async(Post.handle_create_ap)(instance.message)
+                        else:
+                            raise ValueError(
+                                f"Cannot handle activity of type create.{unknown}"
+                            )
             case "update":
                 match instance.message_object_type:
                     case "note":
@@ -44,9 +47,12 @@ class InboxMessageStates(StateGraph):
                     case "question":
                         pass  # Drop for now
                     case unknown:
-                        raise ValueError(
-                            f"Cannot handle activity of type update.{unknown}"
-                        )
+                        if unknown in Post.Types.names:
+                            await sync_to_async(Post.handle_update_ap)(instance.message)
+                        else:
+                            raise ValueError(
+                                f"Cannot handle activity of type update.{unknown}"
+                            )
             case "accept":
                 match instance.message_object_type:
                     case "follow":

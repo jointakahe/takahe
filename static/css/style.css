@@ -1088,15 +1088,31 @@ table.metadata td .emoji {
 }
 
 /* Special Type Posts */
-.typed-post a:hover {
+.post .notice a:hover {
     text-decoration: underline;
 }
 
-.typed-post.type-question h3 small {
+.post .poll h3 small {
     font-weight: lighter;
     font-size: small;
 }
-.type-question ul li .votes {
+.post .poll ul {
+    list-style: none;
+}
+
+.post .poll li {
+    padding: 6px 0;
+    line-height: 18px;
+}
+.poll-number {
+    display: inline-block;
+    width: 45px;
+}
+.poll-footer {
+    padding: 6px 0 6px;
+    font-size: 12px;
+}
+.post .poll ul li .votes {
     margin-left: 10px;
     font-size: small;
 }

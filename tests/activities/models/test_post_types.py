@@ -1,6 +1,7 @@
 import pytest
 
 from activities.models import Post
+from activities.models.post_types import QuestionData
 from core.ld import canonicalise
 
 
@@ -61,6 +62,8 @@ def test_question_post(config_system, identity, remote_identity):
         "published": "2022-12-15T22:03:59Z",
     }
 
-    Post.by_ap(data=canonicalise(data["object"], include_security=True), create=True)
-
-    raise Exception("Merge Guard")
+    post = Post.by_ap(
+        data=canonicalise(data["object"], include_security=True), create=True
+    )
+    assert post.type == Post.Types.question
+    QuestionData.parse_obj(post.type_data)
