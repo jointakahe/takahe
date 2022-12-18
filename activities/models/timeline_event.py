@@ -16,6 +16,7 @@ class TimelineEvent(models.Model):
         liked = "liked"  # Someone liking one of our posts
         followed = "followed"
         boosted = "boosted"  # Someone boosting one of our posts
+        announcement = "announcement"  # Server announcement
 
     # The user this event is for
     identity = models.ForeignKey(
@@ -49,6 +50,9 @@ class TimelineEvent(models.Model):
         null=True,
         related_name="timeline_events_about_us",
     )
+
+    published = models.DateTimeField()
+    seen = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
 
