@@ -7,7 +7,7 @@
         {% csrf_token %}
         <fieldset>
             <legend>Create An Account</legend>
-            {% if config.signup_text %}{{ config.signup_text|safe|linebreaks }}{% endif %}
+            {% if signup_text %}{{ signup_text }}{% endif %}
             {% if config.signup_allowed %}
             {% for field in form %}
                 {% include "forms/_field.html" %}

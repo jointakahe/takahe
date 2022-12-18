@@ -1,9 +1,11 @@
+import markdown_it
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import get_object_or_404, render
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
 
@@ -109,6 +111,14 @@ class Signup(FormView):
             "auth/signup_success.html",
             {"email": user.email},
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if Config.system.signup_text:
+            context["signup_text"] = mark_safe(
+                markdown_it.MarkdownIt().render(Config.system.signup_text)
+            )
+        return context
 
 
 class TriggerReset(FormView):
