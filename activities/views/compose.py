@@ -86,7 +86,6 @@ class Compose(FormView):
                 raise forms.ValidationError(
                     f"You must wait at least {Config.system.post_minimum_interval} seconds between posts"
                 )
-            print(last_post)
             if not text:
                 return text
             # Check post length
@@ -126,7 +125,9 @@ class Compose(FormView):
                 mentioned.update(self.reply_to.mentions.all())
                 mentioned.discard(self.request.identity)
                 initial["text"] = "".join(
-                    f"@{identity.handle} " for identity in mentioned
+                    f"@{identity.handle} "
+                    for identity in mentioned
+                    if identity.username
                 )
         return initial
 
