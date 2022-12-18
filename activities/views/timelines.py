@@ -1,8 +1,7 @@
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect
-from django.template.defaultfilters import linebreaks_filter
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, ListView
+from django.views.generic import ListView, TemplateView
 
 from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
 from core.decorators import cache_page
@@ -13,7 +12,7 @@ from .compose import Compose
 
 
 @method_decorator(identity_required, name="dispatch")
-class Home(FormView):
+class Home(TemplateView):
 
     template_name = "activities/home.html"
 
@@ -23,7 +22,6 @@ class Home(FormView):
         return self.form_class(request=self.request, **self.get_form_kwargs())
 
     def get_context_data(self):
-        context = super().get_context_data()
         events = (
             TimelineEvent.objects.filter(
                 identity=self.request.identity,
@@ -31,26 +29,21 @@ class Home(FormView):
             )
             .select_related("subject_post", "subject_post__author")
             .prefetch_related("subject_post__attachments", "subject_post__mentions")
-            .order_by("-created")
+            .order_by("-published")
         )
-        context["interactions"] = PostInteraction.get_event_interactions(
-            events, self.request.identity
-        )
-        context["current_page"] = "home"
-        context["allows_refresh"] = True
         paginator = Paginator(events, 50)
         page_number = self.request.GET.get("page")
-        context["page_obj"] = paginator.get_page(page_number)
+        context = {
+            "interactions": PostInteraction.get_event_interactions(
+                events,
+                self.request.identity,
+            ),
+            "current_page": "home",
+            "allows_refresh": True,
+            "page_obj": paginator.get_page(page_number),
+            "form": self.form_class(request=self.request),
+        }
         return context
-
-    def form_valid(self, form):
-        Post.create_local(
-            author=self.request.identity,
-            content=linebreaks_filter(form.cleaned_data["text"]),
-            summary=form.cleaned_data.get("content_warning"),
-            visibility=self.request.identity.config_identity.default_post_visibility,
-        )
-        return redirect(".")
 
 
 @method_decorator(
@@ -80,7 +73,7 @@ class Tag(ListView):
             .tagged_with(self.hashtag)
             .select_related("author")
             .prefetch_related("attachments", "mentions")
-            .order_by("-created")
+            .order_by("-published")
         )
 
     def get_context_data(self):
@@ -110,7 +103,7 @@ class Local(ListView):
             .filter(author__restriction=Identity.Restriction.none)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions", "emojis")
-            .order_by("-created")
+            .order_by("-published")
         )
 
     def get_context_data(self):
@@ -139,7 +132,7 @@ class Federated(ListView):
             .filter(author__restriction=Identity.Restriction.none)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions", "emojis")
-            .order_by("-created")
+            .order_by("-published")
         )
 
     def get_context_data(self):
@@ -183,7 +176,7 @@ class Notifications(ListView):
                 types.append(type)
         return (
             TimelineEvent.objects.filter(identity=self.request.identity, type__in=types)
-            .order_by("-created")
+            .order_by("-published")
             .select_related(
                 "subject_post",
                 "subject_post__author",

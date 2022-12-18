@@ -137,7 +137,7 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(TimelineEvent)
 class TimelineEventAdmin(admin.ModelAdmin):
-    list_display = ["id", "identity", "created", "type"]
+    list_display = ["id", "identity", "published", "type"]
     list_filter = (IdentityLocalFilter, "type")
     readonly_fields = ["created"]
     raw_id_fields = [

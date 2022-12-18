@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from core.ld import format_ld_date
 
@@ -51,7 +52,7 @@ class TimelineEvent(models.Model):
         related_name="timeline_events_about_us",
     )
 
-    published = models.DateTimeField()
+    published = models.DateTimeField(default=timezone.now)
     seen = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -85,6 +86,7 @@ class TimelineEvent(models.Model):
             identity=identity,
             type=cls.Types.post,
             subject_post=post,
+            defaults={"published": post.published or post.created},
         )[0]
 
     @classmethod
@@ -97,6 +99,7 @@ class TimelineEvent(models.Model):
             type=cls.Types.mentioned,
             subject_post=post,
             subject_identity=post.author,
+            defaults={"published": post.published or post.created},
         )[0]
 
     @classmethod
