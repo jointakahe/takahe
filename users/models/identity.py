@@ -217,7 +217,7 @@ class Identity(StatorModel):
             return []
         return [
             {
-                "name": data["name"],
+                "name": imageify_emojis(strip_html(data["name"]), self.domain),
                 "value": imageify_emojis(strip_html(data["value"]), self.domain),
             }
             for data in self.metadata
