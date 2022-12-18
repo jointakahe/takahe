@@ -180,7 +180,12 @@ class Post(StatorModel):
     local = models.BooleanField()
 
     # The canonical object ID
-    object_uri = models.CharField(max_length=500, blank=True, null=True, unique=True)
+    object_uri = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        unique=True
+    )
 
     # Who should be able to see this Post
     visibility = models.IntegerField(
@@ -197,7 +202,11 @@ class Post(StatorModel):
     summary = models.TextField(blank=True, null=True)
 
     # The public, web URL of this Post on the original server
-    url = models.CharField(max_length=500, blank=True, null=True)
+    url = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True
+    )
 
     # The Post it is replying to as an AP ID URI
     # (as otherwise we'd have to pull entire threads to use IDs)
