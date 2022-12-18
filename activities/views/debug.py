@@ -40,6 +40,3 @@ class JsonViewer(FormView):
         context = self.get_context_data(form=form)
         context["result"] = result
         return self.render_to_response(context)
-
-
-# https://pixelfed.social/p/wakest/502370273028530995
