@@ -726,7 +726,7 @@ class Post(StatorModel):
                 # Resolve the author
                 author = Identity.by_actor_uri(data["attributedTo"], create=create)
                 # If the post is from a blocked domain, stop and drop
-                if author.domain.blocked:
+                if author.domain and author.domain.blocked:
                     raise cls.DoesNotExist("Post is from a blocked domain")
                 post = cls.objects.create(
                     object_uri=data["id"],
