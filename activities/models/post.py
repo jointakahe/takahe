@@ -712,7 +712,8 @@ class Post(StatorModel):
         Retrieves a Post instance by its ActivityPub JSON object.
 
         Optionally creates one if it's not present.
-        Raises KeyError if it's not found and create is False.
+        Raises DoesNotExist if it's not found and create is False,
+        or it's from a blocked domain.
         """
         # Do we have one with the right ID?
         created = False
@@ -724,6 +725,9 @@ class Post(StatorModel):
             if create:
                 # Resolve the author
                 author = Identity.by_actor_uri(data["attributedTo"], create=create)
+                # If the post is from a blocked domain, stop and drop
+                if author.domain.blocked:
+                    raise cls.DoesNotExist("Post is from a blocked domain")
                 post = cls.objects.create(
                     object_uri=data["id"],
                     author=author,
