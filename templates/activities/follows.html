@@ -17,7 +17,7 @@
     <section class="icon-menu">
         {% for identity in page_obj %}
             <a class="option" href="{{ identity.urls.view }}">
-                <img src="{{ identity.local_icon_url.relative }}">
+                <img src="{{ identity.local_icon_url.relative }}" loading="lazy">
                 <span class="handle">
                     {{ identity.html_name_or_handle }}
                     <small>@{{ identity.handle }}</small>
