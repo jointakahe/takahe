@@ -372,6 +372,9 @@ if SETUP.MEDIA_BACKEND:
         if parsed.hostname is not None:
             port = parsed.port or 443
             AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
+        if SETUP.MEDIA_URL is not None:
+            media_url_parsed = urllib.parse.urlparse(SETUP.MEDIA_URL)
+            AWS_S3_CUSTOM_DOMAIN = media_url_parsed.hostname
     elif parsed.scheme == "local":
         if not (MEDIA_ROOT and MEDIA_URL):
             raise ValueError(
