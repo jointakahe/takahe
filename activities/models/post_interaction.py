@@ -281,7 +281,12 @@ class PostInteraction(StatorModel):
         """
         with transaction.atomic():
             # Create it
-            interaction = cls.by_ap(data, create=True)
+            try:
+                interaction = cls.by_ap(data, create=True)
+            except (cls.DoesNotExist, Post.DoesNotExist):
+                # That post is gone, boss
+                # TODO: Limited retry state?
+                return
             # Boosts (announces) go to everyone who follows locally
             if interaction.type == cls.Types.boost:
                 for follow in Follow.objects.filter(
@@ -303,7 +308,7 @@ class PostInteraction(StatorModel):
             # Find it
             try:
                 interaction = cls.by_ap(data["object"])
-            except cls.DoesNotExist:
+            except (cls.DoesNotExist, Post.DoesNotExist):
                 # Well I guess we don't need to undo it do we
                 return
             # Verify the actor matches
