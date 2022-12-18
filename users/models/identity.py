@@ -423,6 +423,7 @@ class Identity(StatorModel):
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
+                    follow_redirects=True,
                 )
         except httpx.RequestError:
             return None, None
@@ -435,7 +436,13 @@ class Identity(StatorModel):
                 f"Client error fetching webfinger: {response.status_code}",
                 response.content,
             )
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError:
+            raise ValueError(
+                "JSON parse error fetching webfinger",
+                response.content,
+            )
         if data["subject"].startswith("acct:"):
             data["subject"] = data["subject"][5:]
         for link in data["links"]:
