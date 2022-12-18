@@ -18,23 +18,23 @@ Currently, it supports:
 * Profile pages with bios, icons, and header images
 * RSS feeds for users' public posts
 * Hashtag linking and searching
+* Emoji fetching and display
 * Searching for users by exact handle
 * Multiple domain support
 * Multiple identity (per user account support)
+* Moderation flagging system and queue
 * Server defederation (blocking)
 * Signup flow
 * Password reset flow
 * Hashtag trending system with moderation
+* Mastodon-compatible client API for use with apps (alpha stage)
 
 Features planned for releases up to 1.0:
 
-* A mode where followers must be approved
-* Emoji fetching and display
-* Emoji creation at server level
+* Manual approval of followers
+* Emoji admin page
 * Server announcements system
-* Moderation flagging system and queue
 * IP and email domain banning
-* Mastodon-compatible client API for use with apps
 
 Features that may make it into 1.0, or might be further out:
 
