@@ -43,7 +43,10 @@ class FanOutStates(StateGraph):
                         post=post,
                     )
                 # We might have been mentioned
-                if fan_out.identity.id in mentioned:
+                if (
+                    fan_out.identity.id in mentioned
+                    and fan_out.identity_id != post.author_id
+                ):
                     await sync_to_async(TimelineEvent.add_mentioned)(
                         identity=fan_out.identity,
                         post=post,
