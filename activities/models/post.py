@@ -775,8 +775,8 @@ class Post(StatorModel):
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
-                if "toot:focalPoint" in attachment:
-                    focal_x, focal_y = attachment["toot:focalPoint"]["@list"]
+                if "focalPoint" in attachment:
+                    focal_x, focal_y = attachment["focalPoint"]["@list"]
                 else:
                     focal_x, focal_y = None, None
                 post.attachments.create(
@@ -785,7 +785,7 @@ class Post(StatorModel):
                     name=attachment.get("name"),
                     width=attachment.get("width"),
                     height=attachment.get("height"),
-                    blurhash=attachment.get("toot:blurhash"),
+                    blurhash=attachment.get("blurhash"),
                     focal_x=focal_x,
                     focal_y=focal_y,
                 )

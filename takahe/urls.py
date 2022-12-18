@@ -2,7 +2,7 @@ from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
 from django.urls import path, re_path
 
-from activities.views import compose, explore, follows, posts, search, timelines
+from activities.views import compose, debug, explore, follows, posts, search, timelines
 from api.views import api_router, oauth
 from core import views as core
 from mediaproxy import views as mediaproxy
@@ -17,6 +17,7 @@ urlpatterns = [
     path("local/", timelines.Local.as_view(), name="local"),
     path("federated/", timelines.Federated.as_view(), name="federated"),
     path("search/", search.Search.as_view(), name="search"),
+    path("debug/json/", debug.JsonViewer.as_view(), name="debug_json"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
     path("explore/", explore.Explore.as_view(), name="explore"),
     path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
