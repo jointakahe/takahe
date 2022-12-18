@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 
 from core.files import get_remote_file
 from core.html import strip_html
+from core.ld import format_ld_date
 from core.models import Config
 from core.uploads import upload_emoji_namer
 from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl, StaticAbsoluteUrl
@@ -218,13 +219,14 @@ class Emoji(StatorModel):
         """
         return {
             "id": self.object_uri or f"https://{settings.MAIN_DOMAIN}/emoji/{self.pk}/",
-            "type": "toot:Emoji",
-            "name": self.shortcode,
+            "type": "Emoji",
+            "name": f":{self.shortcode}:",
             "icon": {
                 "type": "Image",
                 "mediaType": self.mimetype,
                 "url": self.full_url().absolute,
             },
+            "updated": format_ld_date(self.updated),
         }
 
     @classmethod

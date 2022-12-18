@@ -410,12 +410,15 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
     context = [
         "https://www.w3.org/ns/activitystreams",
         {
+            "blurhash": "toot:blurhash",
+            "Emoji": "toot:Emoji",
+            "focalPoint": {"@container": "@list", "@id": "toot:focalPoint"},
+            "Hashtag": "as:Hashtag",
+            "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+            "Public": "as:Public",
             "sensitive": "as:sensitive",
             "toot": "http://joinmastodon.org/ns#",
             "votersCount": "toot:votersCount",
-            "Hashtag": "as:Hashtag",
-            "Public": "as:Public",
-            "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
         },
     ]
     if include_security:
