@@ -20,10 +20,13 @@ def upload_namer(prefix, instance, filename):
     _, old_extension = os.path.splitext(filename)
 
     if prefix == "profile_images":
-        # If we're saving images for an Identity, we only keep the most recently
-        # received. Ideally, we should hash the file content and de-duplicate
-        # but this is the easy and immediate solution.
-        return f"{prefix}/{urllib.parse.quote(instance.handle)}{old_extension}"
+        # If we're saving images for an Identity, we name predictably as
+        # avatar images are not considered "secret", and otherwise we'll waste
+        # space.
+        handle_safe = urllib.parse.quote(instance.handle)
+        return (
+            f"{prefix}/{handle_safe[:2]}/{handle_safe[:4]}/{handle_safe}{old_extension}"
+        )
 
     new_filename = secrets.token_urlsafe(20)
     now = timezone.now()
