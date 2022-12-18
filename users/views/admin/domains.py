@@ -65,7 +65,7 @@ class DomainCreate(FormView):
         )
         default = forms.BooleanField(
             help_text="If this is the default option for new identities",
-            widget=forms.Select(choices=[(True, "Yes"), (False, "No")]),
+            widget=forms.Select(choices=[(False, "No"), (True, "Yes")]),
             required=False,
         )
 
