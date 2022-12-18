@@ -7,6 +7,7 @@ from django.views.generic import FormView
 from core.files import resize_image
 from core.models.config import Config
 from users.decorators import identity_required
+from users.models import IdentityStates
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -76,6 +77,8 @@ class ProfilePage(FormView):
                 resize_image(image, size=(1500, 500)),
             )
         identity.save()
+        identity.transition_perform(IdentityStates.edited)
+
         # Save profile-specific identity Config
         Config.set_identity(
             identity, "visible_follows", form.cleaned_data["visible_follows"]
