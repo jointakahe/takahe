@@ -776,7 +776,7 @@ class Post(StatorModel):
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
                 if "focalPoint" in attachment:
-                    focal_x, focal_y = attachment["focalPoint"]["@list"]
+                    focal_x, focal_y = attachment["focalPoint"]
                 else:
                     focal_x, focal_y = None, None
                 post.attachments.create(
