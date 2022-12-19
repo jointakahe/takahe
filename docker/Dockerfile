@@ -3,6 +3,8 @@ ARG IMAGE_LABEL=3.11.1-slim-buster
 
 FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
+ENV PYTHONUNBUFFERED=1
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
