@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     #: An optional Sentry DSN for error reporting.
     SENTRY_DSN: str | None = None
     SENTRY_SAMPLE_RATE: float = 1.0
-    SENTRY_TRACES_SAMPLE_RATE: float = 1.0
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.01
     SENTRY_CAPTURE_MESSAGES: bool = False
 
     #: Fallback domain for links.
