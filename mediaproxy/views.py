@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import httpx
 from django.conf import settings
 from django.http import Http404, HttpResponse
@@ -16,26 +18,42 @@ class BaseProxyView(View):
     def get(self, request, **kwargs):
         self.kwargs = kwargs
         remote_url = self.get_remote_url()
-        try:
-            remote_response = httpx.get(
-                remote_url,
-                headers={"User-Agent": settings.TAKAHE_USER_AGENT},
-                follow_redirects=True,
-                timeout=settings.SETUP.REMOTE_TIMEOUT,
+        # See if we can do the nginx trick or a normal forward
+        if request.headers.get("x-takahe-accel"):
+            bits = urlparse(remote_url)
+            redirect_url = (
+                f"/__takahe_accel__/{bits.scheme}/{bits.hostname}/{bits.path}"
             )
-        except httpx.RequestError:
-            return HttpResponse(status=502)
-        if remote_response.status_code >= 400:
-            return HttpResponse(status=502)
-        return HttpResponse(
-            remote_response.content,
-            headers={
-                "Content-Type": remote_response.headers.get(
-                    "Content-Type", "application/octet-stream"
-                ),
-                "Cache-Control": "public, max-age=3600",
-            },
-        )
+            if bits.query:
+                redirect_url += f"?{bits.query}"
+            return HttpResponse(
+                "",
+                headers={
+                    "X-Accel-Redirect": "/__takahe_accel__/",
+                    "X-Takahe-RealUri": remote_url,
+                },
+            )
+        else:
+            try:
+                remote_response = httpx.get(
+                    remote_url,
+                    headers={"User-Agent": settings.TAKAHE_USER_AGENT},
+                    follow_redirects=True,
+                    timeout=settings.SETUP.REMOTE_TIMEOUT,
+                )
+            except httpx.RequestError:
+                return HttpResponse(status=502)
+            if remote_response.status_code >= 400:
+                return HttpResponse(status=502)
+            return HttpResponse(
+                remote_response.content,
+                headers={
+                    "Content-Type": remote_response.headers.get(
+                        "Content-Type", "application/octet-stream"
+                    ),
+                    "Cache-Control": "public, max-age=3600",
+                },
+            )
 
     def get_remote_url(self):
         raise NotImplementedError()

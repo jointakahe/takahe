@@ -6,7 +6,7 @@
 .idea/*
 .venv
 .vscode
-/*.env
+/*.env*
 /build
 /cache/
 /docs/_build
