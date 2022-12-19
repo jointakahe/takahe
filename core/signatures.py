@@ -200,7 +200,7 @@ class HttpSignature:
             body_bytes = b""
         # GET requests get implicit accept headers added
         if method == "get":
-            headers["Accept"] = "application/activity+json, application/ld+json"
+            headers["Accept"] = "application/activity+json"
         # Sign the headers
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
