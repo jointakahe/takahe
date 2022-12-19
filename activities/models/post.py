@@ -363,7 +363,7 @@ class Post(StatorModel):
     def _safe_content_note(self, *, local: bool = True):
         content = Hashtag.linkify_hashtags(
             self.linkify_mentions(sanitize_post(self.content), local=local),
-            domain=self.author.domain,
+            domain=None if local else self.author.domain,
         )
         if local:
             content = imageify_emojis(content, self.author.domain)
