@@ -43,6 +43,7 @@ class SystemActor:
             "id": self.actor_uri,
             "type": "Application",
             "inbox": self.actor_uri + "inbox/",
+            "outbox": self.actor_uri + "outbox/",
             "endpoints": {
                 "sharedInbox": f"https://{settings.MAIN_DOMAIN}/inbox/",
             },

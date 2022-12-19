@@ -107,15 +107,10 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "type", "author", "state", "created"]
     list_filter = ("type", "local", "visibility", "state", "created")
     raw_id_fields = ["to", "mentions", "author", "emojis"]
-    actions = ["force_fetch", "reparse_hashtags"]
+    actions = ["reparse_hashtags"]
     search_fields = ["content"]
     inlines = [PostAttachmentInline]
     readonly_fields = ["created", "updated", "state_changed", "object_json"]
-
-    @admin.action(description="Force Fetch")
-    def force_fetch(self, request, queryset):
-        for instance in queryset:
-            instance.debug_fetch()
 
     @admin.action(description="Reprocess content for hashtags")
     def reparse_hashtags(self, request, queryset):

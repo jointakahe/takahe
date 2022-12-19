@@ -156,6 +156,7 @@ urlpatterns = [
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
+    path("@<handle>/outbox/", activitypub.Outbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     path("@<handle>/rss/", identity.IdentityFeed()),
     path("@<handle>/report/", report.SubmitReport.as_view()),
@@ -233,6 +234,7 @@ urlpatterns = [
     path("nodeinfo/2.0/", activitypub.NodeInfo2.as_view()),
     path("actor/", activitypub.SystemActorView.as_view()),
     path("actor/inbox/", activitypub.Inbox.as_view()),
+    path("actor/outbox/", activitypub.EmptyOutbox.as_view()),
     path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
     # API/Oauth
     path("api/", api_router.urls),

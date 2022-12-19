@@ -335,6 +335,7 @@ class Identity(StatorModel):
             "id": self.actor_uri,
             "type": "Person",
             "inbox": self.actor_uri + "inbox/",
+            "outbox": self.actor_uri + "outbox/",
             "preferredUsername": self.username,
             "publicKey": {
                 "id": self.public_key_id,
