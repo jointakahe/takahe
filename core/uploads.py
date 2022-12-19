@@ -23,10 +23,7 @@ def upload_namer(prefix, instance, filename):
         # If we're saving images for an Identity, we only keep the most recently
         # received. Ideally, we should hash the file content and de-duplicate
         # but this is the easy and immediate solution.
-        return (
-            f"{prefix}/"
-            f"{urllib.parse.quote(instance.handle)}{old_extension}"
-        )
+        return f"{prefix}/{urllib.parse.quote(instance.handle)}{old_extension}"
 
     new_filename = secrets.token_urlsafe(20)
     now = timezone.now()
