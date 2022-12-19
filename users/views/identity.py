@@ -16,6 +16,7 @@ from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
 from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
+from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
 
@@ -146,18 +147,9 @@ class ActionIdentity(View):
         # See what action we should perform
         action = self.request.POST["action"]
         if action == "follow":
-            existing_follow = Follow.maybe_get(self.request.identity, identity)
-            if not existing_follow:
-                Follow.create_local(self.request.identity, identity)
-            elif existing_follow.state in [
-                FollowStates.undone,
-                FollowStates.undone_remotely,
-            ]:
-                existing_follow.transition_perform(FollowStates.unrequested)
+            IdentityService(identity).follow_from(self.request.identity)
         elif action == "unfollow":
-            existing_follow = Follow.maybe_get(self.request.identity, identity)
-            if existing_follow:
-                existing_follow.transition_perform(FollowStates.undone)
+            IdentityService(identity).unfollow_from(self.request.identity)
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)

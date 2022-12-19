@@ -6,6 +6,7 @@ from api.decorators import identity_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
 from users.models import Identity
+from users.services import IdentityService
 
 
 @api_router.get("/v1/accounts/verify_credentials", response=schemas.Account)
@@ -22,25 +23,7 @@ def account_relationships(request):
     for id in ids:
         identity = get_object_or_404(Identity, pk=id)
         result.append(
-            {
-                "id": identity.pk,
-                "following": identity.inbound_follows.filter(
-                    source=request.identity
-                ).exists(),
-                "followed_by": identity.outbound_follows.filter(
-                    target=request.identity
-                ).exists(),
-                "showing_reblogs": True,
-                "notifying": False,
-                "blocking": False,
-                "blocked_by": False,
-                "muting": False,
-                "muting_notifications": False,
-                "requested": False,
-                "domain_blocking": False,
-                "endorsed": False,
-                "note": "",
-            }
+            IdentityService(identity).mastodon_json_relationship(request.identity)
         )
     return result
 
@@ -95,3 +78,25 @@ def account_statuses(
     )
     interactions = PostInteraction.get_post_interactions(posts, request.identity)
     return [post.to_mastodon_json(interactions=interactions) for post in queryset]
+
+
+@api_router.post("/v1/accounts/{id}/follow", response=schemas.Relationship)
+@identity_required
+def account_follow(request, id: str):
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
+    service = IdentityService(identity)
+    service.follow_from(request.identity)
+    return service.mastodon_json_relationship(request.identity)
+
+
+@api_router.post("/v1/accounts/{id}/unfollow", response=schemas.Relationship)
+@identity_required
+def account_unfollow(request, id: str):
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
+    service = IdentityService(identity)
+    service.unfollow_from(request.identity)
+    return service.mastodon_json_relationship(request.identity)
