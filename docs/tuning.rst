@@ -9,26 +9,6 @@ We recommend that all installations are run behind a CDN, and
 have caches configured. See below for more details on each.
 
 
-CDNs
-----
-
-Takahē is *designed to be run behind a CDN*. It serves most static files directly
-from its main webservers, which is inefficient if called directly, but they
-have ``Cache-Control`` headers set so that the CDN can do the heavy lifting -
-more efficiently than offloading all files to something like S3.
-
-If you don't run behind a CDN, things will still work, but even a medium
-level of traffic might put the webservers under a lot of load.
-
-If you do run behind a CDN, ensure that your CDN is set to respect
-``Cache-Control`` headers from the origin. Some CDNs go purely off of file
-extensions by default, which will not capture all of the proxy views Takahē
-uses to show remote images without leaking user information.
-
-If you don't want to use a CDN but still want a performance improvement, a
-read-through cache that respects ``Cache-Control``, like Varnish, will
-also help if placed in front of Takahē.
-
 
 Scaling
 -------
@@ -88,11 +68,7 @@ servers may consider it permanently unreachable and stop sending posts.
 Caching
 -------
 
-By default Takakē has caching disabled. The caching needs of a server can
-varying drastically based upon the number of users and how interconnected
-they are with other servers.
-
-There are multiple ways Takahē uses caches:
+There are two ways Takahē uses caches:
 
 * For caching rendered pages and responses, like user profile information.
   These caches reduce database load on your server and improve performance.
@@ -101,32 +77,26 @@ There are multiple ways Takahē uses caches:
   proxied to protect your users' privacy; also caching these reduces
   your server's consumed bandwidth and improves users' loading times.
 
-The exact caches you can configure are:
+By default Takakē has Nginx inside its container image configured to perform
+read-through HTTP caching for the image and media files, and no cache
+configured for page rendering.
 
-* ``TAKAHE_CACHES_DEFAULT``: Rendered page and response caching
+Each cache can be adjusted to your needs; let's talk about both.
 
-* ``TAKAHE_CACHES_MEDIA``: Remote post images and user profile header pictures
 
-* ``TAKAHE_CACHES_AVATARS``: Remote user avatars ("icons") only
+Page Caching
+~~~~~~~~~~~~
 
-We recommend you set up ``TAKAHE_CACHES_MEDIA`` and ``TAKAHE_CACHES_AVATARS``
-at a bare minimum - proxying these all the time without caching will eat into
-your server's bandwidth.
+This caching helps Takahē avoid database hits by rendering complex pages or
+API endpoints only once, and turning it on will reduce your database load.
+There is no cache enabled for this by default
 
-All caches are configured the same way - with a custom cache URI/URL. We
-support anything that is available as part of
+To configure it, set the ``TAKAHE_CACHES_DEFAULT`` environment variable.
+We support anything that is available as part of
 `django-cache-url <https://github.com/epicserve/django-cache-url>`_, but
 some cache backends will require additional Python packages not installed
-by default with Takahē. More discussion on backend is below.
+by default with Takahē. More discussion on some major backends is below.
 
-All items in the cache come with an expiry set - usually one week - but you
-can also configure a maximum cache size on dedicated cache datastores like
-Memcache. The key names used by the caches do not overlap, so there is
-no need to configure different key prefixes for each of Takahē's caches.
-
-
-Backends
-~~~~~~~~
 
 Redis
 #####
@@ -140,11 +110,6 @@ Examples::
 A Redis-protocol server. Use ``redis://`` for unencrypted communication and
 ``rediss://`` for TLS.
 
-Redis has a large item size limit and is suitable for all caches. We recommend
-that you keep the DEFAULT cache separate from the MEDIA and AVATARS caches, and
-set the ``maxmemory`` on both to appropriate values (the proxying caches will
-need more memory than the DEFAULT cache).
-
 
 
 Memcache
@@ -157,9 +122,6 @@ Examples::
 
 A remote Memcache-protocol server (or set of servers).
 
-Memcached has a 1MB limit per key by default, so this is only suitable for the
-DEFAULT cache and not the AVATARS or MEDIA cache.
-
 
 Filesystem
 ##########
@@ -168,10 +130,8 @@ Examples::
 
   file:///var/cache/takahe/
 
-A cache on the local disk.
-
-This *will* work with any of the cache backends, but is probably more suitable
-for MEDIA and AVATARS.
+A cache on the local disk. Slower than other options, and only really useful
+if you have no other choice.
 
 Note that if you are running Takahē in a cluster, this cache will not be shared
 across different machines. This is not quite as bad as it first seems; it just
@@ -187,4 +147,52 @@ Examples::
   locmem://default
 
 A local memory cache, inside the Python process. This will consume additional
-memory for the process, and should not be used with the MEDIA or AVATARS caches.
+memory for the process, and should be used with care.
+
+
+Image and Media Caching
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to protect your users' privacy and IP addresses, we can't just send
+them the remote URLs of user avatars and post images that aren't on your
+server; we instead need to proxy them through Takahē in order to obscure who
+is requesting them.
+
+Some other ActivityPub servers do this by downloading all media and images as
+soon as they see it, and storing it all locally with some sort of clean-up job;
+Takahē instead opts for using a read-through cache for this task, which uses
+a bit more bandwidth in the long run but which has much easier maintenance and
+better failure modes.
+
+Our Docker image comes with this cache built in, as without it you'll be making
+Python do a lot of file proxying on every page load (and it's not the best at
+that). It's set to 1GB of disk on each container by default, but you can adjust
+this by setting the ``TAKAHE_NGINX_CACHE_SIZE`` environment variable to a value
+Nginx understands, like ``10g``.
+
+The cache directory is ``/cache/``, and you can mount a different disk into
+this path if you'd like to give it faster or more ephemeral storage.
+
+If you have an external CDN or cache, you can also opt to add your own caching
+to these URLs; they all begin with ``/proxy/``, and have appropriate
+``Cache-Control`` headers set.
+
+
+CDNs
+----
+
+Takahē can be run behind a CDN if you want to offset some of the load from the
+webserver containers. Takahē has to proxy all remote user avatars and images in
+order to protect the privacy of your users, and has a built-in cache to help
+with this (see "Caching" above), but at large scale this might start to get
+strained.
+
+If you do run behind a CDN, ensure that your CDN is set to respect
+``Cache-Control`` headers from the origin rather than going purely off of file
+extensions. Some CDNs go purely off of file
+extensions by default, which will not capture all of the proxy views Takahē
+uses to show remote images without leaking user information.
+
+If you don't want to use a CDN but still want a performance improvement, a
+read-through cache that respects ``Cache-Control``, like Varnish, will
+also help if placed in front of Takahē.
