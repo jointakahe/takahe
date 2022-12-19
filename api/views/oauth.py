@@ -1,5 +1,5 @@
 import secrets
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
@@ -13,8 +13,15 @@ from api.parser import FormOrJsonParser
 
 class OauthRedirect(HttpResponseRedirect):
     def __init__(self, redirect_uri, key, value):
-        self.allowed_schemes = [urlparse(redirect_uri).scheme]
-        super().__init__(redirect_uri + f"?{key}={value}")
+        url_parts = urlparse(redirect_uri)
+        self.allowed_schemes = [url_parts.scheme]
+        # Either add or join the query section
+        url_parts = list(url_parts)
+        if url_parts[4]:
+            url_parts[4] = url_parts[4] + f"&{key}={value}"
+        else:
+            url_parts[4] = f"{key}={value}"
+        super().__init__(urlunparse(url_parts))
 
 
 class AuthorizationView(LoginRequiredMixin, TemplateView):
