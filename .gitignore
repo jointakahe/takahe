@@ -3,6 +3,7 @@
 *.psql
 *.pyc
 *.sqlite3
+.DS_Store
 .idea/*
 .venv
 .vscode
@@ -14,6 +15,5 @@
 /static-collected
 __pycache__/
 api-test.*
-notes.md
-.DS_Store
 fly.toml
+notes.md
