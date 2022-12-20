@@ -21,12 +21,13 @@ def resize_image(
     """
     with Image.open(image) as img:
         if cover:
-            resized_image = ImageOps.fit(img, size)
+            resized_image = ImageOps.fit(img, size, method=Image.Resampling.BILINEAR)
         else:
-            resized_image = ImageOps.contain(img, size)
+            resized_image = img.copy()
+            resized_image.thumbnail(size, resample=Image.Resampling.BILINEAR)
         new_image_bytes = io.BytesIO()
         if keep_format:
-            resized_image.save(new_image_bytes, format=image.format)
+            resized_image.save(new_image_bytes, format=img.format)
             file = File(new_image_bytes)
         else:
             resized_image.save(new_image_bytes, format="webp")
