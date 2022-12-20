@@ -5,6 +5,7 @@ from django.db import models
 from activities.models.timeline_event import TimelineEvent
 from core.ld import canonicalise
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models import FollowStates
 
 
 class FanOutStates(StateGraph):
@@ -33,15 +34,21 @@ class FanOutStates(StateGraph):
                 post = await fan_out.subject_post.afetch_full()
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
-                # of the people mentioned AND the author
+                # of the people mentioned AND the author, or we're mentioned,
+                # or it's a reply to us or the author
                 add = True
                 mentioned = {identity.id for identity in post.mentions.all()}
                 followed = await sync_to_async(set)(
-                    fan_out.identity.outbound_follows.values_list("id", flat=True)
+                    fan_out.identity.outbound_follows.filter(
+                        state__in=FollowStates.group_active()
+                    ).values_list("target_id", flat=True)
                 )
                 if post.in_reply_to:
-                    add = (post.author_id in followed) and bool(
-                        mentioned.intersection(followed)
+                    interested_in = followed.union(
+                        {post.author_id, fan_out.identity_id}
+                    )
+                    add = (post.author_id in followed) and (
+                        bool(mentioned.intersection(interested_in))
                     )
                 if add:
                     await sync_to_async(TimelineEvent.add_post)(

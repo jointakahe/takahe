@@ -543,7 +543,7 @@ class Post(StatorModel):
         Returns the AP JSON for this object
         """
         value = {
-            "to": "Public",
+            "to": [],
             "cc": [],
             "type": self.type,
             "id": self.object_uri,
@@ -573,6 +573,12 @@ class Post(StatorModel):
             value["inReplyTo"] = self.in_reply_to
         if self.edited:
             value["updated"] = format_ld_date(self.edited)
+        # Targeting
+        # TODO: Add followers object
+        if self.visibility == self.Visibilities.public:
+            value["to"].append("Public")
+        elif self.visibility == self.Visibilities.unlisted:
+            value["cc"].append("Public")
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(mention.to_ap_tag())
@@ -593,7 +599,7 @@ class Post(StatorModel):
         for attachment in self.attachments.all():
             value["attachment"].append(attachment.to_ap())
         # Remove fields if they're empty
-        for field in ["cc", "tag", "attachment"]:
+        for field in ["to", "cc", "tag", "attachment"]:
             if not value[field]:
                 del value[field]
         return value
@@ -604,7 +610,7 @@ class Post(StatorModel):
         """
         object = self.to_ap()
         return {
-            "to": object["to"],
+            "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Create",
             "id": self.object_uri + "#create",
@@ -618,7 +624,7 @@ class Post(StatorModel):
         """
         object = self.to_ap()
         return {
-            "to": object["to"],
+            "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Update",
             "id": self.object_uri + "#update",
@@ -632,7 +638,7 @@ class Post(StatorModel):
         """
         object = self.to_ap()
         return {
-            "to": object["to"],
+            "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Delete",
             "id": self.object_uri + "#delete",
@@ -739,13 +745,15 @@ class Post(StatorModel):
                 else:
                     raise ValueError(f"Unknown tag type {tag['type']}")
             # Visibility and to
-            # (a post is public if it's ever to/cc as:Public, otherwise we
-            # regard it as unlisted for now)
-            targets = get_list(data, "to") + get_list(data, "cc")
-            post.visibility = Post.Visibilities.unlisted
-            for target in targets:
-                if target.lower() == "as:public":
-                    post.visibility = Post.Visibilities.public
+            # (a post is public if it's to:public, otherwise it's unlisted if
+            # it's cc:public, otherwise it's more limited)
+            to = [x.lower() for x in get_list(data, "to")]
+            cc = [x.lower() for x in get_list(data, "cc")]
+            post.visibility = Post.Visibilities.mentioned
+            if "public" in to or "as:public" in to:
+                post.visibility = Post.Visibilities.public
+            elif "public" in cc or "as:public" in cc:
+                post.visibility = Post.Visibilities.unlisted
             # Attachments
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
