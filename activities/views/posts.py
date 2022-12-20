@@ -40,11 +40,6 @@ class Individual(TemplateView):
         ancestors, descendants = PostService(self.post_obj).context(
             self.request.identity
         )
-        print(
-            self.post_obj.to_mastodon_json(),
-            self.post_obj.emojis.all(),
-            self.post_obj.emojis.usable(),
-        )
         return {
             "identity": self.identity,
             "post": self.post_obj,

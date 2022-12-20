@@ -1,5 +1,6 @@
 from time import time
 
+from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
 
 from core import sentry
@@ -65,3 +66,10 @@ class SentryTaggingMiddleware:
         sentry.set_takahe_app("web")
         response = self.get_response(request)
         return response
+
+
+def show_toolbar(request):
+    """
+    Determines whether to show the debug toolbar on a given page.
+    """
+    return settings.DEBUG and request.user.is_authenticated and request.user.admin

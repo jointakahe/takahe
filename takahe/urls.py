@@ -1,6 +1,6 @@
 from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 
 from activities.views import compose, debug, explore, follows, posts, search, timelines
 from api.views import api_router, oauth
@@ -246,6 +246,8 @@ urlpatterns = [
     path(".stator/", stator.RequestRunner.as_view()),
     # Django admin
     path("djadmin/", djadmin.site.urls),
+    # Debug toolbar
+    path("__debug__/", include("debug_toolbar.urls")),
     # Media files
     re_path(
         r"^media/(?P<path>.*)$",
