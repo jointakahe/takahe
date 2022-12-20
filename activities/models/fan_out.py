@@ -8,10 +8,12 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class FanOutStates(StateGraph):
-    new = State(try_interval=300)
+    new = State(try_interval=600)
     sent = State()
+    failed = State()
 
     new.transitions_to(sent)
+    new.times_out_to(failed, seconds=86400 * 3)
 
     @classmethod
     async def handle_new(cls, instance: "FanOut"):

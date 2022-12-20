@@ -159,7 +159,7 @@ class StatorModel(models.Model):
         """
         Attempts to transition the current state by running its handler(s).
         """
-        current_state = self.state_graph.states[self.state]
+        current_state: State = self.state_graph.states[self.state]
         # If it's a manual progression state don't even try
         # We shouldn't really be here in this case, but it could be a race condition
         if current_state.externally_progressed:
@@ -168,7 +168,7 @@ class StatorModel(models.Model):
             )
             return None
         try:
-            next_state = await current_state.handler(self)
+            next_state = await current_state.handler(self)  # type: ignore
         except BaseException as e:
             await exceptions.acapture_exception(e)
             traceback.print_exc()
@@ -184,6 +184,14 @@ class StatorModel(models.Model):
                     )
                 await self.atransition_perform(next_state)
                 return next_state
+        # See if it timed out
+        if (
+            current_state.timeout_value
+            and current_state.timeout_value
+            <= (timezone.now() - self.state_changed).total_seconds()
+        ):
+            await self.atransition_perform(current_state.timeout_state)
+            return current_state.timeout_state
         await self.__class__.objects.filter(pk=self.pk).aupdate(
             state_attempted=timezone.now(),
             state_locked_until=None,
