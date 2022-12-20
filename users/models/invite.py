@@ -1,5 +1,6 @@
 import random
 
+import urlman
 from django.db import models
 
 
@@ -19,6 +20,11 @@ class Invite(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    class urls(urlman.Urls):
+        admin = "/admin/invites/"
+        admin_create = "{admin}create/"
+        admin_view = "{admin}{self.pk}/"
 
     @classmethod
     def create_random(cls, email=None):

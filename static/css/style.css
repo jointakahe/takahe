@@ -377,8 +377,8 @@ img.emoji {
     color: var(--color-text-dull);
 }
 
-.icon-menu .option.empty:hover {
-    border: 0;
+.icon-menu .option.empty:hover,
+.icon-menu .option.static:hover {
     border: 2px solid rgba(255, 255, 255, 0);
 }
 
@@ -1096,6 +1096,7 @@ table.metadata td .emoji {
     font-weight: lighter;
     font-size: small;
 }
+
 .post .poll ul {
     list-style: none;
 }
@@ -1104,14 +1105,17 @@ table.metadata td .emoji {
     padding: 6px 0;
     line-height: 18px;
 }
+
 .poll-number {
     display: inline-block;
     width: 45px;
 }
+
 .poll-footer {
     padding: 6px 0 6px;
     font-size: 12px;
 }
+
 .post .poll ul li .votes {
     margin-left: 10px;
     font-size: small;

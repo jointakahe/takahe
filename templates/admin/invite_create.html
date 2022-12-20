@@ -1,0 +1,18 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Create Invite{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Details</legend>
+            {% include "forms/_field.html" with field=form.email %}
+            {% include "forms/_field.html" with field=form.notes %}
+        </fieldset>
+        <div class="buttons">
+            <a href="{% url "admin_invites" %}" class="button secondary left">Back</a>
+            <button>Create</button>
+        </div>
+    </form>
+{% endblock %}

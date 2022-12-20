@@ -127,8 +127,18 @@ urlpatterns = [
     ),
     path(
         "admin/invites/",
-        admin.Invites.as_view(),
+        admin.InvitesRoot.as_view(),
         name="admin_invites",
+    ),
+    path(
+        "admin/invites/create/",
+        admin.InviteCreate.as_view(),
+        name="admin_invite_create",
+    ),
+    path(
+        "admin/invites/<id>/",
+        admin.InviteView.as_view(),
+        name="admin_invite_view",
     ),
     path(
         "admin/hashtags/",

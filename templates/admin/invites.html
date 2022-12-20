@@ -1,9 +1,41 @@
 {% extends "settings/base.html" %}
+{% load activity_tags %}
 
 {% block subtitle %}Invites{% endblock %}
 
 {% block content %}
-    <p>
-        Please use the <a href="/djadmin/users/invite/">Django Admin</a> for now.
-    </p>
+    <form>
+        <div class="buttons">
+            <a href="{% url "admin_invite_create" %}" class="button">Create New</a>
+        </div>
+    </form>
+    <section class="icon-menu">
+        {% for invite in page_obj %}
+            <a class="option" href="{{ invite.urls.admin_view }}">
+                <i class="fa-solid fa-envelope"></i>
+                <span class="handle">
+                    {{ invite.token }}
+
+                    <small>
+                        {% if invite.email %}
+                            (email {{ invite.email }})
+                        {% endif %}
+                    </small>
+                </span>
+                <time>{{ invite.created|timedeltashort }} ago</time>
+            </a>
+        {% empty %}
+            <p class="option empty">
+                There are no unused invites.
+            </p>
+        {% endfor %}
+        <div class="load-more">
+            {% if page_obj.has_previous %}
+                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+            {% endif %}
+        </div>
+    </section>
 {% endblock %}
