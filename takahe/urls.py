@@ -146,17 +146,8 @@ urlpatterns = [
         name="admin_hashtags",
     ),
     path(
-        "admin/hashtags/create/",
-        admin.HashtagCreate.as_view(),
-        name="admin_hashtags_create",
-    ),
-    path(
         "admin/hashtags/<hashtag>/",
         admin.HashtagEdit.as_view(),
-    ),
-    path(
-        "admin/hashtags/<hashtag>/delete/",
-        admin.HashtagDelete.as_view(),
     ),
     path(
         "admin/stator/",

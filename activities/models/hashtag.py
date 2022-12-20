@@ -116,10 +116,8 @@ class Hashtag(StatorModel):
     objects = HashtagManager()
 
     class urls(urlman.Urls):
-        root = "/admin/hashtags/"
-        create = "/admin/hashtags/create/"
-        edit = "/admin/hashtags/{self.hashtag}/"
-        delete = "{edit}delete/"
+        admin = "/admin/hashtags/"
+        admin_edit = "{admin}{self.hashtag}/"
         timeline = "/tags/{self.hashtag}/"
 
     hashtag_regex = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;)")
