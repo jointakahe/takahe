@@ -15,6 +15,11 @@
         </div>
     </form>
     {% if result %}
+
+        <p>Canonacalized Response: (view source for raw)</p>
+        <div id="raw-json-result" style="display: none;">
+{{ raw_result|escape }}
+        </div>
         <pre>{{ result }}</pre>
     {% endif %}
 {% endblock %}

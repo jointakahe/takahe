@@ -23,6 +23,7 @@ class JsonViewer(FormView):
         )
 
     def form_valid(self, form):
+        raw_result = ""
         try:
             response = async_to_sync(SystemActor().signed_request)(
                 method="get",
@@ -31,6 +32,7 @@ class JsonViewer(FormView):
         except httpx.RequestError:
             result = "Request Error"
         else:
+            raw_result = response.text
             if response.status_code >= 400:
                 result = f"Error response: {response.status_code}\n{response.content}"
             else:
@@ -39,4 +41,5 @@ class JsonViewer(FormView):
         # Render results
         context = self.get_context_data(form=form)
         context["result"] = result
+        context["raw_result"] = raw_result
         return self.render_to_response(context)
