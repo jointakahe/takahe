@@ -128,6 +128,28 @@ class PostQuerySet(models.QuerySet):
             return query.filter(in_reply_to__isnull=True)
         return query
 
+    def visible_to(self, identity, include_replies: bool = False):
+        query = self.filter(
+            models.Q(
+                visibility__in=[
+                    Post.Visibilities.public,
+                    Post.Visibilities.local_only,
+                    Post.Visibilities.unlisted,
+                ]
+            )
+            | models.Q(
+                visibility=Post.Visibilities.followers,
+                author__inbound_follows__source=identity,
+            )
+            | models.Q(
+                visibility=Post.Visibilities.mentioned,
+                mentions=identity,
+            )
+        ).distinct()
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
     def tagged_with(self, hashtag: str | Hashtag):
         if isinstance(hashtag, str):
             tag_q = models.Q(hashtags__contains=hashtag)
@@ -525,48 +547,6 @@ class Post(StatorModel):
                 await Hashtag.objects.aget_or_create(
                     hashtag=hashtag,
                 )
-
-    ### Actions ###
-
-    def interact_as(self, identity, type):
-        from activities.models import PostInteraction, PostInteractionStates
-
-        interaction = PostInteraction.objects.get_or_create(
-            type=type, identity=identity, post=self
-        )[0]
-        if interaction.state in [
-            PostInteractionStates.undone,
-            PostInteractionStates.undone_fanned_out,
-        ]:
-            interaction.transition_perform(PostInteractionStates.new)
-
-    def uninteract_as(self, identity, type):
-        from activities.models import PostInteraction, PostInteractionStates
-
-        for interaction in PostInteraction.objects.filter(
-            type=type, identity=identity, post=self
-        ):
-            interaction.transition_perform(PostInteractionStates.undone)
-
-    def like_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.interact_as(identity, PostInteraction.Types.like)
-
-    def unlike_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.uninteract_as(identity, PostInteraction.Types.like)
-
-    def boost_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.interact_as(identity, PostInteraction.Types.boost)
-
-    def unboost_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.uninteract_as(identity, PostInteraction.Types.boost)
 
     ### ActivityPub (outbound) ###
 

@@ -1,16 +1,15 @@
 from django.core.exceptions import PermissionDenied
-from django.db import models
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView, View
 
-from activities.models import Post, PostInteraction, PostStates
+from activities.models import PostInteraction, PostStates
+from activities.services import PostService
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
 from users.decorators import identity_required
-from users.models import Identity
 from users.shortcuts import by_handle_or_404
 
 
@@ -38,44 +37,19 @@ class Individual(TemplateView):
             return super().get(request)
 
     def get_context_data(self):
-        parent = None
-        if self.post_obj.in_reply_to:
-            try:
-                parent = Post.by_object_uri(self.post_obj.in_reply_to, fetch=True)
-            except Post.DoesNotExist:
-                pass
+        ancestors, descendants = PostService(self.post_obj).context(
+            self.request.identity
+        )
         return {
             "identity": self.identity,
             "post": self.post_obj,
             "interactions": PostInteraction.get_post_interactions(
-                [self.post_obj],
+                [self.post_obj] + ancestors + descendants,
                 self.request.identity,
             ),
             "link_original": True,
-            "parent": parent,
-            "replies": Post.objects.filter(
-                models.Q(
-                    visibility__in=[
-                        Post.Visibilities.public,
-                        Post.Visibilities.local_only,
-                        Post.Visibilities.unlisted,
-                    ]
-                )
-                | models.Q(
-                    visibility=Post.Visibilities.followers,
-                    author__inbound_follows__source=self.identity,
-                )
-                | models.Q(
-                    visibility=Post.Visibilities.mentioned,
-                    mentions=self.identity,
-                ),
-                in_reply_to=self.post_obj.object_uri,
-            )
-            .exclude(author__restriction=Identity.Restriction.blocked)
-            .distinct()
-            .select_related("author__domain")
-            .prefetch_related("emojis")
-            .order_by("published", "created"),
+            "ancestors": ancestors,
+            "descendants": descendants,
         }
 
     def serve_object(self):
@@ -101,10 +75,11 @@ class Like(View):
         post = get_object_or_404(
             identity.posts.prefetch_related("attachments"), pk=post_id
         )
+        service = PostService(post)
         if self.undo:
-            post.unlike_as(self.request.identity)
+            service.unlike_as(self.request.identity)
         else:
-            post.like_as(self.request.identity)
+            service.like_as(self.request.identity)
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(
@@ -129,10 +104,11 @@ class Boost(View):
     def post(self, request, handle, post_id):
         identity = by_handle_or_404(self.request, handle, local=False)
         post = get_object_or_404(identity.posts, pk=post_id)
+        service = PostService(post)
         if self.undo:
-            post.unboost_as(request.identity)
+            service.unboost_as(request.identity)
         else:
-            post.boost_as(request.identity)
+            service.boost_as(request.identity)
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(

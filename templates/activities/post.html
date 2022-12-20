@@ -3,11 +3,11 @@
 {% block title %}Post by {{ post.author.html_name_or_handle }}{% endblock %}
 
 {% block content %}
-    {% if parent %}
-        {% include "activities/_post.html" with post=parent reply=True link_original=False %}
-    {% endif %}
+    {% for ancestor in ancestors reversed %}
+        {% include "activities/_post.html" with post=ancestor reply=True link_original=False %}
+    {% endfor %}
     {% include "activities/_post.html" %}
-    {% for reply in replies %}
-        {% include "activities/_post.html" with post=reply reply=True link_original=False %}
+    {% for descendant in descendants %}
+        {% include "activities/_post.html" with post=descendant reply=True link_original=False %}
     {% endfor %}
 {% endblock %}
