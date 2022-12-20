@@ -23,6 +23,10 @@ class FanOutStates(StateGraph):
 
         fan_out = await instance.afetch_full()
 
+        # Don't try to fan out to identities that are not fetched yet
+        if not (fan_out.identity.local or fan_out.identity.inbox_uri):
+            return
+
         match (fan_out.type, fan_out.identity.local):
             # Handle creating/updating local posts
             case ((FanOut.Types.post | FanOut.Types.post_edited), True):

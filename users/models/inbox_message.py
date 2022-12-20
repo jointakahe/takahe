@@ -135,8 +135,11 @@ class InboxMessage(StatorModel):
         return self.message["type"].lower()
 
     @property
-    def message_object_type(self):
-        return self.message["object"]["type"].lower()
+    def message_object_type(self) -> str | None:
+        if isinstance(self.message["object"], dict):
+            return self.message["object"]["type"].lower()
+        else:
+            return None
 
     @property
     def message_type_full(self):
