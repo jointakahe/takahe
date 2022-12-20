@@ -14,7 +14,7 @@ from core.html import strip_html, hashtag_callback, ALLOWED_HTML_TAGS
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
-HASHTAG_REGEX = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;/)")
+HASHTAG_REGEX = re.compile(r"^\B#([a-zA-Z0-9(_)]+\b)(?![;/])")
 
 
 class HashtagStates(StateGraph):
@@ -201,7 +201,7 @@ class Hashtag(StatorModel):
                         partial(hashtag_callback, domain=domain)
                     ]
                 ),
-            ],
+            ]
         )
         return mark_safe(cleaner.clean(content))
 
