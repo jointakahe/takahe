@@ -82,7 +82,7 @@ class Searcher:
         type = document.get("type", "unknown").lower()
 
         # Is it an identity?
-        if type == "person":
+        if type in Identity.ACTOR_TYPES:
             # Try and retrieve the profile by actor URI
             identity = Identity.by_actor_uri(document["id"], create=True)
             if identity and identity.state == IdentityStates.outdated:

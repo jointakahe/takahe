@@ -44,6 +44,14 @@ class InboxMessageStates(StateGraph):
                         await sync_to_async(Post.handle_update_ap)(instance.message)
                     case "person":
                         await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "service":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "group":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "organization":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "application":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
                     case "question":
                         pass  # Drop for now
                     case unknown:

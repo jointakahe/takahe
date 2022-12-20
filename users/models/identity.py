@@ -66,6 +66,8 @@ class Identity(StatorModel):
         limited = 1
         blocked = 2
 
+    ACTOR_TYPES = ["person", "service", "application", "group", "organization"]
+
     # The Actor URI is essentially also a PK - we keep the default numeric
     # one around as well for making nice URLs etc.
     actor_uri = models.CharField(max_length=500, unique=True)
@@ -102,6 +104,7 @@ class Identity(StatorModel):
     image_uri = models.CharField(max_length=500, blank=True, null=True)
     followers_uri = models.CharField(max_length=500, blank=True, null=True)
     following_uri = models.CharField(max_length=500, blank=True, null=True)
+    actor_type = models.CharField(max_length=100, default="person")
 
     icon = models.ImageField(
         upload_to=partial(upload_namer, "profile_images"), blank=True, null=True
@@ -317,7 +320,7 @@ class Identity(StatorModel):
     def to_ap(self):
         response = {
             "id": self.actor_uri,
-            "type": "Person",
+            "type": self.actor_type.title(),
             "inbox": self.actor_uri + "inbox/",
             "outbox": self.actor_uri + "outbox/",
             "preferredUsername": self.username,
@@ -475,6 +478,7 @@ class Identity(StatorModel):
         self.outbox_uri = document.get("outbox")
         self.followers_uri = document.get("followers")
         self.following_uri = document.get("following")
+        self.actor_type = document["type"].lower()
         self.shared_inbox_uri = document.get("endpoints", {}).get("sharedInbox")
         self.summary = document.get("summary")
         self.username = document.get("preferredUsername")
