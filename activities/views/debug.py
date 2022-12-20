@@ -24,10 +24,13 @@ class JsonViewer(FormView):
 
     def form_valid(self, form):
         raw_result = ""
+        uri = form.cleaned_data["uri"]
+        if "://" not in uri:
+            uri = "https://" + uri
         try:
             response = async_to_sync(SystemActor().signed_request)(
                 method="get",
-                uri=form.cleaned_data["uri"],
+                uri=uri,
             )
         except httpx.RequestError:
             result = "Request Error"

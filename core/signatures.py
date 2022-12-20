@@ -183,6 +183,8 @@ class HttpSignature:
         Performs an async request to the given path, with a document, signed
         as an identity.
         """
+        if "://" not in uri:
+            raise ValueError("URI does not contain a scheme")
         # Create the core header field set
         uri_parts = urlparse(uri)
         date_string = http_date()
@@ -200,9 +202,7 @@ class HttpSignature:
             body_bytes = b""
         # GET requests get implicit accept headers added
         if method == "get":
-            headers[
-                "Accept"
-            ] = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+            headers["Accept"] = "application/ld+json"
         # Sign the headers
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
