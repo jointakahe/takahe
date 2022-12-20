@@ -9,15 +9,17 @@ from users.models.identity import Identity
 
 
 class FollowStates(StateGraph):
-    unrequested = State(try_interval=300)
+    unrequested = State(try_interval=600)
     local_requested = State(try_interval=24 * 60 * 60)
     remote_requested = State(try_interval=24 * 60 * 60)
     accepted = State(externally_progressed=True)
     undone = State(try_interval=60 * 60)
     undone_remotely = State()
+    failed = State()
 
     unrequested.transitions_to(local_requested)
     unrequested.transitions_to(remote_requested)
+    unrequested.times_out_to(failed, seconds=86400 * 7)
     local_requested.transitions_to(accepted)
     remote_requested.transitions_to(accepted)
     accepted.transitions_to(undone)
@@ -37,6 +39,11 @@ class FollowStates(StateGraph):
         # Remote follows should not be here
         if not follow.source.local:
             return cls.remote_requested
+        if follow.target.local:
+            return cls.accepted
+        # Don't try if the other identity didn't fetch yet
+        if not follow.target.inbox_uri:
+            return
         # Sign it and send it
         try:
             await follow.source.signed_request(

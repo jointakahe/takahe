@@ -22,6 +22,7 @@ class IdentityService:
         elif existing_follow.state in [
             FollowStates.undone,
             FollowStates.undone_remotely,
+            FollowStates.failed,
         ]:
             existing_follow.transition_perform(FollowStates.unrequested)
         return cast(Follow, existing_follow)
@@ -41,22 +42,14 @@ class IdentityService:
         """
         return {
             "id": self.identity.pk,
-            "following": self.identity.inbound_follows.filter(source=from_identity)
-            .exclude(
-                state__in=[
-                    FollowStates.undone,
-                    FollowStates.undone_remotely,
-                ]
-            )
-            .exists(),
-            "followed_by": self.identity.outbound_follows.filter(target=from_identity)
-            .exclude(
-                state__in=[
-                    FollowStates.undone,
-                    FollowStates.undone_remotely,
-                ]
-            )
-            .exists(),
+            "following": self.identity.inbound_follows.filter(
+                source=from_identity,
+                state__in=FollowStates.group_active(),
+            ).exists(),
+            "followed_by": self.identity.outbound_follows.filter(
+                target=from_identity,
+                state__in=FollowStates.group_active(),
+            ).exists(),
             "showing_reblogs": True,
             "notifying": False,
             "blocking": False,
