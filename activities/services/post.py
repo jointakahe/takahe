@@ -67,6 +67,8 @@ class PostService:
         ancestor = self.post
         while ancestor.in_reply_to and len(ancestors) < num_ancestors:
             ancestor = cast(Post, ancestor.in_reply_to_post())
+            if ancestor is None:
+                break
             if ancestor.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
                 break
             ancestors.append(ancestor)
