@@ -3,6 +3,13 @@
 .env
 .git
 .pre-commit-config.yaml
-.venv
+fly.toml
 media
 notes.md
+# Various virtualenv folder names, because uploading a virtualenv to docker is annoying
+.venv
+venv
+VENV
+virtualenv
+# Other random folders that show up
+.mypy_cache
