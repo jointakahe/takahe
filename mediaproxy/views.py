@@ -19,7 +19,7 @@ class BaseProxyView(View):
         self.kwargs = kwargs
         remote_url = self.get_remote_url()
         # See if we can do the nginx trick or a normal forward
-        if request.headers.get("x-takahe-accel"):
+        if request.headers.get("x-takahe-accel") and not request.GET.get("no_accel"):
             bits = urlparse(remote_url)
             redirect_url = (
                 f"/__takahe_accel__/{bits.scheme}/{bits.hostname}/{bits.path}"
