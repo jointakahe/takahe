@@ -1,6 +1,20 @@
+import re
+from functools import partial
+
 import bleach
 from bleach.linkifier import LinkifyFilter
 from django.utils.safestring import mark_safe
+
+url_regex = re.compile(
+    r"""\(*  # Match any opening parentheses.
+    \b(?<![@.])(?:https?://(?:(?:\w+:)?\w+@)?)  # http://
+    ([\w-]+\.)+(?:[\w-]+)(?:\:[0-9]+)?(?!\.\w)\b   # xx.yy.tld(:##)?
+    (?:[/?][^\s\{{\}}\|\\\^\[\]`<>"]*)?
+        # /path/zz (excluding "unsafe" chars from RFC 1738,
+        # except for # and ~, which happen in practice)
+    """,
+    re.IGNORECASE | re.VERBOSE | re.UNICODE,
+)
 
 
 def allow_a(tag: str, name: str, value: str):
@@ -26,7 +40,7 @@ def sanitize_html(post_html: str) -> str:
             "p": ["class"],
             "span": ["class"],
         },
-        filters=[LinkifyFilter],
+        filters=[partial(LinkifyFilter, url_re=url_regex)],
         strip=True,
     )
     return mark_safe(cleaner.clean(post_html))
@@ -36,7 +50,11 @@ def strip_html(post_html: str) -> str:
     """
     Strips all tags from the text, then linkifies it.
     """
-    cleaner = bleach.Cleaner(tags=[], strip=True, filters=[LinkifyFilter])
+    cleaner = bleach.Cleaner(
+        tags=[],
+        strip=True,
+        filters=[partial(LinkifyFilter, url_re=url_regex)],
+    )
     return mark_safe(cleaner.clean(post_html))
 
 
