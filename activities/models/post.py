@@ -23,6 +23,7 @@ from activities.models.post_types import (
 from activities.templatetags.emoji_tags import imageify_emojis
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
+from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity, IdentityStates
 from users.models.system_actor import SystemActor
@@ -686,7 +687,7 @@ class Post(StatorModel):
     ### ActivityPub (inbound) ###
 
     @classmethod
-    def by_ap(cls, data, create=False, update=False) -> "Post":
+    def by_ap(cls, data, create=False, update=False, fetch_author=False) -> "Post":
         """
         Retrieves a Post instance by its ActivityPub JSON object.
 
@@ -704,8 +705,16 @@ class Post(StatorModel):
             if create:
                 # Resolve the author
                 author = Identity.by_actor_uri(data["attributedTo"], create=create)
+                # If the author is not fetched yet, try again later
+                if author.domain is None:
+                    if fetch_author:
+                        async_to_sync(author.fetch_actor)()
+                        if author.domain is None:
+                            raise TryAgainLater()
+                    else:
+                        raise TryAgainLater()
                 # If the post is from a blocked domain, stop and drop
-                if author.domain and author.domain.blocked:
+                if author.domain.blocked:
                     raise cls.DoesNotExist("Post is from a blocked domain")
                 post = cls.objects.create(
                     object_uri=data["id"],
@@ -800,6 +809,7 @@ class Post(StatorModel):
                     canonicalise(response.json(), include_security=True),
                     create=True,
                     update=True,
+                    fetch_author=True,
                 )
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:

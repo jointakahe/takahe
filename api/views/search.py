@@ -3,7 +3,7 @@ from typing import Literal
 from ninja import Field
 
 from activities.models import PostInteraction
-from activities.search import Searcher
+from activities.services.search import SearchService
 from api import schemas
 from api.decorators import identity_required
 from api.views.base import api_router
@@ -32,7 +32,7 @@ def search(
     if max_id or since_id or min_id or offset:
         return result
     # Run search
-    searcher = Searcher(q, request.identity)
+    searcher = SearchService(q, request.identity)
     search_result = searcher.search_all()
     if type is None or type == "accounts":
         result["accounts"] = [i.to_mastodon_json() for i in search_result["identities"]]

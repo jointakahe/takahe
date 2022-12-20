@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.functional import classproperty
 
 from core import exceptions
+from stator.exceptions import TryAgainLater
 from stator.graph import State, StateGraph
 
 
@@ -169,6 +170,8 @@ class StatorModel(models.Model):
             return None
         try:
             next_state = await current_state.handler(self)  # type: ignore
+        except TryAgainLater:
+            pass
         except BaseException as e:
             await exceptions.acapture_exception(e)
             traceback.print_exc()

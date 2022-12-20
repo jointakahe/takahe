@@ -7,7 +7,7 @@ from users.models import Domain, Identity, IdentityStates
 from users.models.system_actor import SystemActor
 
 
-class Searcher:
+class SearchService:
     """
     Captures the logic needed to search - reused in the UI and API
     """
