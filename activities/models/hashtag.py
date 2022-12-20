@@ -14,7 +14,7 @@ from core.html import strip_html, hashtag_callback, ALLOWED_HTML_TAGS
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
-HASHTAG_REGEX = re.compile(r"^\B#([a-zA-Z0-9(_)]+\b)(?![;/])")
+HASHTAG_REGEX = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?![;/])")
 
 
 class HashtagStates(StateGraph):
@@ -177,12 +177,12 @@ class Hashtag(StatorModel):
         Return a parsed and sanitized of hashtags found in content without
         leading '#'.
         """
-        hashtag_hits = HASHTAG_REGEX.findall(strip_html(content))
-        hashtags = sorted({tag.lower() for tag in hashtag_hits})
-        return list(hashtags)
+        hashtags = []
+        cls.linkify_hashtags(content, callback=hashtags.append)
+        return sorted({tag.lower() for tag in hashtags})
 
     @classmethod
-    def linkify_hashtags(cls, content: str, domain=None) -> str:
+    def linkify_hashtags(cls, content: str, domain=None, callback=None) -> str:
         """
         Converts all hashtags found in the HTML blob `content` to hyperlinks.
         """
@@ -198,7 +198,11 @@ class Hashtag(StatorModel):
                         "a"
                     ],
                     callbacks=[
-                        partial(hashtag_callback, domain=domain)
+                        partial(
+                            hashtag_callback,
+                            domain=domain,
+                            callback=callback
+                        )
                     ]
                 ),
             ]

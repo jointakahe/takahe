@@ -54,7 +54,7 @@ def html_to_plaintext(post_html: str) -> str:
     return cleaner.clean(post_html).strip()
 
 
-def hashtag_callback(attrs, new=False, domain=None):
+def hashtag_callback(attrs, new=False, domain=None, callback=None):
     """
     A callback intended to be used with the bleach Linkify plugin to convert
     hashtags to links.
@@ -62,6 +62,9 @@ def hashtag_callback(attrs, new=False, domain=None):
     text: str = attrs.get('_text')
     if not text:
         return attrs
+
+    if callback is not None:
+        callback(text)
 
     hashtag_url = f"/tags/{text.lower()}"
     if domain:
