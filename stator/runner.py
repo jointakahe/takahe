@@ -5,6 +5,7 @@ import traceback
 import uuid
 
 from asgiref.sync import async_to_sync, sync_to_async
+from django.conf import settings
 from django.utils import timezone
 
 from core import exceptions, sentry
@@ -21,8 +22,10 @@ class StatorRunner:
     def __init__(
         self,
         models: list[type[StatorModel]],
-        concurrency: int = 50,
-        concurrency_per_model: int = 10,
+        concurrency: int = getattr(settings, "STATOR_CONCURRENCY", 50),
+        concurrency_per_model: int = getattr(
+            settings, "STATOR_CONCURRENCY_PER_MODEL", 20
+        ),
         liveness_file: str | None = None,
         schedule_interval: int = 30,
         lock_expiry: int = 300,

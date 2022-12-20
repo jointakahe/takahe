@@ -119,11 +119,8 @@ be provided to the containers from the first boot.
   ``["andrew@aeracode.org"]`` (if you're doing this via shell, be careful
   about escaping!)
 
-In addition, there are some optional variables you can set:
-
-* ``TAKAHE_NGINX_CACHE_SIZE`` allows you to specify the size of the disk cache
-  that is used to cache proxied avatars, profile images and media. See
-  :doc:`tuning` for more.
+There are some other, optional variables you can tweak once the
+system is up and working - see :doc:`tuning` for more.
 
 
 .. _media_configuration:
