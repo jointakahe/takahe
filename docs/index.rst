@@ -19,6 +19,7 @@ in alpha. For more information about Takahē, see
    contributing
    domains
    moderation
+   intercompatibility
    stator
    tuning
    releases/index
