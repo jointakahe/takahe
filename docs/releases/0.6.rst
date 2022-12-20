@@ -16,14 +16,20 @@ more on that.
 Major features:
 
 * Initial Mastodon Client API support
+
   * Timelines, notifications, posting, image upload, emoji, search, follow/unfollow, like, boost, thread view all work
   * Filtering, DMs/conversations, bookmarks, favourites list, lists, scheduling, announcements do not work yet
+
 * Custom Emoji ("emojo") support
+
   * Fetching and rendering is fully supported
   * Local creation is still via the Django Admin, but otherwise works well
+
 * Report functionality and moderation queue
+
   * Both local and forwarded reports from other servers
   * Identities can now be "limited" or blocked entirely
+
 * Follows page
 * Identity, user and invites admin pages
 * Stator status monitoring page
