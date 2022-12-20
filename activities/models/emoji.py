@@ -1,10 +1,11 @@
 import re
 from functools import partial
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import httpx
 import urlman
 from asgiref.sync import sync_to_async
+from cachetools import TTLCache, cached
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -50,17 +51,18 @@ class EmojiStates(StateGraph):
 
 class EmojiQuerySet(models.QuerySet):
     def usable(self, domain: Domain | None = None):
-        if domain is None or domain.local:
-            visible_q = models.Q(local=True)
-        else:
-            visible_q = models.Q(public=True)
-            if Config.system.emoji_unreviewed_are_public:
-                visible_q |= models.Q(public__isnull=True)
-
+        """
+        Returns all usable emoji, optionally filtering by domain too.
+        """
+        visible_q = models.Q(local=True) | models.Q(public=True)
+        if Config.system.emoji_unreviewed_are_public:
+            visible_q |= models.Q(public__isnull=True)
         qs = self.filter(visible_q)
+
         if domain:
             if not domain.local:
                 qs = qs.filter(domain=domain)
+
         return qs
 
 
@@ -136,6 +138,13 @@ class Emoji(StatorModel):
     def load_locals(cls) -> dict[str, "Emoji"]:
         return {x.shortcode: x for x in Emoji.objects.usable().filter(local=True)}
 
+    @classmethod
+    @cached(cache=TTLCache(maxsize=1000, ttl=60))
+    def for_domain(cls, domain: Domain | None) -> list["Emoji"]:
+        if not domain:
+            return list(cls.locals.values())
+        return list(cls.objects.usable(domain))
+
     @property
     def fullcode(self):
         return f":{self.shortcode}:"
@@ -163,41 +172,6 @@ class Emoji(StatorModel):
                 f'<img src="{self.full_url().relative}" class="emoji" alt="Emoji {self.shortcode}">'
             )
         return self.fullcode
-
-    @classmethod
-    def imageify_emojis(
-        cls,
-        content: str,
-        *,
-        emojis: list["Emoji"] | EmojiQuerySet | None = None,
-        include_local: bool = True,
-    ):
-        """
-        Find :emoji: in content and convert to <img>. If include_local is True,
-        the local emoji will be used as a fallback for any shortcodes not defined
-        by emojis.
-        """
-        emoji_set = (
-            cast(list[Emoji], list(cls.locals.values())) if include_local else []
-        )
-
-        if emojis:
-            if isinstance(emojis, (EmojiQuerySet, list)):
-                emoji_set.extend(list(emojis))
-            else:
-                raise TypeError("Unsupported type for emojis")
-
-        possible_matches = {
-            emoji.shortcode: emoji.as_html() for emoji in emoji_set if emoji.is_usable
-        }
-
-        def replacer(match):
-            fullcode = match.group(1).lower()
-            if fullcode in possible_matches:
-                return possible_matches[fullcode]
-            return match.group()
-
-        return mark_safe(Emoji.emoji_regex.sub(replacer, content))
 
     @classmethod
     def emojis_from_content(cls, content: str, domain: Domain | None) -> list[str]:

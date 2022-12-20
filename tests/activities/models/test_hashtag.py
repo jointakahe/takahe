@@ -1,4 +1,5 @@
 from activities.models import Hashtag
+from core.html import ContentRenderer
 
 
 def test_hashtag_from_content():
@@ -19,7 +20,7 @@ def test_hashtag_from_content():
 
 
 def test_linkify_hashtag():
-    linkify = Hashtag.linkify_hashtags
+    linkify = lambda html: ContentRenderer(local=True).linkify_hashtags(html, None)
 
     assert linkify("# hashtag") == "# hashtag"
     assert (

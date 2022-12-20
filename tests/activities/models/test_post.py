@@ -10,6 +10,16 @@ def test_fetch_post(httpx_mock: HTTPXMock, config_system):
     Tests that a post we don't have locally can be fetched by by_object_uri
     """
     httpx_mock.add_response(
+        url="https://example.com/test-actor",
+        json={
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+            ],
+            "id": "https://example.com/test-actor",
+            "type": "Person",
+        },
+    )
+    httpx_mock.add_response(
         url="https://example.com/test-post",
         json={
             "@context": [

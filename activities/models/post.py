@@ -20,8 +20,7 @@ from activities.models.post_types import (
     PostTypeDataDecoder,
     PostTypeDataEncoder,
 )
-from activities.templatetags.emoji_tags import imageify_emojis
-from core.html import sanitize_post, strip_html
+from core.html import ContentRenderer, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -383,13 +382,7 @@ class Post(StatorModel):
         return mark_safe(self.mention_regex.sub(replacer, content))
 
     def _safe_content_note(self, *, local: bool = True):
-        content = Hashtag.linkify_hashtags(
-            self.linkify_mentions(sanitize_post(self.content), local=local),
-            domain=None if local else self.author.domain,
-        )
-        if local:
-            content = imageify_emojis(content, self.author.domain)
-        return content
+        return ContentRenderer(local=local).render_post(self.content, self)
 
     # def _safe_content_question(self, *, local: bool = True):
     #     context = {
@@ -431,12 +424,6 @@ class Post(StatorModel):
         Returns the content formatted for remote consumption
         """
         return self.safe_content(local=False)
-
-    def safe_content_plain(self):
-        """
-        Returns the content formatted as plain text
-        """
-        return self.linkify_mentions(sanitize_post(self.content))
 
     ### Async helpers ###
 
@@ -914,7 +901,7 @@ class Post(StatorModel):
             "poll": None,
             "card": None,
             "language": None,
-            "text": self.safe_content_plain(),
+            "text": self.safe_content_remote(),
             "edited_at": format_ld_date(self.edited) if self.edited else None,
         }
         if interactions:

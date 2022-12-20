@@ -1,4 +1,4 @@
-from core.html import html_to_plaintext, sanitize_post
+from core.html import html_to_plaintext, sanitize_html
 
 
 def test_html_to_plaintext():
@@ -17,5 +17,5 @@ def test_html_to_plaintext():
 
 def test_sanitize_post():
 
-    assert sanitize_post("<p>Hello!</p>") == "<p>Hello!</p>"
-    assert sanitize_post("<p>It&#39;s great</p>") == "<p>It&#39;s great</p>"
+    assert sanitize_html("<p>Hello!</p>") == "<p>Hello!</p>"
+    assert sanitize_html("<p>It&#39;s great</p>") == "<p>It&#39;s great</p>"

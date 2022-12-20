@@ -3,8 +3,6 @@ import datetime
 from django import template
 from django.utils import timezone
 
-from activities.models import Hashtag
-
 register = template.Library()
 
 
@@ -33,14 +31,3 @@ def timedeltashort(value: datetime.datetime):
         years = max(days // 365.25, 1)
         text = f"{years:0n}y"
     return text
-
-
-@register.filter
-def linkify_hashtags(value: str):
-    """
-    Convert hashtags in content in to /tags/<hashtag>/ links.
-    """
-    if not value:
-        return ""
-
-    return Hashtag.linkify_hashtags(value)

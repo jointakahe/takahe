@@ -5,7 +5,6 @@ import urlman
 from asgiref.sync import sync_to_async
 from django.db import models
 from django.utils import timezone
-from django.utils.safestring import mark_safe
 
 from core.html import strip_html
 from core.models import Config
@@ -175,19 +174,6 @@ class Hashtag(StatorModel):
         hashtag_hits = cls.hashtag_regex.findall(strip_html(content))
         hashtags = sorted({tag.lower() for tag in hashtag_hits})
         return list(hashtags)
-
-    @classmethod
-    def linkify_hashtags(cls, content, domain=None) -> str:
-        def replacer(match):
-            hashtag = match.group(1)
-            if domain:
-                return f'<a class="hashtag" href="https://{domain.uri_domain}/tags/{hashtag.lower()}/">#{hashtag}</a>'
-            else:
-                return (
-                    f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
-                )
-
-        return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))
 
     def to_mastodon_json(self):
         return {

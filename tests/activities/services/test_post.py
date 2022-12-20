@@ -6,7 +6,7 @@ from users.models import Identity
 
 
 @pytest.mark.django_db
-def test_post_context(identity: Identity):
+def test_post_context(identity: Identity, config_system):
     """
     Tests that post context fetching works correctly
     """
