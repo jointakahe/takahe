@@ -3,11 +3,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
-from users.decorators import admin_required
+from users.decorators import moderator_required
 from users.models import Invite
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class InvitesRoot(ListView):
 
     template_name = "admin/invites.html"
@@ -23,7 +23,7 @@ class InvitesRoot(ListView):
         return Invite.objects.order_by("created")
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class InviteCreate(FormView):
 
     template_name = "admin/invite_create.html"
@@ -47,7 +47,7 @@ class InviteCreate(FormView):
         return redirect(invite.urls.admin)
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class InviteView(FormView):
 
     template_name = "admin/invite_view.html"

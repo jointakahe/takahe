@@ -4,11 +4,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
-from users.decorators import admin_required
+from users.decorators import moderator_required
 from users.models import Domain
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class FederationRoot(ListView):
 
     template_name = "admin/federation.html"
@@ -33,7 +33,7 @@ class FederationRoot(ListView):
         return domains
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class FederationEdit(FormView):
 
     template_name = "admin/federation_edit.html"

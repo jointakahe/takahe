@@ -93,14 +93,12 @@ td a {
     --color-text-dull: #99a;
     --color-text-main: #fff;
     --color-text-link: rgb(176, 194, 206);
-    --color-text-error: #f44336;
 
     --color-input-border: #000;
     --color-input-border-active: #444b5d;
     --color-button-main: #444b5d;
     --color-button-main-hover: #515d7c;
     --color-button-disabled: #7c9c97;
-    --color-bg3: #444b5d;
 }
 
 body {
@@ -279,6 +277,14 @@ nav a:hover {
 
 nav a.selected:hover {
     border-left: 3px solid transparent;
+}
+
+nav a.danger {
+    color: var(--color-text-duller);
+}
+
+nav a.danger:hover {
+    color: var(--color-text-dull);
 }
 
 nav a i {

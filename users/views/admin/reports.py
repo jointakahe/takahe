@@ -4,11 +4,11 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
-from users.decorators import admin_required
+from users.decorators import moderator_required
 from users.models import Identity, Report
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class ReportsRoot(ListView):
 
     template_name = "admin/reports.html"
@@ -32,7 +32,7 @@ class ReportsRoot(ListView):
         return reports
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class ReportView(FormView):
 
     template_name = "admin/report_view.html"

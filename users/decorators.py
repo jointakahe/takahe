@@ -29,5 +29,11 @@ def identity_required(function):
     return inner
 
 
+def moderator_required(function):
+    return user_passes_test(
+        lambda user: user.is_authenticated and (user.admin or user.moderator)
+    )(function)
+
+
 def admin_required(function):
     return user_passes_test(lambda user: user.is_authenticated and user.admin)(function)

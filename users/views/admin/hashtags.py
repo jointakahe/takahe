@@ -4,10 +4,10 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 
 from activities.models import Hashtag, HashtagStates
-from users.decorators import admin_required
+from users.decorators import moderator_required
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class Hashtags(TemplateView):
 
     template_name = "admin/hashtags.html"
@@ -19,7 +19,7 @@ class Hashtags(TemplateView):
         }
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class HashtagCreate(FormView):
 
     template_name = "admin/hashtag_create.html"
@@ -68,7 +68,7 @@ class HashtagCreate(FormView):
         return redirect(Hashtag.urls.root)
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class HashtagEdit(FormView):
 
     template_name = "admin/hashtag_edit.html"
@@ -106,7 +106,7 @@ class HashtagEdit(FormView):
         }
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class HashtagDelete(TemplateView):
 
     template_name = "admin/hashtag_delete.html"
