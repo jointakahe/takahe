@@ -10,7 +10,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
-from core.html import strip_html, hashtag_callback, ALLOWED_HTML_TAGS
+from core.html import ALLOWED_HTML_TAGS, hashtag_callback
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
@@ -177,7 +177,7 @@ class Hashtag(StatorModel):
         Return a parsed and sanitized of hashtags found in content without
         leading '#'.
         """
-        hashtags = []
+        hashtags: list[str] = []
         cls.linkify_hashtags(content, callback=hashtags.append)
         return sorted({tag.lower() for tag in hashtags})
 
@@ -198,14 +198,10 @@ class Hashtag(StatorModel):
                         "a"
                     ],
                     callbacks=[
-                        partial(
-                            hashtag_callback,
-                            domain=domain,
-                            callback=callback
-                        )
-                    ]
+                        partial(hashtag_callback, domain=domain, callback=callback)
+                    ],
                 ),
-            ]
+            ],
         )
         return mark_safe(cleaner.clean(content))
 

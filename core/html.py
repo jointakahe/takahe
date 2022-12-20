@@ -72,9 +72,6 @@ def hashtag_callback(attrs, new=False, domain=None, callback=None):
     if domain:
         hashtag_url = f"https://{domain.uri_domain}{hashtag_url}"
 
-    attrs.update({
-        (None, "class"): "hashtag",
-        (None, "href"): hashtag_url
-    })
+    attrs.update({(None, "class"): "hashtag", (None, "href"): hashtag_url})
 
     return attrs
