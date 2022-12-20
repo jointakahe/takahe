@@ -14,6 +14,8 @@ Key features:
 
 For more background and information, see [jointakahe.org](https://jointakahe.org/).
 
+<img width="570" alt="takahe-expanded" src="https://user-images.githubusercontent.com/36182/208662574-08b695ad-e97c-4288-bb5a-4c0e38b4517d.png"> <img width="306" alt="takahe-compact" src="https://user-images.githubusercontent.com/36182/208662601-dbbf303b-b836-4463-b2e6-4a872c7d50b2.png">
+
 
 ## Deployment
 
