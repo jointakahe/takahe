@@ -2,7 +2,7 @@ version: "3.4"
 
 # DO NOT USE THIS IN PRODUCTION - it is for development only due to insecure
 # settings and the use of "runserver" versus "gunicorn".
-# See https://takahe-server.readthedocs.io/en/latest/installation.html for more
+# See https://docs.jointakahe.org/en/latest/installation/ for more
 
 x-takahe-common:
   &takahe-common
