@@ -27,8 +27,18 @@ class Home(TemplateView):
                 identity=self.request.identity,
                 type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
             )
-            .select_related("subject_post", "subject_post__author")
-            .prefetch_related("subject_post__attachments", "subject_post__mentions")
+            .select_related(
+                "subject_post",
+                "subject_post__author",
+                "subject_post__author__domain",
+                "subject_identity",
+                "subject_identity__domain",
+            )
+            .prefetch_related(
+                "subject_post__attachments",
+                "subject_post__mentions",
+                "subject_post__emojis",
+            )
             .order_by("-published")
         )
         paginator = Paginator(events, 50)
@@ -71,7 +81,7 @@ class Tag(ListView):
             Post.objects.public()
             .filter(author__restriction=Identity.Restriction.none)
             .tagged_with(self.hashtag)
-            .select_related("author")
+            .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions")
             .order_by("-published")
         )
@@ -182,8 +192,13 @@ class Notifications(ListView):
                 "subject_post__author",
                 "subject_post__author__domain",
                 "subject_identity",
+                "subject_identity__domain",
             )
-            .prefetch_related("subject_post__emojis")
+            .prefetch_related(
+                "subject_post__emojis",
+                "subject_post__mentions",
+                "subject_post__attachments",
+            )
         )
 
     def get_context_data(self, **kwargs):

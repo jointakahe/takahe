@@ -21,8 +21,15 @@ def home(
             identity=request.identity,
             type__in=[TimelineEvent.Types.post],
         )
-        .select_related("subject_post", "subject_post__author")
-        .prefetch_related("subject_post__attachments")
+        .select_related(
+            "subject_post",
+            "subject_post__author",
+            "subject_post__author__domain",
+        )
+        .prefetch_related(
+            "subject_post__attachments",
+            "subject_post__mentions",
+        )
         .order_by("-published")
     )
     events = paginator.paginate(
