@@ -59,14 +59,16 @@ def hashtag_callback(attrs, new=False, domain=None, callback=None):
     A callback intended to be used with the bleach Linkify plugin to convert
     hashtags to links.
     """
-    text: str = attrs.get('_text')
+    text: str = attrs.get("_text")
     if not text:
         return attrs
+
+    text = text.lstrip("#")
 
     if callback is not None:
         callback(text)
 
-    hashtag_url = f"/tags/{text.lower()}"
+    hashtag_url = f"/tags/{text.lower()}/"
     if domain:
         hashtag_url = f"https://{domain.uri_domain}{hashtag_url}"
 
