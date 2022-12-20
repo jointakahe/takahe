@@ -41,7 +41,10 @@ class IdentityStates(StateGraph):
     updated = State(try_interval=86400 * 7, attempt_immediately=False)
 
     edited = State(try_interval=300, attempt_immediately=True)
-    deleted = State(externally_progressed=True)
+    deleted = State(try_interval=300, attempt_immediately=True)
+    deleted_fanned_out = State(externally_progressed=True)
+
+    deleted.transitions_to(deleted_fanned_out)
 
     edited.transitions_to(updated)
     updated.transitions_to(edited)
@@ -73,10 +76,6 @@ class IdentityStates(StateGraph):
             shared_inboxes.add(shared_uri)
 
     @classmethod
-    async def handle_new(cls, instance):
-        return cls.outdated
-
-    @classmethod
     async def handle_edited(cls, instance: "Identity"):
         from activities.models import FanOut
 
@@ -84,13 +83,19 @@ class IdentityStates(StateGraph):
             return cls.updated
 
         identity = await instance.afetch_full()
+        await cls.targets_fan_out(identity, FanOut.Types.identity_edited)
+        return cls.updated
 
-        if identity.deleted:
-            await cls.targets_fan_out(identity, FanOut.Types.identity_deleted)
-            return cls.deleted
-        else:
-            await cls.targets_fan_out(identity, FanOut.Types.identity_edited)
+    @classmethod
+    async def handle_deleted(cls, instance: "Identity"):
+        from activities.models import FanOut
+
+        if not instance.local:
             return cls.updated
+
+        identity = await instance.afetch_full()
+        await cls.targets_fan_out(identity, FanOut.Types.identity_deleted)
+        return cls.deleted_fanned_out
 
     @classmethod
     async def handle_outdated(cls, identity: "Identity"):
@@ -106,6 +111,22 @@ class IdentityStates(StateGraph):
     async def handle_updated(cls, instance: "Identity"):
         if instance.state_age > Config.system.identity_max_age:
             return cls.outdated
+
+
+class IdentityQuerySet(models.QuerySet):
+    def not_deleted(self):
+        query = self.exclude(
+            state__in=[IdentityStates.deleted, IdentityStates.deleted_fanned_out]
+        )
+        return query
+
+
+class IdentityManager(models.Manager):
+    def get_queryset(self):
+        return IdentityQuerySet(self.model, using=self._db)
+
+    def not_deleted(self):
+        return self.get_queryset().not_deleted()
 
 
 class Identity(StatorModel):
@@ -186,6 +207,8 @@ class Identity(StatorModel):
     updated = models.DateTimeField(auto_now=True)
     fetched = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
+
+    objects = IdentityManager()
 
     ### Model attributes ###
 

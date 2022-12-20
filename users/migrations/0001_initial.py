@@ -231,7 +231,13 @@ class Migration(migrations.Migration):
                 (
                     "state",
                     stator.models.StateField(
-                        choices=[("outdated", "outdated"), ("updated", "updated")],
+                        choices=[
+                            ("outdated", "outdated"),
+                            ("updated", "updated"),
+                            ("edited", "edited"),
+                            ("deleted", "deleted"),
+                            ("deleted_fanned_out", "deleted_fanned_out"),
+                        ],
                         default="outdated",
                         graph=users.models.identity.IdentityStates,
                         max_length=100,
