@@ -2,6 +2,8 @@ import bleach
 from bleach.linkifier import LinkifyFilter
 from django.utils.safestring import mark_safe
 
+ALLOWED_HTML_TAGS = ["br", "p", "a"]
+
 
 def allow_a(tag: str, name: str, value: str):
     if name in ["href", "title", "class"]:
@@ -20,7 +22,7 @@ def sanitize_post(post_html: str) -> str:
     Only allows a, br, p and span tags, and class attributes.
     """
     cleaner = bleach.Cleaner(
-        tags=["br", "p", "a"],
+        tags=ALLOWED_HTML_TAGS,
         attributes={  # type:ignore
             "a": allow_a,
             "p": ["class"],
@@ -50,3 +52,24 @@ def html_to_plaintext(post_html: str) -> str:
     # Remove all other HTML and return
     cleaner = bleach.Cleaner(tags=[], strip=True, filters=[])
     return cleaner.clean(post_html).strip()
+
+
+def hashtag_callback(attrs, new=False, domain=None):
+    """
+    A callback intended to be used with the bleach Linkify plugin to convert
+    hashtags to links.
+    """
+    text: str = attrs.get('_text')
+    if not text:
+        return attrs
+
+    hashtag_url = f"/tags/{text.lower()}"
+    if domain:
+        hashtag_url = f"https://{domain.uri_domain}{hashtag_url}"
+
+    attrs.update({
+        (None, "class"): "hashtag",
+        (None, "href"): hashtag_url
+    })
+
+    return attrs

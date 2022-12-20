@@ -1,15 +1,20 @@
 import re
 from datetime import date, timedelta
+from functools import partial
 
+import bleach
 import urlman
 from asgiref.sync import sync_to_async
+from bleach.linkifier import LinkifyFilter
 from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
-from core.html import strip_html
+from core.html import strip_html, hashtag_callback, ALLOWED_HTML_TAGS
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
+
+HASHTAG_REGEX = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;/)")
 
 
 class HashtagStates(StateGraph):
@@ -122,8 +127,6 @@ class Hashtag(StatorModel):
         delete = "{edit}delete/"
         timeline = "/tags/{self.hashtag}/"
 
-    hashtag_regex = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;)")
-
     def save(self, *args, **kwargs):
         self.hashtag = self.hashtag.lstrip("#")
         if self.name_override:
@@ -174,22 +177,33 @@ class Hashtag(StatorModel):
         Return a parsed and sanitized of hashtags found in content without
         leading '#'.
         """
-        hashtag_hits = cls.hashtag_regex.findall(strip_html(content))
+        hashtag_hits = HASHTAG_REGEX.findall(strip_html(content))
         hashtags = sorted({tag.lower() for tag in hashtag_hits})
         return list(hashtags)
 
     @classmethod
-    def linkify_hashtags(cls, content, domain=None) -> str:
-        def replacer(match):
-            hashtag = match.group(1)
-            if domain:
-                return f'<a class="hashtag" href="https://{domain.uri_domain}/tags/{hashtag.lower()}/">#{hashtag}</a>'
-            else:
-                return (
-                    f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
-                )
-
-        return mark_safe(Hashtag.hashtag_regex.sub(replacer, content))
+    def linkify_hashtags(cls, content: str, domain=None) -> str:
+        """
+        Converts all hashtags found in the HTML blob `content` to hyperlinks.
+        """
+        cleaner = bleach.Cleaner(
+            tags=ALLOWED_HTML_TAGS,
+            filters=[
+                partial(
+                    LinkifyFilter,
+                    url_re=HASHTAG_REGEX,
+                    skip_tags=[
+                        # Ensure we don't linkify matching content that is
+                        # _inside_ an existing link.
+                        "a"
+                    ],
+                    callbacks=[
+                        partial(hashtag_callback, domain=domain)
+                    ]
+                ),
+            ],
+        )
+        return mark_safe(cleaner.clean(content))
 
     def to_mastodon_json(self):
         return {
