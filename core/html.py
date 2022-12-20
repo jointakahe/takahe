@@ -34,11 +34,10 @@ def sanitize_html(post_html: str) -> str:
     Only allows a, br, p and span tags, and class attributes.
     """
     cleaner = bleach.Cleaner(
-        tags=["br", "p"],
+        tags=["br", "p", "a"],
         attributes={  # type:ignore
             "a": allow_a,
             "p": ["class"],
-            "span": ["class"],
         },
         filters=[partial(LinkifyFilter, url_re=url_regex)],
         strip=True,
@@ -148,16 +147,26 @@ class ContentRenderer:
     def linkify_hashtags(self, html, identity) -> str:
         from activities.models import Hashtag
 
-        def replacer(match):
-            hashtag = match.group(1)
+        def replacer(attrs, new=False):
+            # See if the text in this link looks like a hashtag
+            if not Hashtag.hashtag_regex.match(attrs.get("_text", "")):
+                return attrs
+            hashtag = attrs["_text"].strip().lstrip("#")
+            attrs[None, "class"] = "hashtag"
+            if (None, "rel") in attrs:
+                del attrs[None, "rel"]
             if self.local:
-                return (
-                    f'<a class="hashtag" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
-                )
+                attrs[None, "href"] = f"/tags/{hashtag.lower()}/"
             else:
-                return f'<a class="hashtag" href="https://{identity.domain.uri_domain}/tags/{hashtag.lower()}/">#{hashtag}</a>'
+                attrs[
+                    None, "href"
+                ] = f"https://{identity.domain.uri_domain}/tags/{hashtag.lower()}/"
+            return attrs
 
-        return Hashtag.hashtag_regex.sub(replacer, html)
+        linker = bleach.linkifier.Linker(
+            url_re=Hashtag.hashtag_regex, callbacks=[replacer]
+        )
+        return linker.linkify(html)
 
     def imageify_emojis(self, html: str, identity, include_local: bool = True):
         """

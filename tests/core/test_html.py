@@ -1,4 +1,8 @@
-from core.html import html_to_plaintext, sanitize_html
+from unittest.mock import Mock
+
+import pytest
+
+from core.html import ContentRenderer, html_to_plaintext, sanitize_html
 
 
 def test_html_to_plaintext():
@@ -30,4 +34,30 @@ def test_sanitize_post():
     assert (
         sanitize_html("<p>@someone@subdomain.some-domain.com</p>")
         == "<p>@someone@subdomain.some-domain.com</p>"
+    )
+
+
+@pytest.mark.django_db
+def test_link_preservation(emoji_locals):
+    """
+    We want to:
+     - Preserve incoming links from other servers
+     - Linkify mentions and hashtags
+     - Not have these all step on each other!
+    """
+    renderer = ContentRenderer(local=True)
+    fake_mention = Mock()
+    fake_mention.username = "andrew"
+    fake_mention.domain_id = "aeracode.org"
+    fake_mention.urls.view = "/@andrew@aeracode.org/"
+    fake_post = Mock()
+    fake_post.mentions.all.return_value = [fake_mention]
+    fake_post.author.domain.uri_domain = "example.com"
+
+    assert (
+        renderer.render_post(
+            'Hello @andrew, I want to link to this <span>#</span>hashtag: <a href="http://example.com/@andrew/#notahashtag">here</a> and rewrite <a href="https://example.com/tags/thishashtag/">#thishashtag</a>',
+            fake_post,
+        )
+        == 'Hello <a href="/@andrew@aeracode.org/">@andrew</a>, I want to link to this <a href="/tags/hashtag/" class="hashtag">#hashtag</a>: <a href="http://example.com/@andrew/#notahashtag" rel="nofollow">here</a> and rewrite <a href="/tags/thishashtag/" class="hashtag">#thishashtag</a>'
     )
