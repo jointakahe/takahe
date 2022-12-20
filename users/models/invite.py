@@ -27,10 +27,11 @@ class Invite(models.Model):
         admin_view = "{admin}{self.pk}/"
 
     @classmethod
-    def create_random(cls, email=None):
+    def create_random(cls, email=None, note=None):
         return cls.objects.create(
             token="".join(
                 random.choice("abcdefghkmnpqrstuvwxyz23456789") for i in range(20)
             ),
             email=email,
+            note=note,
         )

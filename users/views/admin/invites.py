@@ -43,8 +43,11 @@ class InviteCreate(FormView):
         )
 
     def form_valid(self, form):
-        invite = Invite.create_random(email=form.cleaned_data.get("email") or None)
-        return redirect(invite.urls.admin)
+        invite = Invite.create_random(
+            email=form.cleaned_data.get("email") or None,
+            note=form.cleaned_data.get("notes"),
+        )
+        return redirect(invite.urls.admin_view)
 
 
 @method_decorator(moderator_required, name="dispatch")
