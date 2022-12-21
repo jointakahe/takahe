@@ -262,6 +262,8 @@ class Migration(migrations.Migration):
                             ("post_deleted", "Post Deleted"),
                             ("interaction", "Interaction"),
                             ("undo_interaction", "Undo Interaction"),
+                            ("identity_edited", "Identity Edited"),
+                            ("identity_deleted", "Identity Deleted"),
                         ],
                         max_length=100,
                     ),

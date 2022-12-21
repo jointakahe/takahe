@@ -30,19 +30,76 @@ from users.models.system_actor import SystemActor
 
 class IdentityStates(StateGraph):
     """
-    There are only two states in a cycle.
     Identities sit in "updated" for up to system.identity_max_age, and then
     go back to "outdated" for refetching.
+
+    When a local identity is "edited" or "deleted", it will fanout the change to
+    all followers and transition to "updated"
     """
 
     outdated = State(try_interval=3600, force_initial=True)
     updated = State(try_interval=86400 * 7, attempt_immediately=False)
 
+    edited = State(try_interval=300, attempt_immediately=True)
+    deleted = State(try_interval=300, attempt_immediately=True)
+    deleted_fanned_out = State(externally_progressed=True)
+
+    deleted.transitions_to(deleted_fanned_out)
+
+    edited.transitions_to(updated)
+    updated.transitions_to(edited)
+    edited.transitions_to(deleted)
+
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
 
     @classmethod
+    async def targets_fan_out(cls, identity: "Identity", type_: str) -> None:
+        from activities.models import FanOut
+        from users.models import Follow
+
+        # Fan out to each target
+        shared_inboxes = set()
+        async for follower in Follow.objects.select_related("source", "target").filter(
+            target=identity
+        ):
+            # Dedupe shared_inbox_uri
+            shared_uri = follower.source.shared_inbox_uri
+            if shared_uri and shared_uri in shared_inboxes:
+                continue
+
+            await FanOut.objects.acreate(
+                identity=follower.source,
+                type=type_,
+                subject_identity=identity,
+            )
+            shared_inboxes.add(shared_uri)
+
+    @classmethod
+    async def handle_edited(cls, instance: "Identity"):
+        from activities.models import FanOut
+
+        if not instance.local:
+            return cls.updated
+
+        identity = await instance.afetch_full()
+        await cls.targets_fan_out(identity, FanOut.Types.identity_edited)
+        return cls.updated
+
+    @classmethod
+    async def handle_deleted(cls, instance: "Identity"):
+        from activities.models import FanOut
+
+        if not instance.local:
+            return cls.updated
+
+        identity = await instance.afetch_full()
+        await cls.targets_fan_out(identity, FanOut.Types.identity_deleted)
+        return cls.deleted_fanned_out
+
+    @classmethod
     async def handle_outdated(cls, identity: "Identity"):
+
         # Local identities never need fetching
         if identity.local:
             return cls.updated
@@ -54,6 +111,22 @@ class IdentityStates(StateGraph):
     async def handle_updated(cls, instance: "Identity"):
         if instance.state_age > Config.system.identity_max_age:
             return cls.outdated
+
+
+class IdentityQuerySet(models.QuerySet):
+    def not_deleted(self):
+        query = self.exclude(
+            state__in=[IdentityStates.deleted, IdentityStates.deleted_fanned_out]
+        )
+        return query
+
+
+class IdentityManager(models.Manager):
+    def get_queryset(self):
+        return IdentityQuerySet(self.model, using=self._db)
+
+    def not_deleted(self):
+        return self.get_queryset().not_deleted()
 
 
 class Identity(StatorModel):
@@ -134,6 +207,8 @@ class Identity(StatorModel):
     updated = models.DateTimeField(auto_now=True)
     fetched = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
+
+    objects = IdentityManager()
 
     ### Model attributes ###
 
@@ -313,6 +388,14 @@ class Identity(StatorModel):
     def limited(self) -> bool:
         return self.restriction == self.Restriction.limited
 
+    ### Async helpers ###
+
+    async def afetch_full(self):
+        """
+        Returns a version of the object with all relations pre-loaded
+        """
+        return await Identity.objects.select_related("domain").aget(pk=self.pk)
+
     ### ActivityPub (outbound) ###
 
     def to_ap(self):
@@ -361,6 +444,30 @@ class Identity(StatorModel):
             "href": self.actor_uri,
             "name": "@" + self.handle,
             "type": "Mention",
+        }
+
+    def to_update_ap(self):
+        """
+        Returns the AP JSON to update this object
+        """
+        object = self.to_ap()
+        return {
+            "type": "Update",
+            "id": self.actor_uri + "#update",
+            "actor": self.actor_uri,
+            "object": object,
+        }
+
+    def to_delete_ap(self):
+        """
+        Returns the AP JSON to delete this object
+        """
+        object = self.to_ap()
+        return {
+            "type": "Delete",
+            "id": self.actor_uri + "#delete",
+            "actor": self.actor_uri,
+            "object": object,
         }
 
     ### ActivityPub (inbound) ###
