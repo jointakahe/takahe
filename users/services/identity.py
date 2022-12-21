@@ -82,5 +82,8 @@ class IdentityService:
         """
         Safely sets a summary and turns linebreaks into HTML
         """
-        self.identity.summary = linebreaks_filter(strip_html(summary))
+        if summary:
+            self.identity.summary = linebreaks_filter(strip_html(summary))
+        else:
+            self.identity.summary = None
         self.identity.save()
