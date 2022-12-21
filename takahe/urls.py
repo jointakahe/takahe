@@ -248,8 +248,6 @@ urlpatterns = [
     path(".stator/", stator.RequestRunner.as_view()),
     # Django admin
     path("djadmin/", djadmin.site.urls),
-    # Debug toolbar
-    path("__debug__/", include("debug_toolbar.urls")),
     # Media files
     re_path(
         r"^media/(?P<path>.*)$",
@@ -257,3 +255,7 @@ urlpatterns = [
         kwargs={"document_root": djsettings.MEDIA_ROOT},
     ),
 ]
+
+# Debug toolbar
+if djsettings.DEBUG:
+    urlpatterns.append(path("__debug__/", include("debug_toolbar.urls")))
