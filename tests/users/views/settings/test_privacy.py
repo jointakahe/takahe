@@ -13,7 +13,7 @@ def test_stats(client, identity, other_identity):
     Follow.objects.create(source=other_identity, target=identity)
     Config.set_identity(identity, "visible_follows", True)
     response = client.get(identity.urls.view)
-    assertContains(response, "<strong>1</strong> followers", status_code=200)
+    assertContains(response, "<strong>1</strong> follower", status_code=200)
 
 
 @pytest.mark.django_db

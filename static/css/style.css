@@ -414,10 +414,11 @@ img.emoji {
 
 .icon-menu .option .pill {
     display: inline-block;
-    padding: 5px 8px;
-    background: var(--color-highlight);
-    border-radius: 5px;
+    padding: 2px 10px;
+    background: var(--color-text-duller);
+    border-radius: 20px;
     margin: 0 5px 0 5px;
+    font-size: 70%;
 }
 
 .icon-menu .option .pill.bad {
@@ -428,6 +429,16 @@ img.emoji {
     float: right;
     color: var(--color-text-duller);
     margin: 14px 0 0 0;
+}
+
+.icon-menu .option .right {
+    display: inline-block;
+    float: right;
+}
+
+.icon-menu .option button {
+    margin-top: 8px;
+    margin-right: 20px;
 }
 
 .handle {
@@ -466,24 +477,28 @@ form.inline {
     padding: 0;
 }
 
-form.follow {
+form.follow-profile {
     float: right;
     margin: 20px 0 0 0;
     font-size: 16px;
     text-align: center;
 }
 
-form.follow.has-reverse {
+form.follow-profile.has-reverse {
     margin-top: 0;
 }
 
-form.follow .reverse-follow {
+form.follow-profile .reverse-follow {
     display: block;
     margin: 0 0 5px 0;
 }
 
-form.follow button {
+form.follow-profile button {
     margin: 0;
+}
+
+form.follow {
+    display: inline;
 }
 
 form.search {
@@ -721,6 +736,11 @@ button.danger,
     background: var(--color-delete);
 }
 
+button.destructive:hover,
+.button.destructive:hover {
+    background: var(--color-delete);
+}
+
 button.secondary,
 .button.secondary {
     background: var(--color-bg-menu);
@@ -889,14 +909,22 @@ table.metadata td .emoji {
 
 .view-options a {
     margin: 0 10px 0 0;
-    padding: 4px 7px;
+    padding: 4px 12px;
     color: var(--color-text-duller);
     background: var(--color-bg-box);
     border-radius: 3px;
 }
 
+.view-options a:hover {
+    background: var(--color-text-dull);
+}
+
 .view-options a.selected {
-    color: var(--color-text-main);
+    color: var(--color-text-highlight);
+}
+
+.view-options .fa-solid {
+    min-width: 16px;
 }
 
 /* Posts */

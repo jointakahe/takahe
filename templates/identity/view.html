@@ -24,14 +24,14 @@
                     <a class="button" href="{% url "settings_profile" %}">Edit Profile</a>
                 </form>
             {% else %}
-                <form action="{{ identity.urls.action }}" method="POST" class="inline follow {% if reverse_follow %}has-reverse{% endif %}">
+                <form action="{{ identity.urls.action }}" method="POST" class="inline follow-profile {% if reverse_follow %}has-reverse{% endif %}">
                     {% csrf_token %}
                     {% if reverse_follow %}
                         <span class="reverse-follow">Follows You</span>
                     {% endif %}
                     {% if follow %}
                         <input type="hidden" name="action" value="unfollow">
-                        <button>Unfollow</button>
+                        <button class="destructive">Unfollow</button>
                     {% else %}
                         <input type="hidden" name="action" value="follow">
                         <button>Follow</button>
@@ -76,7 +76,7 @@
       <div class="stats">
         <ul>
           <li><strong>{{ following_count }}</strong> following</li>
-          <li><strong>{{ followers_count }}</strong> followers</li>
+          <li><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</li>
         </ul>
       </div>
     {% endif %}

@@ -63,7 +63,9 @@ class Follows(ListView):
             )
             identity_ids = [identity.id for identity in context["page_obj"]]
             context["outbound_ids"] = Follow.objects.filter(
-                source=self.request.identity, target_id__in=identity_ids
+                source=self.request.identity,
+                target_id__in=identity_ids,
+                state__in=FollowStates.group_active(),
             ).values_list("target_id", flat=True)
         else:
             context["page_obj"].object_list = self.follows_to_identities(
@@ -71,7 +73,9 @@ class Follows(ListView):
             )
             identity_ids = [identity.id for identity in context["page_obj"]]
             context["inbound_ids"] = Follow.objects.filter(
-                target=self.request.identity, source_id__in=identity_ids
+                target=self.request.identity,
+                source_id__in=identity_ids,
+                state__in=FollowStates.group_active(),
             ).values_list("source_id", flat=True)
         context["inbound"] = self.inbound
         context["num_inbound"] = Follow.objects.filter(
