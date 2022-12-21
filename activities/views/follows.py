@@ -1,3 +1,4 @@
+from django.db import models
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
@@ -23,15 +24,23 @@ class Follows(ListView):
 
     def get_queryset(self):
         if self.inbound:
-            return Follow.objects.filter(
-                target=self.request.identity,
-                state__in=FollowStates.group_active(),
-            ).order_by("-created")
+            follow_dir = models.Q(target=self.request.identity)
         else:
-            return Follow.objects.filter(
-                source=self.request.identity,
+            follow_dir = models.Q(source=self.request.identity)
+
+        return (
+            Follow.objects.filter(
+                follow_dir,
                 state__in=FollowStates.group_active(),
-            ).order_by("-created")
+            )
+            .select_related(
+                "target",
+                "target__domain",
+                "source",
+                "source__domain",
+            )
+            .order_by("-created")
+        )
 
     def follows_to_identities(self, follows, attr):
         """
