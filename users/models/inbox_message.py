@@ -69,6 +69,14 @@ class InboxMessageStates(StateGraph):
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
                         )
+            case "reject":
+                match instance.message_object_type:
+                    case "follow":
+                        await sync_to_async(Follow.handle_reject_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type reject.{unknown}"
+                        )
             case "undo":
                 match instance.message_object_type:
                     case "follow":

@@ -16,11 +16,13 @@ class FollowStates(StateGraph):
     undone = State(try_interval=60 * 60)
     undone_remotely = State()
     failed = State()
+    rejected = State()
 
     unrequested.transitions_to(local_requested)
     unrequested.transitions_to(remote_requested)
     unrequested.times_out_to(failed, seconds=86400 * 7)
     local_requested.transitions_to(accepted)
+    local_requested.transitions_to(rejected)
     remote_requested.transitions_to(accepted)
     accepted.transitions_to(undone)
     undone.transitions_to(undone_remotely)
@@ -279,3 +281,19 @@ class Follow(StatorModel):
             raise ValueError("No Follow locally for incoming Undo", data)
         # Delete the follow
         follow.delete()
+
+    @classmethod
+    def handle_reject_ap(cls, data):
+        """
+        Handles an incoming Follow Reject for one of our follows
+        """
+        # Ensure the Accept actor is the Follow's object
+        if data["actor"] != data["object"]["object"]:
+            raise ValueError("Accept actor does not match its Follow object", data)
+        # Resolve source and target and see if a Follow exists (it really should)
+        try:
+            follow = cls.by_ap(data["object"])
+        except KeyError:
+            raise ValueError("No Follow locally for incoming Reject", data)
+        # Mark the follow rejected
+        follow.transition_perform(FollowStates.rejected)
