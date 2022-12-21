@@ -3,10 +3,10 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
 
-from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
+from activities.models import Hashtag, PostInteraction, TimelineEvent
+from activities.services import TimelineService
 from core.decorators import cache_page
 from users.decorators import identity_required
-from users.models import Identity
 
 from .compose import Compose
 
@@ -22,28 +22,7 @@ class Home(TemplateView):
         return self.form_class(request=self.request, **self.get_form_kwargs())
 
     def get_context_data(self):
-        events = (
-            TimelineEvent.objects.filter(
-                identity=self.request.identity,
-                type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
-            )
-            .select_related(
-                "subject_post",
-                "subject_post__author",
-                "subject_post__author__domain",
-                "subject_identity",
-                "subject_identity__domain",
-                "subject_post_interaction",
-                "subject_post_interaction__identity",
-                "subject_post_interaction__identity__domain",
-            )
-            .prefetch_related(
-                "subject_post__attachments",
-                "subject_post__mentions",
-                "subject_post__emojis",
-            )
-            .order_by("-published")
-        )
+        events = TimelineService(self.request.identity).home()
         paginator = Paginator(events, 50)
         page_number = self.request.GET.get("page")
         context = {
@@ -80,14 +59,7 @@ class Tag(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return (
-            Post.objects.public()
-            .filter(author__restriction=Identity.Restriction.none)
-            .tagged_with(self.hashtag)
-            .select_related("author", "author__domain")
-            .prefetch_related("attachments", "mentions")
-            .order_by("-published")
-        )
+        return TimelineService(self.request.identity).hashtag(self.hashtag)
 
     def get_context_data(self):
         context = super().get_context_data()
@@ -111,13 +83,7 @@ class Local(ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        return (
-            Post.objects.local_public()
-            .filter(author__restriction=Identity.Restriction.none)
-            .select_related("author", "author__domain")
-            .prefetch_related("attachments", "mentions", "emojis")
-            .order_by("-published")
-        )
+        return TimelineService(self.request.identity).local()
 
     def get_context_data(self):
         context = super().get_context_data()
@@ -138,15 +104,7 @@ class Federated(ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        return (
-            Post.objects.filter(
-                visibility=Post.Visibilities.public, in_reply_to__isnull=True
-            )
-            .filter(author__restriction=Identity.Restriction.none)
-            .select_related("author", "author__domain")
-            .prefetch_related("attachments", "mentions", "emojis")
-            .order_by("-published")
-        )
+        return TimelineService(self.request.identity).federated()
 
     def get_context_data(self):
         context = super().get_context_data()
@@ -187,25 +145,7 @@ class Notifications(ListView):
         for type_name, type in self.notification_types.items():
             if notification_options.get(type_name, True):
                 types.append(type)
-        return (
-            TimelineEvent.objects.filter(identity=self.request.identity, type__in=types)
-            .order_by("-published")
-            .select_related(
-                "subject_post",
-                "subject_post__author",
-                "subject_post__author__domain",
-                "subject_identity",
-                "subject_identity__domain",
-                "subject_post_interaction",
-                "subject_post_interaction__identity",
-                "subject_post_interaction__identity__domain",
-            )
-            .prefetch_related(
-                "subject_post__emojis",
-                "subject_post__mentions",
-                "subject_post__attachments",
-            )
-        )
+        return TimelineService(self.request.identity).notifications(types)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

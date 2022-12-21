@@ -1,9 +1,9 @@
-from activities.models import Post, PostInteraction, TimelineEvent
+from activities.models import Post, PostInteraction
+from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
-from users.models import Identity
 
 
 @api_router.get("/v1/timelines/home", response=list[schemas.Status])
@@ -16,22 +16,7 @@ def home(
     limit: int = 20,
 ):
     paginator = MastodonPaginator(Post)
-    queryset = (
-        TimelineEvent.objects.filter(
-            identity=request.identity,
-            type__in=[TimelineEvent.Types.post],
-        )
-        .select_related(
-            "subject_post",
-            "subject_post__author",
-            "subject_post__author__domain",
-        )
-        .prefetch_related(
-            "subject_post__attachments",
-            "subject_post__mentions",
-        )
-        .order_by("-published")
-    )
+    queryset = TimelineService(request.identity).home()
     events = paginator.paginate(
         queryset,
         min_id=min_id,
@@ -58,16 +43,11 @@ def public(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    queryset = (
-        Post.objects.public()
-        .filter(author__restriction=Identity.Restriction.none)
-        .select_related("author")
-        .prefetch_related("attachments")
-        .order_by("-published")
-    )
     if local:
-        queryset = queryset.filter(local=True)
-    elif remote:
+        queryset = TimelineService(request.identity).local()
+    else:
+        queryset = TimelineService(request.identity).federated()
+    if remote:
         queryset = queryset.filter(local=False)
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
@@ -97,14 +77,7 @@ def hashtag(
 ):
     if limit > 40:
         limit = 40
-    queryset = (
-        Post.objects.public()
-        .filter(author__restriction=Identity.Restriction.none)
-        .tagged_with(hashtag)
-        .select_related("author")
-        .prefetch_related("attachments")
-        .order_by("-published")
-    )
+    queryset = TimelineService(request.identity).hashtag(hashtag)
     if local:
         queryset = queryset.filter(local=True)
     if only_media:
