@@ -76,7 +76,7 @@
       <div class="stats">
         <ul>
           <li><strong>{{ following_count }}</strong> following</li>
-          <li><strong>{{ followers_count }}</strong> followers</li>
+          <li><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</li>
         </ul>
       </div>
     {% endif %}
