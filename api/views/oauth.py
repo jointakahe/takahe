@@ -3,6 +3,7 @@ from urllib.parse import urlparse, urlunparse
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
@@ -67,6 +68,9 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
             code=secrets.token_urlsafe(16),
             scopes=scope.split(),
         )
+        # If it's an out of band request, show the code
+        if redirect_uri == "urn:ietf:wg:oauth:2.0:oob":
+            return render(request, "api/oauth_code.html", {"code": token.code})
         # Redirect with the token's code
         return OauthRedirect(redirect_uri, "code", token.code)
 
