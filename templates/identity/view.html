@@ -89,7 +89,7 @@
         {% else %}
             <p class="system-note">
                 This is a member of another server.
-                <a href="{{ identity.profile_uri }}">See their original profile ➔</a>
+                <a href="{{ identity.profile_uri|default:identity.actor_uri }}">See their original profile ➔</a>
             </p>
         {% endif %}
     {% endif %}
