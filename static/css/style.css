@@ -916,7 +916,7 @@ table.metadata td .emoji {
 }
 
 .view-options a:hover {
-    background: var(--color-text-dull);
+    color: var(--color-text-dull);
 }
 
 .view-options a.selected {
