@@ -835,6 +835,10 @@ h1.identity small {
     height: 22px;
 }
 
+.bio p {
+    margin: 0 0 10px 0;
+}
+
 .system-note {
     background: var(--color-bg-menu);
     color: var(--color-text-dull);

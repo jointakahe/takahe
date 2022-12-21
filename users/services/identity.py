@@ -1,7 +1,9 @@
 from typing import cast
 
 from django.db import models
+from django.template.defaultfilters import linebreaks_filter
 
+from core.html import strip_html
 from users.models import Follow, FollowStates, Identity
 
 
@@ -69,3 +71,10 @@ class IdentityService:
             "endorsed": False,
             "note": "",
         }
+
+    def set_summary(self, summary: str):
+        """
+        Safely sets a summary and turns linebreaks into HTML
+        """
+        self.identity.summary = linebreaks_filter(strip_html(summary))
+        self.identity.save()
