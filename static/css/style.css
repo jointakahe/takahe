@@ -904,7 +904,11 @@ table.metadata td .emoji {
 }
 
 .view-options {
-    margin: 0 0 10px 3px;
+    margin: 0 0 10px 0px;
+}
+
+.view-options.follows {
+    margin: 0 0 20px 0px;
 }
 
 .view-options a {

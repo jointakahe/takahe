@@ -1,5 +1,7 @@
 from typing import cast
 
+from django.db import models
+
 from users.models import Follow, FollowStates, Identity
 
 
@@ -10,6 +12,16 @@ class IdentityService:
 
     def __init__(self, identity: Identity):
         self.identity = identity
+
+    def following(self) -> models.QuerySet[Identity]:
+        return Identity.objects.filter(
+            inbound_follows__source=self.identity
+        ).not_deleted()
+
+    def followers(self) -> models.QuerySet[Identity]:
+        return Identity.objects.filter(
+            outbound_follows__target=self.identity
+        ).not_deleted()
 
     def follow_from(self, from_identity: Identity) -> Follow:
         """

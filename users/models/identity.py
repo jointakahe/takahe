@@ -219,6 +219,8 @@ class Identity(StatorModel):
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
         action = "{view}action/"
+        followers = "{view}followers/"
+        following = "{view}following/"
         activate = "{view}activate/"
         admin = "/admin/identities/"
         admin_edit = "{admin}{self.pk}/"

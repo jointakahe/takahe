@@ -21,6 +21,9 @@ def test_visible_follows_disabled(client, identity):
     """
     Tests that disabling visible follows hides it from profile
     """
+    Config.set_identity(identity, "visible_follows", True)
+    response = client.get(identity.urls.view)
+    assertContains(response, '<div class="view-options follows">', status_code=200)
     Config.set_identity(identity, "visible_follows", False)
     response = client.get(identity.urls.view)
-    assertNotContains(response, '<div class="stats">', status_code=200)
+    assertNotContains(response, '<div class="view-options follows">', status_code=200)

@@ -161,6 +161,8 @@ urlpatterns = [
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     path("@<handle>/rss/", identity.IdentityFeed()),
     path("@<handle>/report/", report.SubmitReport.as_view()),
+    path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
+    path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
     # Posts
     path("compose/", compose.Compose.as_view(), name="compose"),
     path(
