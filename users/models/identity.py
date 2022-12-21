@@ -470,6 +470,8 @@ class Identity(StatorModel):
                 f"Client error fetching actor: {response.status_code}", response.content
             )
         document = canonicalise(response.json(), include_security=True)
+        if "type" not in document:
+            return False
         self.name = document.get("name")
         self.profile_uri = document.get("url")
         self.inbox_uri = document.get("inbox")
