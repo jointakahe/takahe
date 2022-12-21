@@ -26,7 +26,7 @@ class SearchService:
             return set()
 
         # Try to fetch the user by handle
-        handle = self.query.lstrip("@").lower()
+        handle = self.query.lstrip("@")
         results: set[Identity] = set()
         if "@" in handle:
             username, domain = handle.split("@", 1)

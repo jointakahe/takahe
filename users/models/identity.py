@@ -535,6 +535,9 @@ class Identity(StatorModel):
         try:
             data = response.json()
         except ValueError:
+            # Some servers return these with a 200 status code!
+            if b"not found" in response.content.lower():
+                return None, None
             raise ValueError(
                 "JSON parse error fetching webfinger",
                 response.content,
