@@ -33,6 +33,9 @@ class Home(TemplateView):
                 "subject_post__author__domain",
                 "subject_identity",
                 "subject_identity__domain",
+                "subject_post_interaction",
+                "subject_post_interaction__identity",
+                "subject_post_interaction__identity__domain",
             )
             .prefetch_related(
                 "subject_post__attachments",
@@ -193,6 +196,9 @@ class Notifications(ListView):
                 "subject_post__author__domain",
                 "subject_identity",
                 "subject_identity__domain",
+                "subject_post_interaction",
+                "subject_post_interaction__identity",
+                "subject_post_interaction__identity__domain",
             )
             .prefetch_related(
                 "subject_post__emojis",
