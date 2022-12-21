@@ -16,14 +16,20 @@ class IdentityService:
         self.identity = identity
 
     def following(self) -> models.QuerySet[Identity]:
-        return Identity.objects.filter(
-            inbound_follows__source=self.identity
-        ).not_deleted()
+        return (
+            Identity.objects.filter(inbound_follows__source=self.identity)
+            .not_deleted()
+            .order_by("username")
+            .select_related("domain")
+        )
 
     def followers(self) -> models.QuerySet[Identity]:
-        return Identity.objects.filter(
-            outbound_follows__target=self.identity
-        ).not_deleted()
+        return (
+            Identity.objects.filter(outbound_follows__target=self.identity)
+            .not_deleted()
+            .order_by("username")
+            .select_related("domain")
+        )
 
     def follow_from(self, from_identity: Identity) -> Follow:
         """

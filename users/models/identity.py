@@ -54,6 +54,10 @@ class IdentityStates(StateGraph):
     updated.transitions_to(outdated)
 
     @classmethod
+    def group_deleted(cls):
+        return [cls.deleted, cls.deleted_fanned_out]
+
+    @classmethod
     async def targets_fan_out(cls, identity: "Identity", type_: str) -> None:
         from activities.models import FanOut
         from users.models import Follow
@@ -115,9 +119,7 @@ class IdentityStates(StateGraph):
 
 class IdentityQuerySet(models.QuerySet):
     def not_deleted(self):
-        query = self.exclude(
-            state__in=[IdentityStates.deleted, IdentityStates.deleted_fanned_out]
-        )
+        query = self.exclude(state__in=IdentityStates.group_deleted())
         return query
 
 

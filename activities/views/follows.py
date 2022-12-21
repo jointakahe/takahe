@@ -3,7 +3,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
 from users.decorators import identity_required
-from users.models import Follow, FollowStates
+from users.models import Follow, FollowStates, IdentityStates
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -39,6 +39,8 @@ class Follows(ListView):
                 "source",
                 "source__domain",
             )
+            .exclude(source__state__in=IdentityStates.group_deleted())
+            .exclude(target__state__in=IdentityStates.group_deleted())
             .order_by("-created")
         )
 
