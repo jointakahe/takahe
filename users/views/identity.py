@@ -285,7 +285,10 @@ class CreateIdentity(FormView):
             if (
                 username
                 and domain
-                and Identity.objects.filter(username=username, domain=domain).exists()
+                and Identity.objects.filter(
+                    username__iexact=username,
+                    domain=domain.lower(),
+                ).exists()
             ):
                 raise forms.ValidationError(f"{username}@{domain} is already taken")
 
@@ -307,7 +310,7 @@ class CreateIdentity(FormView):
         domain_instance = Domain.get_domain(domain)
         new_identity = Identity.objects.create(
             actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/",
-            username=username.lower(),
+            username=username,
             domain_id=domain,
             name=form.cleaned_data["name"],
             local=True,

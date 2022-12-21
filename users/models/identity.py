@@ -293,18 +293,17 @@ class Identity(StatorModel):
     def by_username_and_domain(cls, username, domain, fetch=False, local=False):
         if username.startswith("@"):
             raise ValueError("Username must not start with @")
-        username = username.lower()
         domain = domain.lower()
         try:
             if local:
                 return cls.objects.get(
-                    username=username,
+                    username__iexact=username,
                     domain_id=domain,
                     local=True,
                 )
             else:
                 return cls.objects.get(
-                    username=username,
+                    username__iexact=username,
                     domain_id=domain,
                 )
         except cls.DoesNotExist:
@@ -596,7 +595,7 @@ class Identity(StatorModel):
         if self.username and "@value" in self.username:
             self.username = self.username["@value"]
         if self.username:
-            self.username = self.username.lower()
+            self.username = self.username
         self.manually_approves_followers = document.get("manuallyApprovesFollowers")
         self.public_key = document.get("publicKey", {}).get("publicKeyPem")
         self.public_key_id = document.get("publicKey", {}).get("id")
@@ -626,7 +625,7 @@ class Identity(StatorModel):
             )
             if webfinger_handle:
                 webfinger_username, webfinger_domain = webfinger_handle.split("@")
-                self.username = webfinger_username.lower()
+                self.username = webfinger_username
                 self.domain = await get_domain(webfinger_domain)
             else:
                 self.domain = await get_domain(actor_url_parts.hostname)

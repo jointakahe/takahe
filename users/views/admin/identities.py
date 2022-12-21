@@ -35,7 +35,7 @@ class IdentitiesRoot(ListView):
             if "@" in query:
                 username, domain = query.split("@", 1)
                 identities = identities.filter(
-                    username=username,
+                    username__iexact=username,
                     domain__domain__istartswith=domain,
                 )
             else:

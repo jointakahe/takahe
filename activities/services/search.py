@@ -13,7 +13,7 @@ class SearchService:
     """
 
     def __init__(self, query: str, identity: Identity | None):
-        self.query = query.strip().lower()
+        self.query = query.strip()
         self.identity = identity
 
     def search_identities_handle(self) -> set[Identity]:
@@ -26,7 +26,7 @@ class SearchService:
             return set()
 
         # Try to fetch the user by handle
-        handle = self.query.lstrip("@")
+        handle = self.query.lstrip("@").lower()
         results: set[Identity] = set()
         if "@" in handle:
             username, domain = handle.split("@", 1)
@@ -37,7 +37,8 @@ class SearchService:
                 if domain_instance is None:
                     raise Identity.DoesNotExist()
                 identity = Identity.objects.get(
-                    domain=domain_instance, username=username
+                    domain=domain_instance,
+                    username__iexact=username,
                 )
             except Identity.DoesNotExist:
                 if self.identity is not None:
@@ -82,11 +83,13 @@ class SearchService:
         type = document.get("type", "unknown").lower()
 
         # Is it an identity?
+        print(type)
         if type in Identity.ACTOR_TYPES:
             # Try and retrieve the profile by actor URI
             identity = Identity.by_actor_uri(document["id"], create=True)
+            print("got identity")
             if identity and identity.state == IdentityStates.outdated:
-                async_to_sync(identity.fetch_actor)()
+                print(async_to_sync(identity.fetch_actor)())
             return identity
 
         # Is it a post?
@@ -112,7 +115,7 @@ class SearchService:
             return set()
 
         results: set[Hashtag] = set()
-        name = self.query.lstrip("#")
+        name = self.query.lstrip("#").lower()
         for hashtag in Hashtag.objects.public().hashtag_or_alias(name)[:10]:
             results.add(hashtag)
         for hashtag in Hashtag.objects.public().filter(hashtag__startswith=name)[:10]:
