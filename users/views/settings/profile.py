@@ -52,7 +52,7 @@ class ProfilePage(FormView):
         identity = self.request.identity
         return {
             "name": identity.name,
-            "summary": html_to_plaintext(identity.summary),
+            "summary": html_to_plaintext(identity.summary) if identity.summary else "",
             "icon": identity.icon and identity.icon.url,
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,
