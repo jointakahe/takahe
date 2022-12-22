@@ -31,7 +31,9 @@
                     {% endif %}
                     {% if follow %}
                         <input type="hidden" name="action" value="unfollow">
-                        <button class="destructive">Unfollow</button>
+                        <button class="destructive">
+                            {% if follow.pending %}Follow Pending{% else %}Unfollow{% endif %}
+                        </button>
                     {% else %}
                         <input type="hidden" name="action" value="follow">
                         <button>Follow</button>

@@ -167,6 +167,12 @@ class Follow(StatorModel):
             "source", "source__domain", "target"
         ).aget(pk=self.pk)
 
+    ### Helper properties ###
+
+    @property
+    def pending(self):
+        return self.state in [FollowStates.unrequested, FollowStates.local_requested]
+
     ### ActivityPub (outbound) ###
 
     def to_ap(self):
