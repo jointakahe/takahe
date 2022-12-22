@@ -55,6 +55,7 @@ Our plan for the 0.7 release is not finalised, but likely includes:
 * User-initiated identity deletion
 * Server announcements system
 * Initial video support
+* HTML emails and moderation emails
 
 We're now looking for specific help from the following people as we develop further:
 
