@@ -4,27 +4,27 @@
 
 {% block content %}
     <form action="." method="POST">
-        {% csrf_token %}
-        <fieldset>
-            <legend>Create An Account</legend>
-            {% if signup_text %}{{ signup_text }}{% endif %}
-            {% if config.signup_allowed %}
-            {% for field in form %}
-                {% include "forms/_field.html" %}
-            {% endfor %}
-            {% else %}
-                {% if not config.signup_text %}
-                <p>Not accepting new users at this time</p>
+        {% if form %}
+            {% csrf_token %}
+            <fieldset>
+                <legend>Create An Account</legend>
+                {% if signup_text %}{{ signup_text }}{% endif %}
+                {% for field in form %}
+                    {% include "forms/_field.html" %}
+                {% endfor %}
+            </fieldset>
+            <div class="buttons">
+                <button>Create</button>
+            </div>
+        {% else %}
+            <fieldset>
+                <legend>Create An Account</legend>
+                {% if signup_text %}
+                    {{ signup_text }}
+                {% else %}
+                    <p>We're not accepting new users at this time.</p>
                 {% endif %}
-            {% endif %}
-
-        </fieldset>
-
-        {% if config.signup_allowed %}
-        <div class="buttons">
-            <button>Create</button>
-        </div>
+            </fieldset>
         {% endif %}
-
     </form>
 {% endblock %}

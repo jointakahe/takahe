@@ -1,5 +1,9 @@
+import datetime
+
 from django import forms
+from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
@@ -32,19 +36,28 @@ class InviteCreate(FormView):
     }
 
     class form_class(forms.Form):
-        email = forms.EmailField(
+        uses = forms.IntegerField(
             required=False,
-            help_text="Optional email to tie the invite to.\nYou will still need to email the user this code yourself!",
+            help_text="Number of times this can be used. Leave blank for infinite uses.",
+        )
+        expires_days = forms.IntegerField(
+            required=False,
+            help_text="Number of days until this expires. Leave blank to make it last forever.",
         )
         notes = forms.CharField(
             required=False,
-            widget=forms.Textarea,
             help_text="Notes for other admins",
         )
 
     def form_valid(self, form):
+        expires_days = form.cleaned_data.get("expires_days")
         invite = Invite.create_random(
-            email=form.cleaned_data.get("email") or None,
+            uses=form.cleaned_data.get("uses") or None,
+            expires=(
+                timezone.now() + datetime.timedelta(days=expires_days)
+                if expires_days is not None
+                else None
+            ),
             note=form.cleaned_data.get("notes"),
         )
         return redirect(invite.urls.admin_view)
@@ -59,7 +72,7 @@ class InviteView(FormView):
     }
 
     class form_class(InviteCreate.form_class):
-        code = forms.CharField(disabled=True, required=False)
+        link = forms.CharField(disabled=True, required=False)
 
     def dispatch(self, request, id, *args, **kwargs):
         self.invite = get_object_or_404(Invite, id=id)
@@ -74,13 +87,19 @@ class InviteView(FormView):
     def get_initial(self):
         return {
             "notes": self.invite.note,
-            "email": self.invite.email,
-            "code": self.invite.token,
+            "uses": self.invite.uses,
+            "link": f"https://{settings.MAIN_DOMAIN}/auth/signup/{self.invite.token}/",
         }
 
     def form_valid(self, form):
+        expires_days = form.cleaned_data.get("expires_days")
         self.invite.note = form.cleaned_data.get("notes") or ""
-        self.invite.email = form.cleaned_data.get("email") or None
+        self.invite.uses = form.cleaned_data.get("uses") or None
+        self.invite.expires = (
+            timezone.now() + datetime.timedelta(days=expires_days)
+            if expires_days is not None
+            else None
+        )
         self.invite.save()
         return redirect(self.invite.urls.admin)
 

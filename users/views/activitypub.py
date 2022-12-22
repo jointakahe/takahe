@@ -82,8 +82,7 @@ class NodeInfo2(View):
                     "users": {"total": local_identities},
                     "localPosts": local_posts,
                 },
-                "openRegistrations": Config.system.signup_allowed
-                and not Config.system.signup_invite_only,
+                "openRegistrations": Config.system.signup_allowed,
                 "metadata": {},
             }
         )

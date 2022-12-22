@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.views import LoginView, LogoutView
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -39,11 +40,6 @@ class Signup(FormView):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            # Add the invite field if it's enabled
-            if Config.system.signup_invite_only:
-                self.fields["invite_code"] = forms.CharField(
-                    help_text="Your invite code from one of our admins"
-                )
             # Add the policies if they're defined
             policies = []
             if Config.system.policy_rules:
@@ -82,30 +78,33 @@ class Signup(FormView):
                 raise forms.ValidationError("This email already has an account")
             return email
 
-        def clean_invite_code(self):
-            invite_code = self.cleaned_data["invite_code"].lower().strip()
-            invite = Invite.objects.filter(token=invite_code).first()
-            if not invite:
-                raise forms.ValidationError("That is not a valid invite code")
-            if invite.email and invite.email != self.cleaned_data.get("email"):
-                raise forms.ValidationError(
-                    "That is not a valid invite code for this email address"
-                )
-            return invite_code
-
-        def clean(self):
-            if not Config.system.signup_allowed:
-                raise forms.ValidationError("Not accepting new users at this time")
+    def dispatch(self, request, token=None, *args, **kwargs):
+        if token:
+            self.invite = get_object_or_404(Invite, token=token)
+            if not self.invite.valid:
+                raise Http404()
+        else:
+            self.invite = None
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Don't allow anything if there's no invite and no signup allowed
+        if not Config.system.signup_allowed and not self.invite:
+            return self.render_to_response(self.get_context_data())
+        # Make the new user
         user = User.objects.create(email=form.cleaned_data["email"])
         # Auto-promote the user to admin if that setting is set
         if settings.AUTO_ADMIN_EMAIL and user.email == settings.AUTO_ADMIN_EMAIL:
             user.admin = True
             user.save()
         PasswordReset.create_for_user(user)
-        if "invite_code" in form.cleaned_data:
-            Invite.objects.filter(token=form.cleaned_data["invite_code"]).delete()
+        # Drop invite uses down if it has them
+        if self.invite and self.invite.uses is not None:
+            self.invite.uses -= 1
+            if self.invite.uses <= 0:
+                self.invite.delete()
+            else:
+                self.invite.save()
         return render(
             self.request,
             "auth/signup_success.html",
@@ -114,6 +113,8 @@ class Signup(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if not Config.system.signup_allowed and not self.invite:
+            del context["form"]
         if Config.system.signup_text:
             context["signup_text"] = mark_safe(
                 markdown_it.MarkdownIt().render(Config.system.signup_text)

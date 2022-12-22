@@ -7,7 +7,8 @@
         {% csrf_token %}
         <fieldset>
             <legend>Details</legend>
-            {% include "forms/_field.html" with field=form.email %}
+            {% include "forms/_field.html" with field=form.uses %}
+            {% include "forms/_field.html" with field=form.expires_days %}
             {% include "forms/_field.html" with field=form.notes %}
         </fieldset>
         <div class="buttons">

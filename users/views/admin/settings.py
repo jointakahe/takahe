@@ -69,11 +69,7 @@ class BasicSettings(AdminSettingsPage):
         },
         "signup_allowed": {
             "title": "Signups Allowed",
-            "help_text": "If signups are allowed at all",
-        },
-        "signup_invite_only": {
-            "title": "Invite-Only",
-            "help_text": "If signups require an invite code",
+            "help_text": "If uninvited signups are allowed.\nInvite codes will always work.",
         },
         "signup_text": {
             "title": "Signup Page Text",
@@ -103,7 +99,10 @@ class BasicSettings(AdminSettingsPage):
             "site_banner",
             "highlight_color",
         ],
-        "Signups": ["signup_allowed", "signup_invite_only", "signup_text"],
+        "Signups": [
+            "signup_allowed",
+            "signup_text",
+        ],
         "Posts": [
             "post_length",
             "post_minimum_interval",

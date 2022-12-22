@@ -211,7 +211,6 @@ class Config(models.Model):
         policy_rules: str = ""
 
         signup_allowed: bool = True
-        signup_invite_only: bool = False
         signup_text: str = ""
         content_warning_text: str = "Content Warning"
 

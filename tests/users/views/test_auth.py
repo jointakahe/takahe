@@ -1,5 +1,8 @@
+import datetime
+
 import pytest
 from django.core import mail
+from django.utils import timezone
 from pytest_django.asserts import assertContains, assertNotContains
 
 from users.models import Invite, User
@@ -13,7 +16,9 @@ def test_signup_disabled(client, config_system):
     # Signup disabled and no signup text
     config_system.signup_allowed = False
     response = client.get("/auth/signup/")
-    assertContains(response, "Not accepting new users at this time", status_code=200)
+    assertContains(
+        response, "We're not accepting new users at this time", status_code=200
+    )
     assertNotContains(response, "<button>Create</button>")
 
     # Signup disabled with signup text configured
@@ -32,7 +37,7 @@ def test_signup_disabled(client, config_system):
     config_system.signup_allowed = True
     response = client.get("/auth/signup/")
     assertContains(response, "<button>Create</button>", status_code=200)
-    assertNotContains(response, "Not accepting new users at this time")
+    assertNotContains(response, "We're not accepting new users at this time")
 
 
 @pytest.mark.django_db
@@ -40,42 +45,44 @@ def test_signup_invite_only(client, config_system):
     """
     Tests that invite codes work with signup
     """
-    config_system.signup_allowed = True
-    config_system.signup_invite_only = True
+    config_system.signup_allowed = False
 
     # Try to sign up without an invite code
     response = client.post("/auth/signup/", {"email": "random@example.com"})
     assertNotContains(response, "Email Sent", status_code=200)
 
-    # Make an invite code for any email
-    invite_any = Invite.create_random()
+    # Make an invite code for any email with infinite uses
+    invite_infinite = Invite.create_random()
     response = client.post(
-        "/auth/signup/",
-        {"email": "random@example.com", "invite_code": invite_any.token},
-    )
-    assertNotContains(response, "not a valid invite")
-    assertContains(response, "Email Sent", status_code=200)
-
-    # Make sure you can't reuse an invite code
-    response = client.post(
-        "/auth/signup/",
-        {"email": "random2@example.com", "invite_code": invite_any.token},
-    )
-    assertNotContains(response, "Email Sent", status_code=200)
-
-    # Make an invite code for a specific email
-    invite_specific = Invite.create_random(email="special@example.com")
-    response = client.post(
-        "/auth/signup/",
-        {"email": "random3@example.com", "invite_code": invite_specific.token},
-    )
-    assertContains(response, "valid invite code for this email", status_code=200)
-    assertNotContains(response, "Email Sent")
-    response = client.post(
-        "/auth/signup/",
-        {"email": "special@example.com", "invite_code": invite_specific.token},
+        f"/auth/signup/{invite_infinite.token}/",
+        {"email": "random@example.com"},
     )
     assertContains(response, "Email Sent", status_code=200)
+
+    # Ensure it still has infinite uses
+    assert Invite.objects.get(token=invite_infinite.token).uses is None
+
+    # Make an invite code for any email with one use
+    invite_single = Invite.create_random(uses=1)
+    response = client.post(
+        f"/auth/signup/{invite_single.token}/",
+        {"email": "random2@example.com"},
+    )
+    assertContains(response, "Email Sent", status_code=200)
+
+    # Verify it was used up
+    assert Invite.objects.filter(token=invite_single.token).count() == 0
+
+    # Make an invite code that's invalid
+    invite_expired = Invite.create_random(
+        expires=timezone.now() - datetime.timedelta(days=1)
+    )
+    response = client.post(
+        f"/auth/signup/{invite_expired.token}/",
+        {"email": "random3@example.com"},
+    )
+    print(response.content)
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -84,7 +91,6 @@ def test_signup_policy(client, config_system):
     Tests that you must agree to policies to sign up
     """
     config_system.signup_allowed = True
-    config_system.signup_invite_only = False
 
     # Make sure we can sign up when there are no policies
     response = client.post("/auth/signup/", {"email": "random@example.com"})
@@ -103,7 +109,6 @@ def test_signup_email(client, config_system, stator):
     Tests that you can sign up and get an email sent to you
     """
     config_system.signup_allowed = True
-    config_system.signup_invite_only = False
 
     # Sign up with a user
     response = client.post("/auth/signup/", {"email": "random@example.com"})

@@ -182,6 +182,7 @@ urlpatterns = [
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),
     path("auth/signup/", auth.Signup.as_view(), name="signup"),
+    path("auth/signup/<token>/", auth.Signup.as_view(), name="signup"),
     path("auth/reset/", auth.TriggerReset.as_view(), name="trigger_reset"),
     path("auth/reset/<token>/", auth.PerformReset.as_view(), name="password_reset"),
     # Identity selection

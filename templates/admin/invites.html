@@ -17,12 +17,22 @@
                     {{ invite.token }}
 
                     <small>
-                        {% if invite.email %}
-                            (email {{ invite.email }})
+                        {% if invite.expires %}
+                            Expires in {{ invite.expires|timeuntil }}
+                            {% if invite.notes %}|{% endif %}
+                        {% endif %}
+                        {% if invite.notes %}
+                            {{ invite.notes }}
                         {% endif %}
                     </small>
                 </span>
-                <time>{{ invite.created|timedeltashort }} ago</time>
+                <time>
+                    {% if invite.uses %}
+                        {{ invite.uses }} use{{ invite.uses|pluralize }} left
+                    {% else %}
+                        Infinite uses
+                    {% endif %}
+                </time>
             </a>
         {% empty %}
             <p class="option empty">
