@@ -110,9 +110,7 @@ def test_linkify_mentions_remote(
 
 
 @pytest.mark.django_db
-def test_linkify_mentions_local(
-    config_system, emoji_locals, identity, identity2, remote_identity
-):
+def test_linkify_mentions_local(config_system, identity, identity2, remote_identity):
     """
     Tests that we can linkify post mentions properly for local use
     """
