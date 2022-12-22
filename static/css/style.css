@@ -1025,6 +1025,7 @@ form .post {
 .post .edited {
     font-weight: lighter;
     color: var(--color-text-duller);
+    margin-left: 64px;
 }
 
 .post .content {
@@ -1350,6 +1351,7 @@ form .post {
 
     .post .content,
     .post .summary,
+    .post .edited,
     .post .actions {
         margin-left: 0;
     }
