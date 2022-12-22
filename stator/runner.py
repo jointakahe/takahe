@@ -39,6 +39,8 @@ class StatorRunner:
         self.schedule_interval = schedule_interval
         self.lock_expiry = lock_expiry
         self.run_for = run_for
+        self.minimum_loop_delay = 0.5
+        self.maximum_loop_delay = 5
 
     async def run(self):
         sentry.set_takahe_app("stator")
@@ -46,6 +48,7 @@ class StatorRunner:
         self.started = time.monotonic()
         self.last_clean = time.monotonic() - self.schedule_interval
         self.tasks = []
+        self.loop_delay = self.minimum_loop_delay
         # For the first time period, launch tasks
         print("Running main task loop")
         try:
@@ -73,8 +76,18 @@ class StatorRunner:
                         and (time.monotonic() - self.started) > self.run_for
                     ):
                         break
-                    # Prevent busylooping
-                    await asyncio.sleep(0.5)
+
+                    # Prevent busylooping, but also back off delay if we have
+                    # no tasks
+                    if self.tasks:
+                        self.loop_delay = self.minimum_loop_delay
+                    else:
+                        self.loop_delay = min(
+                            self.loop_delay * 1.5,
+                            self.maximum_loop_delay,
+                        )
+                    await asyncio.sleep(self.loop_delay)
+
                     # Clear the Sentry breadcrumbs and extra for next loop
                     sentry.scope_clear(scope)
         except KeyboardInterrupt:
@@ -86,7 +99,7 @@ class StatorRunner:
             if not self.tasks:
                 break
             # Prevent busylooping
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
         print("Complete")
         return self.handled
 
@@ -173,6 +186,6 @@ class StatorRunner:
             if not self.tasks:
                 break
             self.remove_completed_tasks()
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.05)
 
     run_single_cycle_sync = async_to_sync(run_single_cycle)
