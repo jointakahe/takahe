@@ -414,7 +414,7 @@ class Identity(StatorModel):
     ### ActivityPub (outbound) ###
 
     def to_webfinger(self):
-        aliases = self.all_absolute_profile_uris()
+        aliases = [self.absolute_profile_uri()]
 
         actor_links = []
 
@@ -432,8 +432,11 @@ class Identity(StatorModel):
         #       Exposing the activity+json will allow migrating off server
         actor_links.extend(
             [
-                {"rel": "self", "type": "application/activity+json", "href": alias_uri}
-                for alias_uri in aliases
+                {
+                    "rel": "self",
+                    "type": "application/activity+json",
+                    "href": self.actor_uri,
+                }
             ]
         )
 
