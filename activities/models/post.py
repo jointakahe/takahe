@@ -712,7 +712,7 @@ class Post(StatorModel):
                 post = cls.objects.create(
                     object_uri=data["id"],
                     author=author,
-                    content=data["content"],
+                    content="",
                     local=False,
                     type=data["type"],
                 )
@@ -724,7 +724,16 @@ class Post(StatorModel):
             if post.type in (cls.Types.article, cls.Types.question):
                 type_data = PostTypeData(__root__=data).__root__
                 post.type_data = type_data.dict()
-            post.content = data["content"]
+            # Get content in order of: content value, contentmap.und, any contentmap entry
+            if "content" in data:
+                post.content = data["content"]
+            elif "contentMap" in data:
+                if "und" in data["contentMap"]:
+                    post.content = data["contentMap"]["und"]
+                else:
+                    post.content = list(data["contentMap"].values())[0]
+            else:
+                raise ValueError("Post has no content or content map")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
             post.url = data.get("url")

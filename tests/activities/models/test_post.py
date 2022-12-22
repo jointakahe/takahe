@@ -184,3 +184,45 @@ def test_post_transitions(identity, stator):
     stator.run_single_cycle_sync()
     post = Post.objects.get(id=post.id)
     assert post.state == str(PostStates.deleted_fanned_out)
+
+
+@pytest.mark.django_db
+def test_content_map(remote_identity):
+    """
+    Tests that post contentmap content also works
+    """
+    post = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/1/",
+            "type": "Note",
+            "content": "Hi World",
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+        },
+        create=True,
+    )
+    assert post.content == "Hi World"
+
+    post2 = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/2/",
+            "type": "Note",
+            "contentMap": {"und": "Hey World"},
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+        },
+        create=True,
+    )
+    assert post2.content == "Hey World"
+
+    post3 = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/3/",
+            "type": "Note",
+            "contentMap": {"en-gb": "Hello World"},
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+        },
+        create=True,
+    )
+    assert post3.content == "Hello World"
