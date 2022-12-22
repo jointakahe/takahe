@@ -1256,6 +1256,7 @@ form .post {
         position: fixed;
         height: 100%;
         right: 0;
+        top: 50px;
     }
 
     header {
