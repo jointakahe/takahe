@@ -941,7 +941,7 @@ table.metadata td .emoji {
     margin-bottom: 20px;
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    padding: 14px 14px 0 14px;
+    padding: 14px;
 }
 
 .post.mini {
@@ -1059,9 +1059,10 @@ form .post {
 .post .actions {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 8px 0 0 0;
     align-items: center;
     align-content: center;
+    margin-bottom: -8px;
 }
 
 .post .post-action {
