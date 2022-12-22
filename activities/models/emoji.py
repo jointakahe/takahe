@@ -217,8 +217,16 @@ class Emoji(StatorModel):
             if not create:
                 raise KeyError(f"No emoji with ID {data['id']}", data)
 
+        # Name could be a direct property, or in a language'd value
+        if "name" in data:
+            name = data["name"]
+        elif "nameMap" in data:
+            name = data["nameMap"]["und"]
+        else:
+            raise ValueError("No name on emoji JSON")
+
         # create
-        shortcode = data["name"].lower().strip(":")
+        shortcode = name.lower().strip(":")
         icon = data["icon"]
         category = (icon.get("category") or "")[:100]
         emoji = cls.objects.create(
