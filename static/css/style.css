@@ -1002,7 +1002,7 @@ form .post {
 }
 
 .post .summary {
-    margin: 12px 0 4px 0;
+    margin: 12px 0 4px 64px;
     padding: 3px 6px;
     border-radius: 3px;
     background: var(--color-bg-menu);
@@ -1025,6 +1025,10 @@ form .post {
 .post .edited {
     font-weight: lighter;
     color: var(--color-text-duller);
+}
+
+.post .content {
+    margin-left: 64px;
 }
 
 .post.mini .content,
@@ -1058,32 +1062,28 @@ form .post {
 
 .post .actions {
     display: flex;
+    position: relative;
     justify-content: space-between;
     padding: 8px 0 0 0;
     align-items: center;
     align-content: center;
-    margin-bottom: -8px;
-}
-
-.post .post-action {
-    padding: 2px 4px;
-    border-radius: 4px;
-    min-width: 60px;
-    text-align: center;
-}
-
-.post .post-action:hover {
-    background-color: var(--color-bg-main);
+    margin: 0 0 -8px 64px;
 }
 
 .post .actions a {
+    padding: 2px 4px;
+    border-radius: 4px;
+    min-width: 60px;
     text-align: center;
     cursor: pointer;
     color: var(--color-text-dull);
 }
 
-.post .actions a.menu {
+.post .actions a:hover {
+    background-color: var(--color-bg-main);
 }
+
+.post .actions a.menu {}
 
 .post .actions menu {
     display: none;
@@ -1092,8 +1092,8 @@ form .post {
     padding: 5px 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     position: absolute;
-    left: -130px;
-    top: -130px;
+    right: 0px;
+    bottom: 35px;
 }
 
 .post .actions menu.enabled {
@@ -1104,17 +1104,13 @@ form .post {
 .post .actions menu a {
     text-align: left;
     display: block;
-    width: 165px;
+    width: 185px;
     font-size: 15px;
 }
 
 .post .actions menu a i {
     margin-right: 4px;
     width: 16px;
-}
-
-.post .actions .dropdown {
-    position: relative;
 }
 
 .post .actions a:hover {
@@ -1177,7 +1173,7 @@ form .post {
 .mention-banner,
 .follow-banner,
 .like-banner {
-    padding: 3px 0 3px 10px;
+    padding: 0 0 3px 5px;
 }
 
 .boost-banner .emoji,
@@ -1298,7 +1294,7 @@ form .post {
 }
 
 
-@media (max-width: 700px) {
+@media (max-width: 750px) {
     header menu a.identity {
         width: 50px;
         padding: 10px 10px 0 0;
@@ -1339,19 +1335,25 @@ form .post {
         display: none;
     }
 
-    #main-content {
-        padding: 0;
-    }
-
-    #side-navigation,
-    header menu .identity {
-        border-left: 1px solid var(--color-input-border);
+    .left-column {
+        padding: 8px;
     }
 
     .post {
-        margin-bottom: 0;
-        border-bottom: 1px solid var(--color-input-border);
+        margin-bottom: 15px;
     }
+
+}
+
+
+@media (max-width: 550px) {
+
+    .post .content,
+    .post .summary,
+    .post .actions {
+        margin-left: 0;
+    }
+
 }
 
 /* Copy to clipboard action */

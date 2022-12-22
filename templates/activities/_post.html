@@ -62,36 +62,34 @@
         {% include "activities/_reply.html" %}
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
-        <div class="dropdown">
-          <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu">
-            <i class="fa-solid fa-caret-down"></i>
+        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu">
+          <i class="fa-solid fa-bars"></i>
+        </a>
+        <menu>
+          <a href="{{ post.urls.view }}" role="menuitem">
+            <i class="fa-solid fa-comment"></i> View Post &amp; Replies
           </a>
-          <menu>
-            <a href="{{ post.urls.view }}" role="menuitem">
-              <i class="fa-solid fa-comment"></i> View Post &amp; Replies
+          <a href="{{ post.urls.action_report }}" role="menuitem">
+            <i class="fa-solid fa-flag"></i> Report
+          </a>
+          {% if post.author == request.identity %}
+            <a href="{{ post.urls.action_edit }}" role="menuitem">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
             </a>
-            <a href="{{ post.urls.action_report }}" role="menuitem">
-              <i class="fa-solid fa-flag"></i> Report
+            <a href="{{ post.urls.action_delete }}" role="menuitem">
+              <i class="fa-solid fa-trash"></i> Delete
             </a>
-            {% if post.author == request.identity %}
-              <a href="{{ post.urls.action_edit }}" role="menuitem">
-                <i class="fa-solid fa-pen-to-square"></i> Edit
-              </a>
-              <a href="{{ post.urls.action_delete }}" role="menuitem">
-                <i class="fa-solid fa-trash"></i> Delete
-              </a>
-            {% elif not post.local and post.url %}
-              <a href="{{ post.url }}" role="menuitem">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
-              </a>
-            {% endif %}
-            {% if request.user.admin %}
-              <a href="{{ post.urls.admin_edit }}" role="menuitem">
-                <i class="fa-solid fa-gear"></i> View In Admin
-              </a>
-            {% endif %}
-          </menu>
-        </div>
+          {% elif not post.local and post.url %}
+            <a href="{{ post.url }}" role="menuitem">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
+            </a>
+          {% endif %}
+          {% if request.user.admin %}
+            <a href="{{ post.urls.admin_edit }}" role="menuitem">
+              <i class="fa-solid fa-gear"></i> View In Admin
+            </a>
+          {% endif %}
+        </menu>
       </div>
     {% endif %}
 
