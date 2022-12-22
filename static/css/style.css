@@ -1263,6 +1263,10 @@ form .post {
         z-index: 9;
     }
 
+    header menu a {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
     main {
         width: 100%;
         margin: 0;
