@@ -57,6 +57,16 @@ class TimelineService:
             .filter(author__restriction=Identity.Restriction.none)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions", "emojis")
+            .annotate(
+                like_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.like),
+                ),
+                boost_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.boost),
+                ),
+            )
             .order_by("-published")
         )
 
@@ -67,6 +77,16 @@ class TimelineService:
             .filter(author__restriction=Identity.Restriction.none)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions", "emojis")
+            .annotate(
+                like_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.like),
+                ),
+                boost_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.boost),
+                ),
+            )
             .order_by("-published")
         )
 
@@ -78,6 +98,16 @@ class TimelineService:
             .tagged_with(hashtag)
             .select_related("author", "author__domain")
             .prefetch_related("attachments", "mentions")
+            .annotate(
+                like_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.like),
+                ),
+                boost_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.boost),
+                ),
+            )
             .order_by("-published")
         )
 
@@ -99,5 +129,19 @@ class TimelineService:
                 "subject_post__emojis",
                 "subject_post__mentions",
                 "subject_post__attachments",
+            )
+            .annotate(
+                like_count=models.Count(
+                    "subject_post__interactions",
+                    filter=models.Q(
+                        subject_post__interactions__type=PostInteraction.Types.like
+                    ),
+                ),
+                boost_count=models.Count(
+                    "subject_post__interactions",
+                    filter=models.Q(
+                        subject_post__interactions__type=PostInteraction.Types.boost
+                    ),
+                ),
             )
         )

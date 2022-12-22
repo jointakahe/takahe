@@ -160,7 +160,7 @@ class PostInteraction(StatorModel):
         Returns a dict of {interaction_type: set(post_ids)} for all the posts
         and the given identity, for use in templates.
         """
-        # Bulk-fetch any interactions
+        # Bulk-fetch any of our own interactions
         ids_with_interaction_type = cls.objects.filter(
             identity=identity,
             post_id__in=[post.pk for post in posts],

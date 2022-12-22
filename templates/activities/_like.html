@@ -1,9 +1,9 @@
 {% if post.pk in interactions.like %}
     <a title="Unlike" class="active" hx-post="{{ post.urls.action_unlike }}" hx-swap="outerHTML" role="menuitem">
-        <i class="fa-solid fa-star"></i> {{ event.like_count }}
+        <i class="fa-solid fa-star"></i> {% if event.like_count is not None %}{{ event.like_count }}{% else %}{{ post.like_count }}{% endif %}
     </a>
 {% else %}
     <a title="Like" hx-post="{{ post.urls.action_like }}" hx-swap="outerHTML" role="menuitem">
-        <i class="fa-solid fa-star"></i> {{ event.like_count }}
+        <i class="fa-solid fa-star"></i> {% if event.like_count is not None %}{{ event.like_count }}{% else %}{{ post.like_count }}{% endif %}
     </a>
 {% endif %}
