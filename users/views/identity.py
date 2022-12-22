@@ -11,6 +11,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView, View
 
 from activities.models import Post, PostInteraction
+from activities.services import TimelineService
 from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
@@ -62,13 +63,7 @@ class ViewIdentity(ListView):
         )
 
     def get_queryset(self):
-        return (
-            self.identity.posts.not_hidden()
-            .unlisted(include_replies=True)
-            .select_related("author")
-            .prefetch_related("attachments")
-            .order_by("-created")
-        )
+        return TimelineService(self.request.identity).identity_public(self.identity)
 
     def get_context_data(self):
         context = super().get_context_data()
@@ -121,14 +116,7 @@ class IdentityFeed(Feed):
         return identity.absolute_profile_uri()
 
     def items(self, identity: Identity):
-        return (
-            identity.posts.filter(
-                visibility=Post.Visibilities.public,
-            )
-            .select_related("author")
-            .prefetch_related("attachments")
-            .order_by("-created")
-        )
+        return TimelineService(None).identity_public(identity)[:20]
 
     def item_description(self, item: Post):
         return item.safe_content_remote()

@@ -9,7 +9,7 @@ class TimelineService:
     Timelines and stuff!
     """
 
-    def __init__(self, identity: Identity):
+    def __init__(self, identity: Identity | None):
         self.identity = identity
 
     def home(self) -> models.QuerySet[TimelineEvent]:
@@ -144,4 +144,28 @@ class TimelineService:
                     ),
                 ),
             )
+        )
+
+    def identity_public(self, identity: Identity):
+        """
+        Returns all publically visible posts for an identity
+        """
+        return (
+            identity.posts.not_hidden()
+            .unlisted(include_replies=True)
+            .select_related("author")
+            .prefetch_related("attachments")
+            .select_related("author", "author__domain")
+            .prefetch_related("attachments", "mentions")
+            .annotate(
+                like_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.like),
+                ),
+                boost_count=models.Count(
+                    "interactions",
+                    filter=models.Q(interactions__type=PostInteraction.Types.boost),
+                ),
+            )
+            .order_by("-created")
         )
