@@ -14,8 +14,8 @@ of our own push in this regard - see https://jointakahe.org/takahesocial/ for
 more information and how to get an invite.
 
 If you're curious on the reasons *not* to use Takahē yet, see what's left
-to implement on our :doc:`features` page, and our federation and client
-compatibility list on our :doc:`interoperability` page.
+to implement on our :doc:`/features` page, and our federation and client
+compatibility list on our :doc:`/interoperability` page.
 
 Major features:
 
@@ -56,19 +56,19 @@ Our plan for the 0.7 release is not finalised, but likely includes:
 * Server announcements system
 * Initial video support
 
-I would also like to specifically thank `Michael Manfre <https://manfre.me/>`_
-and `Tyler Kennedy (TkTech) <https://tkte.ch/>`_ for their help during the 0.6
-development cycle; it is people like them, who turn up and help with the boring
-and unglamarous parts of development, who make Open Source work.
-
-We're looking for specific help from the following people as we develop further:
+We're now looking for specific help from the following people as we develop further:
 
 * Visual Design - We'd like to have a proper design system and identity for Takahē
 * Instance admins or developers of non-Mastodon servers - We need help debugging
   federation issues, especially where we're causing errors we can't see elsewhere.
 
-If you'd like to help with these or other areas, see :doc:`contributing` to
+If you'd like to help with these or other areas, see :doc:`/contributing` to
 see how to get in touch.
+
+I would also like to specifically thank `Michael Manfre <https://manfre.me/>`_
+and `Tyler Kennedy (TkTech) <https://tkte.ch/>`_ for their help during the 0.6
+development cycle; it is people like them, who turn up and help with the boring
+and unglamarous parts of development, who make Open Source work.
 
 You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
 or use the image name ``jointakahe/takahe:0.6``.

@@ -41,7 +41,8 @@ needed:
 * Peertube
 
 * Pixelfed
-  * Replies may not federate?
+
+  * Replies may not federate back from Takahē to Pixelfed
 
 * Pleroma
 
@@ -49,7 +50,9 @@ needed:
 These servers have the beginnings of support but known bugs that need fixing:
 
 * Gotosocial
+
   * Issues pulling accounts
 
 * Mitra
+
   * Sends Follow Accept messages in a compact format we don't accept yet

@@ -6,17 +6,20 @@ If you're interested in becoming a contributor, see our :doc:`contributing`
 page!
 
 
-* Creator & Main Developer
+Creator & Main Developer
+------------------------
 
-    * `Andrew Godwin <https://aeracode.org>`_
-
-
-* Core Contributors
-
-    * `Michael Manfre <https://manfre.me/>`_
-    * `Tyler Kennedy (TkTech) <https://tkte.ch/>`_
+* `Andrew Godwin <https://aeracode.org>`_
 
 
-* Other Contributors
+Core Contributors
+-----------------
 
-    * Please see our `GitHub contributors list <https://github.com/jointakahe/takahe/graphs/contributors>`_.
+* `Michael Manfre <https://manfre.me/>`_
+* `Tyler Kennedy (TkTech) <https://tkte.ch/>`_
+
+
+Other Contributors
+------------------
+
+* Please see our `GitHub contributors list <https://github.com/jointakahe/takahe/graphs/contributors>`_.
