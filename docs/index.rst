@@ -23,3 +23,4 @@ in alpha. For more information about Takahē, see
    stator
    tuning
    releases/index
+   contributors

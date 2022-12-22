@@ -26,6 +26,7 @@ Currently, it supports:
 * Server defederation (blocking)
 * Signup flow
 * Password reset flow
+* Invites system for restricting signups
 * Hashtag trending system with moderation
 * Mastodon-compatible client API for use with apps (alpha stage)
 

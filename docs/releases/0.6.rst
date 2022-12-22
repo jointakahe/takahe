@@ -6,12 +6,16 @@
 This release focuses primarily on server completeness and stability, with
 an extra helping of moderation tools as well.
 
-This is the first release we might *recommend you start a community on*. Bear in
+This is the first release we *might* recommend you start a community on. Bear in
 mind that this is still beta software, and so not free of bugs, but we've now
 reached enough stability and moderation functionality that it's doable. We're
 also spooling up invites on `takahe.social <https://takahe.social>`_ as part
 of our own push in this regard - see https://jointakahe.org/takahesocial/ for
-more on that.
+more information and how to get an invite.
+
+If you're curious on the reasons *not* to use Takahē yet, see what's left
+to implement on our :doc:`features` page, and our federation and client
+compatibility list on our :doc:`interoperability` page.
 
 Major features:
 
@@ -36,7 +40,6 @@ Major features:
 * Separate moderation and admin user permission levels
 * Terms Of Service, Privacy Policy, and Server Rules page functionality
 
-
 Additionally, we've made lots of bug fixes and other improvements, including:
 
 * Profile and post URLs now work in search
@@ -46,6 +49,26 @@ Additionally, we've made lots of bug fixes and other improvements, including:
 * All uploaded images are now WebP for efficiency
 * Sessions use signed cookies for reduced database load
 
+Our plan for the 0.7 release is not finalised, but likely includes:
+
+* Emoji admin page
+* User-initiated identity deletion
+* Server announcements system
+* Initial video support
+
+I would also like to specifically thank `Michael Manfre <https://manfre.me/>`_
+and `Tyler Kennedy (TkTech) <https://tkte.ch/>`_ for their help during the 0.6
+development cycle; it is people like them, who turn up and help with the boring
+and unglamarous parts of development, who make Open Source work.
+
+We're looking for specific help from the following people as we develop further:
+
+* Visual Design - We'd like to have a proper design system and identity for Takahē
+* Instance admins or developers of non-Mastodon servers - We need help debugging
+  federation issues, especially where we're causing errors we can't see elsewhere.
+
+If you'd like to help with these or other areas, see :doc:`contributing` to
+see how to get in touch.
 
 You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
 or use the image name ``jointakahe/takahe:0.6``.
