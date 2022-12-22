@@ -23,6 +23,7 @@
     <a id='skip-to-main' class='screenreader-text' href='#main-content'>Skip to Content</a>
     <a id='skip-to-nav' class='screenreader-text' href='#side-navigation'>Skip to Navigation</a>
     <main>
+        {% block body_main %}
         <header>
             <a class="logo" href="/">
                 <img src="{{ config.site_icon }}" width="32">
@@ -72,6 +73,7 @@
                     {% endblock %}
                 </div>
             </div>
+        {% endblock %}
         {% endblock %}
     </main>
 

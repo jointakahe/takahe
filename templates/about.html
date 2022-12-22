@@ -1,0 +1,19 @@
+{% extends "base_plain.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+    <section class="markdown">
+        <img class="banner" src="{{ config.site_banner }}">
+        {{ content }}
+    </section>
+
+    {% if not request.user.is_authenticated %}
+        <h1>Recent Posts</h1>
+        <section class="posts shell">
+            {% for post in posts %}
+                {% include "activities/_post.html" %}
+            {% endfor %}
+        </section>
+    {% endif %}
+{% endblock %}

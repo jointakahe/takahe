@@ -122,13 +122,22 @@ main {
     border-radius: 5px;
 }
 
+.no-sidebar main {
+    box-shadow: none;
+    max-width: 800px;
+}
+
 footer {
-    width: 900px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 0 0 10px 0;
     color: var(--color-text-duller);
     text-align: center;
     font-size: 90%;
+}
+
+.no-sidebar footer {
+    max-width: 800px;
 }
 
 footer a {
@@ -139,6 +148,10 @@ footer a {
 header {
     display: flex;
     height: 50px;
+}
+
+.no-sidebar header {
+    justify-content: center;
 }
 
 header .logo {
@@ -153,6 +166,10 @@ header .logo {
     color: var(--color-text-main);
     border-bottom: 3px solid rgba(0, 0, 0, 0);
     z-index: 10;
+}
+
+.no-sidebar header .logo {
+    border-radius: 5px;
 }
 
 header .logo:hover {
@@ -173,11 +190,19 @@ header menu {
     z-index: 10;
 }
 
+.no-sidebar header menu {
+    flex-grow: 0;
+}
+
 header menu a {
     padding: 10px 20px 4px 20px;
     color: #eee;
     line-height: 30px;
     border-bottom: 3px solid rgba(0, 0, 0, 0);
+}
+
+.no-sidebar header menu a {
+    margin: 0 10px;
 }
 
 body.has-banner header menu a {
@@ -188,6 +213,12 @@ body.has-banner header menu a {
 header menu a:hover,
 header menu a.selected {
     border-bottom: 3px solid var(--color-highlight);
+}
+
+.no-sidebar header menu a:hover:not(.logo) {
+    border-bottom: 3px solid rgba(0, 0, 0, 0);
+    background-color: var(--color-bg-menu);
+    border-radius: 5px;
 }
 
 header menu a i {
@@ -223,10 +254,6 @@ header menu a.identity {
     background: var(--color-bg-menu) !important;
     border-radius: 0 5px 0 0;
     width: 250px;
-}
-
-body.no-sidebar header menu a.identity {
-    display: none;
 }
 
 header menu a.identity i {
@@ -341,10 +368,6 @@ nav a i {
     border-radius: 0 0 5px 0;
 }
 
-body.no-sidebar .right-column {
-    display: none;
-}
-
 .right-column h2 {
     background: var(--color-highlight);
     padding: 8px 10px;
@@ -357,7 +380,43 @@ img.emoji {
     height: 0.8em;
 }
 
-/* Generic markdown styling */
+/* Generic markdown styling and sections */
+
+.no-sidebar section {
+    max-width: 700px;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    margin: 25px auto 45px auto;
+    padding: 5px 15px;
+}
+
+.no-sidebar section.shell {
+    background: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.no-sidebar #main-content>h1 {
+    max-width: 700px;
+    margin: 25px auto 5px auto;
+    font-weight: bold;
+    font-size: 120%;
+    text-transform: uppercase;
+    color: var(--color-text-main);
+}
+
+.no-sidebar h1+section {
+    margin-top: 0;
+}
+
+.markdown .banner {
+    width: calc(100% + 30px);
+    height: auto;
+    object-fit: cover;
+    margin: -5px -15px 10px -15px;
+    border-radius: 5px 0 0 0;
+    display: block;
+}
 
 .markdown p {
     margin: 4px 0 10px 0;
@@ -460,6 +519,11 @@ img.emoji {
 
 
 /* Forms */
+
+.no-sidebar form {
+    max-width: 500px;
+    margin: 40px auto;
+}
 
 fieldset {
     border: 0;
@@ -1256,14 +1320,14 @@ form .post {
         top: 50px;
     }
 
-    header {
+    body:not(.no-sidebar) header {
         height: var(--md-header-height);
         position: fixed;
         width: 100%;
         z-index: 9;
     }
 
-    header menu a {
+    body:not(.no-sidebar) header menu a {
         background: rgba(0, 0, 0, 0.5);
     }
 
@@ -1274,7 +1338,11 @@ form .post {
         border-radius: 0;
     }
 
-    footer {
+    .no-sidebar main {
+        margin: 20px auto 20px auto;
+    }
+
+    body:not(.no-sidebar) footer {
         position: fixed;
         bottom: 0;
         right: 0;
@@ -1284,12 +1352,12 @@ form .post {
         text-align: right;
     }
 
-    footer a {
+    body:not(.no-sidebar) footer a {
         display: block;
         border: 0;
     }
 
-    header .logo {
+    body:not(.no-sidebar) header .logo {
         border-radius: 0;
     }
 
@@ -1342,7 +1410,7 @@ form .post {
         display: none;
     }
 
-    footer {
+    body:not(.no-sidebar) footer {
         display: none;
     }
 

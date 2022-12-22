@@ -17,7 +17,6 @@ urlpatterns = [
     path("local/", timelines.Local.as_view(), name="local"),
     path("federated/", timelines.Federated.as_view(), name="federated"),
     path("search/", search.Search.as_view(), name="search"),
-    path("debug/json/", debug.JsonViewer.as_view(), name="debug_json"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
     path("explore/", explore.Explore.as_view(), name="explore"),
     path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
@@ -190,11 +189,7 @@ urlpatterns = [
     path("identity/select/", identity.SelectIdentity.as_view()),
     path("identity/create/", identity.CreateIdentity.as_view()),
     # Flat pages
-    path(
-        "about/",
-        core.FlatPage.as_view(title="About This Server", config_option="site_about"),
-        name="about",
-    ),
+    path("about/", core.About.as_view(), name="about"),
     path(
         "pages/privacy/",
         core.FlatPage.as_view(title="Privacy Policy", config_option="policy_privacy"),
@@ -210,6 +205,10 @@ urlpatterns = [
         core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
         name="rules",
     ),
+    # Debug aids
+    path("debug/json/", debug.JsonViewer.as_view(), name="debug_json"),
+    path("debug/404/", debug.NotFound.as_view(), name="not_found"),
+    path("debug/500/", debug.ServerError.as_view(), name="server_error"),
     # Media/image proxy
     path(
         "proxy/identity_icon/<identity_id>/",

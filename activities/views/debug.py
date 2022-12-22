@@ -4,7 +4,7 @@ import httpx
 from asgiref.sync import async_to_sync
 from django import forms
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 
 from core.ld import canonicalise
 from users.decorators import admin_required
@@ -46,3 +46,13 @@ class JsonViewer(FormView):
         context["result"] = result
         context["raw_result"] = raw_result
         return self.render_to_response(context)
+
+
+class NotFound(TemplateView):
+
+    template_name = "404.html"
+
+
+class ServerError(TemplateView):
+
+    template_name = "500.html"

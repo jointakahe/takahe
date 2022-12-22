@@ -35,7 +35,7 @@ class Signup(FormView):
     class form_class(forms.Form):
 
         email = forms.EmailField(
-            help_text="We will send a link to this email to set your password and create your account",
+            help_text="We will send a link to this email to create your account.",
         )
 
         def __init__(self, *args, **kwargs):

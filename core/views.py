@@ -7,33 +7,32 @@ from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView, View
 from django.views.static import serve
 
+from activities.services.timeline import TimelineService
 from activities.views.timelines import Home
 from core.decorators import cache_page
 from core.models import Config
-from users.models import Identity
 
 
 def homepage(request):
     if request.user.is_authenticated:
         return Home.as_view()(request)
     else:
-        return LoggedOutHomepage.as_view()(request)
+        return About.as_view()(request)
 
 
 @method_decorator(cache_page(public_only=True), name="dispatch")
-class LoggedOutHomepage(TemplateView):
+class About(TemplateView):
 
-    template_name = "index.html"
+    template_name = "about.html"
 
     def get_context_data(self):
+        service = TimelineService(self.request.identity)
         return {
-            "about": mark_safe(
+            "current_page": "about",
+            "content": mark_safe(
                 markdown_it.MarkdownIt().render(Config.system.site_about)
             ),
-            "identities": Identity.objects.filter(
-                local=True,
-                discoverable=True,
-            ).order_by("-created")[:20],
+            "posts": service.local()[:10],
         }
 
 
