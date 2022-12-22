@@ -8,7 +8,7 @@
         {{ content }}
     </section>
 
-    {% if not request.user.is_authenticated %}
+    {% if not request.user.is_authenticated and config.site_frontpage_posts %}
         <h1>Recent Posts</h1>
         <section class="posts shell">
             {% for post in posts %}
