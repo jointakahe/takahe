@@ -248,6 +248,18 @@ class Identity(StatorModel):
         else:
             return self.profile_uri
 
+    def all_absolute_profile_uris(self) -> list[str]:
+        """
+        Returns alist of profile URIs that are always absolute. For local addresses,
+        this includes the short and long form URIs.
+        """
+        if not self.local:
+            return [self.profile_uri]
+        return [
+            f"https://{self.domain.uri_domain}/@{self.username}/",
+            f"https://{self.domain.uri_domain}/@{self.username}@{self.domain_id}/",
+        ]
+
     def local_icon_url(self) -> RelativeAbsoluteUrl:
         """
         Returns an icon for use by us, with fallbacks to a placeholder
@@ -400,6 +412,36 @@ class Identity(StatorModel):
         return await Identity.objects.select_related("domain").aget(pk=self.pk)
 
     ### ActivityPub (outbound) ###
+
+    def to_webfinger(self):
+        aliases = self.all_absolute_profile_uris()
+
+        actor_links = []
+
+        if self.restriction != Identity.Restriction.blocked:
+            # Blocked users don't get a profile page
+            actor_links.append(
+                {
+                    "rel": "http://webfinger.net/rel/profile-page",
+                    "type": "text/html",
+                    "href": self.absolute_profile_uri(),
+                },
+            )
+
+        # TODO: How to handle Restriction.limited and Restriction.blocked?
+        #       Exposing the activity+json will allow migrating off server
+        actor_links.extend(
+            [
+                {"rel": "self", "type": "application/activity+json", "href": alias_uri}
+                for alias_uri in aliases
+            ]
+        )
+
+        return {
+            "subject": f"acct:{self.handle}",
+            "aliases": aliases,
+            "links": actor_links,
+        }
 
     def to_ap(self):
         response = {

@@ -108,28 +108,8 @@ class Webfinger(View):
             actor = SystemActor()
         else:
             actor = by_handle_or_404(request, handle)
-            handle = actor.handle
 
-        return JsonResponse(
-            {
-                "subject": f"acct:{handle}",
-                "aliases": [
-                    actor.absolute_profile_uri(),
-                ],
-                "links": [
-                    {
-                        "rel": "http://webfinger.net/rel/profile-page",
-                        "type": "text/html",
-                        "href": actor.absolute_profile_uri(),
-                    },
-                    {
-                        "rel": "self",
-                        "type": "application/activity+json",
-                        "href": actor.actor_uri,
-                    },
-                ],
-            }
-        )
+        return JsonResponse(actor.to_webfinger())
 
 
 @method_decorator(csrf_exempt, name="dispatch")
