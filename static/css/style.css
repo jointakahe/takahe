@@ -1118,14 +1118,13 @@ table.metadata td .emoji {
     width: 16px;
 }
 
-.post a.hashtag,
-.post.mini a.hashtag {
+.post .content a {
+    word-break: break-all;
     text-decoration: none;
-    color: var(--color-text-link);
+    color: var(--color-highlight);
 }
 
-.post a.hashtag:hover,
-.post.mini a.hashtag:hover {
+.post .content a:hover {
     text-decoration: underline;
 }
 
