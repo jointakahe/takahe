@@ -1227,7 +1227,8 @@ table.metadata td .emoji {
 }
 
 
-@media (max-width: 920px) or (display-mode: standalone) {
+@media (max-width: 920px),
+(display-mode: standalone) {
 
     html {
         scrollbar-color: var(--color-bg-main) var(--color-text-duller);

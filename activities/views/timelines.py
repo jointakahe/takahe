@@ -23,7 +23,7 @@ class Home(TemplateView):
 
     def get_context_data(self):
         events = TimelineService(self.request.identity).home()
-        paginator = Paginator(events, 50)
+        paginator = Paginator(events, 25)
         page_number = self.request.GET.get("page")
         context = {
             "interactions": PostInteraction.get_event_interactions(
@@ -48,7 +48,7 @@ class Tag(ListView):
         "current_page": "tag",
         "allows_refresh": True,
     }
-    paginate_by = 50
+    paginate_by = 25
 
     def get(self, request, hashtag, *args, **kwargs):
         tag = hashtag.lower().lstrip("#")
@@ -80,7 +80,7 @@ class Local(ListView):
         "current_page": "local",
         "allows_refresh": True,
     }
-    paginate_by = 50
+    paginate_by = 25
 
     def get_queryset(self):
         return TimelineService(self.request.identity).local()
@@ -101,7 +101,7 @@ class Federated(ListView):
         "current_page": "federated",
         "allows_refresh": True,
     }
-    paginate_by = 50
+    paginate_by = 25
 
     def get_queryset(self):
         return TimelineService(self.request.identity).federated()
@@ -122,7 +122,7 @@ class Notifications(ListView):
         "current_page": "notifications",
         "allows_refresh": True,
     }
-    paginate_by = 50
+    paginate_by = 25
     notification_types = {
         "followed": TimelineEvent.Types.followed,
         "boosted": TimelineEvent.Types.boosted,
