@@ -102,6 +102,10 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: MediaBackendUrl | None = None
 
+    #: S3 ACL to apply to all media objects when MEDIA_BACKEND is set to S3. If using a CDN
+    #: and/or have public access blocked to buckets this will likely need to be 'private'
+    MEDIA_BACKEND_S3_ACL: str = "public-read"
+
     #: Maximum filesize when uploading images. Increasing this may increase memory utilization
     #: because all images with a dimension greater than 2000px are resized to meet that limit, which
     #: is necessary for compatibility with Mastodon’s image proxy.
@@ -370,7 +374,7 @@ if SETUP.MEDIA_BACKEND:
         DEFAULT_FILE_STORAGE = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
-        AWS_DEFAULT_ACL = "public-read"
+        AWS_DEFAULT_ACL = SETUP.MEDIA_BACKEND_S3_ACL
         if parsed.username is not None:
             AWS_ACCESS_KEY_ID = parsed.username
             AWS_SECRET_ACCESS_KEY = urllib.parse.unquote(parsed.password)

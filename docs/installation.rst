@@ -176,7 +176,7 @@ To use a local directory, specify the media URL as ``local://``.
 You must then also specify:
 
 * ``TAKAHE_MEDIA_ROOT``, the file path to the local media Directory
-* ``TAKAHE_MEDIA_URL``, a fully-qualified URL prefix that serves that directory
+* ``TAKAHE_MEDIA_URL``, a fully-qualified URL prefix that serves that directory (must end in a slash)
 
 The media directory must be read-write accessible from every single container
 of Takahē - webserver and workers alike.
