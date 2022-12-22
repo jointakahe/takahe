@@ -1325,6 +1325,20 @@ table.metadata td .emoji {
     footer {
         display: none;
     }
+
+    #main-content {
+        padding: 0;
+    }
+
+    #side-navigation,
+    header menu .identity {
+        border-left: 1px solid var(--color-input-border);
+    }
+
+    .post {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--color-input-border);
+    }
 }
 
 /* Copy to clipboard action */
