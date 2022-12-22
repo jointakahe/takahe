@@ -644,6 +644,9 @@ class Identity(StatorModel):
         self.manually_approves_followers = document.get("manuallyApprovesFollowers")
         self.public_key = document.get("publicKey", {}).get("publicKeyPem")
         self.public_key_id = document.get("publicKey", {}).get("id")
+        # Sometimes the public key PEM is in a language construct?
+        if isinstance(self.public_key, dict):
+            self.public_key = self.public_key["@value"]
         self.icon_uri = get_first_image_url(document.get("icon", None))
         self.image_uri = get_first_image_url(document.get("image", None))
         self.discoverable = document.get("toot:discoverable", True)
