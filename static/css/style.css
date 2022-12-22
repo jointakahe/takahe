@@ -1262,7 +1262,6 @@ form .post {
         height: var(--md-header-height);
         position: fixed;
         width: 100%;
-        background-color: var(--color-bg-main);
         z-index: 9;
     }
 
@@ -1361,6 +1360,22 @@ form .post {
         margin-left: 0;
     }
 
+}
+
+
+@media (display-mode: standalone) {
+    html {
+        scrollbar-color: var(--color-bg-main) var(--color-text-duller);
+    }
+
+    html::-webkit-scrollbar {
+        background: var(--color-bg-menu);
+        width: 7px;
+    }
+
+    html::-webkit-scrollbar-thumb {
+        background: var(--color-text-dull);
+    }
 }
 
 /* Copy to clipboard action */
