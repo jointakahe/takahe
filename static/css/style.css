@@ -956,7 +956,7 @@ table.metadata td .emoji {
 .left-column .post {
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    padding: 10px;
+    padding: 14px;
 }
 
 .left-column form .post {
@@ -1005,7 +1005,7 @@ table.metadata td .emoji {
 }
 
 .post .summary {
-    margin: 12px 0 4px 64px;
+    margin: 12px 0 4px 0;
     padding: 3px 6px;
     border-radius: 3px;
     background: var(--color-bg-menu);
@@ -1026,18 +1026,13 @@ table.metadata td .emoji {
 }
 
 .post .edited {
-    margin-left: 64px;
     font-weight: lighter;
     color: var(--color-text-duller);
 }
 
-.post .content {
-    margin-left: 64px;
-}
-
 .post.mini .content,
 .post.mini .edited {
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 .post .content.hidden {
