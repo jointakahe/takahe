@@ -939,6 +939,9 @@ table.metadata td .emoji {
 
 .post {
     margin-bottom: 20px;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    padding: 14px;
 }
 
 .post.mini {
@@ -953,13 +956,7 @@ table.metadata td .emoji {
     overflow: hidden;
 }
 
-.left-column .post {
-    background: var(--color-bg-box);
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-}
-
-.left-column form .post {
+form .post {
     background-color: var(--color-bg-main);
 }
 
@@ -1005,7 +1002,7 @@ table.metadata td .emoji {
 }
 
 .post .summary {
-    margin: 12px 0 4px 64px;
+    margin: 12px 0 4px 0;
     padding: 3px 6px;
     border-radius: 3px;
     background: var(--color-bg-menu);
@@ -1026,18 +1023,13 @@ table.metadata td .emoji {
 }
 
 .post .edited {
-    margin-left: 64px;
     font-weight: lighter;
     color: var(--color-text-duller);
 }
 
-.post .content {
-    margin-left: 64px;
-}
-
 .post.mini .content,
 .post.mini .edited {
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 .post .content.hidden {
@@ -1065,40 +1057,43 @@ table.metadata td .emoji {
 }
 
 .post .actions {
-    position: relative;
-    float: right;
-    padding: 3px 5px 0 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0 0 0;
+    align-items: center;
+    align-content: center;
+    margin-bottom: -8px;
+}
+
+.post .post-action {
+    padding: 2px 4px;
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.post .post-action:hover {
+    background-color: var(--color-bg-main);
 }
 
 .post .actions a {
     text-align: center;
     cursor: pointer;
     color: var(--color-text-dull);
-    margin-right: 5px;
 }
 
 .post .actions a.menu {
-    width: 16px;
-    display: inline-block;
-}
-
-.post .actions a:hover {
-    color: var(--color-text-main);
-}
-
-.post .actions a.active {
-    color: var(--color-highlight);
 }
 
 .post .actions menu {
-    position: absolute;
     display: none;
-    top: 25px;
-    right: 10px;
     background-color: var(--color-bg-menu);
     border-radius: 5px;
     padding: 5px 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    position: absolute;
+    left: -130px;
+    top: -130px;
 }
 
 .post .actions menu.enabled {
@@ -1118,14 +1113,29 @@ table.metadata td .emoji {
     width: 16px;
 }
 
-.post a.hashtag,
-.post.mini a.hashtag {
-    text-decoration: none;
-    color: var(--color-text-link);
+.post .actions .dropdown {
+    position: relative;
 }
 
-.post a.hashtag:hover,
-.post.mini a.hashtag:hover {
+.post .actions a:hover {
+    color: var(--color-text-main);
+}
+
+.post .actions a.active {
+    color: var(--color-highlight);
+}
+
+.post .handle .link:hover {
+    text-decoration: underline;
+}
+
+.post .content a {
+    word-break: break-all;
+    text-decoration: none;
+    color: var(--color-highlight);
+}
+
+.post .content a:hover {
     text-decoration: underline;
 }
 
@@ -1167,7 +1177,7 @@ table.metadata td .emoji {
 .mention-banner,
 .follow-banner,
 .like-banner {
-    padding: 0 0 3px 5px;
+    padding: 3px 0 3px 10px;
 }
 
 .boost-banner .emoji,
@@ -1327,6 +1337,20 @@ table.metadata td .emoji {
 
     footer {
         display: none;
+    }
+
+    #main-content {
+        padding: 0;
+    }
+
+    #side-navigation,
+    header menu .identity {
+        border-left: 1px solid var(--color-input-border);
+    }
+
+    .post {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--color-input-border);
     }
 }
 

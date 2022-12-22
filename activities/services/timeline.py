@@ -1,6 +1,6 @@
 from django.db import models
 
-from activities.models import Hashtag, Post, TimelineEvent
+from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
 from users.models import Identity
 
 
@@ -32,6 +32,20 @@ class TimelineService:
                 "subject_post__attachments",
                 "subject_post__mentions",
                 "subject_post__emojis",
+            )
+            .annotate(
+                like_count=models.Count(
+                    "subject_post__interactions",
+                    filter=models.Q(
+                        subject_post__interactions__type=PostInteraction.Types.like
+                    ),
+                ),
+                boost_count=models.Count(
+                    "subject_post__interactions",
+                    filter=models.Q(
+                        subject_post__interactions__type=PostInteraction.Types.boost
+                    ),
+                ),
             )
             .order_by("-published")
         )
