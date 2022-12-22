@@ -92,9 +92,9 @@ class ContentRenderer:
             html = self.imageify_emojis(html, identity=post.author)
         return mark_safe(html)
 
-    def render_identity(self, html: str, identity, strip: bool = False) -> str:
+    def render_identity_summary(self, html: str, identity, strip: bool = False) -> str:
         """
-        Given identity field HTML, normalises it and renders it for presentation.
+        Given identity summary HTML, normalises it and renders it for presentation.
         """
         if not html:
             return ""
@@ -103,6 +103,20 @@ class ContentRenderer:
         else:
             html = sanitize_html(html)
         html = self.linkify_hashtags(html, identity=identity)
+        if self.local:
+            html = self.imageify_emojis(html, identity=identity)
+        return mark_safe(html)
+
+    def render_identity_data(self, html: str, identity, strip: bool = False) -> str:
+        """
+        Given name/basic value HTML, normalises it and renders it for presentation.
+        """
+        if not html:
+            return ""
+        if strip:
+            html = strip_html(html)
+        else:
+            html = sanitize_html(html)
         if self.local:
             html = self.imageify_emojis(html, identity=identity)
         return mark_safe(html)

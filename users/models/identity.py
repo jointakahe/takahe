@@ -283,7 +283,7 @@ class Identity(StatorModel):
 
     @property
     def safe_summary(self):
-        return ContentRenderer(local=True).render_identity(self.summary, self)
+        return ContentRenderer(local=True).render_identity_summary(self.summary, self)
 
     @property
     def safe_metadata(self):
@@ -293,8 +293,8 @@ class Identity(StatorModel):
             return []
         return [
             {
-                "name": renderer.render_identity(data["name"], self, strip=True),
-                "value": renderer.render_identity(data["value"], self, strip=True),
+                "name": renderer.render_identity_data(data["name"], self, strip=True),
+                "value": renderer.render_identity_data(data["value"], self, strip=True),
             }
             for data in self.metadata
         ]
@@ -367,7 +367,7 @@ class Identity(StatorModel):
         """
         Return the name_or_handle with any HTML substitutions made
         """
-        return ContentRenderer(local=True).render_identity(
+        return ContentRenderer(local=True).render_identity_data(
             self.name_or_handle, self, strip=True
         )
 
