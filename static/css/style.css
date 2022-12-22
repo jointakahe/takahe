@@ -1118,6 +1118,10 @@ table.metadata td .emoji {
     width: 16px;
 }
 
+.post .handle .link:hover {
+    text-decoration: underline;
+}
+
 .post .content a {
     word-break: break-all;
     text-decoration: none;
