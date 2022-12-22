@@ -1,7 +1,7 @@
-Intercompatibility
-==================
+Interoperability
+================
 
-Takahē aims to be compatible with every modern Fediverse server, and Mastodon
+Takahē aims to be compatible with every modern Fediverse server and Mastodon
 client app, but the range of options means that we cannot exhaustively test
 with everything.
 
@@ -37,13 +37,19 @@ These servers have been tried and appear to initally work, but more testing is
 needed:
 
 * Akkoma
-* Gotosocial
+
 * Peertube
+
 * Pixelfed
+   * Replies may not federate?
+
 * Pleroma
 
 
 These servers have the beginnings of support but known bugs that need fixing:
+
+* Gotosocial
+   * Issues pulling accounts
 
 * Mitra
    * Sends Follow Accept messages in a compact format we don't accept yet
