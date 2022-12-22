@@ -1165,7 +1165,7 @@ table.metadata td .emoji {
 .mention-banner,
 .follow-banner,
 .like-banner {
-    padding: 0 0 3px 5px;
+    padding: 3px 0 3px 10px;
 }
 
 .boost-banner .emoji,
