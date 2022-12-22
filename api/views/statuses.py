@@ -94,7 +94,9 @@ def status_context(request, id: str):
         ancestors + descendants, request.identity
     )
     return {
-        "ancestors": [p.to_mastodon_json(interactions=interactions) for p in ancestors],
+        "ancestors": [
+            p.to_mastodon_json(interactions=interactions) for p in reversed(ancestors)
+        ],
         "descendants": [
             p.to_mastodon_json(interactions=interactions) for p in descendants
         ],
