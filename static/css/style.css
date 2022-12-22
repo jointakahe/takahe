@@ -1064,6 +1064,17 @@ form .post {
     align-content: center;
 }
 
+.post .post-action {
+    padding: 2px 4px;
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.post .post-action:hover {
+    background-color: var(--color-bg-main);
+}
+
 .post .actions a {
     text-align: center;
     cursor: pointer;
