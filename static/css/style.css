@@ -939,6 +939,9 @@ table.metadata td .emoji {
 
 .post {
     margin-bottom: 20px;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    padding: 14px 14px 0 14px;
 }
 
 .post.mini {
@@ -953,13 +956,7 @@ table.metadata td .emoji {
     overflow: hidden;
 }
 
-.left-column .post {
-    background: var(--color-bg-box);
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    padding: 14px;
-}
-
-.left-column form .post {
+form .post {
     background-color: var(--color-bg-main);
 }
 
@@ -1060,40 +1057,31 @@ table.metadata td .emoji {
 }
 
 .post .actions {
-    position: relative;
-    float: right;
-    padding: 3px 5px 0 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    align-items: center;
+    align-content: center;
 }
 
 .post .actions a {
     text-align: center;
     cursor: pointer;
     color: var(--color-text-dull);
-    margin-right: 5px;
 }
 
 .post .actions a.menu {
-    width: 16px;
-    display: inline-block;
-}
-
-.post .actions a:hover {
-    color: var(--color-text-main);
-}
-
-.post .actions a.active {
-    color: var(--color-highlight);
 }
 
 .post .actions menu {
-    position: absolute;
     display: none;
-    top: 25px;
-    right: 10px;
     background-color: var(--color-bg-menu);
     border-radius: 5px;
     padding: 5px 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    position: absolute;
+    left: -130px;
+    top: -130px;
 }
 
 .post .actions menu.enabled {
@@ -1111,6 +1099,18 @@ table.metadata td .emoji {
 .post .actions menu a i {
     margin-right: 4px;
     width: 16px;
+}
+
+.post .actions .dropdown {
+    position: relative;
+}
+
+.post .actions a:hover {
+    color: var(--color-text-main);
+}
+
+.post .actions a.active {
+    color: var(--color-highlight);
 }
 
 .post .handle .link:hover {
