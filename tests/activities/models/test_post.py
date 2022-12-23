@@ -77,6 +77,7 @@ def test_linkify_mentions_remote(
         local=True,
     )
     assert post.safe_content_remote() == "<p>@test@example.com, welcome!</p>"
+
     # Test case insensitivity (remote)
     post = Post.objects.create(
         content="<p>Hey @TeSt</p>",
@@ -87,6 +88,18 @@ def test_linkify_mentions_remote(
     assert (
         post.safe_content_remote()
         == '<p>Hey <a href="https://remote.test/@test/">@test</a></p>'
+    )
+
+    # Test trailing dot (remote)
+    post = Post.objects.create(
+        content="<p>Hey @test@remote.test.</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(remote_identity)
+    assert (
+        post.safe_content_remote()
+        == '<p>Hey <a href="https://remote.test/@test/">@test</a>.</p>'
     )
 
     # Test that collapsing only applies to the first unique, short username

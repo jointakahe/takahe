@@ -342,7 +342,7 @@ class Post(StatorModel):
         PostTypeData.parse_obj(value)
 
     mention_regex = re.compile(
-        r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
+        r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_\.]+[\w\d\-_]+)?)"
     )
 
     def linkify_mentions(self, content: str, local: bool = False) -> str:
