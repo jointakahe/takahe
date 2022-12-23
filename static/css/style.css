@@ -99,6 +99,12 @@ td a {
     --color-button-main: #444b5d;
     --color-button-main-hover: #515d7c;
     --color-button-disabled: #7c9c97;
+
+    --sm-header-height: 50px;
+    --sm-sidebar-width: 50px;
+
+    --md-sidebar-width: 250px;
+    --md-header-height: 50px;
 }
 
 body {
@@ -330,7 +336,7 @@ nav a i {
 }
 
 .right-column {
-    width: 250px;
+    width: var(--md-sidebar-width);
     background: var(--color-bg-menu);
     border-radius: 0 0 5px 0;
 }
@@ -1236,45 +1242,39 @@ form .post {
 
 @media (max-width: 920px),
 (display-mode: standalone) {
-
-    html {
-        scrollbar-color: var(--color-bg-main) var(--color-text-duller);
-    }
-
-    div::-webkit-scrollbar {
-        background: var(--color-bg-main);
-        width: 7px;
-    }
-
-    div::-webkit-scrollbar-thumb {
-        background: var(--color-bg-main);
-    }
-
-    div:hover::-webkit-scrollbar-thumb {
-        background: var(--color-text-dull);
-    }
-
     div.columns {
         height: calc(100vh - 50px);
         align-items: stretch;
     }
 
-    .left-column,
+    .left-column {
+        margin: var(--md-header-height) var(--md-sidebar-width) 0 0;
+    }
+
     .right-column {
-        overflow-y: auto;
-        overflow-x: hidden;
+        width: var(--md-sidebar-width);
+        position: fixed;
+        height: 100%;
+        right: 0;
+    }
+
+    header {
+        height: var(--md-header-height);
+        position: fixed;
+        width: 100%;
+        background-color: var(--color-bg-main);
+        z-index: 9;
     }
 
     main {
         width: 100%;
-        overflow: hidden;
         margin: 0;
         box-shadow: none;
         border-radius: 0;
     }
 
     footer {
-        position: absolute;
+        position: fixed;
         bottom: 0;
         right: 0;
         width: 250px;
@@ -1296,8 +1296,12 @@ form .post {
 
 
 @media (max-width: 750px) {
+    header {
+        height: var(--sm-header-height);
+    }
+
     header menu a.identity {
-        width: 50px;
+        width: var(--sm-sidebar-width);
         padding: 10px 10px 0 0;
         font-size: 0;
     }
@@ -1306,8 +1310,13 @@ form .post {
         font-size: 22px;
     }
 
+    .left-column {
+        padding: 8px;
+        margin: var(--sm-header-height) var(--sm-sidebar-width) 0 0;
+    }
+
     .right-column {
-        width: 50px;
+        width: var(--sm-sidebar-width);
     }
 
     .right-column nav {
@@ -1334,10 +1343,6 @@ form .post {
 
     footer {
         display: none;
-    }
-
-    .left-column {
-        padding: 8px;
     }
 
     .post {
