@@ -86,6 +86,25 @@ database table. As part of this change, when you upgrade, all users will be
 signed out, but no data will be lost - they just need to sign in again.
 
 
+Signup Settings
+~~~~~~~~~~~~~~~
+
+The previous "invite only signups mode" option has been removed - invites are
+now always allowed to sign up, and the only option is to disable open signup
+or not.
+
+As a result, your site may default to open signups after upgrade - check the
+setting and ensure signups are disabled if you want invite-only.
+
+
+About Page Format
+~~~~~~~~~~~~~~~~~
+
+The about page and homepage have been merged and have a new format (and
+Markdown is now supported). You should check your layout and formatting still
+looks good.
+
+
 Storage Settings
 ~~~~~~~~~~~~~~~~
 
