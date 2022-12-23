@@ -1090,16 +1090,13 @@ form .post {
     background-color: var(--color-bg-main);
 }
 
-.post .actions a.menu {}
-
 .post .actions menu {
     display: none;
     background-color: var(--color-bg-menu);
     border-radius: 5px;
-    padding: 5px 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     position: absolute;
-    right: 0px;
+    right: 0;
     bottom: 35px;
 }
 
@@ -1111,8 +1108,8 @@ form .post {
 .post .actions menu a {
     text-align: left;
     display: block;
-    width: 185px;
     font-size: 15px;
+    padding: 4px 10px;
 }
 
 .post .actions menu a i {
