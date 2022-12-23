@@ -3,7 +3,6 @@ import time
 import pytest
 from django.conf import settings
 
-from activities.models import Emoji
 from api.models import Application, Token
 from core.models import Config
 from stator.runner import StatorModel, StatorRunner
@@ -85,16 +84,6 @@ def client_with_identity(client, identity, user):
     session.save()
     client.cookies[settings.SESSION_COOKIE_NAME] = session.session_key
     return client
-
-
-@pytest.fixture
-@pytest.mark.django_db
-def emoji_locals():
-    Emoji.locals = Emoji.load_locals()
-    Emoji.__forced__ = True
-    yield Emoji.locals
-    Emoji.__forced__ = False
-    del Emoji.locals
 
 
 @pytest.fixture

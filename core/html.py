@@ -89,7 +89,11 @@ class ContentRenderer:
         html = self.linkify_mentions(html, post=post)
         html = self.linkify_hashtags(html, identity=post.author)
         if self.local:
-            html = self.imageify_emojis(html, identity=post.author)
+            html = self.imageify_emojis(
+                html,
+                identity=post.author,
+                emojis=post.emojis.all(),
+            )
         return mark_safe(html)
 
     def render_identity_summary(self, html: str, identity, strip: bool = False) -> str:
@@ -182,7 +186,9 @@ class ContentRenderer:
         )
         return linker.linkify(html)
 
-    def imageify_emojis(self, html: str, identity, include_local: bool = True):
+    def imageify_emojis(
+        self, html: str, identity, include_local: bool = True, emojis=None
+    ):
         """
         Find :emoji: in content and convert to <img>. If include_local is True,
         the local emoji will be used as a fallback for any shortcodes not defined
@@ -190,18 +196,26 @@ class ContentRenderer:
         """
         from activities.models import Emoji
 
-        emoji_set = Emoji.for_domain(identity.domain)
-        if include_local:
-            emoji_set.extend(Emoji.for_domain(None))
-
-        possible_matches = {
-            emoji.shortcode: emoji.as_html() for emoji in emoji_set if emoji.is_usable
-        }
+        # If precached emojis were passed, prep them
+        cached_emojis = {}
+        if emojis:
+            for emoji in emojis:
+                cached_emojis[emoji.shortcode] = emoji
 
         def replacer(match):
-            fullcode = match.group(1).lower()
-            if fullcode in possible_matches:
-                return possible_matches[fullcode]
+            shortcode = match.group(1).lower()
+            if shortcode in cached_emojis:
+                return cached_emojis[shortcode].as_html()
+            try:
+                emoji = Emoji.get_by_domain(shortcode, identity.domain)
+                if emoji.is_usable:
+                    return emoji.as_html()
+            except Emoji.DoesNotExist:
+                if include_local:
+                    try:
+                        return Emoji.get_by_domain(shortcode, identity.domain).as_html()
+                    except Emoji.DoesNotExist:
+                        pass
             return match.group()
 
         return Emoji.emoji_regex.sub(replacer, html)

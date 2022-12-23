@@ -38,7 +38,7 @@ def test_sanitize_post():
 
 
 @pytest.mark.django_db
-def test_link_preservation(emoji_locals):
+def test_link_preservation():
     """
     We want to:
      - Preserve incoming links from other servers
@@ -53,6 +53,7 @@ def test_link_preservation(emoji_locals):
     fake_post = Mock()
     fake_post.mentions.all.return_value = [fake_mention]
     fake_post.author.domain.uri_domain = "example.com"
+    fake_post.emojis.all.return_value = []
 
     assert (
         renderer.render_post(

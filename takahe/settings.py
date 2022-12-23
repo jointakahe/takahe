@@ -205,7 +205,6 @@ MIDDLEWARE = [
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
-    "activities.middleware.EmojiDefaultsLoadingMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"
