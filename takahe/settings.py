@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     #: Should django run in debug mode?
     DEBUG: bool = False
 
+    # Should the debug toolbar be loaded?
+    DEBUG_TOOLBAR: bool = False
+
     #: Set a secret key used for signing values such as sessions. Randomized
     #: by default, so you'll logout everytime the process restarts.
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_hex(128))
@@ -313,7 +316,7 @@ MEDIA_ROOT = SETUP.MEDIA_ROOT
 MAIN_DOMAIN = SETUP.MAIN_DOMAIN
 
 # Debug toolbar should only be loaded at all when debug is on
-if DEBUG:
+if DEBUG and SETUP.DEBUG_TOOLBAR:
     INSTALLED_APPS.append("debug_toolbar")
     DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "core.middleware.show_toolbar"}
     MIDDLEWARE.insert(8, "debug_toolbar.middleware.DebugToolbarMiddleware")
