@@ -163,6 +163,10 @@ urlpatterns = [
     path("@<handle>/report/", report.SubmitReport.as_view()),
     path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
     path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
+    re_path(
+        r"^users?/(?P<handle>[a-zA-Z0-9_-].*)/?$",
+        identity.ViewIdentityAlt.as_view(),
+    ),
     # Posts
     path("compose/", compose.Compose.as_view(), name="compose"),
     path(

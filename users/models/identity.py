@@ -10,7 +10,7 @@ from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.functional import lazy
 
-from core.exceptions import ActorMismatchError
+from core.exceptions import ActorMismatchError, capture_message
 from core.html import ContentRenderer, strip_html
 from core.ld import (
     canonicalise,
@@ -256,8 +256,8 @@ class Identity(StatorModel):
         if not self.local:
             return [self.profile_uri]
         return [
-            f"https://{self.domain.uri_domain}/@{self.username}/",
             f"https://{self.domain.uri_domain}/@{self.username}@{self.domain_id}/",
+            f"https://{self.domain.uri_domain}/@{self.username}/",
         ]
 
     def local_icon_url(self) -> RelativeAbsoluteUrl:
@@ -346,6 +346,22 @@ class Identity(StatorModel):
         try:
             return cls.objects.get(actor_uri=uri)
         except cls.DoesNotExist:
+            # TODO: PR Review focus on Security Implications
+            try:
+                # Try finding it by their alias
+                matches = list(
+                    cls.objects.filter(also_known_as__contains=uri).order_by(
+                        "local", "-created"
+                    )
+                )
+                if matches:
+                    capture_message(
+                        f"by_actor_uri fallback to also_known_as found {len(matches)} matches: {matches}"
+                    )
+                    if len(matches) == 1:
+                        return matches[0]
+            except IndexError:
+                pass
             if create:
                 if transient:
                     # Some code (like inbox fetching) doesn't need this saved
@@ -411,10 +427,14 @@ class Identity(StatorModel):
         """
         return await Identity.objects.select_related("domain").aget(pk=self.pk)
 
-    ### ActivityPub (outbound) ###
+    ### Webfinger (outbound) ###
 
     def to_webfinger(self):
-        aliases = self.all_absolute_profile_uris()
+        aliases = [self.absolute_profile_uri()]
+
+        # TODO: Should this filter down to only local domains?
+        # if self.also_known_as:
+        #     aliases.extend(self.also_known_as)
 
         actor_links = []
 
@@ -432,8 +452,11 @@ class Identity(StatorModel):
         #       Exposing the activity+json will allow migrating off server
         actor_links.extend(
             [
-                {"rel": "self", "type": "application/activity+json", "href": alias_uri}
-                for alias_uri in aliases
+                {
+                    "rel": "self",
+                    "type": "application/activity+json",
+                    "href": self.actor_uri,
+                }
             ]
         )
 
@@ -442,6 +465,8 @@ class Identity(StatorModel):
             "aliases": aliases,
             "links": actor_links,
         }
+
+    ### ActivityPub (outbound) ###
 
     def to_ap(self):
         response = {
@@ -627,6 +652,21 @@ class Identity(StatorModel):
         document = canonicalise(response.json(), include_security=True)
         if "type" not in document:
             return False
+        # Look for a change in actor_uri, try to adjust ours if it's safe to do so
+        orig_actor_uri = self.actor_uri
+        new_actor_uri = document.get("id")
+        if new_actor_uri and new_actor_uri != orig_actor_uri:
+            try:
+                Identity.by_actor_uri(new_actor_uri)
+            except Identity.DoesNotExist:
+                capture_message(
+                    f"actor_uri mismatch in fetch_actor (no conflict). DB has '{orig_actor_uri}', fetch returned '{new_actor_uri}'"
+                )
+            else:
+                capture_message(
+                    f"actor_uri mismatch in fetch_actor (with conflict). DB has '{orig_actor_uri}', fetch returned '{new_actor_uri}'"
+                )
+
         self.name = document.get("name")
         self.profile_uri = document.get("url")
         self.inbox_uri = document.get("inbox")

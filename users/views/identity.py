@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.syndication.views import Feed
 from django.core import validators
+from django.db import models
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -94,6 +95,62 @@ class ViewIdentity(ListView):
             if reverse_follow and reverse_follow.state in FollowStates.group_active():
                 context["reverse_follow"] = reverse_follow
         return context
+
+
+@method_decorator(vary_on_headers("Accept"), name="dispatch")
+@method_decorator(cache_page_by_ap_json(public_only=True), name="dispatch")
+class ViewIdentityAlt(ViewIdentity):
+    """
+    This view serves as a shim when acquiring domains/accounts from various
+    other flavors of ActivityPub servers.
+
+    To act as a shim:
+
+        * a local Domain record must exist
+        * the Identity has the old actor_uri value in also_known_as
+    """
+
+    def get(self, request, handle):
+
+        host = request.headers["host"]
+        # lookup domain and service domain
+        try:
+            domain = Domain.get_domain(host)
+            if not domain.local:
+                # We only care about ones we're claiming to host
+                raise Domain.DoesNotExist()
+        except Domain.DoesNotExist:
+            # We're servicing a domain we don't know about
+            raise Http404("Local Identity action against an unknown Domain")
+
+        handle = handle.rstrip("/").lower()
+
+        try:
+            self.identity = Identity.objects.get(username=handle, domain=domain)
+        except Identity.DoesNotExist:
+            # Now try also_known_as for a few combinations
+            matches = list(
+                Identity.objects.filter(
+                    models.Q(
+                        also_known_as__contains=f"https://{host}{request.get_full_path()}"
+                    )
+                    | models.Q(
+                        also_known_as__contains=f"https://{host}{request.get_full_path()}/"
+                    )
+                )
+            )
+            if matches and len(matches) == 1:
+                self.identity = matches[0]
+            else:
+                raise Http404("Multiple also_known_as matches")
+
+        # If they're coming in looking for JSON, they want the actor
+        if request.ap_json:
+            # Return actor info
+            return self.serve_actor(self.identity)
+        else:
+            # Permanent forward to current profile
+            return redirect(self.identity.absolute_profile_uri(), permanent=True)
 
 
 @method_decorator(
