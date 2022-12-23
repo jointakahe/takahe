@@ -1069,6 +1069,10 @@ form .post {
     max-width: 100%;
 }
 
+.post .attachments video {
+    max-width: 100%;
+}
+
 .post .actions {
     display: flex;
     position: relative;
