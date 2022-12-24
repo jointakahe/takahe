@@ -7,7 +7,6 @@ import urlman
 from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.db import IntegrityError, models
-from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.functional import lazy
 from lxml import etree
@@ -467,7 +466,7 @@ class Identity(StatorModel):
         if self.name:
             response["name"] = self.name
         if self.summary:
-            response["summary"] = str(linebreaks_filter(self.summary))
+            response["summary"] = self.summary
         if self.icon:
             response["icon"] = {
                 "type": "Image",
