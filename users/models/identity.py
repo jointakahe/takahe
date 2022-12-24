@@ -576,7 +576,7 @@ class Identity(StatorModel):
                 # In the case of anything other than a success, we'll still try
                 # hitting the webfinger URL on the domain we were given to handle
                 # incorrectly setup servers.
-                if response.status_code == 200:
+                if response.status_code == 200 and response.content.strip():
                     tree = etree.fromstring(response.content)
                     template = tree.xpath(
                         "string(.//*[local-name() = 'Link' and @rel='lrdd']/@template)"
