@@ -21,6 +21,10 @@ class PostInteractionStates(StateGraph):
     undone.transitions_to(undone_fanned_out)
 
     @classmethod
+    def group_active(cls):
+        return [cls.new, cls.fanned_out]
+
+    @classmethod
     async def handle_new(cls, instance: "PostInteraction"):
         """
         Creates all needed fan-out objects for a new PostInteraction.

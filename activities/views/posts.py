@@ -25,7 +25,10 @@ class Individual(TemplateView):
         self.identity = by_handle_or_404(self.request, handle, local=False)
         if self.identity.blocked:
             raise Http404("Blocked user")
-        self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
+        self.post_obj = get_object_or_404(
+            PostService.queryset().filter(author=self.identity),
+            pk=post_id,
+        )
         if self.post_obj.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
             raise Http404("Deleted post")
         # If they're coming in looking for JSON, they want the actor
@@ -73,13 +76,16 @@ class Like(View):
     def post(self, request, handle, post_id):
         identity = by_handle_or_404(self.request, handle, local=False)
         post = get_object_or_404(
-            identity.posts.prefetch_related("attachments"), pk=post_id
+            PostService.queryset().filter(author=identity),
+            pk=post_id,
         )
         service = PostService(post)
         if self.undo:
-            service.unlike_as(self.request.identity)
+            service.unlike_as(request.identity)
+            post.like_count = max(0, post.like_count - 1)
         else:
-            service.like_as(self.request.identity)
+            service.like_as(request.identity)
+            post.like_count += 1
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(
@@ -103,12 +109,17 @@ class Boost(View):
 
     def post(self, request, handle, post_id):
         identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(identity.posts, pk=post_id)
+        post = get_object_or_404(
+            PostService.queryset().filter(author=identity),
+            pk=post_id,
+        )
         service = PostService(post)
         if self.undo:
             service.unboost_as(request.identity)
+            post.boost_count = max(0, post.boost_count - 1)
         else:
             service.boost_as(request.identity)
+            post.boost_count += 1
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(
