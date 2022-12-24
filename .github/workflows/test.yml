@@ -58,6 +58,22 @@ jobs:
           TAKAHE_MAIN_DOMAIN: "example.com"
         run: |
           python -m pytest
+      - name: set PY
+        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit
         run: |
           pre-commit run -a --show-diff-on-failure
+      - name: Save changes made by pre-commit
+        if:
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "Takahe Workflow"
+            git config user.email "<>"
+            git commit -am "Saving automated pre-commit changes."
+            git push
+          fi
+        shell: bash
