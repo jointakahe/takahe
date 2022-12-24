@@ -583,7 +583,7 @@ class Identity(StatorModel):
                     )
                     if template:
                         webfinger_url = template
-        except httpx.RequestError:
+        except (httpx.RequestError, etree.ParseError):
             pass
 
         try:
