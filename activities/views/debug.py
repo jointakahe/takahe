@@ -56,3 +56,18 @@ class NotFound(TemplateView):
 class ServerError(TemplateView):
 
     template_name = "500.html"
+
+
+@method_decorator(admin_required, name="dispatch")
+class OauthAuthorize(TemplateView):
+
+    template_name = "api/oauth_authorize.html"
+
+    def get_context_data(self):
+        return {
+            "application": {"name": "Fake Application", "client_id": "fake"},
+            "redirect_uri": "",
+            "scope": "read write push",
+            "identities": self.request.user.identities.all(),
+            "code": "12345abcde",
+        }

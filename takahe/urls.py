@@ -211,9 +211,10 @@ urlpatterns = [
         name="rules",
     ),
     # Debug aids
-    path("debug/json/", debug.JsonViewer.as_view(), name="debug_json"),
-    path("debug/404/", debug.NotFound.as_view(), name="not_found"),
-    path("debug/500/", debug.ServerError.as_view(), name="server_error"),
+    path("debug/json/", debug.JsonViewer.as_view()),
+    path("debug/404/", debug.NotFound.as_view()),
+    path("debug/500/", debug.ServerError.as_view()),
+    path("debug/oauth_authorize/", debug.OauthAuthorize.as_view()),
     # Media/image proxy
     path(
         "proxy/identity_icon/<identity_id>/",

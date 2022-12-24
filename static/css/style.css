@@ -426,6 +426,11 @@ img.emoji {
     margin: 4px 0 10px 0;
 }
 
+p.authorization-code {
+    margin: 10px 0;
+    font-size: 140%;
+}
+
 /* Icon menus */
 
 .icon-menu .option {

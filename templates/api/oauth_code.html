@@ -1,7 +1,11 @@
-{% extends "base.html" %}
+{% extends "base_plain.html" %}
 
 {% block title %}Authorization Code{% endblock %}
 
 {% block content %}
-    <p>To continue, provide this code to your application: <tt>{{ code }}</tt></p>
+    <h1>Authorization Code</h1>
+    <section>
+        <p>To continue, provide this code to your application:</p>
+        <p class="authorization-code">{{ code }}</p>
+    </section>
 {% endblock %}
