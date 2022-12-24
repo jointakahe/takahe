@@ -1,4 +1,4 @@
-import pprint
+import json
 
 import httpx
 from asgiref.sync import async_to_sync
@@ -23,28 +23,42 @@ class JsonViewer(FormView):
         )
 
     def form_valid(self, form):
-        raw_result = ""
         uri = form.cleaned_data["uri"]
         if "://" not in uri:
             uri = "https://" + uri
+
+        # Render results
+        context = self.get_context_data(form=form)
+
         try:
             response = async_to_sync(SystemActor().signed_request)(
                 method="get",
                 uri=uri,
             )
-        except httpx.RequestError:
-            result = "Request Error"
+        except httpx.RequestError as ex:
+            result = f"Request Error: {str(ex)}"
         else:
-            raw_result = response.text
+            context.update(
+                {
+                    "status_code": response.status_code,
+                    "content_type": response.headers["content-type"],
+                    "num_bytes_downloaded": response.num_bytes_downloaded,
+                    "charset_encoding": response.charset_encoding,
+                    "raw_result": response.text,
+                }
+            )
+
             if response.status_code >= 400:
                 result = f"Error response: {response.status_code}\n{response.content}"
             else:
-                document = canonicalise(response.json(), include_security=True)
-                result = pprint.pformat(document)
-        # Render results
-        context = self.get_context_data(form=form)
+                try:
+                    document = canonicalise(response.json(), include_security=True)
+                except json.JSONDecodeError as ex:
+                    result = str(ex)
+                else:
+                    result = json.dumps(document, indent=4, sort_keys=True)
+                    # result = pprint.pformat(document)
         context["result"] = result
-        context["raw_result"] = raw_result
         return self.render_to_response(context)
 
 
