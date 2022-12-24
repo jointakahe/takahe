@@ -45,6 +45,12 @@
                 <a href="{{ attachment.full_url.relative }}" class="image">
                   <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" loading="lazy" />
                 </a>
+              {% elif attachment.is_video %}
+                <a href="{{ attachment.full_url.relative }}" class="video">
+                  <video muted controls loop>
+                    <source src="{{ attachment.full_url.relative }}">
+                  </video>
+                </a>
               {% endif %}
             {% endfor %}
           </div>

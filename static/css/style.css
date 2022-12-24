@@ -1127,18 +1127,24 @@ form .post {
 
 .post .attachments {
     padding-top: 4px;
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    grid-column-gap: 4px;
+    grid-row-gap: 4px;
 }
 
-.post .attachments a.image {
-    display: inline-block;
-    border: 3px solid var(--color-bg-menu);
-    border-radius: 3px;
+.post .attachments a {
+    display: block;
+    width: 100%;
 }
 
 .post .attachments a.image img {
     display: block;
-    max-width: 200px;
-    max-height: 200px;
+    max-width: 100%;
+}
+
+.post .attachments video {
+    max-width: 100%;
 }
 
 .post .actions {
@@ -1327,7 +1333,11 @@ form .post {
         position: fixed;
         height: 100%;
         right: 0;
-        top: 50px;
+        top: var(--md-header-height);
+    }
+
+    .right-column nav {
+        padding: 0;
     }
 
     body:not(.no-sidebar) header {
@@ -1396,6 +1406,7 @@ form .post {
 
     .right-column {
         width: var(--sm-sidebar-width);
+        top: var(--sm-header-height);
     }
 
     .right-column nav {

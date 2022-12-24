@@ -72,6 +72,9 @@ class PostAttachment(StatorModel):
             "image/webp",
         ]
 
+    def is_video(self):
+        return self.mimetype in ["video/webm"]
+
     def thumbnail_url(self) -> RelativeAbsoluteUrl:
         if self.thumbnail:
             return RelativeAbsoluteUrl(self.thumbnail.url)
