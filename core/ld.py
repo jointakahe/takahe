@@ -451,6 +451,17 @@ def get_list(container, key) -> list:
     return value
 
 
+def get_str_or_id(value: str | dict | None) -> str | None:
+    """
+    Given a value that could be a str or {"id": str}, return the str
+    """
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, dict):
+        return value.get("id")
+    return None
+
+
 def format_ld_date(value: datetime.datetime) -> str:
     return value.strftime(DATETIME_FORMAT)
 
