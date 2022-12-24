@@ -5,10 +5,12 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
+from django.conf import settings
 from django.db import IntegrityError, models
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.functional import lazy
+from lxml import etree
 
 from core.exceptions import ActorMismatchError
 from core.html import ContentRenderer, strip_html
@@ -560,14 +562,41 @@ class Identity(StatorModel):
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1].lower()
+        webfinger_url = "https://{domain}/.well-known/webfinger?resource={uri}"
+
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(
+                timeout=settings.SETUP.REMOTE_TIMEOUT
+            ) as client:
                 response = await client.get(
-                    f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
+                    f"https://{domain}/.well-known/host-meta",
+                    follow_redirects=True,
+                )
+
+                # In the case of anything other than a success, we'll still try
+                # hitting the webfinger URL on the domain we were given to handle
+                # incorrectly setup servers.
+                if response.status_code == 200:
+                    tree = etree.fromstring(response.content)
+                    template = tree.xpath(
+                        "string(.//*[local-name() = 'Link' and @rel='lrdd']/@template)"
+                    )
+                    if template:
+                        webfinger_url = template
+        except httpx.RequestError:
+            pass
+
+        try:
+            async with httpx.AsyncClient(
+                timeout=settings.SETUP.REMOTE_TIMEOUT
+            ) as client:
+                response = await client.get(
+                    webfinger_url.format(domain=domain, uri=f"acct:{handle}"),
                     follow_redirects=True,
                 )
         except httpx.RequestError:
             return None, None
+
         if response.status_code in [404, 410]:
             return None, None
         if response.status_code >= 500:
