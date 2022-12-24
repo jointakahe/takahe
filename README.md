@@ -1,15 +1,16 @@
 ![takahē](static/img/logo-128.png)
 
-An *experimental* Fediverse server for microblogging/"toots". Not fully functional yet -
+A *beta* Fediverse server for microblogging/"toots". Not fully functional yet -
 we're still working towards a 1.0!
 
-**Current version: [0.5.0](https://docs.jointakahe.org/en/latest/releases/0.5/)**
+**Current version: [0.6.0](https://docs.jointakahe.org/en/latest/releases/0.6/)**
 
 Key features:
 
 - Multiple domain support
 - Multiple identities per user (and can be shared between users)
 - Desktop, mobile and PWA-compatible web UI (with minimal JavaScript)
+- Mastodon-compatible client API (supports existing apps)
 - Easy deployment (web worker, background worker, and one database)
 
 For more background and information, see [jointakahe.org](https://jointakahe.org/).
