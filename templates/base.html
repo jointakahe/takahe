@@ -22,6 +22,9 @@
         }
         {% endif %}
     </style>
+    {% if config_identity.custom_css %}
+      <style>{{ config_identity.custom_css }}</style>
+    {% endif %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
