@@ -3,7 +3,7 @@ from typing import Optional
 import httpx
 from django.db import models, transaction
 
-from core.ld import canonicalise
+from core.ld import canonicalise, get_str_or_id
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity
 
@@ -220,7 +220,7 @@ class Follow(StatorModel):
         """
         # Resolve source and target and see if a Follow exists
         source = Identity.by_actor_uri(data["actor"], create=create)
-        target = Identity.by_actor_uri(data["object"])
+        target = Identity.by_actor_uri(get_str_or_id(data["object"]))
         follow = cls.maybe_get(source=source, target=target)
         # If it doesn't exist, create one in the remote_requested state
         if follow is None:
