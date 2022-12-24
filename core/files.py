@@ -63,6 +63,8 @@ async def get_remote_file(
                     pass
             if allow_download:
                 file = ContentFile(await stream.aread(), name=url)
-                return file, stream.headers["content-type"]
+                return file, stream.headers.get(
+                    "content-type", "application/octet-stream"
+                )
 
     return None, None
