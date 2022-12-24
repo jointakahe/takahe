@@ -47,11 +47,6 @@ urlpatterns = [
         name="settings_interface",
     ),
     path(
-        "settings/user/",
-        settings.WellnessPage.as_view(),
-        name="settings_wellness",
-    ),
-    path(
         "admin/",
         admin.AdminRoot.as_view(),
         name="admin",

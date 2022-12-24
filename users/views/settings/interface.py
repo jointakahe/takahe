@@ -16,6 +16,13 @@ class InterfacePage(SettingsPage):
             "help_text": "Visibility to use as default for new posts.",
             "choices": Post.Visibilities.choices,
         },
+        "visible_reaction_counts": {
+            "title": "Show Boost and Like Counts",
+            "help_text": "Disable to hide the number of Likes and Boosts on a 'Post'",
+        },
     }
 
-    layout = {"Posting": ["toot_mode", "default_post_visibility"]}
+    layout = {
+        "Posting": ["toot_mode", "default_post_visibility"],
+        "Wellness": ["visible_reaction_counts"],
+    }
