@@ -16,10 +16,76 @@
     </form>
     {% if result %}
 
-        <p>Canonacalized Response: (view source for raw)</p>
-        <div id="raw-json-result" style="display: none;">
-{{ raw_result|escape }}
+    <div class="debug">
+        <h2>Summary</h2>
+        <div class="debug-section">
+            <div class="field">
+                <span class="name">Status Code:</span>
+                <span class="value">{{ status_code }}</span>
+            </div>
+
+            <div class="field">
+                <span class="name">Content-Type:</span>
+                <span class="value">{{ content_type }}</span>
+            </div>
+
+            <div class="field">
+                <span class="name">Bytes Downloaded:</span>
+                <span class="value">{{ num_bytes_downloaded }}</span>
+            </div>
         </div>
-        <pre>{{ result }}</pre>
+
+        <h2>Payload</h2>
+
+        <div class="debug-section">
+            <div class="field payload">
+                <span class="name">Raw Response:
+                    <a title="Copy Content"
+                    class="copy"
+                    _="on click
+                         writeText(#raw_response.innerText) into the navigator's clipboard
+                         then add .copied
+                         wait 2s
+                         then remove .copied">
+                        <i class="fa-solid fa-copy"></i>
+                    </a>
+                </span>
+                <span class="value">
+                    <a _="on click
+                            toggle .hidden on #raw_response
+                            then
+                                if my.innerText is 'Hide' set my.innerText to 'Show'
+                                else set my.innerText to 'Hide'
+                        ">Show</a></span>
+            </div>
+            <div id="raw_response" class="hidden">
+
+{{ raw_result|escape }}
+            </div>
+
+            <div class="field payload">
+                <span class="name">Canonical:
+                    <a title="Copy Content"
+                    class="copy"
+                    _="on click
+                         writeText(#canonical_response.innerText) into the navigator's clipboard
+                         then add .copied
+                         wait 2s
+                         then remove .copied">
+                    <i class="fa-solid fa-copy"></i>
+                    </a>
+                </span>
+                <span class="value">
+                    <a _="on click
+                            toggle .hidden on #canonical_response
+                            then
+                                if my.innerText is 'Hide' set my.innerText to 'Show'
+                                else set my.innerText to 'Hide'
+                        ">Show</a></span>
+            </div>
+            <pre id="canonical_response" class="hidden">{{ result }}</pre>
+        </div>
+    </div>
     {% endif %}
+
 {% endblock %}

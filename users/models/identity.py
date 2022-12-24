@@ -642,6 +642,10 @@ class Identity(StatorModel):
             )
         except httpx.RequestError:
             return False
+        content_type = response.headers.get("content-type")
+        if content_type and "html" in content_type:
+            # Some servers don't properly handle "application/activity+json"
+            return False
         if response.status_code == 410:
             # Their account got deleted, so let's do the same.
             if self.pk:
