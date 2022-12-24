@@ -47,7 +47,7 @@
                 </a>
               {% elif attachment.is_video %}
                 <a href="{{ attachment.full_url.relative }}" class="video">
-                  <video autoplay muted controls loop>
+                  <video muted controls loop>
                     <source src="{{ attachment.full_url.relative }}">
                   </video>
                 </a>
