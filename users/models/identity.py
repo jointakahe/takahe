@@ -278,7 +278,7 @@ class Identity(StatorModel):
         Returns a background image for us, returning None if there isn't one
         """
         if self.image:
-            return RelativeAbsoluteUrl(self.image.url)
+            return AutoAbsoluteUrl(self.image.url)
         elif self.image_uri:
             return AutoAbsoluteUrl(f"/proxy/identity_image/{self.pk}/")
         return None
