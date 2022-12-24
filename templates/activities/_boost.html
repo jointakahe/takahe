@@ -1,9 +1,11 @@
 {% if post.pk in interactions.boost %}
     <a title="Unboost" class="active" hx-post="{{ post.urls.action_unboost }}" hx-swap="outerHTML">
-        <i class="fa-solid fa-retweet"></i> {% if event.boost_count is not None %}{{ event.boost_count }}{% else %}{{ post.boost_count }}{% endif %}
+        <i class="fa-solid fa-retweet"></i>
+        <span class="like-count">{% if event.boost_count is not None %}{{ event.boost_count }}{% else %}{{ post.boost_count }}{% endif %}</span>
     </a>
 {% else %}
     <a title="Boost" hx-post="{{ post.urls.action_boost }}" hx-swap="outerHTML">
-        <i class="fa-solid fa-retweet"></i> {% if event.boost_count is not None %}{{ event.boost_count }}{% else %}{{ post.boost_count }}{% endif %}
+        <i class="fa-solid fa-retweet"></i>
+        <span class="like-count">{% if event.boost_count is not None %}{{ event.boost_count }}{% else %}{{ post.boost_count }}{% endif %}</span>
     </a>
 {% endif %}
