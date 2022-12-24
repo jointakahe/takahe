@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from activities.admin import IdentityLocalFilter
@@ -41,8 +42,19 @@ class IdentityAdmin(admin.ModelAdmin):
     list_filter = ("local", "state", "discoverable")
     raw_id_fields = ["users"]
     actions = ["force_update"]
-    readonly_fields = ["actor_json"]
-    search_fields = ["username", "name"]
+    readonly_fields = ["handle", "actor_json"]
+    search_fields = ["search_handle", "search_service_handle", "name", "id"]
+
+    def get_search_results(self, request, queryset, search_term):
+        from django.db.models.functions import Concat
+
+        queryset = queryset.annotate(
+            search_handle=Concat("username", models.Value("@"), "domain_id"),
+            search_service_handle=Concat(
+                "username", models.Value("@"), "domain__service_domain"
+            ),
+        )
+        return super().get_search_results(request, queryset, search_term)
 
     @admin.action(description="Force Update")
     def force_update(self, request, queryset):
