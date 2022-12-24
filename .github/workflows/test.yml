@@ -68,7 +68,7 @@ jobs:
         run: |
           pre-commit run -a --show-diff-on-failure
       - name: Save changes made by pre-commit
-        if:
+        if: always()
         run: |
           if [[ `git status --porcelain` ]]; then
             git config user.name "Takahe Workflow"
