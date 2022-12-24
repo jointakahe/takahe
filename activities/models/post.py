@@ -10,7 +10,6 @@ from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
-from django.utils.safestring import mark_safe
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
@@ -344,42 +343,6 @@ class Post(StatorModel):
     mention_regex = re.compile(
         r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_\.]+[\w\d\-_]+)?)"
     )
-
-    def linkify_mentions(self, content: str, local: bool = False) -> str:
-        """
-        Links mentions _in the context of the post_ - as in, using the mentions
-        property as the only source (as we might be doing this without other
-        DB access allowed)
-        """
-
-        possible_matches = {}
-        for mention in self.mentions.all():
-            if local:
-                url = str(mention.urls.view)
-            else:
-                url = mention.absolute_profile_uri()
-            possible_matches[mention.username] = url
-            possible_matches[f"{mention.username}@{mention.domain_id}"] = url
-
-        collapse_name: dict[str, str] = {}
-
-        def replacer(match):
-            precursor = match.group(1)
-            handle = match.group(2).lower()
-            if "@" in handle:
-                short_handle = handle.split("@", 1)[0]
-            else:
-                short_handle = handle
-            if handle in possible_matches:
-                if short_handle not in collapse_name:
-                    collapse_name[short_handle] = handle
-                elif collapse_name.get(short_handle) != handle:
-                    short_handle = handle
-                return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
-            else:
-                return match.group()
-
-        return mark_safe(self.mention_regex.sub(replacer, content))
 
     def _safe_content_note(self, *, local: bool = True):
         return ContentRenderer(local=local).render_post(self.content, self)
