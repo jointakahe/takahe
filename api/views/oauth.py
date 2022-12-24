@@ -79,7 +79,13 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
 class TokenView(View):
     def post(self, request):
         post_data = FormOrJsonParser().parse_body(request)
-        grant_type = post_data["grant_type"]
+
+        grant_type = post_data.get("grant_type")
+        if grant_type not in (
+            "authorization_code",
+            "client_credentials",
+        ):
+            return JsonResponse({"error": "invalid_grant_type"}, status=400)
 
         try:
             application = Application.objects.get(client_id=post_data["client_id"])
@@ -89,7 +95,9 @@ class TokenView(View):
         if grant_type == "client_credentials":
             return JsonResponse({"error": "invalid_grant_type"}, status=400)
         elif grant_type == "authorization_code":
-            code = post_data["code"]
+            code = post_data.get("code")
+            if not code:
+                return JsonResponse({"error": "invalid_code"}, status=400)
             # Retrieve the token by code
             # TODO: Check code expiry based on created date
             try:
