@@ -1141,6 +1141,11 @@ form .post {
 .post .attachments a.image img {
     display: block;
     max-width: 100%;
+    object-fit: cover;
+    object-position: center;
+    max-height: 400px;
+    height: 100%;
+    width: 100%;
 }
 
 .post .attachments video {
@@ -1381,6 +1386,9 @@ form .post {
         border-radius: 0;
     }
 
+    .post .attachments a.image img {
+        max-height: 300px;
+    }
 }
 
 
