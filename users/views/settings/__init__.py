@@ -6,6 +6,7 @@ from users.views.settings.interface import InterfacePage  # noqa
 from users.views.settings.profile import ProfilePage  # noqa
 from users.views.settings.security import SecurityPage  # noqa
 from users.views.settings.settings_page import SettingsPage  # noqa
+from users.views.settings.wellness import WellnessPage  # noqa
 
 
 @method_decorator(identity_required, name="dispatch")

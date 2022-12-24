@@ -16,6 +16,11 @@
         body {
             --color-highlight: {{ config.highlight_color }};
         }
+        {% if not config_system.visible_reaction_counts %}
+        .like-count {
+            display: none;
+        }
+        {% endif %}
     </style>
     {% block extra_head %}{% endblock %}
 </head>
