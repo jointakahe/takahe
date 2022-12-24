@@ -446,6 +446,7 @@ p.authorization-code {
     padding: 10px 20px;
     border: 2px solid rgba(255, 255, 255, 0);
     border-radius: 3px;
+    overflow: hidden;
 }
 
 .icon-menu .option:hover {
@@ -1437,6 +1438,10 @@ form .post {
     .post .edited,
     .post .actions {
         margin-left: 0;
+    }
+
+    menu a.search {
+        display: none;
     }
 
 }

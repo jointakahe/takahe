@@ -39,7 +39,7 @@
                     <a href="{% url "compose" %}" title="Compose" role="menuitem" {% if top_section == "compose" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-feather"></i>
                     </a>
-                    <a href="{% url "search" %}" title="Search" role="menuitem" {% if top_section == "search" %}class="selected"{% endif %}>
+                    <a href="{% url "search" %}" title="Search" role="menuitem" class="search {% if top_section == "search" %}selected{% endif %}">
                         <i class="fa-solid fa-search"></i>
                     </a>
                     {% if allows_refresh %}
