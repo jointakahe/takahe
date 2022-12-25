@@ -43,6 +43,8 @@ services:
       POSTGRES_DB: takahe
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: insecure_password
+    ports:
+      - "5432:5432"
 
   web:
     <<: *takahe-common
