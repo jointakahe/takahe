@@ -14,7 +14,7 @@
         <meta content="{{ opengraph.modifed_time }}" property="og:modifed_time"/>
     {% endif %}
     {% if opengraph.description %}
-        <meta content="{{ opengraph.description }}" property="og:description"/>
+        <meta content="{{ opengraph.description|striptags }}" property="og:description"/>
     {% endif %}
     {% if opengraph.profile.username %}
         <meta content="{{ opengraph.profile.username }}" property="og:profile:username"/>

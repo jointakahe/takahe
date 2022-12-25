@@ -1,6 +1,5 @@
 import string
 
-import bleach
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.syndication.views import Feed
@@ -74,7 +73,7 @@ class ViewIdentity(ListView):
         context["opengraph"] = {
             "type": "profile",
             "title": f"{self.identity.name} (@{self.identity.handle})",
-            "description": bleach.clean(self.identity.summary or "", strip=True),
+            "description": self.identity.summary,
             "profile": {
                 "username": self.identity.handle,
             },

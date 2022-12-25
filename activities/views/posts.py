@@ -1,4 +1,3 @@
-import bleach
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -67,8 +66,7 @@ class Individual(TemplateView):
                     or self.post_obj.created.isoformat()
                 ),
                 "description": (
-                    self.post_obj.summary
-                    or bleach.clean(self.post_obj.safe_content_local(), strip=True)
+                    self.post_obj.summary or self.post_obj.safe_content_local()
                 ),
                 "image": {
                     "url": self.post_obj.author.local_icon_url().absolute,
