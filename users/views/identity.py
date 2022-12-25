@@ -70,19 +70,6 @@ class ViewIdentity(ListView):
         context["identity"] = self.identity
         context["follow"] = None
         context["reverse_follow"] = None
-        context["opengraph"] = {
-            "type": "profile",
-            "title": f"{self.identity.name} (@{self.identity.handle})",
-            "description": self.identity.summary,
-            "profile": {
-                "username": self.identity.handle,
-            },
-            "image": {
-                "url": self.identity.local_icon_url().absolute,
-                "height": 85,
-                "width": 85,
-            },
-        }
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"],
             self.request.identity,

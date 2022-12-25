@@ -735,6 +735,19 @@ class Identity(StatorModel):
                 await sync_to_async(self.save)()
         return True
 
+    ### OpenGraph API ###
+
+    def to_opengraph_dict(self) -> dict:
+        return {
+            "og:title": f"{self.name} (@{self.handle})",
+            "og:type": "profile",
+            "og:description": self.summary,
+            "og:profile:username": self.handle,
+            "og:image:url": self.local_icon_url().absolute,
+            "og:image:height": 85,
+            "og:image:width": 85,
+        }
+
     ### Mastodon Client API ###
 
     def to_mastodon_json(self):

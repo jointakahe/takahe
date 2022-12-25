@@ -8,7 +8,7 @@ def config_context(request):
             request.identity.config_identity if request.identity else None
         ),
         "top_section": request.path.strip("/").split("/")[0],
-        "opengraph_default": {
+        "opengraph_defaults": {
             "og:site_name": Config.system.site_name,
             "og:type": "website",
             "og:title": Config.system.site_name,
