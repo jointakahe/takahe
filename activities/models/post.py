@@ -832,7 +832,7 @@ class Post(StatorModel):
 
     ### OpenGraph API ###
 
-    def to_opengraph_dict(self):
+    def to_opengraph_dict(self) -> dict:
         return {
             "og:title": f"{self.author.name} (@{self.author.handle})",
             "og:type": "article",

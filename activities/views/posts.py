@@ -42,8 +42,6 @@ class Individual(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["opengraph"] = self.post_obj.to_opengraph_dict()
-
         ancestors, descendants = PostService(self.post_obj).context(
             self.request.identity
         )
