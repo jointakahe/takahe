@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -18,6 +19,7 @@ from core.signatures import (
     VerificationError,
     VerificationFormatError,
 )
+from core.views import StaticContentView
 from takahe import __version__
 from users.models import Identity, InboxMessage, SystemActor
 from users.shortcuts import by_handle_or_404
@@ -216,35 +218,38 @@ class Outbox(View):
         )
 
 
-class EmptyOutbox(View):
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class EmptyOutbox(StaticContentView):
     """
     A fixed-empty outbox for the system actor
     """
 
-    def get(self, request, *args, **kwargs):
-        return JsonResponse(
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
             canonicalise(
                 {
                     "type": "OrderedCollection",
                     "totalItems": 0,
                     "orderedItems": [],
                 }
-            ),
-            content_type="application/activity+json",
+            )
         )
 
 
-@method_decorator(cache_page(), name="dispatch")
-class SystemActorView(View):
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class SystemActorView(StaticContentView):
     """
     Special endpoint for the overall system actor
     """
 
-    def get(self, request):
-        return JsonResponse(
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
             canonicalise(
                 SystemActor().to_ap(),
                 include_security=True,
-            ),
-            content_type="application/activity+json",
+            )
         )
