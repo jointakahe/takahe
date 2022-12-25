@@ -75,15 +75,27 @@ def test_link_mixcase_mentions():
     fake_mention2.username = "manfre"
     fake_mention2.domain_id = "takahe.social"
     fake_mention2.urls.view = "https://takahe.social/@manfre@takahe.social/"
+
+    unfetched_mention = Mock()
+    unfetched_mention.username = None
+    unfetched_mention.domain_id = None
+    unfetched_mention.urls.view = "/None@None/"
+
     fake_post = Mock()
-    fake_post.mentions.all.return_value = [fake_mention, fake_mention2]
+    fake_post.mentions.all.return_value = [
+        fake_mention,
+        fake_mention2,
+        unfetched_mention,
+    ]
     fake_post.author.domain.uri_domain = "example.com"
     fake_post.emojis.all.return_value = []
 
-    assert (
-        renderer.render_post(
-            "@Manfre@manfre.net @mAnFrE@takahe.social @manfre@manfre.net",
-            fake_post,
-        )
-        == '<a href="/@Manfre@manfre.net/">@Manfre</a> <a href="https://takahe.social/@manfre@takahe.social/">@mAnFrE@takahe.social</a> <a href="/@Manfre@manfre.net/">@manfre</a>'
+    assert renderer.render_post(
+        "@Manfre@manfre.net @mAnFrE@takahe.social @manfre@manfre.net @unfetched@manfre.net",
+        fake_post,
+    ) == (
+        '<a href="/@Manfre@manfre.net/">@Manfre</a> '
+        '<a href="https://takahe.social/@manfre@takahe.social/">@mAnFrE@takahe.social</a> '
+        '<a href="/@Manfre@manfre.net/">@manfre</a> '
+        "@unfetched@manfre.net"
     )

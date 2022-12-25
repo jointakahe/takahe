@@ -139,8 +139,11 @@ class ContentRenderer:
                 url = str(mention.urls.view)
             else:
                 url = mention.absolute_profile_uri()
-            possible_matches[mention.username.lower()] = url
-            possible_matches[f"{mention.username.lower()}@{mention.domain_id}"] = url
+            # Might not have fetched it (yet)
+            if mention.username:
+                username = mention.username.lower()
+                possible_matches[username] = url
+                possible_matches[f"{username}@{mention.domain_id}"] = url
 
         collapse_name: dict[str, str] = {}
 
