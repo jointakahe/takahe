@@ -1,0 +1,32 @@
+{% if opengraph.disabled %}
+    <!-- OpenGraph tagging disabled on this page -->
+{% else %}
+{% block opengraph %}
+    <!-- Begin OpenGraph tagging -->
+    <meta content="{{ config.site_name }}" property="og:site_name"/>
+    <meta content="{{ opengraph.type|default:"website" }}" property="og:type"/>
+    <meta content="{{ opengraph.title|default:config.site_name }}" property="og:title"/>
+    <meta content="{{ opengraph.url|default:request.build_absolute_uri }}" property="og:url"/>
+    {% if opengraph.published_time %}
+        <meta content="{{ opengraph.published_time }}" property="og:published_time"/>
+    {% endif %}
+    {% if opengraph.modifed_time %}
+        <meta content="{{ opengraph.modifed_time }}" property="og:modifed_time"/>
+    {% endif %}
+    {% if opengraph.description %}
+        <meta content="{{ opengraph.description }}" property="og:description"/>
+    {% endif %}
+    {% if opengraph.profile.username %}
+        <meta content="{{ opengraph.profile.username }}" property="og:profile:username"/>
+    {% endif %}
+    <meta content="{{ opengraph.image.url|default:config.site_icon }}" property="og:image"/>
+    <meta content="{{ opengraph.image.type|default:"image/webp" }}" property="og:image:type"/>
+    {% if opengraph.image.width %}
+        <meta content="{{ opengraph.image.width }}" property="og:image:width" />
+        <meta content="{{ opengraph.image.height }}" property="og:image:height" />
+    {% endif %}
+    {% block opengraph_extra %}
+    {% endblock %}
+    <!-- End OpenGraph tagging -->
+{% endblock %}
+{% endif %}

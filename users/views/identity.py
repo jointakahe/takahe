@@ -1,5 +1,6 @@
 import string
 
+import bleach
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.syndication.views import Feed
@@ -70,6 +71,19 @@ class ViewIdentity(ListView):
         context["identity"] = self.identity
         context["follow"] = None
         context["reverse_follow"] = None
+        context["opengraph"] = {
+            "type": "profile",
+            "title": f"{self.identity.name} (@{self.identity.handle})",
+            "description": bleach.clean(self.identity.summary or "", strip=True),
+            "profile": {
+                "username": self.identity.handle,
+            },
+            "image": {
+                "url": self.identity.local_icon_url().absolute,
+                "height": 85,
+                "width": 85,
+            },
+        }
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"],
             self.request.identity,
