@@ -3,7 +3,14 @@
 <div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
 
     <a href="{{ post.author.urls.view }}" tabindex="-1">
-        <img src="{{ post.author.local_icon_url.relative }}" class="icon" loading="lazy">
+        <img
+          src="{{ post.author.local_icon_url.relative }}"
+          class="icon"
+          alt="Avatar for {{ post.author.name_or_handle }}"
+          loading="lazy"
+          data-handle="{{ post.author.name_or_handle }}"
+          onerror="this.onerror=null;generate_avatar(this)"
+        >
     </a>
 
     <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
