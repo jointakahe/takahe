@@ -15,6 +15,7 @@
     {% endif %}
     {% if opengraph.description %}
         <meta content="{{ opengraph.description|striptags }}" property="og:description"/>
+        <meta content="{{ opengraph.description|striptags }}" name="description"/>
     {% endif %}
     {% if opengraph.profile.username %}
         <meta content="{{ opengraph.profile.username }}" property="og:profile:username"/>
@@ -24,6 +25,9 @@
     {% if opengraph.image.width %}
         <meta content="{{ opengraph.image.width }}" property="og:image:width" />
         <meta content="{{ opengraph.image.height }}" property="og:image:height" />
+    {% endif %}
+    {% if opengraph.image.alt %}
+        <meta content="{{ opengraph.image.alt }}" property="og:image:alt" />
     {% endif %}
     {% block opengraph_extra %}
     {% endblock %}
