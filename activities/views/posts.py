@@ -39,42 +39,30 @@ class Individual(TemplateView):
             # Show normal page
             return super().get(request)
 
-    def get_context_data(self):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["opengraph"] = self.post_obj.to_opengraph_dict()
+
         ancestors, descendants = PostService(self.post_obj).context(
             self.request.identity
         )
-        return {
-            "identity": self.identity,
-            "post": self.post_obj,
-            "interactions": PostInteraction.get_post_interactions(
-                [self.post_obj] + ancestors + descendants,
-                self.request.identity,
-            ),
-            "link_original": True,
-            "ancestors": ancestors,
-            "descendants": descendants,
-            "opengraph": {
-                "title": f"{self.post_obj.author.name} (@{self.post_obj.author.handle})",
-                "type": "article",
-                "published_time": (
-                    self.post_obj.published.isoformat()
-                    or self.post_obj.created.isoformat()
+
+        context.update(
+            {
+                "identity": self.identity,
+                "post": self.post_obj,
+                "interactions": PostInteraction.get_post_interactions(
+                    [self.post_obj] + ancestors + descendants,
+                    self.request.identity,
                 ),
-                "modified_time": (
-                    self.post_obj.edited.isoformat()
-                    or self.post_obj.published.isoformat()
-                    or self.post_obj.created.isoformat()
-                ),
-                "description": (
-                    self.post_obj.summary or self.post_obj.safe_content_local()
-                ),
-                "image": {
-                    "url": self.post_obj.author.local_icon_url().absolute,
-                    "height": 85,
-                    "width": 85,
-                },
-            },
-        }
+                "link_original": True,
+                "ancestors": ancestors,
+                "descendants": descendants,
+            }
+        )
+
+        return context
 
     def serve_object(self):
         # If this not a local post, redirect to its canonical URI
