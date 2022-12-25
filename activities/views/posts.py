@@ -57,13 +57,19 @@ class Individual(TemplateView):
             "opengraph": {
                 "title": f"{self.post_obj.author.name} (@{self.post_obj.author.handle})",
                 "type": "article",
-                "published_time": self.post_obj.published.isoformat()
-                or self.post_obj.created.isoformat(),
-                "modified_time": self.post_obj.edited.isoformat()
-                or self.post_obj.published.isoformat()
-                or self.post_obj.created.isoformat(),
-                "description": self.post_obj.summary
-                or bleach.clean(self.post_obj.safe_content_local(), strip=True),
+                "published_time": (
+                    self.post_obj.published.isoformat()
+                    or self.post_obj.created.isoformat()
+                ),
+                "modified_time": (
+                    self.post_obj.edited.isoformat()
+                    or self.post_obj.published.isoformat()
+                    or self.post_obj.created.isoformat()
+                ),
+                "description": (
+                    self.post_obj.summary
+                    or bleach.clean(self.post_obj.safe_content_local(), strip=True)
+                ),
                 "image": {
                     "url": self.post_obj.author.local_icon_url().absolute,
                     "height": 85,
