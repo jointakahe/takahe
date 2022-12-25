@@ -44,10 +44,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: insecure_password
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   web:
     <<: *takahe-common
+    environment:
+      GUNICORN_EXTRA_CMD_ARGS: "--reload"
     ports:
       - "8000:8000"
 
