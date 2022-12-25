@@ -62,3 +62,28 @@ def test_link_preservation():
         )
         == 'Hello <a href="/@andrew@aeracode.org/">@andrew</a>, I want to link to this <a href="/tags/hashtag/" class="hashtag">#hashtag</a>: <a href="http://example.com/@andrew/#notahashtag" rel="nofollow">here</a> and rewrite <a href="/tags/thishashtag/" class="hashtag">#thishashtag</a>'
     )
+
+
+@pytest.mark.django_db
+def test_link_mixcase_mentions():
+    renderer = ContentRenderer(local=True)
+    fake_mention = Mock()
+    fake_mention.username = "Manfre"
+    fake_mention.domain_id = "manfre.net"
+    fake_mention.urls.view = "/@Manfre@manfre.net/"
+    fake_mention2 = Mock()
+    fake_mention2.username = "manfre"
+    fake_mention2.domain_id = "takahe.social"
+    fake_mention2.urls.view = "https://takahe.social/@manfre@takahe.social/"
+    fake_post = Mock()
+    fake_post.mentions.all.return_value = [fake_mention, fake_mention2]
+    fake_post.author.domain.uri_domain = "example.com"
+    fake_post.emojis.all.return_value = []
+
+    assert (
+        renderer.render_post(
+            "@Manfre@manfre.net @mAnFrE@takahe.social @manfre@manfre.net",
+            fake_post,
+        )
+        == '<a href="/@Manfre@manfre.net/">@Manfre</a> <a href="https://takahe.social/@manfre@takahe.social/">@mAnFrE@takahe.social</a> <a href="/@Manfre@manfre.net/">@manfre</a>'
+    )

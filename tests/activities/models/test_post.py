@@ -87,7 +87,7 @@ def test_linkify_mentions_remote(
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_remote()
-        == '<p>Hey <a href="https://remote.test/@test/">@test</a></p>'
+        == '<p>Hey <a href="https://remote.test/@test/">@TeSt</a></p>'
     )
 
     # Test trailing dot (remote)
@@ -110,14 +110,14 @@ def test_linkify_mentions_remote(
     )
     post.mentions.set([remote_identity, remote_identity2])
     assert post.safe_content_remote() == (
-        '<p>Hey <a href="https://remote.test/@test/">@test</a> '
+        '<p>Hey <a href="https://remote.test/@test/">@TeSt</a> '
         'and <a href="https://remote2.test/@test/">@test@remote2.test</a></p>'
     )
 
     post.content = "<p>Hey @TeSt, @Test@remote.test and @test</p>"
     assert post.safe_content_remote() == (
-        '<p>Hey <a href="https://remote2.test/@test/">@test</a>, '
-        '<a href="https://remote.test/@test/">@test@remote.test</a> '
+        '<p>Hey <a href="https://remote2.test/@test/">@TeSt</a>, '
+        '<a href="https://remote.test/@test/">@Test@remote.test</a> '
         'and <a href="https://remote2.test/@test/">@test</a></p>'
     )
 

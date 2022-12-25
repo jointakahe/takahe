@@ -139,24 +139,26 @@ class ContentRenderer:
                 url = str(mention.urls.view)
             else:
                 url = mention.absolute_profile_uri()
-            possible_matches[mention.username] = url
-            possible_matches[f"{mention.username}@{mention.domain_id}"] = url
+            possible_matches[mention.username.lower()] = url
+            possible_matches[f"{mention.username.lower()}@{mention.domain_id}"] = url
 
         collapse_name: dict[str, str] = {}
 
         def replacer(match):
             precursor = match.group(1)
-            handle = match.group(2).lower()
+            handle = match.group(2)
             if "@" in handle:
                 short_handle = handle.split("@", 1)[0]
             else:
                 short_handle = handle
-            if handle in possible_matches:
-                if short_handle not in collapse_name:
-                    collapse_name[short_handle] = handle
-                elif collapse_name.get(short_handle) != handle:
+            handle_hash = handle.lower()
+            short_hash = short_handle.lower()
+            if handle_hash in possible_matches:
+                if short_hash not in collapse_name:
+                    collapse_name[short_hash] = handle_hash
+                elif collapse_name.get(short_hash) != handle_hash:
                     short_handle = handle
-                return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
+                return f'{precursor}<a href="{possible_matches[handle_hash]}">@{short_handle}</a>'
             else:
                 return match.group()
 
