@@ -4,7 +4,7 @@ from django.utils import timezone
 from activities.models.fan_out import FanOut
 from activities.models.post import Post
 from activities.models.timeline_event import TimelineEvent
-from core.ld import format_ld_date, parse_ld_date
+from core.ld import format_ld_date, get_str_or_id, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
 from users.models.identity import Identity
@@ -257,7 +257,7 @@ class PostInteraction(StatorModel):
                 # Resolve the author
                 identity = Identity.by_actor_uri(data["actor"], create=True)
                 # Resolve the post
-                post = Post.by_object_uri(data["object"], fetch=True)
+                post = Post.by_object_uri(get_str_or_id(data["object"]), fetch=True)
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
