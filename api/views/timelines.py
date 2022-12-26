@@ -23,7 +23,7 @@ def home(
         )
         .select_related("subject_post", "subject_post__author")
         .prefetch_related("subject_post__attachments")
-        .order_by("-created")
+        .order_by("-published")
     )
     events = paginator.paginate(
         queryset,
@@ -56,7 +56,7 @@ def public(
         .filter(author__restriction=Identity.Restriction.none)
         .select_related("author")
         .prefetch_related("attachments")
-        .order_by("-created")
+        .order_by("-published")
     )
     if local:
         queryset = queryset.filter(local=True)
@@ -96,7 +96,7 @@ def hashtag(
         .tagged_with(hashtag)
         .select_related("author")
         .prefetch_related("attachments")
-        .order_by("-created")
+        .order_by("-published")
     )
     if local:
         queryset = queryset.filter(local=True)

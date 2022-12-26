@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
+from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -15,6 +16,11 @@ from django.utils.safestring import mark_safe
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
 from activities.models.hashtag import Hashtag
+from activities.models.post_types import (
+    PostTypeData,
+    PostTypeDataDecoder,
+    PostTypeDataEncoder,
+)
 from activities.templatetags.emoji_tags import imageify_emojis
 from core.html import sanitize_post, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
@@ -166,6 +172,16 @@ class Post(StatorModel):
         followers = 2
         mentioned = 3
 
+    class Types(models.TextChoices):
+        article = "Article"
+        audio = "Audio"
+        event = "Event"
+        image = "Image"
+        note = "Note"
+        page = "Page"
+        question = "Question"
+        video = "Video"
+
     # The author (attributedTo) of the post
     author = models.ForeignKey(
         "users.Identity",
@@ -180,7 +196,7 @@ class Post(StatorModel):
     local = models.BooleanField()
 
     # The canonical object ID
-    object_uri = models.CharField(max_length=500, blank=True, null=True, unique=True)
+    object_uri = models.CharField(max_length=2048, blank=True, null=True, unique=True)
 
     # Who should be able to see this Post
     visibility = models.IntegerField(
@@ -191,13 +207,22 @@ class Post(StatorModel):
     # The main (HTML) content
     content = models.TextField()
 
+    type = models.CharField(
+        max_length=20,
+        choices=Types.choices,
+        default=Types.note,
+    )
+    type_data = models.JSONField(
+        blank=True, null=True, encoder=PostTypeDataEncoder, decoder=PostTypeDataDecoder
+    )
+
     # If the contents of the post are sensitive, and the summary (content
     # warning) to show if it is
     sensitive = models.BooleanField(default=False)
     summary = models.TextField(blank=True, null=True)
 
     # The public, web URL of this Post on the original server
-    url = models.CharField(max_length=500, blank=True, null=True)
+    url = models.CharField(max_length=2048, blank=True, null=True)
 
     # The Post it is replying to as an AP ID URI
     # (as otherwise we'd have to pull entire threads to use IDs)
@@ -292,9 +317,11 @@ class Post(StatorModel):
     ain_reply_to_post = sync_to_async(in_reply_to_post)
 
     ### Content cleanup and extraction ###
+    def clean_type_data(self, value):
+        PostTypeData.parse_obj(value)
 
     mention_regex = re.compile(
-        r"(^|[^\w\d\-_])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
+        r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
     )
 
     def linkify_mentions(self, content: str, local: bool = False) -> str:
@@ -333,25 +360,55 @@ class Post(StatorModel):
 
         return mark_safe(self.mention_regex.sub(replacer, content))
 
+    def _safe_content_note(self, *, local: bool = True):
+        content = Hashtag.linkify_hashtags(
+            self.linkify_mentions(sanitize_post(self.content), local=local),
+            domain=None if local else self.author.domain,
+        )
+        if local:
+            content = imageify_emojis(content, self.author.domain)
+        return content
+
+    # def _safe_content_question(self, *, local: bool = True):
+    #     context = {
+    #         "post": self,
+    #         "typed_data": PostTypeData(self.type_data),
+    #     }
+    #     return loader.render_to_string("activities/_type_question.html", context)
+
+    def _safe_content_typed(self, *, local: bool = True):
+        context = {
+            "post": self,
+            "sanitized_content": self._safe_content_note(local=local),
+            "local_display": local,
+        }
+        return loader.render_to_string(
+            (
+                f"activities/_type_{self.type.lower()}.html",
+                "activities/_type_unknown.html",
+            ),
+            context,
+        )
+
+    def safe_content(self, *, local: bool = True):
+        func = getattr(
+            self, f"_safe_content_{self.type.lower()}", self._safe_content_typed
+        )
+        if callable(func):
+            return func(local=local)
+        return self._safe_content_note(local=local)  # fallback
+
     def safe_content_local(self):
         """
         Returns the content formatted for local display
         """
-        return imageify_emojis(
-            Hashtag.linkify_hashtags(
-                self.linkify_mentions(sanitize_post(self.content), local=True)
-            ),
-            self.author.domain,
-        )
+        return self.safe_content(local=True)
 
     def safe_content_remote(self):
         """
         Returns the content formatted for remote consumption
         """
-        return Hashtag.linkify_hashtags(
-            self.linkify_mentions(sanitize_post(self.content)),
-            domain=self.author.domain,
-        )
+        return self.safe_content(local=False)
 
     def safe_content_plain(self):
         """
@@ -521,7 +578,7 @@ class Post(StatorModel):
         value = {
             "to": "Public",
             "cc": [],
-            "type": "Note",
+            "type": self.type,
             "id": self.object_uri,
             "published": format_ld_date(self.published),
             "attributedTo": self.author.actor_uri,
@@ -531,6 +588,18 @@ class Post(StatorModel):
             "tag": [],
             "attachment": [],
         }
+        if self.type == Post.Types.question and self.type_data:
+            value[self.type_data.mode] = [
+                {
+                    "name": option.name,
+                    "type": option.type,
+                    "replies": {"type": "Collection", "totalItems": option.votes},
+                }
+                for option in self.type_data.options
+            ]
+            value["toot:votersCount"] = self.type_data.voter_count
+            if self.type_data.end_time:
+                value["endTime"] = format_ld_date(self.type_data.end_time)
         if self.summary:
             value["summary"] = self.summary
         if self.in_reply_to:
@@ -643,7 +712,8 @@ class Post(StatorModel):
         Retrieves a Post instance by its ActivityPub JSON object.
 
         Optionally creates one if it's not present.
-        Raises KeyError if it's not found and create is False.
+        Raises DoesNotExist if it's not found and create is False,
+        or it's from a blocked domain.
         """
         # Do we have one with the right ID?
         created = False
@@ -655,16 +725,24 @@ class Post(StatorModel):
             if create:
                 # Resolve the author
                 author = Identity.by_actor_uri(data["attributedTo"], create=create)
+                # If the post is from a blocked domain, stop and drop
+                if author.domain and author.domain.blocked:
+                    raise cls.DoesNotExist("Post is from a blocked domain")
                 post = cls.objects.create(
                     object_uri=data["id"],
                     author=author,
                     content=data["content"],
                     local=False,
+                    type=data["type"],
                 )
                 created = True
             else:
                 raise cls.DoesNotExist(f"No post with ID {data['id']}", data)
         if update or created:
+            post.type = data["type"]
+            if post.type in (cls.Types.article, cls.Types.question):
+                type_data = PostTypeData(__root__=data).__root__
+                post.type_data = type_data.dict()
             post.content = data["content"]
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
@@ -697,8 +775,8 @@ class Post(StatorModel):
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
-                if "toot:focalPoint" in attachment:
-                    focal_x, focal_y = attachment["toot:focalPoint"]["@list"]
+                if "focalPoint" in attachment:
+                    focal_x, focal_y = attachment["focalPoint"]
                 else:
                     focal_x, focal_y = None, None
                 post.attachments.create(
@@ -707,7 +785,7 @@ class Post(StatorModel):
                     name=attachment.get("name"),
                     width=attachment.get("width"),
                     height=attachment.get("height"),
-                    blurhash=attachment.get("toot:blurhash"),
+                    blurhash=attachment.get("blurhash"),
                     focal_x=focal_x,
                     focal_y=focal_y,
                 )

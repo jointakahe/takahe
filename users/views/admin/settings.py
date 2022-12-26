@@ -77,7 +77,7 @@ class BasicSettings(AdminSettingsPage):
         },
         "signup_text": {
             "title": "Signup Page Text",
-            "help_text": "Shown above the signup form",
+            "help_text": "Shown above the signup form.\nUse Markdown for formatting.",
             "display": "textarea",
         },
         "restricted_usernames": {

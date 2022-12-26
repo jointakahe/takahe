@@ -2,6 +2,7 @@ import datetime
 import os
 import urllib.parse as urllib_parse
 
+from dateutil import parser
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
 
@@ -366,6 +367,7 @@ schemas = {
 }
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 DATETIME_MS_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
@@ -410,12 +412,15 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
     context = [
         "https://www.w3.org/ns/activitystreams",
         {
+            "blurhash": "toot:blurhash",
+            "Emoji": "toot:Emoji",
+            "focalPoint": {"@container": "@list", "@id": "toot:focalPoint"},
+            "Hashtag": "as:Hashtag",
+            "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+            "Public": "as:Public",
             "sensitive": "as:sensitive",
             "toot": "http://joinmastodon.org/ns#",
             "votersCount": "toot:votersCount",
-            "Hashtag": "as:Hashtag",
-            "Public": "as:Public",
-            "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
         },
     ]
     if include_security:
@@ -445,15 +450,7 @@ def format_ld_date(value: datetime.datetime) -> str:
 def parse_ld_date(value: str | None) -> datetime.datetime | None:
     if value is None:
         return None
-    try:
-        return datetime.datetime.strptime(value, DATETIME_FORMAT).replace(
-            tzinfo=datetime.timezone.utc
-        )
-    except ValueError:
-        return datetime.datetime.strptime(value, DATETIME_MS_FORMAT).replace(
-            tzinfo=datetime.timezone.utc,
-            microsecond=0,
-        )
+    return parser.isoparse(value).replace(microsecond=0)
 
 
 def get_first_image_url(data) -> str | None:

@@ -20,7 +20,7 @@ def sanitize_post(post_html: str) -> str:
     Only allows a, br, p and span tags, and class attributes.
     """
     cleaner = bleach.Cleaner(
-        tags=["br", "p"],
+        tags=["br", "p", "a"],
         attributes={  # type:ignore
             "a": allow_a,
             "p": ["class"],

@@ -104,8 +104,8 @@ class PostAttachmentInline(admin.StackedInline):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ["id", "state", "author", "created"]
-    list_filter = ("local", "visibility", "state", "created")
+    list_display = ["id", "type", "author", "state", "created"]
+    list_filter = ("type", "local", "visibility", "state", "created")
     raw_id_fields = ["to", "mentions", "author", "emojis"]
     actions = ["force_fetch", "reparse_hashtags"]
     search_fields = ["content"]
@@ -137,7 +137,7 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(TimelineEvent)
 class TimelineEventAdmin(admin.ModelAdmin):
-    list_display = ["id", "identity", "created", "type"]
+    list_display = ["id", "identity", "published", "type"]
     list_filter = (IdentityLocalFilter, "type")
     readonly_fields = ["created"]
     raw_id_fields = [

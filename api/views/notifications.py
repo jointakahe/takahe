@@ -33,7 +33,7 @@ def notifications(
             identity=request.identity,
             type__in=[base_types[r] for r in requested_types],
         )
-        .order_by("-created")
+        .order_by("-published")
         .select_related("subject_post", "subject_post__author", "subject_identity")
     )
     paginator = MastodonPaginator(TimelineEvent)

@@ -96,7 +96,7 @@ class PostAttachment(StatorModel):
             "width": self.width,
             "height": self.height,
             "mediaType": self.mimetype,
-            "toot:focalPoint": [0, 0],
+            "blurhash": self.blurhash,
         }
 
     ### Mastodon Client API ###

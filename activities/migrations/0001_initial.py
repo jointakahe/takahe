@@ -323,6 +323,7 @@ class Migration(migrations.Migration):
                             ("liked", "Liked"),
                             ("followed", "Followed"),
                             ("boosted", "Boosted"),
+                            ("announcement", "Announcement"),
                         ],
                         max_length=100,
                     ),

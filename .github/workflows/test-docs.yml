@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   test_docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     strategy:
       matrix:
         python-version: ["3.10"]

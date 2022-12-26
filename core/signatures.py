@@ -87,6 +87,8 @@ class HttpSignature:
                 value = f"{request.method.lower()} {request.path}"
             elif header_name == "content-type":
                 value = request.META["CONTENT_TYPE"]
+            elif header_name == "content-length":
+                value = request.META["CONTENT_LENGTH"]
             else:
                 value = request.META["HTTP_%s" % header_name.upper().replace("-", "_")]
             headers[header_name] = value
@@ -198,7 +200,7 @@ class HttpSignature:
             body_bytes = b""
         # GET requests get implicit accept headers added
         if method == "get":
-            headers["Accept"] = "application/activity+json, application/ld+json"
+            headers["Accept"] = "application/activity+json"
         # Sign the headers
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
