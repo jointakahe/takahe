@@ -39,21 +39,28 @@ class Individual(TemplateView):
             # Show normal page
             return super().get(request)
 
-    def get_context_data(self):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
         ancestors, descendants = PostService(self.post_obj).context(
             self.request.identity
         )
-        return {
-            "identity": self.identity,
-            "post": self.post_obj,
-            "interactions": PostInteraction.get_post_interactions(
-                [self.post_obj] + ancestors + descendants,
-                self.request.identity,
-            ),
-            "link_original": True,
-            "ancestors": ancestors,
-            "descendants": descendants,
-        }
+
+        context.update(
+            {
+                "identity": self.identity,
+                "post": self.post_obj,
+                "interactions": PostInteraction.get_post_interactions(
+                    [self.post_obj] + ancestors + descendants,
+                    self.request.identity,
+                ),
+                "link_original": True,
+                "ancestors": ancestors,
+                "descendants": descendants,
+            }
+        )
+
+        return context
 
     def serve_object(self):
         # If this not a local post, redirect to its canonical URI

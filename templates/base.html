@@ -26,6 +26,9 @@
     {% if config_identity.custom_css %}
       <style>{{ config_identity.custom_css }}</style>
     {% endif %}
+    {% block opengraph %}
+        {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
+    {% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

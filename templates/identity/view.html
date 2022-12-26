@@ -2,6 +2,10 @@
 
 {% block title %}{{ identity }}{% endblock %}
 
+{% block opengraph %}
+    {% include "_opengraph.html" with opengraph_local=identity.to_opengraph_dict %}
+{% endblock %}
+
 {% block extra_head %}
     {% if identity.local %}
         <link rel="alternate" type="application/rss+xml" title="RSS feed for {{ identity.name }}" href="rss/" />

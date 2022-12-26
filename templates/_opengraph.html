@@ -1,0 +1,14 @@
+{% load opengraph %}
+{% with opengraph_merged=opengraph_local|dict_merge:opengraph_defaults %}
+    <!-- Begin OpenGraph tagging -->
+    {% for key, value in opengraph_merged.items %}
+        <meta content="{{ value|striptags }}" property="{{ key }}"/>
+        {% if key == "og:description" %}
+            {# Mastodon duplicates this one tag without the og: prefix. Not sure why #}
+            <meta content="{{ value|striptags }}" property="description"/>
+        {% endif %}
+    {% endfor %}
+    {% block opengraph_extra %}
+    {% endblock %}
+    <!-- End OpenGraph tagging -->
+{% endwith %}

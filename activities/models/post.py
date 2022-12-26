@@ -838,6 +838,22 @@ class Post(StatorModel):
                 raise ValueError("Actor on delete does not match object")
             post.delete()
 
+    ### OpenGraph API ###
+
+    def to_opengraph_dict(self) -> dict:
+        return {
+            "og:title": f"{self.author.name} (@{self.author.handle})",
+            "og:type": "article",
+            "og:published_time": (self.published or self.created).isoformat(),
+            "og:modified_time": (
+                self.edited or self.published or self.created
+            ).isoformat(),
+            "og:description": (self.summary or self.safe_content_local()),
+            "og:image:url": self.author.local_icon_url().absolute,
+            "og:image:height": 85,
+            "og:image:width": 85,
+        }
+
     ### Mastodon API ###
 
     def to_mastodon_json(self, interactions=None):
