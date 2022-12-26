@@ -2,32 +2,29 @@
 {% load activity_tags %}
 <div class="post {% if reply %}reply{% endif %} {{ post.summary_class }}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
 
-    <a href="{{ post.author.urls.view }}" tabindex="-1">
-        <img src="{{ post.author.local_icon_url.relative }}" class="icon" loading="lazy">
-    </a>
-
-    <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
-        {% if post.visibility == 0 %}
-            <i class="visibility fa-solid fa-earth-oceania" title="Public" aria-label="public"></i>
-        {% elif post.visibility == 1 %}
-            <i class="visibility fa-solid fa-lock-open" title="Unlisted" aria-label="unlisted"></i>
-        {% elif post.visibility == 2 %}
-            <i class="visibility fa-solid fa-lock" title="Followers Only" aria-label="followers only"></i>
-        {% elif post.visibility == 3 %}
-            <i class="visibility fa-solid fa-at" title="Mentioned Only" aria-label="mentioned only"></i>
-        {% elif post.visibility == 4 %}
-        <i class="visibility fa-solid fa-link-slash" title="Local Only" aria-label="local only"></i>
-        {% endif %}
-        {% if post.published %}
-            <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
-        {% else %}
-            <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
-        {% endif %}
-    </time>
-
-    <a href="{{ post.author.urls.view }}" class="handle">
-        <span class="link">{{ post.author.html_name_or_handle }}</span> <small>@{{ post.author.handle }}</small>
-    </a>
+    <div class="post-banner">
+      {% include "identity/_identity_banner.html" with identity=post.author %}
+      <div>
+        <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
+            {% if post.visibility == 0 %}
+                <i class="visibility fa-solid fa-earth-oceania" title="Public" aria-label="public"></i>
+            {% elif post.visibility == 1 %}
+                <i class="visibility fa-solid fa-lock-open" title="Unlisted" aria-label="unlisted"></i>
+            {% elif post.visibility == 2 %}
+                <i class="visibility fa-solid fa-lock" title="Followers Only" aria-label="followers only"></i>
+            {% elif post.visibility == 3 %}
+                <i class="visibility fa-solid fa-at" title="Mentioned Only" aria-label="mentioned only"></i>
+            {% elif post.visibility == 4 %}
+            <i class="visibility fa-solid fa-link-slash" title="Local Only" aria-label="local only"></i>
+            {% endif %}
+            {% if post.published %}
+                <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
+            {% else %}
+                <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
+            {% endif %}
+        </time>
+      </div>
+    </div>
 
     {% if post.summary %}
         {% if config_identity.expand_linked_cws %}

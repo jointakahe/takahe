@@ -438,7 +438,7 @@ p.authorization-code {
 
 .icon-menu .option {
     display: block;
-    margin: 0px 0 20px 0;
+    margin: 0 0 20px 0;
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     color: inherit;
@@ -455,6 +455,10 @@ p.authorization-code {
 
 .icon-menu .option.empty {
     color: var(--color-text-dull);
+}
+
+.icon-menu .option-actions {
+    text-align: right;
 }
 
 .icon-menu .option.empty:hover,
@@ -482,8 +486,20 @@ p.authorization-code {
     font-size: 200%;
 }
 
-.icon-menu .option .handle {
-    margin-right: 20px;
+.icon-menu .option.hashtags {
+    display: flex;
+    align-items: center;
+}
+
+.icon-menu .option.hashtags .tag {
+    min-width: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.icon-menu .option.hashtags .count {
+    text-align: right;
 }
 
 .icon-menu .option .pill {
@@ -500,14 +516,8 @@ p.authorization-code {
 }
 
 .icon-menu .option time {
-    float: right;
     color: var(--color-text-duller);
     margin: 14px 0 0 0;
-}
-
-.icon-menu .option .right {
-    display: inline-block;
-    float: right;
 }
 
 .icon-menu .option button {
@@ -1015,6 +1025,34 @@ table.metadata td .emoji {
     min-width: 16px;
 }
 
+/* Identity banner */
+
+.identity-banner {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.identity-banner .handle {
+    display: block;
+    padding: 0 10px;
+    vertical-align: middle;
+    min-width: 0;
+}
+
+.identity-banner .handle .link,
+.identity-banner .handle .small {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+}
+
+.identity-banner .avatar-link {
+    line-height: 0; /* Fixes a bit of extra padding on the bottom of the link. */
+}
+
 /* Posts */
 
 .post {
@@ -1043,31 +1081,24 @@ form .post {
 .post .icon {
     height: 48px;
     width: auto;
-    float: left;
 }
 
 .post.mini .icon {
     height: 28px;
     width: auto;
-    float: left;
 }
 
 .post .emoji {
     height: 18px;
 }
 
-.post .handle {
-    display: block;
-    padding: 7px 0 0 64px;
-}
-
-.post.mini .handle {
-    padding: 7px 0 0 36px;
+.post .post-banner {
+    display: flex;
+    align-items: center;
 }
 
 .post time {
     display: block;
-    float: right;
     color: var(--color-text-duller);
     width: 65px;
     text-align: center;

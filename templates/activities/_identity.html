@@ -1,9 +1,7 @@
 {% load activity_tags %}
 <div class="post user" data-takahe-id="{{ identity.id }}">
 
-    <a href="{{ identity.urls.view }}">
-        <img src="{{ identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ identity.name_or_handle }}" loading="lazy">
-    </a>
+    {% include "identity/_identity_banner.html" with identity=identity %}
 
     {% if created %}
     <time>

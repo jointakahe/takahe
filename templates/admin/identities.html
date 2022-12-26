@@ -20,16 +20,14 @@
     <section class="icon-menu">
         {% for identity in page_obj %}
             <a class="option" href="{{ identity.urls.admin_edit }}">
-                <img src="{{ identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ identity.name_or_handle }}" loading="lazy">
-                <span class="handle">
-                    {{ identity.html_name_or_handle }}
-                    <small>
-                        {{ identity.handle }}
-                    </small>
-                </span>
+              <div class="option-content">
+                {% include "identity/_identity_banner.html" with identity=identity link_avatar=False link_handle=False %}
+              </div>
+              <div class="option-actions">
                 {% if identity.banned %}
                     <span class="pill bad">Banned</span>
                 {% endif %}
+              </div>
             </a>
         {% empty %}
             <p class="option empty">
