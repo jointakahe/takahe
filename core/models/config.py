@@ -246,5 +246,6 @@ class Config(models.Model):
 
         # wellness Options
         visible_reaction_counts: bool = True
+        expand_linked_cws: bool = True
 
         custom_css: str | None

@@ -20,6 +20,7 @@ x-takahe-common:
       TAKAHE_EMAIL_BACKEND: "console://console"
       TAKAHE_MAIN_DOMAIN: "example.com"
       TAKAHE_ENVIRONMENT: "development"
+      GUNICORN_EXTRA_CMD_ARGS: "--reload"
     networks:
       - external_network
       - internal_network
@@ -43,6 +44,8 @@ services:
       POSTGRES_DB: takahe
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: insecure_password
+    ports:
+      - "5433:5432"
 
   web:
     <<: *takahe-common

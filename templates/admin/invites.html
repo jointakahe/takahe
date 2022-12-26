@@ -19,10 +19,10 @@
                     <small>
                         {% if invite.expires %}
                             Expires in {{ invite.expires|timeuntil }}
-                            {% if invite.notes %}|{% endif %}
+                            {% if invite.note %}|{% endif %}
                         {% endif %}
-                        {% if invite.notes %}
-                            {{ invite.notes }}
+                        {% if invite.note %}
+                            {{ invite.note }}
                         {% endif %}
                     </small>
                 </span>

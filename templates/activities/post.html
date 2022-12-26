@@ -2,6 +2,10 @@
 
 {% block title %}Post by {{ post.author.html_name_or_handle }}{% endblock %}
 
+{% block opengraph %}
+    {% include "_opengraph.html" with opengraph_local=post.to_opengraph_dict %}
+{% endblock %}
+
 {% block content %}
     {% for ancestor in ancestors reversed %}
         {% include "activities/_post.html" with post=ancestor reply=True link_original=False %}

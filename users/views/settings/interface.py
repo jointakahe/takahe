@@ -25,10 +25,14 @@ class InterfacePage(SettingsPage):
             "help_text": "Theme the website however you'd like, just for you. You should probably not use this unless you know what you're doing.",
             "display": "textarea",
         },
+        "expand_linked_cws": {
+            "title": "Expand linked Content Warnings",
+            "help_text": "Expands all CWs of the same type at once, rather than one at a time.",
+        },
     }
 
     layout = {
         "Posting": ["toot_mode", "default_post_visibility"],
-        "Wellness": ["visible_reaction_counts"],
+        "Wellness": ["visible_reaction_counts", "expand_linked_cws"],
         "Appearance": ["custom_css"],
     }
