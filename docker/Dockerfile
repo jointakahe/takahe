@@ -17,6 +17,7 @@ COPY requirements.txt requirements.txt
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        netcat \
         gcc \
         libc6-dev \
         libpq-dev \
@@ -37,8 +38,6 @@ RUN mkdir -p /cache
 COPY . /takahe
 
 WORKDIR /takahe
-
-RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
 
