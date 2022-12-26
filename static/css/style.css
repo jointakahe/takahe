@@ -525,6 +525,11 @@ p.authorization-code {
     margin-right: 20px;
 }
 
+.icon-menu .option button.right {
+    float: right;
+    margin-right: 0;
+}
+
 .handle {
     vertical-align: middle;
     display: inline-block;
@@ -1050,7 +1055,8 @@ table.metadata td .emoji {
 }
 
 .identity-banner .avatar-link {
-    line-height: 0; /* Fixes a bit of extra padding on the bottom of the link. */
+    line-height: 0;
+    /* Fixes a bit of extra padding on the bottom of the link. */
 }
 
 /* Posts */
@@ -1553,29 +1559,36 @@ form .post {
 .debug {
     width: 100%;
 }
+
 .debug h2 {
     text-align: center;
     padding-bottom: 5px;
 }
+
 .debug-section {
     text-align: center;
 }
+
 .debug-section .field.payload,
 #canonical_response,
 #raw_response {
     margin-bottom: 10px;
 }
-#canonical_response, #raw_response {
+
+#canonical_response,
+#raw_response {
     background-color: var(--color-bg-box);
     overflow: scroll;
     text-align: left;
 }
+
 .debug-section .field .name {
     display: inline-block;
     min-width: 49%;
     text-align: right;
     padding-right: 10px;
 }
+
 .debug-section .field .value {
     display: inline-block;
     min-width: 49%;
