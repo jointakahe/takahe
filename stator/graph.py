@@ -98,6 +98,8 @@ class State:
         self.force_initial = force_initial
         self.parents: set["State"] = set()
         self.children: set["State"] = set()
+        self.timeout_state: State | None = None
+        self.timeout_value: int | None = None
 
     def _add_to_graph(self, graph: type[StateGraph], name: str):
         self.graph = graph
@@ -121,6 +123,14 @@ class State:
         return hash(id(self))
 
     def transitions_to(self, other: "State"):
+        self.children.add(other)
+        other.parents.add(other)
+
+    def times_out_to(self, other: "State", seconds: int):
+        if self.timeout_state is not None:
+            raise ValueError("Timeout state already set!")
+        self.timeout_state = other
+        self.timeout_value = seconds
         self.children.add(other)
         other.parents.add(other)
 

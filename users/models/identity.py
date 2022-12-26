@@ -7,13 +7,12 @@ import urlman
 from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.db import IntegrityError, models
-from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.functional import lazy
+from lxml import etree
 
 from core.exceptions import ActorMismatchError
-from core.files import get_remote_file
-from core.html import sanitize_post, strip_html
+from core.html import ContentRenderer, strip_html
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -32,44 +31,105 @@ from users.models.system_actor import SystemActor
 
 class IdentityStates(StateGraph):
     """
-    There are only two states in a cycle.
     Identities sit in "updated" for up to system.identity_max_age, and then
     go back to "outdated" for refetching.
+
+    When a local identity is "edited" or "deleted", it will fanout the change to
+    all followers and transition to "updated"
     """
 
     outdated = State(try_interval=3600, force_initial=True)
     updated = State(try_interval=86400 * 7, attempt_immediately=False)
 
+    edited = State(try_interval=300, attempt_immediately=True)
+    deleted = State(try_interval=300, attempt_immediately=True)
+    deleted_fanned_out = State(externally_progressed=True)
+
+    deleted.transitions_to(deleted_fanned_out)
+
+    edited.transitions_to(updated)
+    updated.transitions_to(edited)
+    edited.transitions_to(deleted)
+
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
 
     @classmethod
+    def group_deleted(cls):
+        return [cls.deleted, cls.deleted_fanned_out]
+
+    @classmethod
+    async def targets_fan_out(cls, identity: "Identity", type_: str) -> None:
+        from activities.models import FanOut
+        from users.models import Follow
+
+        # Fan out to each target
+        shared_inboxes = set()
+        async for follower in Follow.objects.select_related("source", "target").filter(
+            target=identity
+        ):
+            # Dedupe shared_inbox_uri
+            shared_uri = follower.source.shared_inbox_uri
+            if shared_uri and shared_uri in shared_inboxes:
+                continue
+
+            await FanOut.objects.acreate(
+                identity=follower.source,
+                type=type_,
+                subject_identity=identity,
+            )
+            shared_inboxes.add(shared_uri)
+
+    @classmethod
+    async def handle_edited(cls, instance: "Identity"):
+        from activities.models import FanOut
+
+        if not instance.local:
+            return cls.updated
+
+        identity = await instance.afetch_full()
+        await cls.targets_fan_out(identity, FanOut.Types.identity_edited)
+        return cls.updated
+
+    @classmethod
+    async def handle_deleted(cls, instance: "Identity"):
+        from activities.models import FanOut
+
+        if not instance.local:
+            return cls.updated
+
+        identity = await instance.afetch_full()
+        await cls.targets_fan_out(identity, FanOut.Types.identity_deleted)
+        return cls.deleted_fanned_out
+
+    @classmethod
     async def handle_outdated(cls, identity: "Identity"):
+
         # Local identities never need fetching
         if identity.local:
             return cls.updated
         # Run the actor fetch and progress to updated if it succeeds
         if await identity.fetch_actor():
-            # Also stash their icon if we can
-            if identity.icon_uri:
-                try:
-                    file, mimetype = await get_remote_file(
-                        identity.icon_uri,
-                        timeout=settings.SETUP.REMOTE_TIMEOUT,
-                        max_size=settings.SETUP.AVATAR_MAX_IMAGE_FILESIZE_KB * 1024,
-                    )
-                except httpx.RequestError:
-                    # We've still got enough info to consider ourselves updated
-                    return cls.updated
-                if file:
-                    identity.icon = file
-                    await sync_to_async(identity.save)()
             return cls.updated
 
     @classmethod
     async def handle_updated(cls, instance: "Identity"):
         if instance.state_age > Config.system.identity_max_age:
             return cls.outdated
+
+
+class IdentityQuerySet(models.QuerySet):
+    def not_deleted(self):
+        query = self.exclude(state__in=IdentityStates.group_deleted())
+        return query
+
+
+class IdentityManager(models.Manager):
+    def get_queryset(self):
+        return IdentityQuerySet(self.model, using=self._db)
+
+    def not_deleted(self):
+        return self.get_queryset().not_deleted()
 
 
 class Identity(StatorModel):
@@ -81,6 +141,8 @@ class Identity(StatorModel):
         none = 0
         limited = 1
         blocked = 2
+
+    ACTOR_TYPES = ["person", "service", "application", "group", "organization"]
 
     # The Actor URI is essentially also a PK - we keep the default numeric
     # one around as well for making nice URLs etc.
@@ -118,6 +180,7 @@ class Identity(StatorModel):
     image_uri = models.CharField(max_length=500, blank=True, null=True)
     followers_uri = models.CharField(max_length=500, blank=True, null=True)
     following_uri = models.CharField(max_length=500, blank=True, null=True)
+    actor_type = models.CharField(max_length=100, default="person")
 
     icon = models.ImageField(
         upload_to=partial(upload_namer, "profile_images"), blank=True, null=True
@@ -148,6 +211,8 @@ class Identity(StatorModel):
     fetched = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
 
+    objects = IdentityManager()
+
     ### Model attributes ###
 
     class Meta:
@@ -157,6 +222,8 @@ class Identity(StatorModel):
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
         action = "{view}action/"
+        followers = "{view}followers/"
+        following = "{view}following/"
         activate = "{view}activate/"
         admin = "/admin/identities/"
         admin_edit = "{admin}{self.pk}/"
@@ -182,6 +249,18 @@ class Identity(StatorModel):
         else:
             return self.profile_uri
 
+    def all_absolute_profile_uris(self) -> list[str]:
+        """
+        Returns alist of profile URIs that are always absolute. For local addresses,
+        this includes the short and long form URIs.
+        """
+        if not self.local:
+            return [self.profile_uri]
+        return [
+            f"https://{self.domain.uri_domain}/@{self.username}/",
+            f"https://{self.domain.uri_domain}/@{self.username}@{self.domain_id}/",
+        ]
+
     def local_icon_url(self) -> RelativeAbsoluteUrl:
         """
         Returns an icon for use by us, with fallbacks to a placeholder
@@ -198,27 +277,25 @@ class Identity(StatorModel):
         Returns a background image for us, returning None if there isn't one
         """
         if self.image:
-            return RelativeAbsoluteUrl(self.image.url)
+            return AutoAbsoluteUrl(self.image.url)
         elif self.image_uri:
             return AutoAbsoluteUrl(f"/proxy/identity_image/{self.pk}/")
         return None
 
     @property
     def safe_summary(self):
-        from activities.templatetags.emoji_tags import imageify_emojis
-
-        return imageify_emojis(sanitize_post(self.summary), self.domain)
+        return ContentRenderer(local=True).render_identity_summary(self.summary, self)
 
     @property
     def safe_metadata(self):
-        from activities.templatetags.emoji_tags import imageify_emojis
+        renderer = ContentRenderer(local=True)
 
         if not self.metadata:
             return []
         return [
             {
-                "name": imageify_emojis(strip_html(data["name"]), self.domain),
-                "value": imageify_emojis(strip_html(data["value"]), self.domain),
+                "name": renderer.render_identity_data(data["name"], self, strip=True),
+                "value": renderer.render_identity_data(data["value"], self, strip=True),
             }
             for data in self.metadata
         ]
@@ -229,18 +306,17 @@ class Identity(StatorModel):
     def by_username_and_domain(cls, username, domain, fetch=False, local=False):
         if username.startswith("@"):
             raise ValueError("Username must not start with @")
-        username = username.lower()
         domain = domain.lower()
         try:
             if local:
                 return cls.objects.get(
-                    username=username,
+                    username__iexact=username,
                     domain_id=domain,
                     local=True,
                 )
             else:
                 return cls.objects.get(
-                    username=username,
+                    username__iexact=username,
                     domain_id=domain,
                 )
         except cls.DoesNotExist:
@@ -292,9 +368,9 @@ class Identity(StatorModel):
         """
         Return the name_or_handle with any HTML substitutions made
         """
-        from activities.templatetags.emoji_tags import imageify_emojis
-
-        return imageify_emojis(self.name_or_handle, self.domain)
+        return ContentRenderer(local=True).render_identity_data(
+            self.name_or_handle, self, strip=True
+        )
 
     @property
     def handle(self):
@@ -328,13 +404,55 @@ class Identity(StatorModel):
     def limited(self) -> bool:
         return self.restriction == self.Restriction.limited
 
+    ### Async helpers ###
+
+    async def afetch_full(self):
+        """
+        Returns a version of the object with all relations pre-loaded
+        """
+        return await Identity.objects.select_related("domain").aget(pk=self.pk)
+
     ### ActivityPub (outbound) ###
+
+    def to_webfinger(self):
+        aliases = [self.absolute_profile_uri()]
+
+        actor_links = []
+
+        if self.restriction != Identity.Restriction.blocked:
+            # Blocked users don't get a profile page
+            actor_links.append(
+                {
+                    "rel": "http://webfinger.net/rel/profile-page",
+                    "type": "text/html",
+                    "href": self.absolute_profile_uri(),
+                },
+            )
+
+        # TODO: How to handle Restriction.limited and Restriction.blocked?
+        #       Exposing the activity+json will allow migrating off server
+        actor_links.extend(
+            [
+                {
+                    "rel": "self",
+                    "type": "application/activity+json",
+                    "href": self.actor_uri,
+                }
+            ]
+        )
+
+        return {
+            "subject": f"acct:{self.handle}",
+            "aliases": aliases,
+            "links": actor_links,
+        }
 
     def to_ap(self):
         response = {
             "id": self.actor_uri,
-            "type": "Person",
+            "type": self.actor_type.title(),
             "inbox": self.actor_uri + "inbox/",
+            "outbox": self.actor_uri + "outbox/",
             "preferredUsername": self.username,
             "publicKey": {
                 "id": self.public_key_id,
@@ -348,7 +466,7 @@ class Identity(StatorModel):
         if self.name:
             response["name"] = self.name
         if self.summary:
-            response["summary"] = str(linebreaks_filter(self.summary))
+            response["summary"] = self.summary
         if self.icon:
             response["icon"] = {
                 "type": "Image",
@@ -375,6 +493,30 @@ class Identity(StatorModel):
             "href": self.actor_uri,
             "name": "@" + self.handle,
             "type": "Mention",
+        }
+
+    def to_update_ap(self):
+        """
+        Returns the AP JSON to update this object
+        """
+        object = self.to_ap()
+        return {
+            "type": "Update",
+            "id": self.actor_uri + "#update",
+            "actor": self.actor_uri,
+            "object": object,
+        }
+
+    def to_delete_ap(self):
+        """
+        Returns the AP JSON to delete this object
+        """
+        object = self.to_ap()
+        return {
+            "type": "Delete",
+            "id": self.actor_uri + "#delete",
+            "actor": self.actor_uri,
+            "object": object,
         }
 
     ### ActivityPub (inbound) ###
@@ -419,14 +561,41 @@ class Identity(StatorModel):
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1].lower()
+        webfinger_url = "https://{domain}/.well-known/webfinger?resource={uri}"
+
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(
+                timeout=settings.SETUP.REMOTE_TIMEOUT
+            ) as client:
                 response = await client.get(
-                    f"https://{domain}/.well-known/webfinger?resource=acct:{handle}",
+                    f"https://{domain}/.well-known/host-meta",
+                    follow_redirects=True,
+                )
+
+                # In the case of anything other than a success, we'll still try
+                # hitting the webfinger URL on the domain we were given to handle
+                # incorrectly setup servers.
+                if response.status_code == 200 and response.content.strip():
+                    tree = etree.fromstring(response.content)
+                    template = tree.xpath(
+                        "string(.//*[local-name() = 'Link' and @rel='lrdd']/@template)"
+                    )
+                    if template:
+                        webfinger_url = template
+        except (httpx.RequestError, etree.ParseError):
+            pass
+
+        try:
+            async with httpx.AsyncClient(
+                timeout=settings.SETUP.REMOTE_TIMEOUT
+            ) as client:
+                response = await client.get(
+                    webfinger_url.format(domain=domain, uri=f"acct:{handle}"),
                     follow_redirects=True,
                 )
         except httpx.RequestError:
             return None, None
+
         if response.status_code in [404, 410]:
             return None, None
         if response.status_code >= 500:
@@ -439,6 +608,9 @@ class Identity(StatorModel):
         try:
             data = response.json()
         except ValueError:
+            # Some servers return these with a 200 status code!
+            if b"not found" in response.content.lower():
+                return None, None
             raise ValueError(
                 "JSON parse error fetching webfinger",
                 response.content,
@@ -469,6 +641,10 @@ class Identity(StatorModel):
             )
         except httpx.RequestError:
             return False
+        content_type = response.headers.get("content-type")
+        if content_type and "html" in content_type:
+            # Some servers don't properly handle "application/activity+json"
+            return False
         if response.status_code == 410:
             # Their account got deleted, so let's do the same.
             if self.pk:
@@ -484,22 +660,28 @@ class Identity(StatorModel):
                 f"Client error fetching actor: {response.status_code}", response.content
             )
         document = canonicalise(response.json(), include_security=True)
+        if "type" not in document:
+            return False
         self.name = document.get("name")
         self.profile_uri = document.get("url")
         self.inbox_uri = document.get("inbox")
         self.outbox_uri = document.get("outbox")
         self.followers_uri = document.get("followers")
         self.following_uri = document.get("following")
+        self.actor_type = document["type"].lower()
         self.shared_inbox_uri = document.get("endpoints", {}).get("sharedInbox")
         self.summary = document.get("summary")
         self.username = document.get("preferredUsername")
         if self.username and "@value" in self.username:
             self.username = self.username["@value"]
         if self.username:
-            self.username = self.username.lower()
+            self.username = self.username
         self.manually_approves_followers = document.get("manuallyApprovesFollowers")
         self.public_key = document.get("publicKey", {}).get("publicKeyPem")
         self.public_key_id = document.get("publicKey", {}).get("id")
+        # Sometimes the public key PEM is in a language construct?
+        if isinstance(self.public_key, dict):
+            self.public_key = self.public_key["@value"]
         self.icon_uri = get_first_image_url(document.get("icon", None))
         self.image_uri = get_first_image_url(document.get("image", None))
         self.discoverable = document.get("toot:discoverable", True)
@@ -526,7 +708,7 @@ class Identity(StatorModel):
             )
             if webfinger_handle:
                 webfinger_username, webfinger_domain = webfinger_handle.split("@")
-                self.username = webfinger_username.lower()
+                self.username = webfinger_username
                 self.domain = await get_domain(webfinger_domain)
             else:
                 self.domain = await get_domain(actor_url_parts.hostname)

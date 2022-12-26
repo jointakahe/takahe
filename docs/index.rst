@@ -19,6 +19,8 @@ in alpha. For more information about Takahē, see
    contributing
    domains
    moderation
+   interoperability
    stator
    tuning
    releases/index
+   contributors

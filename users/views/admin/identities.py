@@ -4,11 +4,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
-from users.decorators import admin_required
+from users.decorators import moderator_required
 from users.models import Identity, IdentityStates
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class IdentitiesRoot(ListView):
 
     template_name = "admin/identities.html"
@@ -35,7 +35,7 @@ class IdentitiesRoot(ListView):
             if "@" in query:
                 username, domain = query.split("@", 1)
                 identities = identities.filter(
-                    username=username,
+                    username__iexact=username,
                     domain__domain__istartswith=domain,
                 )
             else:
@@ -46,7 +46,7 @@ class IdentitiesRoot(ListView):
         return identities
 
 
-@method_decorator(admin_required, name="dispatch")
+@method_decorator(moderator_required, name="dispatch")
 class IdentityEdit(FormView):
 
     template_name = "admin/identity_edit.html"

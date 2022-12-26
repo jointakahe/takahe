@@ -51,6 +51,10 @@ class BasicSettings(AdminSettingsPage):
             "help_text": "Displayed on the homepage and the about page.\nUse Markdown for formatting.",
             "display": "textarea",
         },
+        "site_frontpage_posts": {
+            "title": "Show Posts On Front Page",
+            "help_text": "Whether to show some recent posts on the logged-out homepage.",
+        },
         "site_icon": {
             "title": "Site Icon",
             "help_text": "Minimum size 64x64px. Should be square.",
@@ -69,11 +73,7 @@ class BasicSettings(AdminSettingsPage):
         },
         "signup_allowed": {
             "title": "Signups Allowed",
-            "help_text": "If signups are allowed at all",
-        },
-        "signup_invite_only": {
-            "title": "Invite-Only",
-            "help_text": "If signups require an invite code",
+            "help_text": "If uninvited signups are allowed.\nInvite codes will always work.",
         },
         "signup_text": {
             "title": "Signup Page Text",
@@ -99,11 +99,15 @@ class BasicSettings(AdminSettingsPage):
         "Branding": [
             "site_name",
             "site_about",
+            "site_frontpage_posts",
             "site_icon",
             "site_banner",
             "highlight_color",
         ],
-        "Signups": ["signup_allowed", "signup_invite_only", "signup_text"],
+        "Signups": [
+            "signup_allowed",
+            "signup_text",
+        ],
         "Posts": [
             "post_length",
             "post_minimum_interval",

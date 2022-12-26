@@ -21,6 +21,7 @@ class SystemActor:
         self.public_key_id = self.actor_uri + "#main-key"
         self.profile_uri = f"https://{settings.MAIN_DOMAIN}/about/"
         self.username = "__system__"
+        self.handle = f"__system__@{settings.MAIN_DOMAIN}"
 
     def absolute_profile_uri(self):
         return self.profile_uri
@@ -43,6 +44,7 @@ class SystemActor:
             "id": self.actor_uri,
             "type": "Application",
             "inbox": self.actor_uri + "inbox/",
+            "outbox": self.actor_uri + "outbox/",
             "endpoints": {
                 "sharedInbox": f"https://{settings.MAIN_DOMAIN}/inbox/",
             },
@@ -55,6 +57,26 @@ class SystemActor:
                 "owner": self.actor_uri,
                 "publicKeyPem": self.public_key,
             },
+        }
+
+    def to_webfinger(self):
+        return {
+            "subject": f"acct:{self.handle}",
+            "aliases": [
+                self.absolute_profile_uri(),
+            ],
+            "links": [
+                {
+                    "rel": "http://webfinger.net/rel/profile-page",
+                    "type": "text/html",
+                    "href": self.absolute_profile_uri(),
+                },
+                {
+                    "rel": "self",
+                    "type": "application/activity+json",
+                    "href": self.actor_uri,
+                },
+            ],
         }
 
     async def signed_request(

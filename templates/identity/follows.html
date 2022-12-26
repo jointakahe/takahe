@@ -1,0 +1,24 @@
+{% extends "identity/view.html" %}
+
+{% block title %}{% if self.inbound %}Followers{% else %}Following{% endif %} - {{ identity }}{% endblock %}
+
+{% block subcontent %}
+
+    {% for identity in page_obj %}
+        {% include "activities/_identity.html" %}
+    {% empty %}
+        <span class="empty">
+            This person has no {% if self.inbound %}followers{% else %}follows{% endif %} yet.
+        </span>
+    {% endfor %}
+
+    <div class="load-more">
+        {% if page_obj.has_previous %}
+            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+        {% endif %}
+    </div>
+
+{% endblock %}

@@ -201,6 +201,7 @@ class Config(models.Model):
         site_name: str = "Takahē"
         highlight_color: str = "#449c8c"
         site_about: str = "<h2>Welcome!</h2>\n\nThis is a community running Takahē."
+        site_frontpage_posts: bool = True
         site_icon: UploadedImage = StaticAbsoluteUrl("img/icon-128.png").relative  # type: ignore
         site_banner: UploadedImage = StaticAbsoluteUrl(
             "img/fjords-banner-600.jpg"
@@ -211,7 +212,6 @@ class Config(models.Model):
         policy_rules: str = ""
 
         signup_allowed: bool = True
-        signup_invite_only: bool = False
         signup_text: str = ""
         content_warning_text: str = "Content Warning"
 
@@ -243,3 +243,8 @@ class Config(models.Model):
         toot_mode: bool = False
         default_post_visibility: int = 0  # Post.Visibilities.public
         visible_follows: bool = True
+
+        # wellness Options
+        visible_reaction_counts: bool = True
+
+        custom_css: str | None

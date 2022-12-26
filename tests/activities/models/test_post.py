@@ -10,6 +10,16 @@ def test_fetch_post(httpx_mock: HTTPXMock, config_system):
     Tests that a post we don't have locally can be fetched by by_object_uri
     """
     httpx_mock.add_response(
+        url="https://example.com/test-actor",
+        json={
+            "@context": [
+                "https://www.w3.org/ns/activitystreams",
+            ],
+            "id": "https://example.com/test-actor",
+            "type": "Person",
+        },
+    )
+    httpx_mock.add_response(
         url="https://example.com/test-post",
         json={
             "@context": [
@@ -67,6 +77,7 @@ def test_linkify_mentions_remote(
         local=True,
     )
     assert post.safe_content_remote() == "<p>@test@example.com, welcome!</p>"
+
     # Test case insensitivity (remote)
     post = Post.objects.create(
         content="<p>Hey @TeSt</p>",
@@ -76,7 +87,19 @@ def test_linkify_mentions_remote(
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_remote()
-        == '<p>Hey <a href="https://remote.test/@test/">@test</a></p>'
+        == '<p>Hey <a href="https://remote.test/@test/">@TeSt</a></p>'
+    )
+
+    # Test trailing dot (remote)
+    post = Post.objects.create(
+        content="<p>Hey @test@remote.test.</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(remote_identity)
+    assert (
+        post.safe_content_remote()
+        == '<p>Hey <a href="https://remote.test/@test/">@test</a>.</p>'
     )
 
     # Test that collapsing only applies to the first unique, short username
@@ -87,22 +110,20 @@ def test_linkify_mentions_remote(
     )
     post.mentions.set([remote_identity, remote_identity2])
     assert post.safe_content_remote() == (
-        '<p>Hey <a href="https://remote.test/@test/">@test</a> '
+        '<p>Hey <a href="https://remote.test/@test/">@TeSt</a> '
         'and <a href="https://remote2.test/@test/">@test@remote2.test</a></p>'
     )
 
     post.content = "<p>Hey @TeSt, @Test@remote.test and @test</p>"
     assert post.safe_content_remote() == (
-        '<p>Hey <a href="https://remote2.test/@test/">@test</a>, '
-        '<a href="https://remote.test/@test/">@test@remote.test</a> '
+        '<p>Hey <a href="https://remote2.test/@test/">@TeSt</a>, '
+        '<a href="https://remote.test/@test/">@Test@remote.test</a> '
         'and <a href="https://remote2.test/@test/">@test</a></p>'
     )
 
 
 @pytest.mark.django_db
-def test_linkify_mentions_local(
-    config_system, emoji_locals, identity, identity2, remote_identity
-):
+def test_linkify_mentions_local(config_system, identity, identity2, remote_identity):
     """
     Tests that we can linkify post mentions properly for local use
     """
@@ -174,3 +195,45 @@ def test_post_transitions(identity, stator):
     stator.run_single_cycle_sync()
     post = Post.objects.get(id=post.id)
     assert post.state == str(PostStates.deleted_fanned_out)
+
+
+@pytest.mark.django_db
+def test_content_map(remote_identity):
+    """
+    Tests that post contentmap content also works
+    """
+    post = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/1/",
+            "type": "Note",
+            "content": "Hi World",
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+        },
+        create=True,
+    )
+    assert post.content == "Hi World"
+
+    post2 = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/2/",
+            "type": "Note",
+            "contentMap": {"und": "Hey World"},
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+        },
+        create=True,
+    )
+    assert post2.content == "Hey World"
+
+    post3 = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/3/",
+            "type": "Note",
+            "contentMap": {"en-gb": "Hello World"},
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+        },
+        create=True,
+    )
+    assert post3.content == "Hello World"

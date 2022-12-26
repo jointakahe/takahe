@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_plain.html" %}
 
 {% block title %}Authorize {{ application.name }}{% endblock %}
 
@@ -24,8 +24,13 @@
                         </select>
                     </div>
                 </div>
-                <p>Do you want to give {{ application.name }} access to this identity?</p>
-                <p>It will have permission to: {{ scope }}</p>
+                <p>Do you want to give <b>{{ application.name }}</b> access to this identity?</p>
+                <p>It will have permission to:</p>
+                <ul>
+                    {% if "read" in scope %}<li>Read all of your data</li>{% endif %}
+                    {% if "write" in scope %}<li>Create posts, edit follows, and change all other data</li>{% endif %}
+                    {% if "push" in scope %}<li>Receive push notifications</li>{% endif %}
+                </ul>
                 <input type="hidden" name="client_id" value="{{ application.client_id }}">
                 <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
                 <input type="hidden" name="scope" value="{{ scope }}">

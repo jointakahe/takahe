@@ -11,6 +11,7 @@ from activities.models import (
     PostStates,
     TimelineEvent,
 )
+from activities.services import PostService
 from api import schemas
 from api.views.base import api_router
 from core.models import Config
@@ -87,16 +88,15 @@ def delete_status(request, id: str):
 @identity_required
 def status_context(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    parent = post.in_reply_to_post()
-    ancestors = []
-    if parent:
-        ancestors.append(parent)
-    descendants = list(Post.objects.filter(in_reply_to=post.object_uri)[:40])
+    service = PostService(post)
+    ancestors, descendants = service.context(request.identity)
     interactions = PostInteraction.get_post_interactions(
-        [post] + ancestors + descendants, request.identity
+        ancestors + descendants, request.identity
     )
     return {
-        "ancestors": [p.to_mastodon_json(interactions=interactions) for p in ancestors],
+        "ancestors": [
+            p.to_mastodon_json(interactions=interactions) for p in reversed(ancestors)
+        ],
         "descendants": [
             p.to_mastodon_json(interactions=interactions) for p in descendants
         ],
@@ -107,7 +107,8 @@ def status_context(request, id: str):
 @identity_required
 def favourite_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    post.like_as(request.identity)
+    service = PostService(post)
+    service.like_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return post.to_mastodon_json(interactions=interactions)
 
@@ -116,7 +117,8 @@ def favourite_status(request, id: str):
 @identity_required
 def unfavourite_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    post.unlike_as(request.identity)
+    service = PostService(post)
+    service.unlike_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return post.to_mastodon_json(interactions=interactions)
 
@@ -125,7 +127,8 @@ def unfavourite_status(request, id: str):
 @identity_required
 def reblog_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    post.boost_as(request.identity)
+    service = PostService(post)
+    service.boost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return post.to_mastodon_json(interactions=interactions)
 
@@ -134,6 +137,7 @@ def reblog_status(request, id: str):
 @identity_required
 def unreblog_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    post.unboost_as(request.identity)
+    service = PostService(post)
+    service.unboost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return post.to_mastodon_json(interactions=interactions)

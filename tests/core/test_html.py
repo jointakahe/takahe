@@ -1,4 +1,8 @@
-from core.html import html_to_plaintext, sanitize_post
+from unittest.mock import Mock
+
+import pytest
+
+from core.html import ContentRenderer, html_to_plaintext, sanitize_html
 
 
 def test_html_to_plaintext():
@@ -17,5 +21,81 @@ def test_html_to_plaintext():
 
 def test_sanitize_post():
 
-    assert sanitize_post("<p>Hello!</p>") == "<p>Hello!</p>"
-    assert sanitize_post("<p>It&#39;s great</p>") == "<p>It&#39;s great</p>"
+    assert sanitize_html("<p>Hello!</p>") == "<p>Hello!</p>"
+    assert sanitize_html("<p>It&#39;s great</p>") == "<p>It&#39;s great</p>"
+
+    # Note that we only want to linkify things with protocol prefixes to prevent
+    # too many false positives.
+    assert sanitize_html("<p>test.com</p>") == "<p>test.com</p>"
+    assert (
+        sanitize_html("<p>https://test.com</p>")
+        == '<p><a href="https://test.com" rel="nofollow">https://test.com</a></p>'
+    )
+    assert (
+        sanitize_html("<p>@someone@subdomain.some-domain.com</p>")
+        == "<p>@someone@subdomain.some-domain.com</p>"
+    )
+
+
+@pytest.mark.django_db
+def test_link_preservation():
+    """
+    We want to:
+     - Preserve incoming links from other servers
+     - Linkify mentions and hashtags
+     - Not have these all step on each other!
+    """
+    renderer = ContentRenderer(local=True)
+    fake_mention = Mock()
+    fake_mention.username = "andrew"
+    fake_mention.domain_id = "aeracode.org"
+    fake_mention.urls.view = "/@andrew@aeracode.org/"
+    fake_post = Mock()
+    fake_post.mentions.all.return_value = [fake_mention]
+    fake_post.author.domain.uri_domain = "example.com"
+    fake_post.emojis.all.return_value = []
+
+    assert (
+        renderer.render_post(
+            'Hello @andrew, I want to link to this <span>#</span>hashtag: <a href="http://example.com/@andrew/#notahashtag">here</a> and rewrite <a href="https://example.com/tags/thishashtag/">#thishashtag</a>',
+            fake_post,
+        )
+        == 'Hello <a href="/@andrew@aeracode.org/">@andrew</a>, I want to link to this <a href="/tags/hashtag/" class="hashtag">#hashtag</a>: <a href="http://example.com/@andrew/#notahashtag" rel="nofollow">here</a> and rewrite <a href="/tags/thishashtag/" class="hashtag">#thishashtag</a>'
+    )
+
+
+@pytest.mark.django_db
+def test_link_mixcase_mentions():
+    renderer = ContentRenderer(local=True)
+    fake_mention = Mock()
+    fake_mention.username = "Manfre"
+    fake_mention.domain_id = "manfre.net"
+    fake_mention.urls.view = "/@Manfre@manfre.net/"
+    fake_mention2 = Mock()
+    fake_mention2.username = "manfre"
+    fake_mention2.domain_id = "takahe.social"
+    fake_mention2.urls.view = "https://takahe.social/@manfre@takahe.social/"
+
+    unfetched_mention = Mock()
+    unfetched_mention.username = None
+    unfetched_mention.domain_id = None
+    unfetched_mention.urls.view = "/None@None/"
+
+    fake_post = Mock()
+    fake_post.mentions.all.return_value = [
+        fake_mention,
+        fake_mention2,
+        unfetched_mention,
+    ]
+    fake_post.author.domain.uri_domain = "example.com"
+    fake_post.emojis.all.return_value = []
+
+    assert renderer.render_post(
+        "@Manfre@manfre.net @mAnFrE@takahe.social @manfre@manfre.net @unfetched@manfre.net",
+        fake_post,
+    ) == (
+        '<a href="/@Manfre@manfre.net/">@Manfre</a> '
+        '<a href="https://takahe.social/@manfre@takahe.social/">@mAnFrE@takahe.social</a> '
+        '<a href="/@Manfre@manfre.net/">@manfre</a> '
+        "@unfetched@manfre.net"
+    )

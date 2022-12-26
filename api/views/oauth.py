@@ -1,8 +1,9 @@
 import secrets
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
@@ -13,8 +14,15 @@ from api.parser import FormOrJsonParser
 
 class OauthRedirect(HttpResponseRedirect):
     def __init__(self, redirect_uri, key, value):
-        self.allowed_schemes = [urlparse(redirect_uri).scheme]
-        super().__init__(redirect_uri + f"?{key}={value}")
+        url_parts = urlparse(redirect_uri)
+        self.allowed_schemes = [url_parts.scheme]
+        # Either add or join the query section
+        url_parts = list(url_parts)
+        if url_parts[4]:
+            url_parts[4] = url_parts[4] + f"&{key}={value}"
+        else:
+            url_parts[4] = f"{key}={value}"
+        super().__init__(urlunparse(url_parts))
 
 
 class AuthorizationView(LoginRequiredMixin, TemplateView):
@@ -60,6 +68,9 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
             code=secrets.token_urlsafe(16),
             scopes=scope.split(),
         )
+        # If it's an out of band request, show the code
+        if redirect_uri == "urn:ietf:wg:oauth:2.0:oob":
+            return render(request, "api/oauth_code.html", {"code": token.code})
         # Redirect with the token's code
         return OauthRedirect(redirect_uri, "code", token.code)
 
@@ -68,7 +79,13 @@ class AuthorizationView(LoginRequiredMixin, TemplateView):
 class TokenView(View):
     def post(self, request):
         post_data = FormOrJsonParser().parse_body(request)
-        grant_type = post_data["grant_type"]
+
+        grant_type = post_data.get("grant_type")
+        if grant_type not in (
+            "authorization_code",
+            "client_credentials",
+        ):
+            return JsonResponse({"error": "invalid_grant_type"}, status=400)
 
         try:
             application = Application.objects.get(client_id=post_data["client_id"])
@@ -78,7 +95,9 @@ class TokenView(View):
         if grant_type == "client_credentials":
             return JsonResponse({"error": "invalid_grant_type"}, status=400)
         elif grant_type == "authorization_code":
-            code = post_data["code"]
+            code = post_data.get("code")
+            if not code:
+                return JsonResponse({"error": "invalid_code"}, status=400)
             # Retrieve the token by code
             # TODO: Check code expiry based on created date
             try:

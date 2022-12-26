@@ -5,8 +5,11 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
 from core.files import resize_image
+from core.html import html_to_plaintext
 from core.models.config import Config
 from users.decorators import identity_required
+from users.models import IdentityStates
+from users.services import IdentityService
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -49,7 +52,7 @@ class ProfilePage(FormView):
         identity = self.request.identity
         return {
             "name": identity.name,
-            "summary": identity.summary,
+            "summary": html_to_plaintext(identity.summary) if identity.summary else "",
             "icon": identity.icon and identity.icon.url,
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,
@@ -60,8 +63,8 @@ class ProfilePage(FormView):
         # Update basic info
         identity = self.request.identity
         identity.name = form.cleaned_data["name"]
-        identity.summary = form.cleaned_data["summary"]
         identity.discoverable = form.cleaned_data["discoverable"]
+        IdentityService(identity).set_summary(form.cleaned_data["summary"])
         # Resize images
         icon = form.cleaned_data.get("icon")
         image = form.cleaned_data.get("image")
@@ -76,6 +79,8 @@ class ProfilePage(FormView):
                 resize_image(image, size=(1500, 500)),
             )
         identity.save()
+        identity.transition_perform(IdentityStates.edited)
+
         # Save profile-specific identity Config
         Config.set_identity(
             identity, "visible_follows", form.cleaned_data["visible_follows"]

@@ -1,8 +1,9 @@
+from django.db import models
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
 from users.decorators import identity_required
-from users.models import Follow, FollowStates
+from users.models import Follow, FollowStates, IdentityStates
 
 
 @method_decorator(identity_required, name="dispatch")
@@ -23,15 +24,25 @@ class Follows(ListView):
 
     def get_queryset(self):
         if self.inbound:
-            return Follow.objects.filter(
-                target=self.request.identity,
-                state__in=FollowStates.group_active(),
-            ).order_by("-created")
+            follow_dir = models.Q(target=self.request.identity)
         else:
-            return Follow.objects.filter(
-                source=self.request.identity,
+            follow_dir = models.Q(source=self.request.identity)
+
+        return (
+            Follow.objects.filter(
+                follow_dir,
                 state__in=FollowStates.group_active(),
-            ).order_by("-created")
+            )
+            .select_related(
+                "target",
+                "target__domain",
+                "source",
+                "source__domain",
+            )
+            .exclude(source__state__in=IdentityStates.group_deleted())
+            .exclude(target__state__in=IdentityStates.group_deleted())
+            .order_by("-created")
+        )
 
     def follows_to_identities(self, follows, attr):
         """
@@ -54,7 +65,9 @@ class Follows(ListView):
             )
             identity_ids = [identity.id for identity in context["page_obj"]]
             context["outbound_ids"] = Follow.objects.filter(
-                source=self.request.identity, target_id__in=identity_ids
+                source=self.request.identity,
+                target_id__in=identity_ids,
+                state__in=FollowStates.group_active(),
             ).values_list("target_id", flat=True)
         else:
             context["page_obj"].object_list = self.follows_to_identities(
@@ -62,7 +75,9 @@ class Follows(ListView):
             )
             identity_ids = [identity.id for identity in context["page_obj"]]
             context["inbound_ids"] = Follow.objects.filter(
-                target=self.request.identity, source_id__in=identity_ids
+                target=self.request.identity,
+                source_id__in=identity_ids,
+                state__in=FollowStates.group_active(),
             ).values_list("source_id", flat=True)
         context["inbound"] = self.inbound
         context["num_inbound"] = Follow.objects.filter(

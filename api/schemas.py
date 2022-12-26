@@ -165,3 +165,8 @@ class Relationship(Schema):
 class Context(Schema):
     ancestors: list[Status]
     descendants: list[Status]
+
+
+class FamiliarFollowers(Schema):
+    id: str
+    accounts: list[Account]

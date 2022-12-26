@@ -45,6 +45,10 @@ You'll need to run two copies of our `Docker image <https://hub.docker.com/r/joi
 
 * One with the arguments ``python3 manage.py runstator``, which will run the background worker
 
+These containers will need the ability to write at least 1GB of files out
+to their scratch disks. See the ``TAKAHE_NGINX_CACHE_SIZE`` environment
+variable for more.
+
 .. note::
 
     If you cannot run a background worker for some reason, you can instead
@@ -59,7 +63,9 @@ project, so if you know what you're doing, go for it - but we won't be able
 to give you support.
 
 If you are running on Kubernetes, we recommend that you make one Deployment
-for the webserver and one Deployment for the background worker.
+for the webserver and one Deployment for the background worker. We also
+recommend that you mount an ``emptyDir`` to the ``/cache/`` path on the
+webserver containers, as this is where the media cache will be stored.
 
 
 Environment Variables
@@ -112,6 +118,9 @@ be provided to the containers from the first boot.
   ``TAKAHE_ERROR_EMAILS`` to a valid JSON list of emails, such as
   ``["andrew@aeracode.org"]`` (if you're doing this via shell, be careful
   about escaping!)
+
+There are some other, optional variables you can tweak once the
+system is up and working - see :doc:`tuning` for more.
 
 
 .. _media_configuration:
@@ -167,7 +176,7 @@ To use a local directory, specify the media URL as ``local://``.
 You must then also specify:
 
 * ``TAKAHE_MEDIA_ROOT``, the file path to the local media Directory
-* ``TAKAHE_MEDIA_URL``, a fully-qualified URL prefix that serves that directory
+* ``TAKAHE_MEDIA_URL``, a fully-qualified URL prefix that serves that directory (must end in a slash)
 
 The media directory must be read-write accessible from every single container
 of Takahē - webserver and workers alike.

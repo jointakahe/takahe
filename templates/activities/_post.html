@@ -25,44 +25,8 @@
         {% endif %}
     </time>
 
-    {% if request.identity %}
-    <div class="actions" role="menubar">
-        {% include "activities/_reply.html" %}
-        {% include "activities/_like.html" %}
-        {% include "activities/_boost.html" %}
-        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu">
-            <i class="fa-solid fa-caret-down"></i>
-        </a>
-        <menu>
-            <a href="{{ post.urls.view }}" role="menuitem">
-                <i class="fa-solid fa-comment"></i> View Post &amp; Replies
-            </a>
-            <a href="{{ post.urls.action_report }}" role="menuitem">
-                <i class="fa-solid fa-flag"></i> Report
-            </a>
-            {% if post.author == request.identity %}
-            <a href="{{ post.urls.action_edit }}" role="menuitem">
-                <i class="fa-solid fa-pen-to-square"></i> Edit
-            </a>
-            <a href="{{ post.urls.action_delete }}" role="menuitem">
-                <i class="fa-solid fa-trash"></i> Delete
-            </a>
-            {% elif not post.local and post.url %}
-              <a href="{{ post.url }}" role="menuitem">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
-              </a>
-            {% endif %}
-            {% if request.user.admin %}
-            <a href="{{ post.urls.admin_edit }}" role="menuitem">
-                <i class="fa-solid fa-gear"></i> View In Admin
-            </a>
-            {% endif %}
-        </menu>
-    </div>
-    {% endif %}
-
     <a href="{{ post.author.urls.view }}" class="handle">
-        {{ post.author.html_name_or_handle }} <small>@{{ post.author.handle }}</small>
+        <span class="link">{{ post.author.html_name_or_handle }}</span> <small>@{{ post.author.handle }}</small>
     </a>
 
     {% if post.summary %}
@@ -81,6 +45,12 @@
                 <a href="{{ attachment.full_url.relative }}" class="image">
                   <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" loading="lazy" />
                 </a>
+              {% elif attachment.is_video %}
+                <a href="{{ attachment.full_url.relative }}" class="video">
+                  <video muted controls loop>
+                    <source src="{{ attachment.full_url.relative }}">
+                  </video>
+                </a>
               {% endif %}
             {% endfor %}
           </div>
@@ -93,5 +63,40 @@
     </div>
     {% endif %}
 
-    <a class="whole-box" href="{{ post.urls.view }}" tabindex="-1"></a>
+    {% if request.identity %}
+      <div class="actions" role="menubar">
+        {% include "activities/_reply.html" %}
+        {% include "activities/_like.html" %}
+        {% include "activities/_boost.html" %}
+        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu">
+          <i class="fa-solid fa-bars"></i>
+        </a>
+        <menu>
+          <a href="{{ post.urls.view }}" role="menuitem">
+            <i class="fa-solid fa-comment"></i> View Post &amp; Replies
+          </a>
+          <a href="{{ post.urls.action_report }}" role="menuitem">
+            <i class="fa-solid fa-flag"></i> Report
+          </a>
+          {% if post.author == request.identity %}
+            <a href="{{ post.urls.action_edit }}" role="menuitem">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
+            </a>
+            <a href="{{ post.urls.action_delete }}" role="menuitem">
+              <i class="fa-solid fa-trash"></i> Delete
+            </a>
+          {% elif not post.local and post.url %}
+            <a href="{{ post.url }}" role="menuitem">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
+            </a>
+          {% endif %}
+          {% if request.user.admin %}
+            <a href="{{ post.urls.admin_edit }}" role="menuitem">
+              <i class="fa-solid fa-gear"></i> View In Admin
+            </a>
+          {% endif %}
+        </menu>
+      </div>
+    {% endif %}
+
 </div>

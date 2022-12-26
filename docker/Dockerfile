@@ -9,6 +9,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
         libxslt1.1 \
+        nginx \
+        busybox \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements.txt
@@ -30,6 +32,8 @@ RUN apt-get update \
         zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /cache
+
 COPY . /takahe
 
 WORKDIR /takahe
@@ -41,4 +45,4 @@ EXPOSE 8000
 # Set some sensible defaults
 ENV GUNICORN_CMD_ARGS="--workers 8"
 
-CMD ["gunicorn", "takahe.wsgi:application", "-b", "0.0.0.0:8000"]
+CMD ["bash", "docker/run.sh"]

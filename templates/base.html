@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>{% block title %}{% endblock %} - {{ config.site_name }}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -16,13 +16,22 @@
         body {
             --color-highlight: {{ config.highlight_color }};
         }
+        {% if not config_identity.visible_reaction_counts %}
+        .like-count {
+            display: none;
+        }
+        {% endif %}
     </style>
+    {% if config_identity.custom_css %}
+      <style>{{ config_identity.custom_css }}</style>
+    {% endif %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <a id='skip-to-main' class='screenreader-text' href='#main-content'>Skip to Content</a>
     <a id='skip-to-nav' class='screenreader-text' href='#side-navigation'>Skip to Navigation</a>
     <main>
+        {% block body_main %}
         <header>
             <a class="logo" href="/">
                 <img src="{{ config.site_icon }}" width="32">
@@ -33,7 +42,7 @@
                     <a href="{% url "compose" %}" title="Compose" role="menuitem" {% if top_section == "compose" %}class="selected"{% endif %}>
                         <i class="fa-solid fa-feather"></i>
                     </a>
-                    <a href="{% url "search" %}" title="Search" role="menuitem" {% if top_section == "search" %}class="selected"{% endif %}>
+                    <a href="{% url "search" %}" title="Search" role="menuitem" class="search {% if top_section == "search" %}selected{% endif %}">
                         <i class="fa-solid fa-search"></i>
                     </a>
                     {% if allows_refresh %}
@@ -72,6 +81,7 @@
                     {% endblock %}
                 </div>
             </div>
+        {% endblock %}
         {% endblock %}
     </main>
 

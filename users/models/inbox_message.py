@@ -44,6 +44,14 @@ class InboxMessageStates(StateGraph):
                         await sync_to_async(Post.handle_update_ap)(instance.message)
                     case "person":
                         await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "service":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "group":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "organization":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                    case "application":
+                        await sync_to_async(Identity.handle_update_ap)(instance.message)
                     case "question":
                         pass  # Drop for now
                     case unknown:
@@ -60,6 +68,14 @@ class InboxMessageStates(StateGraph):
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
+                        )
+            case "reject":
+                match instance.message_object_type:
+                    case "follow":
+                        await sync_to_async(Follow.handle_reject_ap)(instance.message)
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type reject.{unknown}"
                         )
             case "undo":
                 match instance.message_object_type:
@@ -127,8 +143,11 @@ class InboxMessage(StatorModel):
         return self.message["type"].lower()
 
     @property
-    def message_object_type(self):
-        return self.message["object"]["type"].lower()
+    def message_object_type(self) -> str | None:
+        if isinstance(self.message["object"], dict):
+            return self.message["object"]["type"].lower()
+        else:
+            return None
 
     @property
     def message_type_full(self):

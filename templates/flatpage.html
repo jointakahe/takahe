@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+{% extends "base_plain.html" %}
 
 {% block title%}{{ title }}{% endblock %}
 
 {% block content %}
     <h1>{{ title }}</h1>
-    <div class="markdown">
-    {{ content }}
-    </div>
+    <section class="markdown">
+        {{ content }}
+    </section>
 {% endblock %}

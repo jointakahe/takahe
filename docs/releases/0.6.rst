@@ -1,9 +1,78 @@
 0.6
 ===
 
-*Not Yet Released*
+*Released: 2022/12/24*
 
-This is a placeholder release note.
+This release focuses primarily on server completeness and stability, with
+an extra helping of moderation tools as well.
+
+This is the first release we *might* recommend you start a community on. Bear in
+mind that this is still beta software, and so not free of bugs, but we've now
+reached enough stability and moderation functionality that it's doable. We're
+also spooling up invites on `takahe.social <https://takahe.social>`_ as part
+of our own push in this regard - see https://jointakahe.org/takahesocial/ for
+more information and how to get an invite.
+
+If you're curious on the reasons *not* to use Takahē yet, see what's left
+to implement on our :doc:`/features` page, and our federation and client
+compatibility list on our :doc:`/interoperability` page.
+
+Major features:
+
+* Initial Mastodon Client API support
+
+  * Timelines, notifications, posting, image upload, emoji, search, follow/unfollow, like, boost, thread view all work
+  * Filtering, DMs/conversations, bookmarks, favourites list, lists, scheduling, announcements do not work yet
+
+* Custom Emoji ("emojo") support
+
+  * Fetching and rendering is fully supported
+  * Local creation is still via the Django Admin, but otherwise works well
+
+* Report functionality and moderation queue
+
+  * Both local and forwarded reports from other servers
+  * Identities can now be "limited" or blocked entirely
+
+* Following/Followers pages
+* Identity, user and invites admin pages
+* Stator status monitoring page
+* Separate moderation and admin user permission levels
+* Terms Of Service, Privacy Policy, and Server Rules page functionality
+
+Additionally, we've made lots of bug fixes and other improvements, including:
+
+* Profile and post URLs now work in search
+* Character counter on compose forms
+* Videos will now show in the timeline
+* Counts on boosts and likes (that can be turned off in new Wellness settings)
+* Compatibility with more Fediverse servers (see :doc:`/interoperability`)
+* Static files are now efficiently served/proxied by a bundled nginx
+* All uploaded images are now WebP for efficiency
+* Sessions use signed cookies for reduced database load
+* Better web user experience on mobile devices
+
+Our plan for the 0.7 release is not finalised, but likely includes:
+
+* Emoji admin page
+* User-initiated identity deletion
+* Server announcements system
+* Initial video support
+* HTML emails and moderation emails
+
+We're specifically looking help from the following people as we develop further:
+
+* Visual Design - We'd like to have a proper design system and identity for Takahē
+* Instance admins or developers of non-Mastodon servers - We need help debugging
+  federation issues, especially where we're causing errors we can't see elsewhere.
+
+If you'd like to help with these or other areas, see :doc:`/contributing` to
+see how to get in touch.
+
+I would also like to specifically thank `Michael Manfre <https://manfre.me/>`_
+and `Tyler Kennedy (TkTech) <https://tkte.ch/>`_ for their help during the 0.6
+development cycle; it is people like them, who turn up and help with the boring
+and unglamarous parts of development, who make Open Source work.
 
 You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
 or use the image name ``jointakahe/takahe:0.6``.
@@ -11,6 +80,19 @@ or use the image name ``jointakahe/takahe:0.6``.
 
 Upgrade Notes
 -------------
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations, but this once, they are not fully
+backwards-compatible, as we've deleted the unneeded ``stator_errors`` table.
+
+To apply these migrations, you should:
+
+* Stop all Stator processes (it's fine to leave webservers going)
+* Apply the migrations
+* Start new Stator processes
+
 
 Signed Cookie Sessions
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -20,6 +102,17 @@ database table. As part of this change, when you upgrade, all users will be
 signed out, but no data will be lost - they just need to sign in again.
 
 
+Signup Settings
+~~~~~~~~~~~~~~~
+
+The previous "invite only signups mode" option has been removed - invites are
+now always allowed to sign up, and the only option is to disable open signup
+or not.
+
+As a result, your site may default to open signups after upgrade - check the
+setting and ensure signups are disabled if you want invite-only.
+
+
 Storage Settings
 ~~~~~~~~~~~~~~~~
 
@@ -27,14 +120,9 @@ If you use Google Cloud for storage, the URI format has changed - before it was
 ``gcs://bucketname``, and now it is ``gs:///bucketname``.
 
 
-Migrations
-~~~~~~~~~~
+About Page Format
+~~~~~~~~~~~~~~~~~
 
-There are new database migrations, but for once, they are not fully
-backwards-compatible, as we've deleted the unneeded ``stator_errors`` table.
-
-To apply these migrations, you should:
-
-* Stop all Stator processes (it's fine to leave webservers going)
-* Apply the migrations
-* Start new Stator processes
+The about page and homepage have been merged and have a new format (and
+Markdown is now supported). You should check your layout and formatting still
+looks good.

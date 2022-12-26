@@ -5,13 +5,11 @@ from typing import Optional
 import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
-from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
-from django.utils.safestring import mark_safe
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
@@ -21,9 +19,9 @@ from activities.models.post_types import (
     PostTypeDataDecoder,
     PostTypeDataEncoder,
 )
-from activities.templatetags.emoji_tags import imageify_emojis
-from core.html import sanitize_post, strip_html
+from core.html import ContentRenderer, strip_html
 from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
+from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity, IdentityStates
 from users.models.system_actor import SystemActor
@@ -125,6 +123,28 @@ class PostQuerySet(models.QuerySet):
                 Post.Visibilities.unlisted,
             ],
         )
+        if not include_replies:
+            return query.filter(in_reply_to__isnull=True)
+        return query
+
+    def visible_to(self, identity, include_replies: bool = False):
+        query = self.filter(
+            models.Q(
+                visibility__in=[
+                    Post.Visibilities.public,
+                    Post.Visibilities.local_only,
+                    Post.Visibilities.unlisted,
+                ]
+            )
+            | models.Q(
+                visibility=Post.Visibilities.followers,
+                author__inbound_follows__source=identity,
+            )
+            | models.Q(
+                visibility=Post.Visibilities.mentioned,
+                mentions=identity,
+            )
+        ).distinct()
         if not include_replies:
             return query.filter(in_reply_to__isnull=True)
         return query
@@ -321,53 +341,11 @@ class Post(StatorModel):
         PostTypeData.parse_obj(value)
 
     mention_regex = re.compile(
-        r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_]+\.[\w\d\-_\.]+)?)"
+        r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_\.]+[\w\d\-_]+)?)"
     )
 
-    def linkify_mentions(self, content: str, local: bool = False) -> str:
-        """
-        Links mentions _in the context of the post_ - as in, using the mentions
-        property as the only source (as we might be doing this without other
-        DB access allowed)
-        """
-
-        possible_matches = {}
-        for mention in self.mentions.all():
-            if local:
-                url = str(mention.urls.view)
-            else:
-                url = mention.absolute_profile_uri()
-            possible_matches[mention.username] = url
-            possible_matches[f"{mention.username}@{mention.domain_id}"] = url
-
-        collapse_name: dict[str, str] = {}
-
-        def replacer(match):
-            precursor = match.group(1)
-            handle = match.group(2).lower()
-            if "@" in handle:
-                short_handle = handle.split("@", 1)[0]
-            else:
-                short_handle = handle
-            if handle in possible_matches:
-                if short_handle not in collapse_name:
-                    collapse_name[short_handle] = handle
-                elif collapse_name.get(short_handle) != handle:
-                    short_handle = handle
-                return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
-            else:
-                return match.group()
-
-        return mark_safe(self.mention_regex.sub(replacer, content))
-
     def _safe_content_note(self, *, local: bool = True):
-        content = Hashtag.linkify_hashtags(
-            self.linkify_mentions(sanitize_post(self.content), local=local),
-            domain=None if local else self.author.domain,
-        )
-        if local:
-            content = imageify_emojis(content, self.author.domain)
-        return content
+        return ContentRenderer(local=local).render_post(self.content, self)
 
     # def _safe_content_question(self, *, local: bool = True):
     #     context = {
@@ -409,12 +387,6 @@ class Post(StatorModel):
         Returns the content formatted for remote consumption
         """
         return self.safe_content(local=False)
-
-    def safe_content_plain(self):
-        """
-        Returns the content formatted as plain text
-        """
-        return self.linkify_mentions(sanitize_post(self.content))
 
     ### Async helpers ###
 
@@ -527,48 +499,6 @@ class Post(StatorModel):
                     hashtag=hashtag,
                 )
 
-    ### Actions ###
-
-    def interact_as(self, identity, type):
-        from activities.models import PostInteraction, PostInteractionStates
-
-        interaction = PostInteraction.objects.get_or_create(
-            type=type, identity=identity, post=self
-        )[0]
-        if interaction.state in [
-            PostInteractionStates.undone,
-            PostInteractionStates.undone_fanned_out,
-        ]:
-            interaction.transition_perform(PostInteractionStates.new)
-
-    def uninteract_as(self, identity, type):
-        from activities.models import PostInteraction, PostInteractionStates
-
-        for interaction in PostInteraction.objects.filter(
-            type=type, identity=identity, post=self
-        ):
-            interaction.transition_perform(PostInteractionStates.undone)
-
-    def like_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.interact_as(identity, PostInteraction.Types.like)
-
-    def unlike_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.uninteract_as(identity, PostInteraction.Types.like)
-
-    def boost_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.interact_as(identity, PostInteraction.Types.boost)
-
-    def unboost_as(self, identity):
-        from activities.models import PostInteraction
-
-        self.uninteract_as(identity, PostInteraction.Types.boost)
-
     ### ActivityPub (outbound) ###
 
     def to_ap(self) -> dict:
@@ -576,7 +506,7 @@ class Post(StatorModel):
         Returns the AP JSON for this object
         """
         value = {
-            "to": "Public",
+            "to": [],
             "cc": [],
             "type": self.type,
             "id": self.object_uri,
@@ -606,6 +536,12 @@ class Post(StatorModel):
             value["inReplyTo"] = self.in_reply_to
         if self.edited:
             value["updated"] = format_ld_date(self.edited)
+        # Targeting
+        # TODO: Add followers object
+        if self.visibility == self.Visibilities.public:
+            value["to"].append("Public")
+        elif self.visibility == self.Visibilities.unlisted:
+            value["cc"].append("Public")
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(mention.to_ap_tag())
@@ -626,7 +562,7 @@ class Post(StatorModel):
         for attachment in self.attachments.all():
             value["attachment"].append(attachment.to_ap())
         # Remove fields if they're empty
-        for field in ["cc", "tag", "attachment"]:
+        for field in ["to", "cc", "tag", "attachment"]:
             if not value[field]:
                 del value[field]
         return value
@@ -637,7 +573,7 @@ class Post(StatorModel):
         """
         object = self.to_ap()
         return {
-            "to": object["to"],
+            "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Create",
             "id": self.object_uri + "#create",
@@ -651,7 +587,7 @@ class Post(StatorModel):
         """
         object = self.to_ap()
         return {
-            "to": object["to"],
+            "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Update",
             "id": self.object_uri + "#update",
@@ -665,7 +601,7 @@ class Post(StatorModel):
         """
         object = self.to_ap()
         return {
-            "to": object["to"],
+            "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Delete",
             "id": self.object_uri + "#delete",
@@ -707,7 +643,7 @@ class Post(StatorModel):
     ### ActivityPub (inbound) ###
 
     @classmethod
-    def by_ap(cls, data, create=False, update=False) -> "Post":
+    def by_ap(cls, data, create=False, update=False, fetch_author=False) -> "Post":
         """
         Retrieves a Post instance by its ActivityPub JSON object.
 
@@ -725,13 +661,21 @@ class Post(StatorModel):
             if create:
                 # Resolve the author
                 author = Identity.by_actor_uri(data["attributedTo"], create=create)
+                # If the author is not fetched yet, try again later
+                if author.domain is None:
+                    if fetch_author:
+                        async_to_sync(author.fetch_actor)()
+                        if author.domain is None:
+                            raise TryAgainLater()
+                    else:
+                        raise TryAgainLater()
                 # If the post is from a blocked domain, stop and drop
-                if author.domain and author.domain.blocked:
+                if author.domain.blocked:
                     raise cls.DoesNotExist("Post is from a blocked domain")
                 post = cls.objects.create(
                     object_uri=data["id"],
                     author=author,
-                    content=data["content"],
+                    content="",
                     local=False,
                     type=data["type"],
                 )
@@ -743,7 +687,16 @@ class Post(StatorModel):
             if post.type in (cls.Types.article, cls.Types.question):
                 type_data = PostTypeData(__root__=data).__root__
                 post.type_data = type_data.dict()
-            post.content = data["content"]
+            # Get content in order of: content value, contentmap.und, any contentmap entry
+            if "content" in data:
+                post.content = data["content"]
+            elif "contentMap" in data:
+                if "und" in data["contentMap"]:
+                    post.content = data["contentMap"]["und"]
+                else:
+                    post.content = list(data["contentMap"].values())[0]
+            else:
+                raise ValueError("Post has no content or content map")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
             post.url = data.get("url")
@@ -756,7 +709,7 @@ class Post(StatorModel):
                 if tag["type"].lower() == "mention":
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
-                elif tag["type"].lower() == "hashtag":
+                elif tag["type"].lower() in ["_:hashtag", "hashtag"]:
                     post.hashtags.append(tag["name"].lower().lstrip("#"))
                 elif tag["type"].lower() in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
@@ -764,13 +717,15 @@ class Post(StatorModel):
                 else:
                     raise ValueError(f"Unknown tag type {tag['type']}")
             # Visibility and to
-            # (a post is public if it's ever to/cc as:Public, otherwise we
-            # regard it as unlisted for now)
-            targets = get_list(data, "to") + get_list(data, "cc")
-            post.visibility = Post.Visibilities.unlisted
-            for target in targets:
-                if target.lower() == "as:public":
-                    post.visibility = Post.Visibilities.public
+            # (a post is public if it's to:public, otherwise it's unlisted if
+            # it's cc:public, otherwise it's more limited)
+            to = [x.lower() for x in get_list(data, "to")]
+            cc = [x.lower() for x in get_list(data, "cc")]
+            post.visibility = Post.Visibilities.mentioned
+            if "public" in to or "as:public" in to:
+                post.visibility = Post.Visibilities.public
+            elif "public" in cc or "as:public" in cc:
+                post.visibility = Post.Visibilities.unlisted
             # Attachments
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
@@ -821,6 +776,7 @@ class Post(StatorModel):
                     canonicalise(response.json(), include_security=True),
                     create=True,
                     update=True,
+                    fetch_author=True,
                 )
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:
@@ -874,24 +830,6 @@ class Post(StatorModel):
                 raise ValueError("Actor on delete does not match object")
             post.delete()
 
-    def debug_fetch(self):
-        """
-        Fetches the Post from its original URL again and updates us with it
-        """
-        response = httpx.get(
-            self.object_uri,
-            headers={
-                "Accept": "application/json",
-                "User-Agent": settings.TAKAHE_USER_AGENT,
-            },
-            follow_redirects=True,
-        )
-        if 200 <= response.status_code < 300:
-            return self.by_ap(
-                canonicalise(response.json(), include_security=True),
-                update=True,
-            )
-
     ### Mastodon API ###
 
     def to_mastodon_json(self, interactions=None):
@@ -943,7 +881,7 @@ class Post(StatorModel):
             "poll": None,
             "card": None,
             "language": None,
-            "text": self.safe_content_plain(),
+            "text": self.safe_content_remote(),
             "edited_at": format_ld_date(self.edited) if self.edited else None,
         }
         if interactions:

@@ -11,11 +11,13 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView, View
 
 from activities.models import Post, PostInteraction
+from activities.services import TimelineService
 from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
 from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
+from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
 
@@ -28,7 +30,7 @@ class ViewIdentity(ListView):
     """
 
     template_name = "identity/view.html"
-    paginate_by = 5
+    paginate_by = 25
 
     def get(self, request, handle):
         # Make sure we understand this handle
@@ -61,13 +63,7 @@ class ViewIdentity(ListView):
         )
 
     def get_queryset(self):
-        return (
-            self.identity.posts.not_hidden()
-            .unlisted(include_replies=True)
-            .select_related("author")
-            .prefetch_related("attachments")
-            .order_by("-created")
-        )
+        return TimelineService(self.request.identity).identity_public(self.identity)
 
     def get_context_data(self):
         context = super().get_context_data()
@@ -120,14 +116,7 @@ class IdentityFeed(Feed):
         return identity.absolute_profile_uri()
 
     def items(self, identity: Identity):
-        return (
-            identity.posts.filter(
-                visibility=Post.Visibilities.public,
-            )
-            .select_related("author")
-            .prefetch_related("attachments")
-            .order_by("-created")
-        )
+        return TimelineService(None).identity_public(identity)[:20]
 
     def item_description(self, item: Post):
         return item.safe_content_remote()
@@ -139,6 +128,45 @@ class IdentityFeed(Feed):
         return item.published
 
 
+class IdentityFollows(ListView):
+    """
+    Shows following/followers for an identity.
+    """
+
+    template_name = "identity/follows.html"
+    paginate_by = 25
+    inbound = False
+
+    def get(self, request, handle):
+        self.identity = by_handle_or_404(
+            self.request,
+            handle,
+            local=False,
+        )
+        if not Config.load_identity(self.identity).visible_follows:
+            raise Http404("Hidden follows")
+        return super().get(request, identity=self.identity)
+
+    def get_queryset(self):
+        if self.inbound:
+            return IdentityService(self.identity).followers()
+        else:
+            return IdentityService(self.identity).following()
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["identity"] = self.identity
+        context["inbound"] = self.inbound
+        context["follows_page"] = True
+        context["followers_count"] = self.identity.inbound_follows.filter(
+            state__in=FollowStates.group_active()
+        ).count()
+        context["following_count"] = self.identity.outbound_follows.filter(
+            state__in=FollowStates.group_active()
+        ).count()
+        return context
+
+
 @method_decorator(identity_required, name="dispatch")
 class ActionIdentity(View):
     def post(self, request, handle):
@@ -146,18 +174,9 @@ class ActionIdentity(View):
         # See what action we should perform
         action = self.request.POST["action"]
         if action == "follow":
-            existing_follow = Follow.maybe_get(self.request.identity, identity)
-            if not existing_follow:
-                Follow.create_local(self.request.identity, identity)
-            elif existing_follow.state in [
-                FollowStates.undone,
-                FollowStates.undone_remotely,
-            ]:
-                existing_follow.transition_perform(FollowStates.unrequested)
+            IdentityService(identity).follow_from(self.request.identity)
         elif action == "unfollow":
-            existing_follow = Follow.maybe_get(self.request.identity, identity)
-            if existing_follow:
-                existing_follow.transition_perform(FollowStates.undone)
+            IdentityService(identity).unfollow_from(self.request.identity)
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)
@@ -254,7 +273,10 @@ class CreateIdentity(FormView):
             if (
                 username
                 and domain
-                and Identity.objects.filter(username=username, domain=domain).exists()
+                and Identity.objects.filter(
+                    username__iexact=username,
+                    domain=domain.lower(),
+                ).exists()
             ):
                 raise forms.ValidationError(f"{username}@{domain} is already taken")
 
@@ -276,7 +298,7 @@ class CreateIdentity(FormView):
         domain_instance = Domain.get_domain(domain)
         new_identity = Identity.objects.create(
             actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/",
-            username=username.lower(),
+            username=username,
             domain_id=domain,
             name=form.cleaned_data["name"],
             local=True,

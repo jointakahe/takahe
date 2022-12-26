@@ -1,4 +1,5 @@
 from activities.models import PostInteraction, TimelineEvent
+from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator
@@ -28,13 +29,8 @@ def notifications(
         requested_types = set(base_types.keys())
     requested_types.difference_update(excluded_types)
     # Use that to pull relevant events
-    queryset = (
-        TimelineEvent.objects.filter(
-            identity=request.identity,
-            type__in=[base_types[r] for r in requested_types],
-        )
-        .order_by("-published")
-        .select_related("subject_post", "subject_post__author", "subject_identity")
+    queryset = TimelineService(request.identity).notifications(
+        [base_types[r] for r in requested_types]
     )
     paginator = MastodonPaginator(TimelineEvent)
     events = paginator.paginate(

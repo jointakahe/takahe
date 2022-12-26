@@ -1,6 +1,5 @@
 import os
 import secrets
-import urllib.parse
 from typing import TYPE_CHECKING
 
 from django.utils import timezone
@@ -18,16 +17,6 @@ def upload_namer(prefix, instance, filename):
     By default, obscures the original name with a random UUID.
     """
     _, old_extension = os.path.splitext(filename)
-
-    if prefix == "profile_images":
-        # If we're saving images for an Identity, we name predictably as
-        # avatar images are not considered "secret", and otherwise we'll waste
-        # space.
-        handle_safe = urllib.parse.quote(instance.handle)
-        return (
-            f"{prefix}/{handle_safe[:2]}/{handle_safe[:4]}/{handle_safe}{old_extension}"
-        )
-
     new_filename = secrets.token_urlsafe(20)
     now = timezone.now()
     return f"{prefix}/{now.year}/{now.month}/{now.day}/{new_filename}{old_extension}"

@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     #: Should django run in debug mode?
     DEBUG: bool = False
 
+    # Should the debug toolbar be loaded?
+    DEBUG_TOOLBAR: bool = False
+
     #: Set a secret key used for signing values such as sessions. Randomized
     #: by default, so you'll logout everytime the process restarts.
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_hex(128))
@@ -102,6 +105,10 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: MediaBackendUrl | None = None
 
+    #: S3 ACL to apply to all media objects when MEDIA_BACKEND is set to S3. If using a CDN
+    #: and/or have public access blocked to buckets this will likely need to be 'private'
+    MEDIA_BACKEND_S3_ACL: str = "public-read"
+
     #: Maximum filesize when uploading images. Increasing this may increase memory utilization
     #: because all images with a dimension greater than 2000px are resized to meet that limit, which
     #: is necessary for compatibility with Mastodon’s image proxy.
@@ -127,11 +134,9 @@ class Settings(BaseSettings):
     #: Default cache backend
     CACHES_DEFAULT: CacheBackendUrl | None = None
 
-    #: User icon (avatar) caching backend
-    CACHES_AVATARS: CacheBackendUrl | None = None
-
-    #: Media caching backend
-    CACHES_MEDIA: CacheBackendUrl | None = None
+    # Stator tuning
+    STATOR_CONCURRENCY: int = 100
+    STATOR_CONCURRENCY_PER_MODEL: int = 40
 
     PGHOST: str | None = None
     PGPORT: int | None = 5432
@@ -177,8 +182,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_htmx",
     "corsheaders",
+    "django_htmx",
     "core",
     "activities",
     "api",
@@ -203,7 +208,6 @@ MIDDLEWARE = [
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
-    "activities.middleware.EmojiDefaultsLoadingMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"
@@ -297,6 +301,8 @@ ALLOWED_HOSTS = SETUP.ALLOWED_HOSTS
 AUTO_ADMIN_EMAIL = SETUP.AUTO_ADMIN_EMAIL
 
 STATOR_TOKEN = SETUP.STATOR_TOKEN
+STATOR_CONCURRENCY = SETUP.STATOR_CONCURRENCY
+STATOR_CONCURRENCY_PER_MODEL = SETUP.STATOR_CONCURRENCY_PER_MODEL
 
 CORS_ORIGIN_ALLOW_ALL = True  # Temporary
 CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
@@ -309,6 +315,11 @@ MEDIA_URL = SETUP.MEDIA_URL
 MEDIA_ROOT = SETUP.MEDIA_ROOT
 MAIN_DOMAIN = SETUP.MAIN_DOMAIN
 
+# Debug toolbar should only be loaded at all when debug is on
+if DEBUG and SETUP.DEBUG_TOOLBAR:
+    INSTALLED_APPS.append("debug_toolbar")
+    DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "core.middleware.show_toolbar"}
+    MIDDLEWARE.insert(8, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 if SETUP.USE_PROXY_HEADERS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -365,7 +376,7 @@ if SETUP.MEDIA_BACKEND:
         DEFAULT_FILE_STORAGE = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
-        AWS_DEFAULT_ACL = "public-read"
+        AWS_DEFAULT_ACL = SETUP.MEDIA_BACKEND_S3_ACL
         if parsed.username is not None:
             AWS_ACCESS_KEY_ID = parsed.username
             AWS_SECRET_ACCESS_KEY = urllib.parse.unquote(parsed.password)
@@ -385,8 +396,6 @@ if SETUP.MEDIA_BACKEND:
 
 CACHES = {
     "default": django_cache_url.parse(SETUP.CACHES_DEFAULT or "dummy://"),
-    "avatars": django_cache_url.parse(SETUP.CACHES_AVATARS or "dummy://"),
-    "media": django_cache_url.parse(SETUP.CACHES_MEDIA or "dummy://"),
 }
 
 if SETUP.ERROR_EMAILS:

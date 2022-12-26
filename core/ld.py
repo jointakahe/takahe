@@ -362,7 +362,15 @@ schemas = {
         "contentType": "application/ld+json",
         "documentUrl": "http://joinmastodon.org/ns",
         "contextUrl": None,
-        "document": {},
+        "document": {
+            "@context": {
+                "toot": "http://joinmastodon.org/ns#",
+                "discoverable": "toot:discoverable",
+                "devices": "toot:devices",
+                "featured": "toot:featured",
+                "featuredTags": "toot:featuredTags",
+            },
+        },
     },
 }
 
@@ -441,6 +449,17 @@ def get_list(container, key) -> list:
     if not isinstance(value, list):
         return [value]
     return value
+
+
+def get_str_or_id(value: str | dict | None) -> str | None:
+    """
+    Given a value that could be a str or {"id": str}, return the str
+    """
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, dict):
+        return value.get("id")
+    return None
 
 
 def format_ld_date(value: datetime.datetime) -> str:

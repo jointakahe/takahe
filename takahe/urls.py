@@ -1,6 +1,6 @@
 from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 
 from activities.views import compose, debug, explore, follows, posts, search, timelines
 from api.views import api_router, oauth
@@ -17,7 +17,6 @@ urlpatterns = [
     path("local/", timelines.Local.as_view(), name="local"),
     path("federated/", timelines.Federated.as_view(), name="federated"),
     path("search/", search.Search.as_view(), name="search"),
-    path("debug/json/", debug.JsonViewer.as_view(), name="debug_json"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
     path("explore/", explore.Explore.as_view(), name="explore"),
     path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
@@ -127,8 +126,18 @@ urlpatterns = [
     ),
     path(
         "admin/invites/",
-        admin.Invites.as_view(),
+        admin.InvitesRoot.as_view(),
         name="admin_invites",
+    ),
+    path(
+        "admin/invites/create/",
+        admin.InviteCreate.as_view(),
+        name="admin_invite_create",
+    ),
+    path(
+        "admin/invites/<id>/",
+        admin.InviteView.as_view(),
+        name="admin_invite_view",
     ),
     path(
         "admin/hashtags/",
@@ -136,17 +145,8 @@ urlpatterns = [
         name="admin_hashtags",
     ),
     path(
-        "admin/hashtags/create/",
-        admin.HashtagCreate.as_view(),
-        name="admin_hashtags_create",
-    ),
-    path(
         "admin/hashtags/<hashtag>/",
         admin.HashtagEdit.as_view(),
-    ),
-    path(
-        "admin/hashtags/<hashtag>/delete/",
-        admin.HashtagDelete.as_view(),
     ),
     path(
         "admin/stator/",
@@ -156,9 +156,12 @@ urlpatterns = [
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
+    path("@<handle>/outbox/", activitypub.Outbox.as_view()),
     path("@<handle>/action/", identity.ActionIdentity.as_view()),
     path("@<handle>/rss/", identity.IdentityFeed()),
     path("@<handle>/report/", report.SubmitReport.as_view()),
+    path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
+    path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
     # Posts
     path("compose/", compose.Compose.as_view(), name="compose"),
     path(
@@ -178,6 +181,7 @@ urlpatterns = [
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),
     path("auth/signup/", auth.Signup.as_view(), name="signup"),
+    path("auth/signup/<token>/", auth.Signup.as_view(), name="signup"),
     path("auth/reset/", auth.TriggerReset.as_view(), name="trigger_reset"),
     path("auth/reset/<token>/", auth.PerformReset.as_view(), name="password_reset"),
     # Identity selection
@@ -185,11 +189,7 @@ urlpatterns = [
     path("identity/select/", identity.SelectIdentity.as_view()),
     path("identity/create/", identity.CreateIdentity.as_view()),
     # Flat pages
-    path(
-        "about/",
-        core.FlatPage.as_view(title="About This Server", config_option="site_about"),
-        name="about",
-    ),
+    path("about/", core.About.as_view(), name="about"),
     path(
         "pages/privacy/",
         core.FlatPage.as_view(title="Privacy Policy", config_option="policy_privacy"),
@@ -205,6 +205,11 @@ urlpatterns = [
         core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
         name="rules",
     ),
+    # Debug aids
+    path("debug/json/", debug.JsonViewer.as_view()),
+    path("debug/404/", debug.NotFound.as_view()),
+    path("debug/500/", debug.ServerError.as_view()),
+    path("debug/oauth_authorize/", debug.OauthAuthorize.as_view()),
     # Media/image proxy
     path(
         "proxy/identity_icon/<identity_id>/",
@@ -233,6 +238,7 @@ urlpatterns = [
     path("nodeinfo/2.0/", activitypub.NodeInfo2.as_view()),
     path("actor/", activitypub.SystemActorView.as_view()),
     path("actor/inbox/", activitypub.Inbox.as_view()),
+    path("actor/outbox/", activitypub.EmptyOutbox.as_view()),
     path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
     # API/Oauth
     path("api/", api_router.urls),
@@ -250,3 +256,7 @@ urlpatterns = [
         kwargs={"document_root": djsettings.MEDIA_ROOT},
     ),
 ]
+
+# Debug toolbar
+if djsettings.DEBUG:
+    urlpatterns.append(path("__debug__/", include("debug_toolbar.urls")))

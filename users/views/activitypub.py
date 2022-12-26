@@ -2,8 +2,9 @@ import json
 
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -18,6 +19,7 @@ from core.signatures import (
     VerificationError,
     VerificationFormatError,
 )
+from core.views import StaticContentView
 from takahe import __version__
 from users.models import Identity, InboxMessage, SystemActor
 from users.shortcuts import by_handle_or_404
@@ -82,8 +84,7 @@ class NodeInfo2(View):
                     "users": {"total": local_identities},
                     "localPosts": local_posts,
                 },
-                "openRegistrations": Config.system.signup_allowed
-                and not Config.system.signup_invite_only,
+                "openRegistrations": Config.system.signup_allowed,
                 "metadata": {},
             }
         )
@@ -108,28 +109,8 @@ class Webfinger(View):
             actor = SystemActor()
         else:
             actor = by_handle_or_404(request, handle)
-            handle = actor.handle
 
-        return JsonResponse(
-            {
-                "subject": f"acct:{handle}",
-                "aliases": [
-                    actor.absolute_profile_uri(),
-                ],
-                "links": [
-                    {
-                        "rel": "http://webfinger.net/rel/profile-page",
-                        "type": "text/html",
-                        "href": actor.absolute_profile_uri(),
-                    },
-                    {
-                        "rel": "self",
-                        "type": "application/activity+json",
-                        "href": actor.actor_uri,
-                    },
-                ],
-            }
-        )
+        return JsonResponse(actor.to_webfinger())
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -208,17 +189,67 @@ class Inbox(View):
         return HttpResponse(status=202)
 
 
-@method_decorator(cache_page(), name="dispatch")
-class SystemActorView(View):
+class Outbox(View):
+    """
+    The ActivityPub outbox for an identity
+    """
+
+    def get(self, request, handle):
+        self.identity = by_handle_or_404(
+            self.request,
+            handle,
+            local=False,
+            fetch=True,
+        )
+        # If this not a local actor, 404
+        if not self.identity.local:
+            raise Http404("Not a local identity")
+        # Return an ordered collection with the most recent 10 public posts
+        posts = list(self.identity.posts.not_hidden().public()[:10])
+        return JsonResponse(
+            canonicalise(
+                {
+                    "type": "OrderedCollection",
+                    "totalItems": len(posts),
+                    "orderedItems": [post.to_ap() for post in posts],
+                }
+            ),
+            content_type="application/activity+json",
+        )
+
+
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class EmptyOutbox(StaticContentView):
+    """
+    A fixed-empty outbox for the system actor
+    """
+
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
+            canonicalise(
+                {
+                    "type": "OrderedCollection",
+                    "totalItems": 0,
+                    "orderedItems": [],
+                }
+            )
+        )
+
+
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class SystemActorView(StaticContentView):
     """
     Special endpoint for the overall system actor
     """
 
-    def get(self, request):
-        return JsonResponse(
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
             canonicalise(
                 SystemActor().to_ap(),
                 include_security=True,
-            ),
-            content_type="application/activity+json",
+            )
         )

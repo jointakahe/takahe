@@ -22,6 +22,12 @@ In this second case, you need to have a *service domain* - a place where
 Takahē and the Actor URIs for your users live, but which is different to your
 main domain you'd like the account handles to contain.
 
+Service domains **must be unqiue** - they are how we identify what domain the
+request that is coming in is for. It doesn't matter what it is, as long as it's
+unique and it serves Takahē. For example, ``jointakahe.org`` has a service
+domain of ``jointakahe.takahe.social``, but we could also have chosen
+``fedi.jointakahe.org`` as long as we served Takahē through there too.
+
 To set this up, you need to:
 
 * Choose a service domain and point it at Takahē. *You cannot change this

@@ -1,10 +1,10 @@
-import pprint
+import json
 
 import httpx
 from asgiref.sync import async_to_sync
 from django import forms
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 
 from core.ld import canonicalise
 from users.decorators import admin_required
@@ -23,20 +23,65 @@ class JsonViewer(FormView):
         )
 
     def form_valid(self, form):
+        uri = form.cleaned_data["uri"]
+        if "://" not in uri:
+            uri = "https://" + uri
+
+        # Render results
+        context = self.get_context_data(form=form)
+
         try:
             response = async_to_sync(SystemActor().signed_request)(
                 method="get",
-                uri=form.cleaned_data["uri"],
+                uri=uri,
             )
-        except httpx.RequestError:
-            result = "Request Error"
+        except httpx.RequestError as ex:
+            result = f"Request Error: {str(ex)}"
         else:
+            context.update(
+                {
+                    "status_code": response.status_code,
+                    "content_type": response.headers["content-type"],
+                    "num_bytes_downloaded": response.num_bytes_downloaded,
+                    "charset_encoding": response.charset_encoding,
+                    "raw_result": response.text,
+                }
+            )
+
             if response.status_code >= 400:
                 result = f"Error response: {response.status_code}\n{response.content}"
             else:
-                document = canonicalise(response.json(), include_security=True)
-                result = pprint.pformat(document)
-        # Render results
-        context = self.get_context_data(form=form)
+                try:
+                    document = canonicalise(response.json(), include_security=True)
+                except json.JSONDecodeError as ex:
+                    result = str(ex)
+                else:
+                    result = json.dumps(document, indent=4, sort_keys=True)
+                    # result = pprint.pformat(document)
         context["result"] = result
         return self.render_to_response(context)
+
+
+class NotFound(TemplateView):
+
+    template_name = "404.html"
+
+
+class ServerError(TemplateView):
+
+    template_name = "500.html"
+
+
+@method_decorator(admin_required, name="dispatch")
+class OauthAuthorize(TemplateView):
+
+    template_name = "api/oauth_authorize.html"
+
+    def get_context_data(self):
+        return {
+            "application": {"name": "Fake Application", "client_id": "fake"},
+            "redirect_uri": "",
+            "scope": "read write push",
+            "identities": self.request.user.identities.all(),
+            "code": "12345abcde",
+        }

@@ -22,13 +22,30 @@
                     {{ identity.html_name_or_handle }}
                     <small>@{{ identity.handle }}</small>
                 </span>
+
                 {% if identity.id in outbound_ids %}
                     <span class="pill">Following</span>
                 {% endif %}
                 {% if identity.id in inbound_ids %}
                     <span class="pill">Follows You</span>
                 {% endif %}
-                <time>{{ identity.follow_date | timedeltashort }} ago</time>
+
+                <div class="right">
+                    {% if inbound %}
+                      <form action="{{ identity.urls.action }}" method="POST" class="follow">
+                          {% csrf_token %}
+                          {% if identity.id in outbound_ids %}
+                              <input type="hidden" name="action" value="unfollow">
+                              <button class="destructive">Unfollow</button>
+                          {% else %}
+                              <input type="hidden" name="action" value="follow">
+                              <button>Follow</button>
+                          {% endif %}
+                      </form>
+                    {% endif %}
+
+                    <time>{{ identity.follow_date | timedeltashort }} ago</time>
+                </div>
             </a>
         {% empty %}
             <p class="option empty">You have no follows.</p>

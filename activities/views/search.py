@@ -1,7 +1,7 @@
 from django import forms
 from django.views.generic import FormView
 
-from activities.search import Searcher
+from activities.services import SearchService
 
 
 class Search(FormView):
@@ -15,7 +15,7 @@ class Search(FormView):
         )
 
     def form_valid(self, form):
-        searcher = Searcher(form.cleaned_data["query"], self.request.identity)
+        searcher = SearchService(form.cleaned_data["query"], self.request.identity)
         # Render results
         context = self.get_context_data(form=form)
         context["results"] = searcher.search_all()

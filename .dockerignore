@@ -2,7 +2,11 @@
 *.sqlite3
 .env
 .git
+.mypy_cache
 .pre-commit-config.yaml
 .venv
+fly.toml
 media
 notes.md
+venv
+virtualenv

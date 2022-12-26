@@ -5,13 +5,16 @@ from django.db import models
 from activities.models.timeline_event import TimelineEvent
 from core.ld import canonicalise
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models import FollowStates
 
 
 class FanOutStates(StateGraph):
-    new = State(try_interval=300)
+    new = State(try_interval=600)
     sent = State()
+    failed = State()
 
     new.transitions_to(sent)
+    new.times_out_to(failed, seconds=86400 * 3)
 
     @classmethod
     async def handle_new(cls, instance: "FanOut"):
@@ -21,21 +24,31 @@ class FanOutStates(StateGraph):
 
         fan_out = await instance.afetch_full()
 
+        # Don't try to fan out to identities that are not fetched yet
+        if not (fan_out.identity.local or fan_out.identity.inbox_uri):
+            return
+
         match (fan_out.type, fan_out.identity.local):
             # Handle creating/updating local posts
             case ((FanOut.Types.post | FanOut.Types.post_edited), True):
                 post = await fan_out.subject_post.afetch_full()
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
-                # of the people mentioned AND the author
+                # of the people mentioned AND the author, or we're mentioned,
+                # or it's a reply to us or the author
                 add = True
                 mentioned = {identity.id for identity in post.mentions.all()}
                 followed = await sync_to_async(set)(
-                    fan_out.identity.outbound_follows.values_list("id", flat=True)
+                    fan_out.identity.outbound_follows.filter(
+                        state__in=FollowStates.group_active()
+                    ).values_list("target_id", flat=True)
                 )
                 if post.in_reply_to:
-                    add = (post.author_id in followed) and bool(
-                        mentioned.intersection(followed)
+                    interested_in = followed.union(
+                        {post.author_id, fan_out.identity_id}
+                    )
+                    add = (post.author_id in followed) and (
+                        bool(mentioned.intersection(interested_in))
                     )
                 if add:
                     await sync_to_async(TimelineEvent.add_post)(
@@ -146,6 +159,36 @@ class FanOutStates(StateGraph):
                 except httpx.RequestError:
                     return
 
+            # Handle sending identity edited to remote
+            case (FanOut.Types.identity_edited, False):
+                identity = await fan_out.subject_identity.afetch_full()
+                try:
+                    await identity.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(fan_out.subject_identity.to_update_ap()),
+                    )
+                except httpx.RequestError:
+                    return
+
+            # Handle sending identity deleted to remote
+            case (FanOut.Types.identity_deleted, False):
+                identity = await fan_out.subject_identity.afetch_full()
+                try:
+                    await identity.signed_request(
+                        method="post",
+                        uri=fan_out.identity.inbox_uri,
+                        body=canonicalise(fan_out.subject_identity.to_delete_ap()),
+                    )
+                except httpx.RequestError:
+                    return
+
+            # Sending identity edited/deleted to local is a no-op
+            case (FanOut.Types.identity_edited, True):
+                pass
+            case (FanOut.Types.identity_deleted, True):
+                pass
+
             case _:
                 raise ValueError(
                     f"Cannot fan out with type {fan_out.type} local={fan_out.identity.local}"
@@ -165,6 +208,8 @@ class FanOut(StatorModel):
         post_deleted = "post_deleted"
         interaction = "interaction"
         undo_interaction = "undo_interaction"
+        identity_edited = "identity_edited"
+        identity_deleted = "identity_deleted"
 
     state = StateField(FanOutStates)
 
@@ -193,6 +238,13 @@ class FanOut(StatorModel):
         null=True,
         related_name="fan_outs",
     )
+    subject_identity = models.ForeignKey(
+        "users.Identity",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="subject_fan_outs",
+    )
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -208,6 +260,8 @@ class FanOut(StatorModel):
                 "identity",
                 "subject_post",
                 "subject_post_interaction",
+                "subject_identity",
+                "subject_identity__domain",
             )
             .prefetch_related(
                 "subject_post__emojis",

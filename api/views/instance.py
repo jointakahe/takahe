@@ -25,9 +25,7 @@ def instance_info(request):
         },
         "thumbnail": Config.system.site_banner,
         "languages": ["en"],
-        "registrations": (
-            Config.system.signup_allowed and not Config.system.signup_invite_only
-        ),
+        "registrations": (Config.system.signup_allowed),
         "approval_required": False,
         "invites_enabled": False,
         "configuration": {
