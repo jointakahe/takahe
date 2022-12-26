@@ -120,6 +120,7 @@ class Compose(FormView):
                     initial["visibility"] = Post.Visibilities.unlisted
                 else:
                     initial["visibility"] = self.reply_to.visibility
+                initial["content_warning"] = self.reply_to.summary
                 # Build a set of mentions for the content to start as
                 mentioned = {self.reply_to.author}
                 mentioned.update(self.reply_to.mentions.all())

@@ -1,6 +1,6 @@
 {% load static %}
 {% load activity_tags %}
-<div class="post {% if reply %}reply{% endif %}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
+<div class="post {% if reply %}reply{% endif %} {{ post.summary_class }}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
 
     <a href="{{ post.author.urls.view }}" tabindex="-1">
         <img src="{{ post.author.local_icon_url.relative }}" class="icon" loading="lazy">
@@ -30,12 +30,16 @@
     </a>
 
     {% if post.summary %}
-        <div class="summary" _="on click toggle .enabled then  toggle .hidden on the next .content then halt">
+        {% if config_identity.expand_linked_cws %}
+        <div class="summary" _="on click toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt">
+        {% else %}
+        <div class="summary" _="on click toggle .enabled then toggle .hidden on the next .content then halt">
+        {% endif %}
             {{ post.summary }}
         </div>
     {% endif %}
 
-    <div class="content {% if post.summary %}hidden{% endif %}">
+    <div class="content {% if post.summary %}hidden {% endif %}">
         {{ post.safe_content_local }}
 
         {% if post.attachments.exists %}

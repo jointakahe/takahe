@@ -9,7 +9,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
-from django.utils import timezone
+from django.utils import text, timezone
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
@@ -387,6 +387,14 @@ class Post(StatorModel):
         Returns the content formatted for remote consumption
         """
         return self.safe_content(local=False)
+
+    def summary_class(self) -> str:
+        """
+        Returns a CSS class name to identify this summary value
+        """
+        if not self.summary:
+            return ""
+        return "summary-" + text.slugify(self.summary, allow_unicode=True)
 
     ### Async helpers ###
 
