@@ -5,11 +5,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView, View
 
-from activities.models import PostInteraction, PostStates
+from activities.models import Post, PostInteraction, PostStates
 from activities.services import PostService
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
 from users.decorators import identity_required
+from users.models import Identity
 from users.shortcuts import by_handle_or_404
 
 
@@ -20,6 +21,9 @@ from users.shortcuts import by_handle_or_404
 class Individual(TemplateView):
 
     template_name = "activities/post.html"
+
+    identity: Identity
+    post_obj: Post
 
     def get(self, request, handle, post_id):
         self.identity = by_handle_or_404(self.request, handle, local=False)

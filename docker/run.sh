@@ -7,7 +7,7 @@ sed s/__CACHESIZE__/${CACHE_SIZE}/g /takahe/docker/nginx.conf > /takahe/docker/n
 # Run nginx and gunicorn
 nginx -c "/takahe/docker/nginx.rendered.conf" &
 
-gunicorn takahe.wsgi:application -b 0.0.0.0:8001 &
+gunicorn takahe.wsgi:application -b 0.0.0.0:8001 $GUNICORN_EXTRA_CMD_ARGS &
 
 # Wait for any process to exit
 wait -n
