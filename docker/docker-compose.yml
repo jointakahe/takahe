@@ -24,8 +24,6 @@ x-takahe-common:
       - external_network
       - internal_network
     restart: on-failure
-    depends_on:
-      - db
     volumes:
       - ..:/takahe/
 
@@ -34,6 +32,8 @@ services:
     image: docker.io/postgres:15-alpine
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'postgres']
+      interval: 1s
+      retries: 20
     volumes:
       - dbdata:/var/lib/postgresql/data
     networks:
@@ -43,19 +43,39 @@ services:
       POSTGRES_DB: takahe
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: insecure_password
+    ports:
+      - "5433:5432"
+
+  nginx:
+    <<: *takahe-common
+    ports:
+      - "8000:8000"
+    depends_on:
+      web:
+        condition: service_started
 
   web:
     <<: *takahe-common
     ports:
-      - "8000:8000"
+      - "8001:8001"
+    command: ["gunicorn", "takahe.wsgi:application", "-b", "0.0.0.0:8001", "--reload"]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
 
   stator:
     <<: *takahe-common
     command: ["/takahe/manage.py", "runstator"]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
 
   setup:
     <<: *takahe-common
     command: ["/takahe/manage.py", "migrate"]
+    depends_on:
+      db:
+        condition: service_healthy
 
 networks:
   internal_network:
