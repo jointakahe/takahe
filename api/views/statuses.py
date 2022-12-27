@@ -4,13 +4,7 @@ from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
 from ninja import Schema
 
-from activities.models import (
-    Post,
-    PostAttachment,
-    PostInteraction,
-    PostStates,
-    TimelineEvent,
-)
+from activities.models import Post, PostAttachment, PostInteraction, TimelineEvent
 from activities.services import PostService
 from api import schemas
 from api.views.base import api_router
@@ -79,8 +73,7 @@ def status(request, id: str):
 @identity_required
 def delete_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    post.transition_perform(PostStates.deleted)
-    TimelineEvent.objects.filter(subject_post=post, identity=request.identity).delete()
+    PostService(post).delete()
     return post.to_mastodon_json()
 
 

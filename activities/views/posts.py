@@ -164,5 +164,5 @@ class Delete(TemplateView):
         return {"post": self.post_obj}
 
     def post(self, request):
-        self.post_obj.transition_perform(PostStates.deleted)
+        PostService(self.post_obj).delete()
         return redirect("/")
