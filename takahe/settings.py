@@ -64,8 +64,11 @@ class Settings(BaseSettings):
     #: Should django run in debug mode?
     DEBUG: bool = False
 
-    # Should the debug toolbar be loaded?
+    #: Should the debug toolbar be loaded?
     DEBUG_TOOLBAR: bool = False
+
+    #: Should we atttempt to import the 'local_settings.py'
+    LOCAL_SETTINGS: bool = False
 
     #: Set a secret key used for signing values such as sessions. Randomized
     #: by default, so you'll logout everytime the process restarts.
@@ -405,3 +408,7 @@ TAKAHE_USER_AGENT = (
     f"python-httpx/{httpx.__version__} "
     f"(Takahe/{__version__}; +https://{SETUP.MAIN_DOMAIN}/)"
 )
+
+if SETUP.LOCAL_SETTINGS:
+    # Let any errors bubble up
+    from .local_settings import *  # noqa
