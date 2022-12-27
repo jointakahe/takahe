@@ -1,9 +1,12 @@
+from django.http import JsonResponse
+
 from activities.models import Post, PostInteraction
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
+from core.models import Config
 
 
 @api_router.get("/v1/timelines/home", response=list[schemas.Status])
@@ -32,7 +35,6 @@ def home(
 
 
 @api_router.get("/v1/timelines/public", response=list[schemas.Status])
-@identity_required
 def public(
     request,
     local: bool = False,
@@ -43,6 +45,9 @@ def public(
     min_id: str | None = None,
     limit: int = 20,
 ):
+    if not request.identity and not Config.system.public_timeline:
+        return JsonResponse({"error": "public timeline is disabled"}, status=422)
+
     if local:
         queryset = TimelineService(request.identity).local()
     else:
