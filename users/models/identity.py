@@ -754,6 +754,8 @@ class Identity(StatorModel):
         from activities.models import Emoji
 
         header_image = self.local_image_url()
+        missing = StaticAbsoluteUrl("img/missing.png").absolute
+
         metadata_value_text = (
             " ".join([m["value"] for m in self.metadata]) if self.metadata else ""
         )
@@ -769,8 +771,8 @@ class Identity(StatorModel):
             "note": self.summary or "",
             "avatar": self.local_icon_url().absolute,
             "avatar_static": self.local_icon_url().absolute,
-            "header": header_image.absolute if header_image else None,
-            "header_static": header_image.absolute if header_image else None,
+            "header": header_image.absolute if header_image else missing,
+            "header_static": header_image.absolute if header_image else missing,
             "locked": False,
             "fields": (
                 [
