@@ -94,6 +94,7 @@ class ContentRenderer:
                 identity=post.author,
                 emojis=post.emojis.all(),
             )
+        html = self.remove_extra_newlines(html)
         return mark_safe(html)
 
     def render_identity_summary(self, html: str, identity, strip: bool = False) -> str:
@@ -109,6 +110,7 @@ class ContentRenderer:
         html = self.linkify_hashtags(html, identity=identity)
         if self.local:
             html = self.imageify_emojis(html, identity=identity)
+        html = self.remove_extra_newlines(html)
         return mark_safe(html)
 
     def render_identity_data(self, html: str, identity, strip: bool = False) -> str:
@@ -123,6 +125,7 @@ class ContentRenderer:
             html = sanitize_html(html)
         if self.local:
             html = self.imageify_emojis(html, identity=identity)
+        html = self.remove_extra_newlines(html)
         return mark_safe(html)
 
     def linkify_mentions(self, html: str, post) -> str:
@@ -224,3 +227,10 @@ class ContentRenderer:
             return match.group()
 
         return Emoji.emoji_regex.sub(replacer, html)
+
+    def remove_extra_newlines(self, html: str) -> str:
+        """
+        Some clients are sensitive to extra newlines even though it's HTML
+        """
+        # TODO: More intelligent way to strip these?
+        return html.replace("\n", "")
