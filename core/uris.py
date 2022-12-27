@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from urllib.parse import urljoin
 
@@ -27,8 +28,19 @@ class AutoAbsoluteUrl(RelativeAbsoluteUrl):
     or a passed identity's URI domain.
     """
 
-    def __init__(self, relative: str, identity=None):
+    def __init__(
+        self,
+        relative: str,
+        identity=None,
+        hash_tail_input: str | None = None,
+        hash_tail_length: int = 10,
+    ):
         self.relative = relative
+        if hash_tail_input:
+            # When provided, attach a hash of the input (typically the proxied URL)
+            # SHA1 chosen as it generally has the best performance in modern python, and security is not a concern
+            # Hash truncation is generally fine, as in the typical use case the hash is scoped to the identity PK
+            self.relative += f"{hashlib.sha1(hash_tail_input.encode('ascii')).hexdigest()[:hash_tail_length]}/"
         if identity:
             absolute_prefix = f"https://{identity.domain.uri_domain}/"
         else:

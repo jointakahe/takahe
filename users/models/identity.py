@@ -268,7 +268,9 @@ class Identity(StatorModel):
         if self.icon:
             return RelativeAbsoluteUrl(self.icon.url)
         elif self.icon_uri:
-            return AutoAbsoluteUrl(f"/proxy/identity_icon/{self.pk}/")
+            return AutoAbsoluteUrl(
+                f"/proxy/identity_icon/{self.pk}/", hash_tail_input=self.icon_uri
+            )
         else:
             return StaticAbsoluteUrl("img/unknown-icon-128.png")
 
@@ -279,7 +281,9 @@ class Identity(StatorModel):
         if self.image:
             return AutoAbsoluteUrl(self.image.url)
         elif self.image_uri:
-            return AutoAbsoluteUrl(f"/proxy/identity_image/{self.pk}/")
+            return AutoAbsoluteUrl(
+                f"/proxy/identity_image/{self.pk}/", hash_tail_input=self.image_uri
+            )
         return None
 
     @property

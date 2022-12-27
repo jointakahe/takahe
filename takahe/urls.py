@@ -211,23 +211,23 @@ urlpatterns = [
     path("debug/500/", debug.ServerError.as_view()),
     path("debug/oauth_authorize/", debug.OauthAuthorize.as_view()),
     # Media/image proxy
-    path(
-        "proxy/identity_icon/<identity_id>/",
+    re_path(
+        "^proxy/identity_icon/(?P<identity_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
         mediaproxy.IdentityIconCacheView.as_view(),
         name="proxy_identity_icon",
     ),
-    path(
-        "proxy/identity_image/<identity_id>/",
+    re_path(
+        "^proxy/identity_image/(?P<identity_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
         mediaproxy.IdentityImageCacheView.as_view(),
         name="proxy_identity_image",
     ),
-    path(
-        "proxy/post_attachment/<attachment_id>/",
+    re_path(
+        "^proxy/post_attachment/(?P<attachment_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
         mediaproxy.PostAttachmentCacheView.as_view(),
         name="proxy_post_attachment",
     ),
-    path(
-        "proxy/emoji/<emoji_id>/",
+    re_path(
+        "^proxy/emoji/(?P<emoji_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
         mediaproxy.EmojiCacheView.as_view(),
         name="proxy_emoji",
     ),

@@ -81,13 +81,17 @@ class PostAttachment(StatorModel):
         elif self.file:
             return RelativeAbsoluteUrl(self.file.url)
         else:
-            return AutoAbsoluteUrl(f"/proxy/post_attachment/{self.pk}/")
+            return AutoAbsoluteUrl(
+                f"/proxy/post_attachment/{self.pk}/", hash_tail_input=self.remote_url
+            )
 
     def full_url(self):
         if self.file:
             return RelativeAbsoluteUrl(self.file.url)
         else:
-            return AutoAbsoluteUrl(f"/proxy/post_attachment/{self.pk}/")
+            return AutoAbsoluteUrl(
+                f"/proxy/post_attachment/{self.pk}/", hash_tail_input=self.remote_url
+            )
 
     ### ActivityPub ###
 
