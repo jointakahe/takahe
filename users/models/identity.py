@@ -786,8 +786,8 @@ class Identity(StatorModel):
             "bot": False,
             "group": False,
             "discoverable": self.discoverable,
-            "suspended": False,
-            "limited": False,
+            # "suspended": False,
+            # "limited": False,
             "created_at": format_ld_date(
                 self.created.replace(hour=0, minute=0, second=0, microsecond=0)
             ),

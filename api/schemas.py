@@ -43,9 +43,9 @@ class Account(Schema):
     bot: bool
     group: bool
     discoverable: bool
-    moved: Union[None, bool, "Account"]
-    suspended: bool
-    limited: bool
+    # moved: Union[None, bool, "Account"]
+    # suspended: bool
+    # limited: bool
     created_at: str
     last_status_at: str | None = Field(...)
     statuses_count: int
@@ -99,13 +99,13 @@ class Status(Schema):
     poll: None = Field(...)
     card: None = Field(...)
     language: None = Field(...)
-    text: str | None = Field(...)
+    # text: str | None = Field(...)
     edited_at: str | None
-    favourited: bool | None
-    reblogged: bool | None
-    muted: bool | None
-    bookmarked: bool | None
-    pinned: bool | None
+    # favourited: bool | None
+    # reblogged: bool | None
+    # muted: bool | None
+    # bookmarked: bool | None
+    # pinned: bool | None
 
 
 class Conversation(Schema):
