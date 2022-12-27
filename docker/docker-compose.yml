@@ -49,6 +49,11 @@ services:
 
   web:
     <<: *takahe-common
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-v", "localhost", "8000"]
+      interval: 20s
+      timeout: 60s
+      start_period: 15s
     ports:
       - "8000:8000"
 
@@ -58,7 +63,9 @@ services:
 
   setup:
     <<: *takahe-common
-    command: ["/takahe/manage.py", "migrate"]
+    restart: "no"
+    command: >
+      bash -c "/takahe/manage.py migrate && /takahe/manage.py collectstatic --noinput"
 
 networks:
   internal_network:
