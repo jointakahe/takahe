@@ -1119,7 +1119,7 @@ form .post {
 }
 
 .post .summary {
-    margin: 12px 0 4px 64px;
+    margin: 12px 0 4px 58px;
     padding: 3px 6px;
     border-radius: 3px;
     background: var(--color-bg-menu);
@@ -1142,11 +1142,11 @@ form .post {
 .post .edited {
     font-weight: lighter;
     color: var(--color-text-duller);
-    margin-left: 64px;
+    margin-left: 58px;
 }
 
 .post .content {
-    margin-left: 64px;
+    margin-left: 58px;
 }
 
 .post.mini .content,
