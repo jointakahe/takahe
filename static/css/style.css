@@ -434,6 +434,7 @@ p.authorization-code {
     font-size: 140%;
 }
 
+
 /* Icon menus */
 
 .icon-menu .option {
@@ -870,6 +871,35 @@ button:hover,
 .right-column .button {
     padding: 2px 6px;
 }
+form .field.multi-option {
+    margin-bottom: 10px;
+}
+form .field.multi-option {
+    margin-bottom: 10px;
+}
+form .option.option-row {
+    margin: 0px 0px 5px 0px;
+}
+.option-row .right {
+    float: right;
+}
+form .option-row .option-field {
+    vertical-align: middle;
+    display: inline-block;
+    line-height: normal;
+    width: 40%;
+    min-width: 30px;
+    padding-left: 0px;
+    padding-right: 7px;
+
+}
+
+form .option-row .right button {
+    vertical-align: middle;
+    margin-top: 0px;
+    margin-right: 5px;
+}
+
 
 /* Logged out homepage */
 
@@ -931,6 +961,32 @@ h1.identity small {
 
 .bio p {
     margin: 0 0 10px 0;
+}
+
+.identity-metadata .metadata-pair {
+    display: block;
+    margin: 0px 0 10px 0;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    color: inherit;
+    text-decoration: none;
+    padding: 10px 20px;
+    border: 2px solid rgba(255, 255, 255, 0);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.identity-metadata .metadata-pair .metadata-name {
+    display: inline-block;
+    min-width: 80px;
+    margin-right: 15px;
+    text-align: right;
+    color: var(--color-text-dull);
+}
+.identity-metadata .metadata-pair .metadata-name::after {
+    padding-left: 3px;
+
+    color: var(--color-text-dull);
 }
 
 .system-note {
@@ -1600,5 +1656,9 @@ form .post {
 }
 
 .debug-section .hidden {
+    display: none;
+}
+
+.field .hidden {
     display: none;
 }

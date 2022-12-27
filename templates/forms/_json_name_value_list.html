@@ -1,0 +1,72 @@
+{% with name_one=field_name_one|default:"name" name_two=field_name_two|default:"value" %}
+
+<script type="text/hyperscript">
+    def {{ field.name }}.collect{{ field.name|title }}Fields()
+        set newdata to []
+        for item in <div.{{ field.name }}-row/>
+            get the (value of the first <input.{{ field.name }}-{{ name_one }}/> in item)
+            set n to it
+            get the (value of the last <input.{{ field.name }}-{{ name_two }}/> in item)
+            set val to it
+            if n != '' and val != '' then
+            append {'{{ name_one }}': n, '{{ name_two }}': val} to newdata
+        end
+        set #id_{{ field.name }}@value to newdata as JSON
+    end
+
+    def {{ field.name }}.addEmptyField()
+        get #blank_{{ field.name }}'s outerHTML
+        put it before #new_{{ field.name }}
+        get #new_{{ field.name }}'s previousSibling
+        set foo to it
+        set foo@id to ''
+        remove .hidden from foo
+        add .{{ field.name }}-row to foo
+        return foo
+    end
+</script>
+
+{% include "forms/_field.html" %}
+
+<div class="field multi-option">
+    <section class="icon-menu">
+        <span id="new_{{ field.name }}" stlye="display: none"
+            _="on load
+                get the (value of #id_{{ field.name }}) as Object
+                set items to it
+                for item in items
+                    set f to {{ field.name }}.addEmptyField()
+                    set one to the first <input.{{ field.name }}-{{ name_one }}/> in f then
+                    set one@value to item.{{ name_one }}
+
+                    set two to the first <input.{{ field.name }}-{{ name_two }}/> in f then
+                    set two@value to item.{{ name_two }}
+                end
+            "></span>
+
+        <div class="option">
+            <span class="option-field">
+                <button class="fa-solid fa-add" _="on click {{ field.name }}.addEmptyField() then halt"></button>
+            </span>
+        </div>
+
+        <div id="blank_{{ field.name }}" class="option option-row hidden">
+            <span class="option-field">
+                <input type=text class="{{ field.name }}-{{ name_one }}" name="{{ field.name }}_{{ name_one }}" value="">
+            </span>
+            <span class="option-field">
+                <input type=text class="{{ field.name }}-{{ name_two }}" name="{{ field.name }}_{{ name_two }}" value="">
+            </span>
+            <div class="right">
+                <button class="fa-solid fa-trash delete"
+                    _="on click remove (closest parent .option)
+                        then {{ field.name }}.collect{{ field.name|title }}Fields()
+                        then halt" />
+            </div>
+        </div>
+
+    </section>
+
+</div>
+
+{% endwith %}

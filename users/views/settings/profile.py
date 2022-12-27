@@ -47,6 +47,12 @@ class ProfilePage(FormView):
             widget=forms.Select(choices=[(True, "Visible"), (False, "Hidden")]),
             required=False,
         )
+        metadata = forms.JSONField(
+            label="Profile Metadata Fields",
+            help_text="These values will appear on your profile below your Bio",
+            widget=forms.HiddenInput,
+            required=False,
+        )
 
     def get_initial(self):
         identity = self.request.identity
@@ -57,6 +63,7 @@ class ProfilePage(FormView):
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,
             "visible_follows": identity.config_identity.visible_follows,
+            "metadata": identity.metadata,
         }
 
     def form_valid(self, form):
@@ -78,6 +85,9 @@ class ProfilePage(FormView):
                 image.name,
                 resize_image(image, size=(1500, 500)),
             )
+        metadata = form.cleaned_data.get("metadata")
+        if metadata:
+            identity.metadata = metadata
         identity.save()
         identity.transition_perform(IdentityStates.edited)
 

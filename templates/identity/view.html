@@ -68,14 +68,14 @@
     {% endif %}
 
     {% if identity.metadata %}
-        <table class="metadata">
+        <div class="identity-metadata">
             {% for entry in identity.safe_metadata %}
-                <tr>
-                    <th>{{ entry.name }}</td>
-                    <td>{{ entry.value }}</td>
-                </tr>
+            <div class="metadata-pair">
+                <span class="metadata-name">{{ entry.name }}</span>
+                <span class="metadata-value">{{ entry.value }}</span>
+            </div>
             {% endfor %}
-        </table>
+        </div>
     {% endif %}
 
     {% if identity.local and identity.config_identity.visible_follows %}
