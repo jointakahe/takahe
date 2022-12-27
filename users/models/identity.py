@@ -483,6 +483,15 @@ class Identity(StatorModel):
             response["endpoints"] = {
                 "sharedInbox": f"https://{self.domain.uri_domain}/inbox/",
             }
+        if self.metadata:
+            response["attachment"] = [
+                {
+                    "type": "http://schema.org#PropertyValue",
+                    "name": strip_html(item["name"], linkify=False),
+                    "value": strip_html(item["value"]),
+                }
+                for item in self.metadata
+            ]
         return response
 
     def to_ap_tag(self):
