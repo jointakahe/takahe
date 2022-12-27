@@ -52,7 +52,11 @@ async def get_remote_file(
     """
     Download a URL and return the File and content-type.
     """
-    async with httpx.AsyncClient() as client:
+    headers = {
+        "User-Agent": settings.TAKAHE_USER_AGENT,
+    }
+
+    async with httpx.AsyncClient(headers=headers) as client:
         async with client.stream("GET", url, timeout=timeout) as stream:
             allow_download = max_size is None
             if max_size:

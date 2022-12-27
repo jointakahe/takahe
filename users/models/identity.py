@@ -561,15 +561,17 @@ class Identity(StatorModel):
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1].lower()
-        webfinger_url = "https://{domain}/.well-known/webfinger?resource={uri}"
+        webfinger_url = f"https://{domain}/.well-known/webfinger?resource={{uri}}"
 
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.SETUP.REMOTE_TIMEOUT
-            ) as client:
+        async with httpx.AsyncClient(
+            timeout=settings.SETUP.REMOTE_TIMEOUT,
+            headers={"User-Agent": settings.TAKAHE_USER_AGENT},
+        ) as client:
+            try:
                 response = await client.get(
                     f"https://{domain}/.well-known/host-meta",
                     follow_redirects=True,
+                    headers={"Accept": "application/xml"},
                 )
 
                 # In the case of anything other than a success, we'll still try
@@ -582,29 +584,29 @@ class Identity(StatorModel):
                     )
                     if template:
                         webfinger_url = template
-        except (httpx.RequestError, etree.ParseError):
-            pass
+            except (httpx.RequestError, etree.ParseError):
+                pass
 
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.SETUP.REMOTE_TIMEOUT
-            ) as client:
+            try:
                 response = await client.get(
-                    webfinger_url.format(domain=domain, uri=f"acct:{handle}"),
+                    webfinger_url.format(uri=f"acct:{handle}"),
                     follow_redirects=True,
+                    headers={"Accept": "application/json"},
                 )
-        except httpx.RequestError:
-            return None, None
+                response.raise_for_status()
+            except httpx.RequestError as ex:
+                response = getattr(ex, "response", None)
+                if (
+                    response
+                    and response.status_code < 500
+                    and response.status_code not in [404, 410]
+                ):
+                    raise ValueError(
+                        f"Client error fetching webfinger: {response.status_code}",
+                        response.content,
+                    )
+                return None, None
 
-        if response.status_code in [404, 410]:
-            return None, None
-        if response.status_code >= 500:
-            return None, None
-        if response.status_code >= 400:
-            raise ValueError(
-                f"Client error fetching webfinger: {response.status_code}",
-                response.content,
-            )
         try:
             data = response.json()
         except ValueError:
