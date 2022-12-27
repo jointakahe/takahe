@@ -31,6 +31,7 @@ class BaseProxyView(View):
                 headers={
                     "X-Accel-Redirect": "/__takahe_accel__/",
                     "X-Takahe-RealUri": remote_url,
+                    "Cache-Control": "public, max-age=3600",
                 },
             )
         else:
