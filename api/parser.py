@@ -11,7 +11,7 @@ class FormOrJsonParser(Parser):
 
     def parse_body(self, request):
         # Did they submit JSON?
-        if request.content_type == "application/json":
+        if request.content_type == "application/json" and request.body.strip():
             return json.loads(request.body)
         # Fall back to form data
         value = {}
