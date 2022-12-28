@@ -109,7 +109,7 @@ class PostQuerySet(models.QuerySet):
                 Post.Visibilities.public,
                 Post.Visibilities.local_only,
             ],
-            author__local=True,
+            local=True,
         )
         if not include_replies:
             return query.filter(in_reply_to__isnull=True)
