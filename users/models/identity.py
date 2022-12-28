@@ -303,10 +303,34 @@ class Identity(StatorModel):
     ### Alternate constructors/fetchers ###
 
     @classmethod
-    def by_username_and_domain(cls, username, domain, fetch=False, local=False):
+    def by_username_and_domain(
+        cls,
+        username: str,
+        domain: str | Domain,
+        fetch: bool = False,
+        local: bool = False,
+    ):
+        """
+        Get an Identity by username and domain.
+
+        When fetch is True, a failed lookup will do a webfinger lookup to attempt to do
+        a lookup by actor_uri, creating an Identity record if one does not exist. When
+        local is True, lookups will be restricted to local domains.
+
+        If domain is a Domain, domain.local is used instead of passsed local.
+
+        """
         if username.startswith("@"):
             raise ValueError("Username must not start with @")
-        domain = domain.lower()
+
+        domain_instance = None
+
+        if isinstance(domain, Domain):
+            domain_instance = domain
+            local = domain.local
+            domain = domain.domain
+        else:
+            domain = domain.lower()
         try:
             if local:
                 return cls.objects.get(
@@ -333,11 +357,12 @@ class Identity(StatorModel):
                     pass
                 # OK, make one
                 username, domain = handle.split("@")
-                domain = Domain.get_remote_domain(domain)
+                if not domain_instance:
+                    domain_instance = Domain.get_remote_domain(domain)
                 return cls.objects.create(
                     actor_uri=actor_uri,
                     username=username,
-                    domain_id=domain,
+                    domain_id=domain_instance,
                     local=False,
                 )
             return None
