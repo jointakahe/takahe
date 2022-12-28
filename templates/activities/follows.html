@@ -6,11 +6,11 @@
 {% block content %}
     <div class="view-options">
         {% if inbound %}
-            <a href=".">Your Follows ({{ num_outbound }})</a>
-            <a href="." class="selected">Follows You ({{ num_inbound }})</a>
+            <a href=".">Following ({{ num_outbound }})</a>
+            <a href="." class="selected">Followers ({{ num_inbound }})</a>
         {% else %}
-            <a href=".?inbound=true" class="selected">Your Follows ({{ num_outbound }})</a>
-            <a href=".?inbound=true">Follows You ({{ num_inbound }})</a>
+            <a href=".?inbound=true" class="selected">Following ({{ num_outbound }})</a>
+            <a href=".?inbound=true">Followers ({{ num_inbound }})</a>
         {% endif %}
     </div>
 
@@ -44,7 +44,7 @@
               </div>
             </a>
         {% empty %}
-            <p class="option empty">You have no follows.</p>
+            <p class="option empty">You {% if inbound %}have no followers{% else %}are not following anyone{% endif %}.</p>
         {% endfor %}
     </section>
 
