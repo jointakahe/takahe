@@ -1,3 +1,4 @@
+import mimetypes
 import re
 from functools import partial
 from typing import ClassVar
@@ -225,16 +226,23 @@ class Emoji(StatorModel):
         else:
             raise ValueError("No name on emoji JSON")
 
+        icon = data["icon"]
+
+        mimetype = icon.get("mediaType")
+        if not mimetype:
+            mimetype, _ = mimetypes.guess_type(icon["url"])
+            if mimetype is None:
+                raise ValueError("No mimetype on emoji JSON")
+
         # create
         shortcode = name.lower().strip(":")
-        icon = data["icon"]
         category = (icon.get("category") or "")[:100]
         emoji = cls.objects.create(
             shortcode=shortcode,
             domain=None if domain.local else domain,
             local=domain.local,
             object_uri=data["id"],
-            mimetype=icon["mediaType"],
+            mimetype=mimetype,
             category=category,
             remote_url=icon["url"],
         )
