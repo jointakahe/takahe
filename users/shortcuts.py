@@ -25,7 +25,7 @@ def by_handle_or_404(request, handle, local=True, fetch=False) -> Identity:
         domain = domain_instance.domain
     identity = Identity.by_username_and_domain(
         username,
-        domain,
+        domain_instance,
         local=local,
         fetch=fetch,
     )

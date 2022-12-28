@@ -44,7 +44,7 @@ class SearchService:
                 if self.identity is not None:
                     # Allow authenticated users to fetch remote
                     identity = Identity.by_username_and_domain(
-                        username, domain, fetch=True
+                        username, domain_instance or domain, fetch=True
                     )
                     if identity and identity.state == IdentityStates.outdated:
                         async_to_sync(identity.fetch_actor)()
