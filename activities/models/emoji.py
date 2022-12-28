@@ -17,7 +17,12 @@ from core.html import strip_html
 from core.ld import format_ld_date
 from core.models import Config
 from core.uploads import upload_emoji_namer
-from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl, StaticAbsoluteUrl
+from core.uris import (
+    AutoAbsoluteUrl,
+    ProxyAbsoluteUrl,
+    RelativeAbsoluteUrl,
+    StaticAbsoluteUrl,
+)
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models import Domain
 
@@ -169,8 +174,9 @@ class Emoji(StatorModel):
             if self.file:
                 return AutoAbsoluteUrl(self.file.url)
             elif self.remote_url:
-                return AutoAbsoluteUrl(
-                    f"/proxy/emoji/{self.pk}/", hash_tail_input=self.remote_url
+                return ProxyAbsoluteUrl(
+                    f"/proxy/emoji/{self.pk}/",
+                    remote_url=self.remote_url,
                 )
         return StaticAbsoluteUrl("img/blank-emoji-128.png")
 

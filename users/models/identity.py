@@ -23,7 +23,12 @@ from core.ld import (
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
-from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl, StaticAbsoluteUrl
+from core.uris import (
+    AutoAbsoluteUrl,
+    ProxyAbsoluteUrl,
+    RelativeAbsoluteUrl,
+    StaticAbsoluteUrl,
+)
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
 from users.models.system_actor import SystemActor
@@ -268,8 +273,9 @@ class Identity(StatorModel):
         if self.icon:
             return RelativeAbsoluteUrl(self.icon.url)
         elif self.icon_uri:
-            return AutoAbsoluteUrl(
-                f"/proxy/identity_icon/{self.pk}/", hash_tail_input=self.icon_uri
+            return ProxyAbsoluteUrl(
+                f"/proxy/identity_icon/{self.pk}/",
+                remote_url=self.icon_uri,
             )
         else:
             return StaticAbsoluteUrl("img/unknown-icon-128.png")
@@ -281,8 +287,9 @@ class Identity(StatorModel):
         if self.image:
             return AutoAbsoluteUrl(self.image.url)
         elif self.image_uri:
-            return AutoAbsoluteUrl(
-                f"/proxy/identity_image/{self.pk}/", hash_tail_input=self.image_uri
+            return ProxyAbsoluteUrl(
+                f"/proxy/identity_image/{self.pk}/",
+                remote_url=self.image_uri,
             )
         return None
 

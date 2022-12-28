@@ -212,22 +212,22 @@ urlpatterns = [
     path("debug/oauth_authorize/", debug.OauthAuthorize.as_view()),
     # Media/image proxy
     re_path(
-        "^proxy/identity_icon/(?P<identity_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
+        "^proxy/identity_icon/(?P<identity_id>[^/]+)/((?P<image_hash>[^/]+))?$",
         mediaproxy.IdentityIconCacheView.as_view(),
         name="proxy_identity_icon",
     ),
     re_path(
-        "^proxy/identity_image/(?P<identity_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
+        "^proxy/identity_image/(?P<identity_id>[^/]+)/((?P<image_hash>[^/]+))?$",
         mediaproxy.IdentityImageCacheView.as_view(),
         name="proxy_identity_image",
     ),
     re_path(
-        "^proxy/post_attachment/(?P<attachment_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
+        "^proxy/post_attachment/(?P<attachment_id>[^/]+)/((?P<image_hash>[^/]+))?$",
         mediaproxy.PostAttachmentCacheView.as_view(),
         name="proxy_post_attachment",
     ),
     re_path(
-        "^proxy/emoji/(?P<emoji_id>[^/]+)/((?P<image_hash>[^/]+)/)?$",
+        "^proxy/emoji/(?P<emoji_id>[^/]+)/((?P<image_hash>[^/]+))?$",
         mediaproxy.EmojiCacheView.as_view(),
         name="proxy_emoji",
     ),
