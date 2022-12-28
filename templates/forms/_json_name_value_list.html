@@ -42,11 +42,17 @@
                     set two to the first <input.{{ field.name }}-{{ name_two }}/> in f then
                     set two@value to item.{{ name_two }}
                 end
+                get the (@data-min-empty of #id_{{ field.name }})
+                set min_empty to it
+                if items.length < min_empty then
+                    repeat (min_empty - items.length) times
+                        call {{ field.name }}.addEmptyField()
+                    end
             "></span>
 
         <div class="option">
             <span class="option-field">
-                <button class="fa-solid fa-add" _="on click {{ field.name }}.addEmptyField() then halt"></button>
+                <button class="fa-solid fa-add" title="Add Row" _="on click {{ field.name }}.addEmptyField() then halt"></button>
             </span>
         </div>
 
@@ -58,7 +64,7 @@
                 <input type=text class="{{ field.name }}-{{ name_two }}" name="{{ field.name }}_{{ name_two }}" value="">
             </span>
             <div class="right">
-                <button class="fa-solid fa-trash delete"
+                <button class="fa-solid fa-trash delete" title="Delete Row"
                     _="on click remove (closest parent .option)
                         then {{ field.name }}.collect{{ field.name|title }}Fields()
                         then halt" />
