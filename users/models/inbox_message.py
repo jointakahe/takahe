@@ -113,6 +113,9 @@ class InboxMessageStates(StateGraph):
             case "remove":
                 # We are ignoring these right now (probably pinned items)
                 pass
+            case "http://litepub.social/ns#emojireact":
+                # We're ignoring emoji reactions for now
+                pass
             case "flag":
                 # Received reports
                 await sync_to_async(Report.handle_ap)(instance.message)
