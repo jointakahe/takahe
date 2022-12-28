@@ -372,6 +372,40 @@ schemas = {
             },
         },
     },
+    "funkwhale.audio/ns": {
+        "contentType": "application/ld+json",
+        "documentUrl": "http://funkwhale.audio/ns",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "id": "@id",
+                "type": "@type",
+                "as": "https://www.w3.org/ns/activitystreams#",
+                "schema": "http://schema.org#",
+                "fw": "https://funkwhale.audio/ns#",
+                "xsd": "http://www.w3.org/2001/XMLSchema#",
+                "Album": "fw:Album",
+                "Track": "fw:Track",
+                "Artist": "fw:Artist",
+                "Library": "fw:Library",
+                "bitrate": {"@id": "fw:bitrate", "@type": "xsd:nonNegativeInteger"},
+                "size": {"@id": "fw:size", "@type": "xsd:nonNegativeInteger"},
+                "position": {"@id": "fw:position", "@type": "xsd:nonNegativeInteger"},
+                "disc": {"@id": "fw:disc", "@type": "xsd:nonNegativeInteger"},
+                "library": {"@id": "fw:library", "@type": "@id"},
+                "track": {"@id": "fw:track", "@type": "@id"},
+                "cover": {"@id": "fw:cover", "@type": "as:Link"},
+                "album": {"@id": "fw:album", "@type": "@id"},
+                "artists": {"@id": "fw:artists", "@type": "@id", "@container": "@list"},
+                "released": {"@id": "fw:released", "@type": "xsd:date"},
+                "musicbrainzId": "fw:musicbrainzId",
+                "license": {"@id": "fw:license", "@type": "@id"},
+                "copyright": "fw:copyright",
+                "category": "sc:category",
+                "language": "sc:inLanguage",
+            }
+        },
+    },
 }
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
