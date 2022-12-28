@@ -1,3 +1,5 @@
+from django.http import HttpRequest, HttpResponse
+
 from activities.models import PostInteraction, TimelineEvent
 from activities.services import TimelineService
 from api import schemas
@@ -9,7 +11,8 @@ from api.views.base import api_router
 @api_router.get("/v1/notifications", response=list[schemas.Notification])
 @identity_required
 def notifications(
-    request,
+    request: HttpRequest,
+    response: HttpResponse,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
@@ -33,15 +36,27 @@ def notifications(
         [base_types[r] for r in requested_types]
     )
     paginator = MastodonPaginator(TimelineEvent)
-    events = paginator.paginate(
+    pager = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    interactions = PostInteraction.get_event_interactions(events, request.identity)
+
+    if pager.results:
+        params = ["limit", "account_id"]
+        response.headers["Link"] = ", ".join(
+            (
+                f'<{pager.next(request, params)}>; rel="next"',
+                f'<{pager.prev(request, params)}>; rel="prev"',
+            )
+        )
+
+    interactions = PostInteraction.get_event_interactions(
+        pager.results, request.identity
+    )
     return [
         event.to_mastodon_notification_json(interactions=interactions)
-        for event in events
+        for event in pager.results
     ]

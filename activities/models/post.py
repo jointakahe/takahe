@@ -911,7 +911,7 @@ class Post(StatorModel):
             "poll": None,
             "card": None,
             "language": None,
-            # "text": self.safe_content_remote(),
+            "text": self.safe_content_remote(),
             "edited_at": format_ld_date(self.edited) if self.edited else None,
         }
         if interactions:
