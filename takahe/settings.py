@@ -72,7 +72,7 @@ class Settings(BaseSettings):
 
     #: Set a secret key used for signing values such as sessions. Randomized
     #: by default, so you'll logout everytime the process restarts.
-    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_hex(128))
+    SECRET_KEY: str = Field(default_factory=lambda: "autokey-" + secrets.token_hex(128))
 
     #: Set a secret key used to protect the stator. Randomized by default.
     STATOR_TOKEN: str = Field(default_factory=lambda: secrets.token_hex(128))
@@ -173,6 +173,10 @@ class Settings(BaseSettings):
 
 SETUP = Settings()
 
+# Don't allow automatic keys in production
+if SETUP.DEBUG and SETUP.SECRET_KEY.startswith("autokey-"):
+    print("You must set TAKAHE_SECRET_KEY in production")
+    sys.exit(1)
 SECRET_KEY = SETUP.SECRET_KEY
 DEBUG = SETUP.DEBUG
 
