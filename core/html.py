@@ -45,14 +45,14 @@ def sanitize_html(post_html: str) -> str:
     return mark_safe(cleaner.clean(post_html))
 
 
-def strip_html(post_html: str) -> str:
+def strip_html(post_html: str, *, linkify: bool = True) -> str:
     """
     Strips all tags from the text, then linkifies it.
     """
     cleaner = bleach.Cleaner(
         tags=[],
         strip=True,
-        filters=[partial(LinkifyFilter, url_re=url_regex)],
+        filters=[partial(LinkifyFilter, url_re=url_regex)] if linkify else [],
     )
     return mark_safe(cleaner.clean(post_html))
 
