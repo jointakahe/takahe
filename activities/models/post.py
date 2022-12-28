@@ -13,7 +13,7 @@ from django.utils import text, timezone
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
-from activities.models.hashtag import Hashtag
+from activities.models.hashtag import Hashtag, HashtagStates
 from activities.models.post_types import (
     PostTypeData,
     PostTypeDataDecoder,
@@ -503,9 +503,10 @@ class Post(StatorModel):
         # Ensure hashtags
         if self.hashtags:
             for hashtag in self.hashtags:
-                await Hashtag.objects.aget_or_create(
+                tag, _ = await Hashtag.objects.aget_or_create(
                     hashtag=hashtag,
                 )
+                await tag.atransition_perform(HashtagStates.outdated)
 
     ### ActivityPub (outbound) ###
 
