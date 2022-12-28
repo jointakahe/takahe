@@ -708,7 +708,7 @@ class Post(StatorModel):
                 raise ValueError("Post has no content or content map")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
-            post.url = data.get("url")
+            post.url = data.get("url", data["id"])
             post.published = parse_ld_date(data.get("published"))
             post.edited = parse_ld_date(data.get("updated"))
             post.in_reply_to = data.get("inReplyTo")
