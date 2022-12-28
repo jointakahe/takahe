@@ -50,9 +50,17 @@ class ProfilePage(FormView):
         metadata = forms.JSONField(
             label="Profile Metadata Fields",
             help_text="These values will appear on your profile below your Bio",
-            widget=forms.HiddenInput,
+            widget=forms.HiddenInput(attrs={"data-min-empty": 2}),
             required=False,
         )
+
+        def clean_metadata(self):
+            metadata = self.cleaned_data["metadata"]
+            if metadata:
+                metadata = [x for x in metadata if x["name"] and x["value"]]
+            if not metadata:
+                return None
+            return metadata
 
     def get_initial(self):
         identity = self.request.identity
@@ -63,7 +71,7 @@ class ProfilePage(FormView):
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,
             "visible_follows": identity.config_identity.visible_follows,
-            "metadata": identity.metadata,
+            "metadata": identity.metadata or [],
         }
 
     def form_valid(self, form):
@@ -85,9 +93,7 @@ class ProfilePage(FormView):
                 image.name,
                 resize_image(image, size=(1500, 500)),
             )
-        metadata = form.cleaned_data.get("metadata")
-        if metadata:
-            identity.metadata = metadata
+        identity.metadata = form.cleaned_data.get("metadata")
         identity.save()
         identity.transition_perform(IdentityStates.edited)
 
