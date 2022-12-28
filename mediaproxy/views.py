@@ -31,7 +31,7 @@ class BaseProxyView(View):
                 headers={
                     "X-Accel-Redirect": "/__takahe_accel__/",
                     "X-Takahe-RealUri": remote_url,
-                    "Cache-Control": "public, max-age=3600",
+                    "Cache-Control": "public",
                 },
             )
         else:
@@ -52,7 +52,9 @@ class BaseProxyView(View):
                     "Content-Type": remote_response.headers.get(
                         "Content-Type", "application/octet-stream"
                     ),
-                    "Cache-Control": "public, max-age=3600",
+                    "Cache-Control": remote_response.headers.get(
+                        "Cache-Control", "public, max-age=3600"
+                    ),
                 },
             )
 

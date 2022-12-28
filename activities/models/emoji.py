@@ -169,7 +169,9 @@ class Emoji(StatorModel):
             if self.file:
                 return AutoAbsoluteUrl(self.file.url)
             elif self.remote_url:
-                return AutoAbsoluteUrl(f"/proxy/emoji/{self.pk}/")
+                return AutoAbsoluteUrl(
+                    f"/proxy/emoji/{self.pk}/", hash_tail_input=self.remote_url
+                )
         return StaticAbsoluteUrl("img/blank-emoji-128.png")
 
     def as_html(self):
