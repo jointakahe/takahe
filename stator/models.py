@@ -46,6 +46,8 @@ class StatorModel(models.Model):
     concrete model yourself.
     """
 
+    state: StateField
+
     # If this row is up for transition attempts (which it always is on creation!)
     state_ready = models.BooleanField(default=True)
 
@@ -75,11 +77,11 @@ class StatorModel(models.Model):
         return cls._meta.get_field("state").graph
 
     @property
-    def state_age(self) -> int:
+    def state_age(self) -> float:
         return (timezone.now() - self.state_changed).total_seconds()
 
     @classmethod
-    async def atransition_schedule_due(cls, now=None) -> models.QuerySet:
+    async def atransition_schedule_due(cls, now=None):
         """
         Finds instances of this model that need to run and schedule them.
         """
