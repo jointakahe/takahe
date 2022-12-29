@@ -1,4 +1,4 @@
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field
 
@@ -78,6 +78,26 @@ def search(
     searcher = SearchService(q, request.identity)
     search_result = searcher.search_identities_handle()
     return [i.to_mastodon_json() for i in search_result]
+
+
+@api_router.get("/v1/accounts/lookup", response=schemas.Account)
+def lookup(request: HttpRequest, acct: str):
+    """
+    Quickly lookup a username to see if it is available, skipping WebFinger
+    resolution.
+    """
+    acct = acct.lstrip("@")
+
+    identity = Identity.objects.filter(
+        local=True,
+        username__iexact=acct,
+        domain__service_domain__iexact=request.get_host(),
+    ).first()
+
+    if not identity:
+        return JsonResponse({"error": "Record not found"}, status=404)
+
+    return identity.to_mastodon_json()
 
 
 @api_router.get("/v1/accounts/{id}", response=schemas.Account)
