@@ -408,7 +408,7 @@ schemas = {
     },
 }
 
-DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.Z"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 DATETIME_MS_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
@@ -497,7 +497,10 @@ def get_str_or_id(value: str | dict | None) -> str | None:
 
 
 def format_ld_date(value: datetime.datetime) -> str:
-    return value.strftime(DATETIME_FORMAT)
+    # We chop the timestamp to be identical to the timestamps returned by
+    # Mastodon's API, because some clients like Toot! (for iOS) are especially
+    # picky about timestamp parsing.
+    return f"{value.strftime(DATETIME_MS_FORMAT)[:-4]}Z"
 
 
 def parse_ld_date(value: str | None) -> datetime.datetime | None:

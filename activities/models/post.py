@@ -900,7 +900,13 @@ class Post(StatorModel):
                 if mention.username
             ],
             "tags": (
-                [{"name": tag, "url": "/tag/{tag}/"} for tag in self.hashtags]
+                [
+                    {
+                        "name": tag,
+                        "url": f"https://{self.author.domain.uri_domain}/tags/{tag}/",
+                    }
+                    for tag in self.hashtags
+                ]
                 if self.hashtags
                 else []
             ),

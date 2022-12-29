@@ -44,8 +44,8 @@ class Account(Schema):
     group: bool
     discoverable: bool
     moved: Union[None, bool, "Account"]
-    suspended: bool
-    limited: bool
+    suspended: bool = False
+    limited: bool = False
     created_at: str
     last_status_at: str | None = Field(...)
     statuses_count: int

@@ -1,3 +1,4 @@
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field
 
@@ -91,7 +92,8 @@ def account(request, id: str):
 @api_router.get("/v1/accounts/{id}/statuses", response=list[schemas.Status])
 @identity_required
 def account_statuses(
-    request,
+    request: HttpRequest,
+    response: HttpResponse,
     id: str,
     exclude_reblogs: bool = False,
     exclude_replies: bool = False,
@@ -119,16 +121,37 @@ def account_statuses(
         queryset = queryset.filter(attachments__pk__isnull=False)
     if tagged:
         queryset = queryset.tagged_with(tagged)
+
     paginator = MastodonPaginator(Post)
-    posts = paginator.paginate(
+    pager = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    interactions = PostInteraction.get_post_interactions(posts, request.identity)
-    return [post.to_mastodon_json(interactions=interactions) for post in queryset]
+
+    if pager.results:
+        params = [
+            "limit",
+            "id",
+            "exclude_reblogs",
+            "exclude_replies",
+            "only_media",
+            "pinned",
+            "tagged",
+        ]
+        response.headers["Link"] = ", ".join(
+            (
+                f'<{pager.next(request, params)}>; rel="next"',
+                f'<{pager.prev(request, params)}>; rel="prev"',
+            )
+        )
+
+    interactions = PostInteraction.get_post_interactions(
+        pager.results, request.identity
+    )
+    return [post.to_mastodon_json(interactions=interactions) for post in pager.results]
 
 
 @api_router.post("/v1/accounts/{id}/follow", response=schemas.Relationship)
