@@ -55,7 +55,7 @@
                         </a>
                     {% endif %}
                     <div class="gap"></div>
-                    <a href="/identity/select/" role="menuitem" class="identity">
+                    <a href="{{ request.identity.urls.view }}" role="menuitem" class="identity">
                         {% if not request.identity %}
                             No Identity
                             <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">

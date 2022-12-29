@@ -232,6 +232,7 @@ class Identity(StatorModel):
         activate = "{view}activate/"
         admin = "/admin/identities/"
         admin_edit = "{admin}{self.pk}/"
+        djadmin_edit = "/djadmin/users/identity/{self.id}/change/"
 
         def get_scheme(self, url):
             return "https"
