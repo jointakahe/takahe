@@ -120,6 +120,9 @@ class Inbox(View):
     """
 
     def post(self, request, handle=None):
+        # Reject bodies that are unfeasibly big
+        if len(request.body) > settings.JSONLD_MAX_SIZE:
+            return HttpResponseBadRequest("Payload size too large")
         # Load the LD
         document = canonicalise(json.loads(request.body), include_security=True)
         # Find the Identity by the actor on the incoming item

@@ -64,12 +64,15 @@ class Settings(BaseSettings):
     #: Should django run in debug mode?
     DEBUG: bool = False
 
-    # Should the debug toolbar be loaded?
+    #: Should the debug toolbar be loaded?
     DEBUG_TOOLBAR: bool = False
+
+    #: Should we atttempt to import the 'local_settings.py'
+    LOCAL_SETTINGS: bool = False
 
     #: Set a secret key used for signing values such as sessions. Randomized
     #: by default, so you'll logout everytime the process restarts.
-    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_hex(128))
+    SECRET_KEY: str = Field(default_factory=lambda: "autokey-" + secrets.token_hex(128))
 
     #: Set a secret key used to protect the stator. Randomized by default.
     STATOR_TOKEN: str = Field(default_factory=lambda: secrets.token_hex(128))
@@ -170,6 +173,10 @@ class Settings(BaseSettings):
 
 SETUP = Settings()
 
+# Don't allow automatic keys in production
+if not SETUP.DEBUG and SETUP.SECRET_KEY.startswith("autokey-"):
+    print("You must set TAKAHE_SECRET_KEY in production")
+    sys.exit(1)
 SECRET_KEY = SETUP.SECRET_KEY
 DEBUG = SETUP.DEBUG
 
@@ -309,6 +316,8 @@ CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
 CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 604800
 
+JSONLD_MAX_SIZE = 1024 * 50  # 50 KB
+
 CSRF_TRUSTED_ORIGINS = SETUP.CSRF_HOSTS
 
 MEDIA_URL = SETUP.MEDIA_URL
@@ -405,3 +414,7 @@ TAKAHE_USER_AGENT = (
     f"python-httpx/{httpx.__version__} "
     f"(Takahe/{__version__}; +https://{SETUP.MAIN_DOMAIN}/)"
 )
+
+if SETUP.LOCAL_SETTINGS:
+    # Let any errors bubble up
+    from .local_settings import *  # noqa

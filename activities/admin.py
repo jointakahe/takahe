@@ -44,12 +44,17 @@ class HashtagAdmin(admin.ModelAdmin):
 
     readonly_fields = ["created", "updated", "stats_updated"]
 
-    actions = ["force_execution"]
+    actions = ["force_state_outdated", "force_state_updated"]
 
-    @admin.action(description="Force Execution")
-    def force_execution(self, request, queryset):
+    @admin.action(description="Force State: outdated")
+    def force_state_outdated(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("outdated")
+
+    @admin.action(description="Force State: updated")
+    def force_state_updated(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("updated")
 
 
 @admin.register(Emoji)

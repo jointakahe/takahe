@@ -1,6 +1,7 @@
 import re
 from collections.abc import Iterable
 from typing import Optional
+from urllib.parse import urlparse
 
 import httpx
 import urlman
@@ -13,7 +14,7 @@ from django.utils import text, timezone
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
-from activities.models.hashtag import Hashtag
+from activities.models.hashtag import Hashtag, HashtagStates
 from activities.models.post_types import (
     PostTypeData,
     PostTypeDataDecoder,
@@ -109,7 +110,7 @@ class PostQuerySet(models.QuerySet):
                 Post.Visibilities.public,
                 Post.Visibilities.local_only,
             ],
-            author__local=True,
+            local=True,
         )
         if not include_replies:
             return query.filter(in_reply_to__isnull=True)
@@ -503,9 +504,10 @@ class Post(StatorModel):
         # Ensure hashtags
         if self.hashtags:
             for hashtag in self.hashtags:
-                await Hashtag.objects.aget_or_create(
+                tag, _ = await Hashtag.objects.aget_or_create(
                     hashtag=hashtag,
                 )
+                await tag.atransition_perform(HashtagStates.outdated)
 
     ### ActivityPub (outbound) ###
 
@@ -659,6 +661,9 @@ class Post(StatorModel):
         Raises DoesNotExist if it's not found and create is False,
         or it's from a blocked domain.
         """
+        # Ensure the domain of the object's actor and ID match to prevent injection
+        if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
+            raise ValueError("Object's ID domain is different to its author")
         # Do we have one with the right ID?
         created = False
         try:
@@ -707,7 +712,7 @@ class Post(StatorModel):
                 raise ValueError("Post has no content or content map")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
-            post.url = data.get("url")
+            post.url = data.get("url", data["id"])
             post.published = parse_ld_date(data.get("published"))
             post.edited = parse_ld_date(data.get("updated"))
             post.in_reply_to = data.get("inReplyTo")
@@ -827,9 +832,14 @@ class Post(StatorModel):
         Handles an incoming delete request
         """
         with transaction.atomic():
+            # Is this an embedded object or plain ID?
+            if isinstance(data["object"], str):
+                object_uri = data["object"]
+            else:
+                object_uri = data["object"]["id"]
             # Find our post by ID if we have one
             try:
-                post = cls.by_object_uri(data["object"]["id"])
+                post = cls.by_object_uri(object_uri)
             except cls.DoesNotExist:
                 # It's already been deleted
                 return

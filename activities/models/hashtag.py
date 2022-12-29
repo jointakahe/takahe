@@ -13,7 +13,7 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 class HashtagStates(StateGraph):
     outdated = State(try_interval=300, force_initial=True)
-    updated = State(try_interval=3600, attempt_immediately=False)
+    updated = State(externally_progressed=True)
 
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
@@ -23,13 +23,16 @@ class HashtagStates(StateGraph):
         """
         Computes the stats and other things for a Hashtag
         """
+        from time import time
+
         from .post import Post
+
+        start = time()
 
         posts_query = Post.objects.local_public().tagged_with(instance)
         total = await posts_query.acount()
 
         today = timezone.now().date()
-        # TODO: single query
         total_today = await posts_query.filter(
             created__gte=today,
             created__lte=today + timedelta(days=1),
@@ -55,12 +58,8 @@ class HashtagStates(StateGraph):
             instance.stats_updated = timezone.now()
             await sync_to_async(instance.save)()
 
+        print(f"Updated hashtag {instance.hashtag} in {time() - start:.5f} seconds")
         return cls.updated
-
-    @classmethod
-    async def handle_updated(cls, instance: "Hashtag"):
-        if instance.state_age > Config.system.hashtag_stats_max_age:
-            return cls.outdated
 
 
 class HashtagQuerySet(models.QuerySet):

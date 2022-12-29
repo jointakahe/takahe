@@ -245,7 +245,7 @@ class HttpSignature:
                 and response.status_code != 404
             ):
                 raise ValueError(
-                    f"POST error: {response.status_code} {response.content}"
+                    f"POST error to {uri}: {response.status_code} {response.content}"
                 )
             return response
 

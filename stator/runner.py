@@ -179,13 +179,11 @@ class StatorRunner:
 
     async def run_single_cycle(self):
         """
-        Testing entrypoint to advance things just one cycle
+        Testing entrypoint to advance things just one cycle, and allow errors
+        to propagate out.
         """
         await asyncio.wait_for(self.fetch_and_process_tasks(), timeout=1)
-        for _ in range(100):
-            if not self.tasks:
-                break
-            self.remove_completed_tasks()
-            await asyncio.sleep(0.05)
+        for task in self.tasks:
+            await task
 
     run_single_cycle_sync = async_to_sync(run_single_cycle)

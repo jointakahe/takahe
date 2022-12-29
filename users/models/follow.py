@@ -273,6 +273,28 @@ class Follow(StatorModel):
             follow.transition_perform(FollowStates.accepted)
 
     @classmethod
+    def handle_accept_ref_ap(cls, data):
+        """
+        Handles an incoming Follow Accept for one of our follows where there is
+        only an object URI reference.
+        """
+        # Ensure the object ref is in a format we expect
+        bits = data["object"].strip("/").split("/")
+        if bits[-2] != "follow":
+            raise ValueError(f"Unknown Follow object URI in Accept: {data['object']}")
+        # Retrieve the object by PK
+        follow = cls.objects.get(pk=bits[-1])
+        # Ensure it's from the right actor
+        if data["actor"] != follow.target.actor_uri:
+            raise ValueError("Accept actor does not match its Follow object", data)
+        # If the follow was waiting to be accepted, transition it
+        if follow.state in [
+            FollowStates.unrequested,
+            FollowStates.local_requested,
+        ]:
+            follow.transition_perform(FollowStates.accepted)
+
+    @classmethod
     def handle_undo_ap(cls, data):
         """
         Handles an incoming Follow Undo for one of our follows

@@ -3,7 +3,7 @@ from functools import partial
 from django.db import models
 
 from core.uploads import upload_namer
-from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl
+from core.uris import ProxyAbsoluteUrl, RelativeAbsoluteUrl
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
@@ -81,13 +81,19 @@ class PostAttachment(StatorModel):
         elif self.file:
             return RelativeAbsoluteUrl(self.file.url)
         else:
-            return AutoAbsoluteUrl(f"/proxy/post_attachment/{self.pk}/")
+            return ProxyAbsoluteUrl(
+                f"/proxy/post_attachment/{self.pk}/",
+                remote_url=self.remote_url,
+            )
 
     def full_url(self):
         if self.file:
             return RelativeAbsoluteUrl(self.file.url)
         else:
-            return AutoAbsoluteUrl(f"/proxy/post_attachment/{self.pk}/")
+            return ProxyAbsoluteUrl(
+                f"/proxy/post_attachment/{self.pk}/",
+                remote_url=self.remote_url,
+            )
 
     ### ActivityPub ###
 

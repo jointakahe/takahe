@@ -65,6 +65,10 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "follow":
                         await sync_to_async(Follow.handle_accept_ap)(instance.message)
+                    case None:
+                        await sync_to_async(Follow.handle_accept_ref_ap)(
+                            instance.message
+                        )
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
@@ -94,9 +98,20 @@ class InboxMessageStates(StateGraph):
                             f"Cannot handle activity of type undo.{unknown}"
                         )
             case "delete":
-                # If there is no object type, it's probably a profile
+                # If there is no object type, we need to see if it's a profile or a post
                 if not isinstance(instance.message["object"], dict):
-                    await sync_to_async(Identity.handle_delete_ap)(instance.message)
+                    if await Identity.objects.filter(
+                        actor_uri=instance.message["object"]
+                    ).aexists():
+                        await sync_to_async(Identity.handle_delete_ap)(instance.message)
+                    elif await Post.objects.filter(
+                        object_uri=instance.message["object"]
+                    ).aexists():
+                        await sync_to_async(Post.handle_delete_ap)(instance.message)
+                    else:
+                        raise ValueError(
+                            f"Cannot handle activity of type delete on URI {instance.message['object']}"
+                        )
                 else:
                     match instance.message_object_type:
                         case "tombstone":
@@ -112,6 +127,12 @@ class InboxMessageStates(StateGraph):
                 pass
             case "remove":
                 # We are ignoring these right now (probably pinned items)
+                pass
+            case "move":
+                # We're ignoring moves for now
+                pass
+            case "http://litepub.social/ns#emojireact":
+                # We're ignoring emoji reactions for now
                 pass
             case "flag":
                 # Received reports

@@ -44,7 +44,7 @@ class SearchService:
                 if self.identity is not None:
                     # Allow authenticated users to fetch remote
                     identity = Identity.by_username_and_domain(
-                        username, domain, fetch=True
+                        username, domain_instance or domain, fetch=True
                     )
                     if identity and identity.state == IdentityStates.outdated:
                         async_to_sync(identity.fetch_actor)()
@@ -83,13 +83,11 @@ class SearchService:
         type = document.get("type", "unknown").lower()
 
         # Is it an identity?
-        print(type)
         if type in Identity.ACTOR_TYPES:
             # Try and retrieve the profile by actor URI
             identity = Identity.by_actor_uri(document["id"], create=True)
-            print("got identity")
             if identity and identity.state == IdentityStates.outdated:
-                print(async_to_sync(identity.fetch_actor)())
+                async_to_sync(identity.fetch_actor)()
             return identity
 
         # Is it a post?

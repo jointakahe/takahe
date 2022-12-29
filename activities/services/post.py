@@ -1,6 +1,12 @@
 from django.db import models
 
-from activities.models import Post, PostInteraction, PostInteractionStates, PostStates
+from activities.models import (
+    Post,
+    PostInteraction,
+    PostInteractionStates,
+    PostStates,
+    TimelineEvent,
+)
 from users.models import Identity
 
 
@@ -8,6 +14,40 @@ class PostService:
     """
     High-level operations on Posts
     """
+
+    @classmethod
+    def queryset(cls):
+        """
+        Returns the base queryset to use for fetching posts efficiently.
+        """
+        return (
+            Post.objects.not_hidden()
+            .prefetch_related(
+                "attachments",
+                "mentions",
+                "emojis",
+            )
+            .select_related(
+                "author",
+                "author__domain",
+            )
+            .annotate(
+                like_count=models.Count(
+                    "interactions",
+                    filter=models.Q(
+                        interactions__type=PostInteraction.Types.like,
+                        interactions__state__in=PostInteractionStates.group_active(),
+                    ),
+                ),
+                boost_count=models.Count(
+                    "interactions",
+                    filter=models.Q(
+                        interactions__type=PostInteraction.Types.boost,
+                        interactions__state__in=PostInteractionStates.group_active(),
+                    ),
+                ),
+            )
+        )
 
     def __init__(self, post: Post):
         self.post = post
@@ -46,40 +86,6 @@ class PostService:
 
     def unboost_as(self, identity: Identity):
         self.uninteract_as(identity, PostInteraction.Types.boost)
-
-    @classmethod
-    def queryset(cls):
-        """
-        Returns the base queryset to use for fetching posts efficiently.
-        """
-        return (
-            Post.objects.not_hidden()
-            .prefetch_related(
-                "attachments",
-                "mentions",
-                "emojis",
-            )
-            .select_related(
-                "author",
-                "author__domain",
-            )
-            .annotate(
-                like_count=models.Count(
-                    "interactions",
-                    filter=models.Q(
-                        interactions__type=PostInteraction.Types.like,
-                        interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-                boost_count=models.Count(
-                    "interactions",
-                    filter=models.Q(
-                        interactions__type=PostInteraction.Types.boost,
-                        interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-            )
-        )
 
     def context(self, identity: Identity | None) -> tuple[list[Post], list[Post]]:
         """
@@ -123,3 +129,17 @@ class PostService:
                 descendants.append(child)
                 queue.append(child)
         return ancestors, descendants
+
+    def delete(self):
+        """
+        Marks a post as deleted and immediately cleans up its timeline events etc.
+        """
+        self.post.transition_perform(PostStates.deleted)
+        TimelineEvent.objects.filter(subject_post=self.post).delete()
+        PostInteraction.transition_perform_queryset(
+            PostInteraction.objects.filter(
+                post=self.post,
+                state__in=PostInteractionStates.group_active(),
+            ),
+            PostInteractionStates.undone,
+        )
