@@ -65,6 +65,10 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "follow":
                         await sync_to_async(Follow.handle_accept_ap)(instance.message)
+                    case None:
+                        await sync_to_async(Follow.handle_accept_ref_ap)(
+                            instance.message
+                        )
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
@@ -112,6 +116,9 @@ class InboxMessageStates(StateGraph):
                 pass
             case "remove":
                 # We are ignoring these right now (probably pinned items)
+                pass
+            case "move":
+                # We're ignoring moves for now
                 pass
             case "http://litepub.social/ns#emojireact":
                 # We're ignoring emoji reactions for now
