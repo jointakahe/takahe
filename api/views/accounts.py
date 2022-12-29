@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field
@@ -87,11 +88,12 @@ def lookup(request: HttpRequest, acct: str):
     resolution.
     """
     acct = acct.lstrip("@")
+    host = request.get_host()
 
     identity = Identity.objects.filter(
+        Q(domain__service_domain__iexact=host) | Q(domain__domain__iexact=host),
         local=True,
         username__iexact=acct,
-        domain__service_domain__iexact=request.get_host(),
     ).first()
 
     if not identity:
