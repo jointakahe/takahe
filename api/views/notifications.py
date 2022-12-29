@@ -45,13 +45,7 @@ def notifications(
     )
 
     if pager.results:
-        params = ["limit", "account_id"]
-        response.headers["Link"] = ", ".join(
-            (
-                f'<{pager.next(request, params)}>; rel="next"',
-                f'<{pager.prev(request, params)}>; rel="prev"',
-            )
-        )
+        response.headers["Link"] = pager.link_header(request, ["limit", "account_id"])
 
     interactions = PostInteraction.get_event_interactions(
         pager.results, request.identity

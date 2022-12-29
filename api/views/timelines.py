@@ -33,12 +33,7 @@ def home(
     )
 
     if pager.results:
-        response.headers["Link"] = ", ".join(
-            (
-                f"<{pager.next(request, ['limit'])}>; rel=\"next\"",
-                f"<{pager.prev(request, ['limit'])}>; rel=\"prev\"",
-            )
-        )
+        response.headers["Link"] = pager.link_header(request, ["limit"])
 
     return [
         event.to_mastodon_status_json(interactions=interactions)
@@ -79,12 +74,9 @@ def public(
     )
 
     if pager.results:
-        params = ["limit", "local", "remote", "only_media"]
-        response.headers["Link"] = ", ".join(
-            (
-                f'<{pager.next(request, params)}>; rel="next"',
-                f'<{pager.prev(request, params)}>; rel="prev"',
-            )
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit", "local", "remote", "only_media"],
         )
 
     interactions = PostInteraction.get_post_interactions(
@@ -123,12 +115,9 @@ def hashtag(
     )
 
     if pager.results:
-        params = ["limit", "local", "hashtag", "only_media"]
-        response.headers["Link"] = ", ".join(
-            (
-                f'<{pager.next(request, params)}>; rel="next"',
-                f'<{pager.prev(request, params)}>; rel="prev"',
-            )
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit", "local", "remote", "only_media"],
         )
 
     interactions = PostInteraction.get_post_interactions(

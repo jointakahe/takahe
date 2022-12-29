@@ -132,20 +132,17 @@ def account_statuses(
     )
 
     if pager.results:
-        params = [
-            "limit",
-            "id",
-            "exclude_reblogs",
-            "exclude_replies",
-            "only_media",
-            "pinned",
-            "tagged",
-        ]
-        response.headers["Link"] = ", ".join(
-            (
-                f'<{pager.next(request, params)}>; rel="next"',
-                f'<{pager.prev(request, params)}>; rel="prev"',
-            )
+        response.headers["Link"] = pager.link_header(
+            request,
+            [
+                "limit",
+                "id",
+                "exclude_reblogs",
+                "exclude_replies",
+                "only_media",
+                "pinned",
+                "tagged",
+            ],
         )
 
     interactions = PostInteraction.get_post_interactions(

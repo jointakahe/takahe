@@ -7,11 +7,19 @@ from django.http import HttpRequest
 
 @dataclasses.dataclass
 class PaginationResult:
+    """
+    Represents a pagination result for Mastodon (it does Link header stuff)
+    """
+
     #: A list of objects that matched the pagination query.
     results: list[models.Model]
+
     #: The actual applied limit, which may be different from what was requested.
     limit: int
-    sort_attribute: str
+
+    @classmethod
+    def empty(cls):
+        return cls(results=[], limit=20)
 
     def next(self, request: HttpRequest, allowed_params: list[str]):
         """
@@ -36,6 +44,17 @@ class PaginationResult:
         params["min_id"] = self.results[0].pk
 
         return f"{request.build_absolute_uri(request.path)}?{urllib.parse.urlencode(params)}"
+
+    def link_header(self, request: HttpRequest, allowed_params: list[str]):
+        """
+        Creates a link header for the given request
+        """
+        return ", ".join(
+            (
+                f'<{self.next(request, allowed_params)}>; rel="next"',
+                f'<{self.prev(request, allowed_params)}>; rel="prev"',
+            )
+        )
 
     @staticmethod
     def filter_params(request: HttpRequest, allowed_params: list[str]):
@@ -71,12 +90,12 @@ class MastodonPaginator:
         max_id: str | None,
         since_id: str | None,
         limit: int | None,
-    ):
+    ) -> PaginationResult:
         if max_id:
             try:
                 anchor = self.anchor_model.objects.get(pk=max_id)
             except self.anchor_model.DoesNotExist:
-                return []
+                return PaginationResult.empty()
             queryset = queryset.filter(
                 **{self.sort_attribute + "__lt": getattr(anchor, self.sort_attribute)}
             )
@@ -85,7 +104,7 @@ class MastodonPaginator:
             try:
                 anchor = self.anchor_model.objects.get(pk=since_id)
             except self.anchor_model.DoesNotExist:
-                return []
+                return PaginationResult.empty()
             queryset = queryset.filter(
                 **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
             )
@@ -96,7 +115,7 @@ class MastodonPaginator:
             try:
                 anchor = self.anchor_model.objects.get(pk=min_id)
             except self.anchor_model.DoesNotExist:
-                return []
+                return PaginationResult.empty()
             queryset = queryset.filter(
                 **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
             ).order_by(self.sort_attribute)
@@ -107,5 +126,4 @@ class MastodonPaginator:
         return PaginationResult(
             results=list(queryset[:limit]),
             limit=limit,
-            sort_attribute=self.sort_attribute,
         )
