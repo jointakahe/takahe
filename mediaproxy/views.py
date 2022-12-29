@@ -58,7 +58,7 @@ class BaseProxyView(View):
                 },
             )
 
-    def get_remote_url(self):
+    def get_remote_url(self) -> str:
         raise NotImplementedError()
 
 

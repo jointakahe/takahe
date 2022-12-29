@@ -188,7 +188,7 @@ class Emoji(StatorModel):
         return self.fullcode
 
     @classmethod
-    def emojis_from_content(cls, content: str, domain: Domain | None) -> list[str]:
+    def emojis_from_content(cls, content: str, domain: Domain | None) -> list["Emoji"]:
         """
         Return a parsed and sanitized of emoji found in content without
         the surrounding ':'.
