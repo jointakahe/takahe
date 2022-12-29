@@ -2,7 +2,6 @@ import io
 
 import blurhash
 import httpx
-import PIL.ImageQt
 from django.conf import settings
 from django.core.files import File
 from django.core.files.base import ContentFile
@@ -10,7 +9,7 @@ from PIL import Image, ImageOps
 
 
 class ImageFile(File):
-    image: PIL.Image
+    image: Image
 
 
 def resize_image(
