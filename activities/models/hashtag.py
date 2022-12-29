@@ -114,6 +114,7 @@ class Hashtag(StatorModel):
     objects = HashtagManager()
 
     class urls(urlman.Urls):
+        view = "/tags/{self.hashtag}/"
         admin = "/admin/hashtags/"
         admin_edit = "{admin}{self.hashtag}/"
         timeline = "/tags/{self.hashtag}/"

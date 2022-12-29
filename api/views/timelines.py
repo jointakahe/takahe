@@ -41,7 +41,7 @@ def home(
         )
 
     return [
-        event.subject_post.to_mastodon_json(interactions=interactions)
+        event.to_mastodon_status_json(interactions=interactions)
         for event in pager.results
     ]
 

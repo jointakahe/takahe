@@ -181,3 +181,13 @@ class TimelineEvent(models.Model):
         else:
             raise ValueError(f"Cannot convert {self.type} to notification JSON")
         return result
+
+    def to_mastodon_status_json(self, interactions=None):
+        if self.type == self.Types.post:
+            return self.subject_post.to_mastodon_json(interactions=interactions)
+        elif self.type == self.Types.boost:
+            return self.subject_post_interaction.to_mastodon_status_json(
+                interactions=interactions
+            )
+        else:
+            raise ValueError(f"Cannot make status JSON for type {self.type}")
