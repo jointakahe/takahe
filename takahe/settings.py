@@ -174,7 +174,7 @@ class Settings(BaseSettings):
 SETUP = Settings()
 
 # Don't allow automatic keys in production
-if SETUP.DEBUG and SETUP.SECRET_KEY.startswith("autokey-"):
+if not SETUP.DEBUG and SETUP.SECRET_KEY.startswith("autokey-"):
     print("You must set TAKAHE_SECRET_KEY in production")
     sys.exit(1)
 SECRET_KEY = SETUP.SECRET_KEY
