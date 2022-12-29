@@ -29,10 +29,14 @@ class InterfacePage(SettingsPage):
             "title": "Expand linked Content Warnings",
             "help_text": "Expands all CWs of the same type at once, rather than one at a time.",
         },
+        "infinite_scroll": {
+            "title": "Infinite Scroll",
+            "help_text": "Automatically loads more posts when you get to the bottom of a timeline.",
+        },
     }
 
     layout = {
         "Posting": ["toot_mode", "default_post_visibility"],
-        "Wellness": ["visible_reaction_counts", "expand_linked_cws"],
+        "Wellness": ["infinite_scroll", "visible_reaction_counts", "expand_linked_cws"],
         "Appearance": ["custom_css"],
     }

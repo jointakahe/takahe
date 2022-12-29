@@ -136,11 +136,31 @@ footer {
     font-size: 90%;
 }
 
+body:not(.no-sidebar) footer {
+    position: fixed;
+    bottom: 0;
+    right: calc((100vw - 920px)/2);
+    width: 250px;
+    margin: 0;
+    padding: 5px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+body:not(.no-sidebar) footer a {
+    flex-basis: 50%;
+    flex-grow: 1;
+}
+
+body:not(.no-sidebar) footer a:hover {
+    color: var(--color-text-dull);
+}
+
 .no-sidebar footer {
     max-width: 800px;
 }
 
-footer a {
+.no-sidebar footer a {
     border-bottom: 1px solid var(--color-text-duller);
     margin-right: 5px;
 }
@@ -867,22 +887,52 @@ button:hover,
     border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
+button.htmx-request,
+.button.htmx-request {
+    background: var(--color-button-disabled);
+}
+
+button.htmx-request::before,
+.button.htmx-request::before {
+    display: inline-block;
+    content: "\f2f1";
+    font: var(--fa-font-solid);
+    margin-right: 8px;
+    -webkit-animation-delay: var(--fa-animation-delay, 0s);
+    animation-delay: var(--fa-animation-delay, 0s);
+    -webkit-animation-direction: var(--fa-animation-direction, normal);
+    animation-direction: var(--fa-animation-direction, normal);
+    -webkit-animation-name: fa-spin;
+    animation-name: fa-spin;
+    -webkit-animation-duration: var(--fa-animation-duration, 2s);
+    animation-duration: var(--fa-animation-duration, 2s);
+    -webkit-animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+    animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+    -webkit-animation-timing-function: var(--fa-animation-timing, linear);
+    animation-timing-function: var(--fa-animation-timing, linear);
+}
+
 .right-column button,
 .right-column .button {
     padding: 2px 6px;
 }
+
 form .field.multi-option {
     margin-bottom: 10px;
 }
+
 form .field.multi-option {
     margin-bottom: 10px;
 }
+
 form .option.option-row {
     margin: 0px 0px 5px 0px;
 }
+
 .option-row .right {
     float: right;
 }
+
 form .option-row .option-field {
     vertical-align: middle;
     display: inline-block;
@@ -983,6 +1033,7 @@ h1.identity small {
     text-align: right;
     color: var(--color-text-dull);
 }
+
 .identity-metadata .metadata-pair .metadata-name::after {
     padding-left: 3px;
 
@@ -1461,13 +1512,7 @@ form .post {
     }
 
     body:not(.no-sidebar) footer {
-        position: fixed;
-        bottom: 0;
         right: 0;
-        width: 250px;
-        margin: 0;
-        padding: 5px;
-        text-align: right;
     }
 
     body:not(.no-sidebar) footer a {
