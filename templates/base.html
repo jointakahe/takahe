@@ -12,7 +12,7 @@
     <link rel="shortcut icon" href="{{ config.site_icon }}">
     <script src="{% static "js/hyperscript.min.js" %}"></script>
     <script src="{% static "js/htmx.min.js" %}"></script>
-    <script src="{% static "js/minidenticons.min.js" %}"></script>
+    <script src="{% static "js/takahe.min.js" %}"></script>
     <style>
         body {
             --color-highlight: {{ config.highlight_color }};
@@ -50,7 +50,7 @@
                         <i class="fa-solid fa-search"></i>
                     </a>
                     {% if allows_refresh %}
-                        <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s">
+                        <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s[isAtTopOfPage()]">
                             <i class="fa-solid fa-rotate"></i>
                         </a>
                     {% endif %}
