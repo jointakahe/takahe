@@ -2,6 +2,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from activities.models import Post, PostStates
+from users.models import Identity, InboxMessage
 
 
 @pytest.mark.django_db
@@ -237,3 +238,97 @@ def test_content_map(remote_identity):
         create=True,
     )
     assert post3.content == "Hello World"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("delete_type", ["note", "tombstone", "ref"])
+def test_inbound_posts(
+    remote_identity: Identity,
+    stator,
+    delete_type: bool,
+):
+    """
+    Ensures that a remote post can arrive via inbox message, be edited, and be
+    deleted.
+    """
+    # Create an inbound new post message
+    message = {
+        "id": "test",
+        "type": "Create",
+        "actor": remote_identity.actor_uri,
+        "object": {
+            "id": "https://remote.test/test-post",
+            "type": "Note",
+            "published": "2022-11-13T23:20:16Z",
+            "attributedTo": remote_identity.actor_uri,
+            "content": "post version one",
+        },
+    }
+    InboxMessage.objects.create(message=message)
+
+    # Run stator and ensure that made the post
+    stator.run_single_cycle_sync()
+    post = Post.objects.get(object_uri="https://remote.test/test-post")
+    assert post.content == "post version one"
+    assert post.published.day == 13
+    assert post.url == "https://remote.test/test-post"
+
+    # Create an inbound post edited message
+    message = {
+        "id": "test",
+        "type": "Update",
+        "actor": remote_identity.actor_uri,
+        "object": {
+            "id": "https://remote.test/test-post",
+            "type": "Note",
+            "published": "2022-11-13T23:20:16Z",
+            "updated": "2022-11-14T23:20:16Z",
+            "url": "https://remote.test/test-post/display",
+            "attributedTo": remote_identity.actor_uri,
+            "content": "post version two",
+        },
+    }
+    InboxMessage.objects.create(message=message)
+
+    # Run stator and ensure that edited the post
+    stator.run_single_cycle_sync()
+    post = Post.objects.get(object_uri="https://remote.test/test-post")
+    assert post.content == "post version two"
+    assert post.edited.day == 14
+    assert post.url == "https://remote.test/test-post/display"
+
+    # Create an inbound post deleted message
+    if delete_type == "ref":
+        message = {
+            "id": "test",
+            "type": "Delete",
+            "actor": remote_identity.actor_uri,
+            "object": "https://remote.test/test-post",
+        }
+    elif delete_type == "tombstone":
+        message = {
+            "id": "test",
+            "type": "Delete",
+            "actor": remote_identity.actor_uri,
+            "object": {
+                "id": "https://remote.test/test-post",
+                "type": "Tombstone",
+            },
+        }
+    else:
+        message = {
+            "id": "test",
+            "type": "Delete",
+            "actor": remote_identity.actor_uri,
+            "object": {
+                "id": "https://remote.test/test-post",
+                "type": "Note",
+                "published": "2022-11-13T23:20:16Z",
+                "attributedTo": remote_identity.actor_uri,
+            },
+        }
+    InboxMessage.objects.create(message=message)
+
+    # Run stator and ensure that deleted the post
+    stator.run_single_cycle_sync()
+    assert not Post.objects.filter(object_uri="https://remote.test/test-post").exists()

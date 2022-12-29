@@ -1,6 +1,7 @@
 import re
 from collections.abc import Iterable
 from typing import Optional
+from urllib.parse import urlparse
 
 import httpx
 import urlman
@@ -660,6 +661,9 @@ class Post(StatorModel):
         Raises DoesNotExist if it's not found and create is False,
         or it's from a blocked domain.
         """
+        # Ensure the domain of the object's actor and ID match to prevent injection
+        if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
+            raise ValueError("Object's ID domain is different to its author")
         # Do we have one with the right ID?
         created = False
         try:
@@ -828,9 +832,14 @@ class Post(StatorModel):
         Handles an incoming delete request
         """
         with transaction.atomic():
+            # Is this an embedded object or plain ID?
+            if isinstance(data["object"], str):
+                object_uri = data["object"]
+            else:
+                object_uri = data["object"]["id"]
             # Find our post by ID if we have one
             try:
-                post = cls.by_object_uri(data["object"]["id"])
+                post = cls.by_object_uri(object_uri)
             except cls.DoesNotExist:
                 # It's already been deleted
                 return
