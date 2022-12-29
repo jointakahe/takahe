@@ -19,7 +19,7 @@ def home(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    paginator = MastodonPaginator(Post)
+    paginator = MastodonPaginator(Post, sort_attribute="published")
     queryset = TimelineService(request.identity).home()
     pager = paginator.paginate(
         queryset,
@@ -64,7 +64,7 @@ def public(
         queryset = queryset.filter(local=False)
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
-    paginator = MastodonPaginator(Post)
+    paginator = MastodonPaginator(Post, sort_attribute="published")
     pager = paginator.paginate(
         queryset,
         min_id=min_id,
@@ -105,7 +105,7 @@ def hashtag(
         queryset = queryset.filter(local=True)
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
-    paginator = MastodonPaginator(Post)
+    paginator = MastodonPaginator(Post, sort_attribute="published")
     pager = paginator.paginate(
         queryset,
         min_id=min_id,

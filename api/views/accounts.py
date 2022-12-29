@@ -122,7 +122,7 @@ def account_statuses(
     if tagged:
         queryset = queryset.tagged_with(tagged)
 
-    paginator = MastodonPaginator(Post)
+    paginator = MastodonPaginator(Post, sort_attribute="published")
     pager = paginator.paginate(
         queryset,
         min_id=min_id,

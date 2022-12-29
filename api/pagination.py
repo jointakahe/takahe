@@ -4,6 +4,8 @@ import urllib.parse
 from django.db import models
 from django.http import HttpRequest
 
+from activities.models import PostInteraction
+
 
 @dataclasses.dataclass
 class PaginationResult:
@@ -68,7 +70,7 @@ class PaginationResult:
 
 class MastodonPaginator:
     """
-    Paginates in the Mastodon style (max_id, min_id, etc)
+    Paginates in the Mastodon style (max_id, min_id, etc).
     """
 
     def __init__(
@@ -83,6 +85,22 @@ class MastodonPaginator:
         self.default_limit = default_limit
         self.max_limit = max_limit
 
+    def get_anchor(self, anchor_id: str):
+        """
+        Gets an anchor object by ID.
+        It's possible that the anchor object might be an interaction, in which
+        case we recurse down to its post.
+        """
+        if anchor_id.startswith("interaction-"):
+            try:
+                return PostInteraction.objects.get(pk=anchor_id[12:])
+            except PostInteraction.DoesNotExist:
+                return PaginationResult.empty()
+        try:
+            return self.anchor_model.objects.get(pk=anchor_id)
+        except self.anchor_model.DoesNotExist:
+            return PaginationResult.empty()
+
     def paginate(
         self,
         queryset,
@@ -92,19 +110,13 @@ class MastodonPaginator:
         limit: int | None,
     ) -> PaginationResult:
         if max_id:
-            try:
-                anchor = self.anchor_model.objects.get(pk=max_id)
-            except self.anchor_model.DoesNotExist:
-                return PaginationResult.empty()
+            anchor = self.get_anchor(max_id)
             queryset = queryset.filter(
                 **{self.sort_attribute + "__lt": getattr(anchor, self.sort_attribute)}
             )
 
         if since_id:
-            try:
-                anchor = self.anchor_model.objects.get(pk=since_id)
-            except self.anchor_model.DoesNotExist:
-                return PaginationResult.empty()
+            anchor = self.get_anchor(since_id)
             queryset = queryset.filter(
                 **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
             )
@@ -112,10 +124,7 @@ class MastodonPaginator:
         if min_id:
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
-            try:
-                anchor = self.anchor_model.objects.get(pk=min_id)
-            except self.anchor_model.DoesNotExist:
-                return PaginationResult.empty()
+            anchor = self.get_anchor(min_id)
             queryset = queryset.filter(
                 **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
             ).order_by(self.sort_attribute)
