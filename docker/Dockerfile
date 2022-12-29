@@ -39,7 +39,7 @@ COPY . /takahe
 
 WORKDIR /takahe
 
-RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" python3 manage.py collectstatic --noinput
+RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" TAKAHE_SECRET_KEY="takahe" python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
 
