@@ -1,0 +1,27 @@
+{% extends "emails/base.html" %}
+{% load mail_tags %}
+{% autoescape off %}
+{% block title %}{{settings.MAIN_DOMAIN}} - New Account Created{% endblock title %}
+{% block subtitle %}{{settings.MAIN_DOMAIN}} - New Account Created{% endblock subtitle %}
+
+{% block body_greeting %}
+    {% email_body_content "Hi there," %}
+{% endblock body_greeting %}
+
+{% block body_content %}
+    {% email_body_content "Your email address was used to create a new account at {{config.site_name}} (https://{{settings.MAIN_DOMAIN}})." %}
+    {% email_body_content "To confirm your new account, go to this link:" %}
+{% endblock body_content %}
+
+{% block body_button %}
+    {% email_button button_text="Confirm New Account" button_link="https://{{settings.MAIN_DOMAIN}}/auth/reset/{{reset.token}}/" %}
+{% endblock body_button %}
+
+{% block body_signature %}
+    {% email_body_content "Thanks, Admins @{{settings.MAIN_DOMAIN}}" %}
+{% endblock body_signature %}
+
+{% block extra_footer %}
+    {% email_footer "If this was not you, then please ignore this message - your email will not be used to make an account if this link is not visited." %}
+{% endblock extra_footer %}
+{% endautoescape %}
