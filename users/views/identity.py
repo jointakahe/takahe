@@ -179,6 +179,10 @@ class ActionIdentity(View):
             IdentityService(identity).follow_from(self.request.identity)
         elif action == "unfollow":
             IdentityService(identity).unfollow_from(self.request.identity)
+        elif action == "hide_reblogs":
+            IdentityService(identity).follow_from(self.request.identity, reblogs=False)
+        elif action == "show_reblogs":
+            IdentityService(identity).follow_from(self.request.identity, reblogs=True)
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)
