@@ -137,6 +137,16 @@ class InboxMessageStates(StateGraph):
             case "flag":
                 # Received reports
                 await sync_to_async(Report.handle_ap)(instance.message)
+            case "__internal__":
+                match instance.message_object_type:
+                    case "fetchpost":
+                        await sync_to_async(Post.handle_fetch_internal)(
+                            instance.message
+                        )
+                    case unknown:
+                        raise ValueError(
+                            f"Cannot handle activity of type __internal__.{unknown}"
+                        )
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed

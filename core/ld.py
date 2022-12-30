@@ -523,6 +523,20 @@ def get_first_image_url(data) -> str | None:
     return None
 
 
+def get_value_or_map(data, key, map_key):
+    """
+    Retrieves a value that can either be a top level key (like "name") or
+    an entry in a map (like nameMap).
+    """
+    if key in data:
+        return data[key]
+    if map_key in data:
+        if "und" in map_key:
+            return data[map_key]["und"]
+        return list(data[map_key].values())[0]
+    raise KeyError(f"Cannot find {key} or {map_key}")
+
+
 def media_type_from_filename(filename):
     _, extension = os.path.splitext(filename)
     if extension == ".png":

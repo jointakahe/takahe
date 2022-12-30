@@ -187,6 +187,10 @@ class Inbox(View):
                 exceptions.capture_message("Inbox error: Bad HTTP signature")
                 return HttpResponseUnauthorized("Bad signature")
 
+        # Don't allow injection of internal messages
+        if document["type"].startswith("__"):
+            return HttpResponseUnauthorized("Bad type")
+
         # Hand off the item to be processed by the queue
         InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)

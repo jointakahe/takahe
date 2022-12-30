@@ -103,8 +103,10 @@ class PostService:
         ancestors: list[Post] = []
         ancestor = self.post
         while ancestor.in_reply_to and len(ancestors) < num_ancestors:
-            ancestor = self.queryset().filter(object_uri=ancestor.in_reply_to).first()
+            object_uri = ancestor.in_reply_to
+            ancestor = self.queryset().filter(object_uri=object_uri).first()
             if ancestor is None:
+                Post.ensure_object_uri(object_uri)
                 break
             if ancestor.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
                 break

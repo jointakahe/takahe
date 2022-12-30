@@ -21,10 +21,17 @@ from activities.models.post_types import (
     PostTypeDataEncoder,
 )
 from core.html import ContentRenderer, strip_html
-from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
+from core.ld import (
+    canonicalise,
+    format_ld_date,
+    get_list,
+    get_value_or_map,
+    parse_ld_date,
+)
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity, IdentityStates
+from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
 
 
@@ -700,16 +707,7 @@ class Post(StatorModel):
             if post.type in (cls.Types.article, cls.Types.question):
                 type_data = PostTypeData(__root__=data).__root__
                 post.type_data = type_data.dict()
-            # Get content in order of: content value, contentmap.und, any contentmap entry
-            if "content" in data:
-                post.content = data["content"]
-            elif "contentMap" in data:
-                if "und" in data["contentMap"]:
-                    post.content = data["contentMap"]["und"]
-                else:
-                    post.content = list(data["contentMap"].values())[0]
-            else:
-                raise ValueError("Post has no content or content map")
+            post.content = get_value_or_map(data, "content", "contentMap")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
             post.url = data.get("url", data["id"])
@@ -723,7 +721,9 @@ class Post(StatorModel):
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
                 elif tag["type"].lower() in ["_:hashtag", "hashtag"]:
-                    post.hashtags.append(tag["name"].lower().lstrip("#"))
+                    post.hashtags.append(
+                        get_value_or_map(tag, "name", "nameMap").lower().lstrip("#")
+                    )
                 elif tag["type"].lower() in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
@@ -758,10 +758,13 @@ class Post(StatorModel):
                     focal_y=focal_y,
                 )
             post.save()
+            # Potentially schedule a fetch of the reply parent
+            if post.in_reply_to:
+                cls.ensure_object_uri(post.in_reply_to)
         return post
 
     @classmethod
-    def by_object_uri(cls, object_uri, fetch=False):
+    def by_object_uri(cls, object_uri, fetch=False) -> "Post":
         """
         Gets the post by URI - either looking up locally, or fetching
         from the other end if it's not here.
@@ -797,6 +800,27 @@ class Post(StatorModel):
                 return post
             else:
                 raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
+
+    @classmethod
+    def ensure_object_uri(cls, object_uri: str):
+        """
+        Sees if the post is in our local set, and if not, schedules a fetch
+        for it (in the background)
+        """
+        if not object_uri:
+            raise ValueError("No URI provided!")
+        try:
+            cls.by_object_uri(object_uri)
+        except cls.DoesNotExist:
+            InboxMessage.objects.create(
+                message={
+                    "type": "__internal__",
+                    "object": {
+                        "type": "FetchPost",
+                        "object": object_uri,
+                    },
+                }
+            )
 
     @classmethod
     def handle_create_ap(cls, data):
@@ -847,6 +871,16 @@ class Post(StatorModel):
             if not post.author.actor_uri == data["actor"]:
                 raise ValueError("Actor on delete does not match object")
             post.delete()
+
+    @classmethod
+    def handle_fetch_internal(cls, data):
+        """
+        Handles an internal fetch-request inbox message
+        """
+        try:
+            cls.by_object_uri(data["object"]["object"], fetch=True)
+        except cls.DoesNotExist:
+            pass
 
     ### OpenGraph API ###
 
