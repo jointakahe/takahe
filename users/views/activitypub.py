@@ -41,7 +41,7 @@ class HostMeta(View):
             <Link rel="lrdd" template="https://%s/.well-known/webfinger?resource={uri}"/>
             </XRD>"""
             % request.headers["host"],
-            content_type="application/xml",
+            content_type="application/xrd+xml",
         )
 
 
@@ -110,7 +110,7 @@ class Webfinger(View):
         else:
             actor = by_handle_or_404(request, handle)
 
-        return JsonResponse(actor.to_webfinger())
+        return JsonResponse(actor.to_webfinger(), content_type="application/jrd+json")
 
 
 @method_decorator(csrf_exempt, name="dispatch")
