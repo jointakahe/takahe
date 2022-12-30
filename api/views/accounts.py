@@ -193,3 +193,40 @@ def account_unfollow(request, id: str):
     service = IdentityService(identity)
     service.unfollow_from(request.identity)
     return service.mastodon_json_relationship(request.identity)
+
+
+@api_router.get("/v1/accounts/{id}/following", response=list[schemas.Account])
+def account_following(
+    request: HttpRequest,
+    response: HttpResponse,
+    id: str,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 20,
+):
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
+
+    if not identity.config_identity.visible_follows and request.identity != identity:
+        return []
+
+    service = IdentityService(identity)
+
+    paginator = MastodonPaginator(Identity)
+    pager = paginator.paginate(
+        service.following(),
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+
+    if pager.results:
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit"],
+        )
+
+    return [result.to_mastodon_json() for result in pager.results]
