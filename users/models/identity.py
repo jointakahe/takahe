@@ -640,7 +640,7 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                 )
                 response.raise_for_status()
-            except httpx.RequestError as ex:
+            except httpx.HTTPError as ex:
                 response = getattr(ex, "response", None)
                 if (
                     response
