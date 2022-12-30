@@ -1,3 +1,5 @@
+from django.db.models import Q
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field
 
@@ -79,6 +81,27 @@ def search(
     return [i.to_mastodon_json() for i in search_result]
 
 
+@api_router.get("/v1/accounts/lookup", response=schemas.Account)
+def lookup(request: HttpRequest, acct: str):
+    """
+    Quickly lookup a username to see if it is available, skipping WebFinger
+    resolution.
+    """
+    acct = acct.lstrip("@")
+    host = request.get_host()
+
+    identity = Identity.objects.filter(
+        Q(domain__service_domain__iexact=host) | Q(domain__domain__iexact=host),
+        local=True,
+        username__iexact=acct,
+    ).first()
+
+    if not identity:
+        return JsonResponse({"error": "Record not found"}, status=404)
+
+    return identity.to_mastodon_json()
+
+
 @api_router.get("/v1/accounts/{id}", response=schemas.Account)
 @identity_required
 def account(request, id: str):
@@ -91,7 +114,8 @@ def account(request, id: str):
 @api_router.get("/v1/accounts/{id}/statuses", response=list[schemas.Status])
 @identity_required
 def account_statuses(
-    request,
+    request: HttpRequest,
+    response: HttpResponse,
     id: str,
     exclude_reblogs: bool = False,
     exclude_replies: bool = False,
@@ -119,16 +143,34 @@ def account_statuses(
         queryset = queryset.filter(attachments__pk__isnull=False)
     if tagged:
         queryset = queryset.tagged_with(tagged)
-    paginator = MastodonPaginator(Post)
-    posts = paginator.paginate(
+
+    paginator = MastodonPaginator(Post, sort_attribute="published")
+    pager = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    interactions = PostInteraction.get_post_interactions(posts, request.identity)
-    return [post.to_mastodon_json(interactions=interactions) for post in queryset]
+
+    if pager.results:
+        response.headers["Link"] = pager.link_header(
+            request,
+            [
+                "limit",
+                "id",
+                "exclude_reblogs",
+                "exclude_replies",
+                "only_media",
+                "pinned",
+                "tagged",
+            ],
+        )
+
+    interactions = PostInteraction.get_post_interactions(
+        pager.results, request.identity
+    )
+    return [post.to_mastodon_json(interactions=interactions) for post in pager.results]
 
 
 @api_router.post("/v1/accounts/{id}/follow", response=schemas.Relationship)
@@ -151,3 +193,40 @@ def account_unfollow(request, id: str):
     service = IdentityService(identity)
     service.unfollow_from(request.identity)
     return service.mastodon_json_relationship(request.identity)
+
+
+@api_router.get("/v1/accounts/{id}/following", response=list[schemas.Account])
+def account_following(
+    request: HttpRequest,
+    response: HttpResponse,
+    id: str,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 40,
+):
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
+
+    if not identity.config_identity.visible_follows and request.identity != identity:
+        return []
+
+    service = IdentityService(identity)
+
+    paginator = MastodonPaginator(Identity, max_limit=80, sort_attribute="username")
+    pager = paginator.paginate(
+        service.following(),
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+
+    if pager.results:
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit"],
+        )
+
+    return [result.to_mastodon_json() for result in pager.results]

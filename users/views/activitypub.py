@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -18,6 +19,7 @@ from core.signatures import (
     VerificationError,
     VerificationFormatError,
 )
+from core.views import StaticContentView
 from takahe import __version__
 from users.models import Identity, InboxMessage, SystemActor
 from users.shortcuts import by_handle_or_404
@@ -39,7 +41,7 @@ class HostMeta(View):
             <Link rel="lrdd" template="https://%s/.well-known/webfinger?resource={uri}"/>
             </XRD>"""
             % request.headers["host"],
-            content_type="application/xml",
+            content_type="application/xrd+xml",
         )
 
 
@@ -108,7 +110,7 @@ class Webfinger(View):
         else:
             actor = by_handle_or_404(request, handle)
 
-        return JsonResponse(actor.to_webfinger())
+        return JsonResponse(actor.to_webfinger(), content_type="application/jrd+json")
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -118,6 +120,9 @@ class Inbox(View):
     """
 
     def post(self, request, handle=None):
+        # Reject bodies that are unfeasibly big
+        if len(request.body) > settings.JSONLD_MAX_SIZE:
+            return HttpResponseBadRequest("Payload size too large")
         # Load the LD
         document = canonicalise(json.loads(request.body), include_security=True)
         # Find the Identity by the actor on the incoming item
@@ -182,6 +187,10 @@ class Inbox(View):
                 exceptions.capture_message("Inbox error: Bad HTTP signature")
                 return HttpResponseUnauthorized("Bad signature")
 
+        # Don't allow injection of internal messages
+        if document["type"].startswith("__"):
+            return HttpResponseUnauthorized("Bad type")
+
         # Hand off the item to be processed by the queue
         InboxMessage.objects.create(message=document)
         return HttpResponse(status=202)
@@ -216,35 +225,38 @@ class Outbox(View):
         )
 
 
-class EmptyOutbox(View):
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class EmptyOutbox(StaticContentView):
     """
     A fixed-empty outbox for the system actor
     """
 
-    def get(self, request, *args, **kwargs):
-        return JsonResponse(
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
             canonicalise(
                 {
                     "type": "OrderedCollection",
                     "totalItems": 0,
                     "orderedItems": [],
                 }
-            ),
-            content_type="application/activity+json",
+            )
         )
 
 
-@method_decorator(cache_page(), name="dispatch")
-class SystemActorView(View):
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class SystemActorView(StaticContentView):
     """
     Special endpoint for the overall system actor
     """
 
-    def get(self, request):
-        return JsonResponse(
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
             canonicalise(
                 SystemActor().to_ap(),
                 include_security=True,
-            ),
-            content_type="application/activity+json",
+            )
         )

@@ -1,9 +1,13 @@
+import json
+from typing import ClassVar
+
 import markdown_it
-from django.http import JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.templatetags.static import static
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.views.decorators.cache import cache_control
 from django.views.generic import TemplateView, View
 from django.views.static import serve
 
@@ -36,14 +40,50 @@ class About(TemplateView):
         }
 
 
-class AppManifest(View):
+class StaticContentView(View):
+    """
+    A view that returns a bit of static content.
+    """
+
+    # Content type of the static payload
+    content_type: str
+
+    # The static content that will be returned by the view
+    static_content: ClassVar[str | bytes]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if getattr(StaticContentView, "static_content", None) is None:
+            StaticContentView.static_content = self.get_static_content()
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(
+            StaticContentView.static_content,
+            content_type=self.content_type,
+        )
+
+    def get_static_content(self) -> str | bytes:
+        """
+        Override to generate the view's static content.
+        """
+        raise NotImplementedError()
+
+
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class AppManifest(StaticContentView):
     """
     Serves a PWA manifest file. This is a view as we want to drive some
     items from settings.
+
+    NOTE: If this view changes to need runtime Config, it should change from
+          StaticContentView to View, otherwise the settings will only get
+          picked up during boot time.
     """
 
-    def get(self, request):
-        return JsonResponse(
+    content_type = "application/json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
             {
                 "$schema": "https://json.schemastore.org/web-manifest-combined.json",
                 "name": "Takahē",

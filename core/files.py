@@ -8,13 +8,17 @@ from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
 
 
+class ImageFile(File):
+    image: Image
+
+
 def resize_image(
     image: File,
     *,
     size: tuple[int, int],
     cover=True,
     keep_format=False,
-) -> File:
+) -> ImageFile:
     """
     Resizes an image to fit insize the given size (cropping one dimension
     to fit if needed)
@@ -28,10 +32,10 @@ def resize_image(
         new_image_bytes = io.BytesIO()
         if keep_format:
             resized_image.save(new_image_bytes, format=img.format)
-            file = File(new_image_bytes)
+            file = ImageFile(new_image_bytes)
         else:
             resized_image.save(new_image_bytes, format="webp")
-            file = File(new_image_bytes, name="image.webp")
+            file = ImageFile(new_image_bytes, name="image.webp")
         file.image = resized_image
         return file
 
@@ -52,7 +56,11 @@ async def get_remote_file(
     """
     Download a URL and return the File and content-type.
     """
-    async with httpx.AsyncClient() as client:
+    headers = {
+        "User-Agent": settings.TAKAHE_USER_AGENT,
+    }
+
+    async with httpx.AsyncClient(headers=headers) as client:
         async with client.stream("GET", url, timeout=timeout) as stream:
             allow_download = max_size is None
             if max_size:

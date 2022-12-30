@@ -7,7 +7,6 @@ import urlman
 from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.db import IntegrityError, models
-from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 from django.utils.functional import lazy
 from lxml import etree
@@ -24,7 +23,12 @@ from core.ld import (
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
 from core.uploads import upload_namer
-from core.uris import AutoAbsoluteUrl, RelativeAbsoluteUrl, StaticAbsoluteUrl
+from core.uris import (
+    AutoAbsoluteUrl,
+    ProxyAbsoluteUrl,
+    RelativeAbsoluteUrl,
+    StaticAbsoluteUrl,
+)
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
 from users.models.system_actor import SystemActor
@@ -228,6 +232,7 @@ class Identity(StatorModel):
         activate = "{view}activate/"
         admin = "/admin/identities/"
         admin_edit = "{admin}{self.pk}/"
+        djadmin_edit = "/djadmin/users/identity/{self.id}/change/"
 
         def get_scheme(self, url):
             return "https"
@@ -269,7 +274,10 @@ class Identity(StatorModel):
         if self.icon:
             return RelativeAbsoluteUrl(self.icon.url)
         elif self.icon_uri:
-            return AutoAbsoluteUrl(f"/proxy/identity_icon/{self.pk}/")
+            return ProxyAbsoluteUrl(
+                f"/proxy/identity_icon/{self.pk}/",
+                remote_url=self.icon_uri,
+            )
         else:
             return StaticAbsoluteUrl("img/unknown-icon-128.png")
 
@@ -280,7 +288,10 @@ class Identity(StatorModel):
         if self.image:
             return AutoAbsoluteUrl(self.image.url)
         elif self.image_uri:
-            return AutoAbsoluteUrl(f"/proxy/identity_image/{self.pk}/")
+            return ProxyAbsoluteUrl(
+                f"/proxy/identity_image/{self.pk}/",
+                remote_url=self.image_uri,
+            )
         return None
 
     @property
@@ -304,10 +315,34 @@ class Identity(StatorModel):
     ### Alternate constructors/fetchers ###
 
     @classmethod
-    def by_username_and_domain(cls, username, domain, fetch=False, local=False):
+    def by_username_and_domain(
+        cls,
+        username: str,
+        domain: str | Domain,
+        fetch: bool = False,
+        local: bool = False,
+    ):
+        """
+        Get an Identity by username and domain.
+
+        When fetch is True, a failed lookup will do a webfinger lookup to attempt to do
+        a lookup by actor_uri, creating an Identity record if one does not exist. When
+        local is True, lookups will be restricted to local domains.
+
+        If domain is a Domain, domain.local is used instead of passsed local.
+
+        """
         if username.startswith("@"):
             raise ValueError("Username must not start with @")
-        domain = domain.lower()
+
+        domain_instance = None
+
+        if isinstance(domain, Domain):
+            domain_instance = domain
+            local = domain.local
+            domain = domain.domain
+        else:
+            domain = domain.lower()
         try:
             if local:
                 return cls.objects.get(
@@ -334,11 +369,12 @@ class Identity(StatorModel):
                     pass
                 # OK, make one
                 username, domain = handle.split("@")
-                domain = Domain.get_remote_domain(domain)
+                if not domain_instance:
+                    domain_instance = Domain.get_remote_domain(domain)
                 return cls.objects.create(
                     actor_uri=actor_uri,
                     username=username,
-                    domain_id=domain,
+                    domain_id=domain_instance,
                     local=False,
                 )
             return None
@@ -467,7 +503,7 @@ class Identity(StatorModel):
         if self.name:
             response["name"] = self.name
         if self.summary:
-            response["summary"] = str(linebreaks_filter(self.summary))
+            response["summary"] = self.summary
         if self.icon:
             response["icon"] = {
                 "type": "Image",
@@ -484,6 +520,15 @@ class Identity(StatorModel):
             response["endpoints"] = {
                 "sharedInbox": f"https://{self.domain.uri_domain}/inbox/",
             }
+        if self.metadata:
+            response["attachment"] = [
+                {
+                    "type": "http://schema.org#PropertyValue",
+                    "name": strip_html(item["name"], linkify=False),
+                    "value": strip_html(item["value"]),
+                }
+                for item in self.metadata
+            ]
         return response
 
     def to_ap_tag(self):
@@ -562,15 +607,17 @@ class Identity(StatorModel):
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1].lower()
-        webfinger_url = "https://{domain}/.well-known/webfinger?resource={uri}"
+        webfinger_url = f"https://{domain}/.well-known/webfinger?resource={{uri}}"
 
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.SETUP.REMOTE_TIMEOUT
-            ) as client:
+        async with httpx.AsyncClient(
+            timeout=settings.SETUP.REMOTE_TIMEOUT,
+            headers={"User-Agent": settings.TAKAHE_USER_AGENT},
+        ) as client:
+            try:
                 response = await client.get(
                     f"https://{domain}/.well-known/host-meta",
                     follow_redirects=True,
+                    headers={"Accept": "application/xml"},
                 )
 
                 # In the case of anything other than a success, we'll still try
@@ -583,29 +630,29 @@ class Identity(StatorModel):
                     )
                     if template:
                         webfinger_url = template
-        except (httpx.RequestError, etree.ParseError):
-            pass
+            except (httpx.RequestError, etree.ParseError):
+                pass
 
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.SETUP.REMOTE_TIMEOUT
-            ) as client:
+            try:
                 response = await client.get(
-                    webfinger_url.format(domain=domain, uri=f"acct:{handle}"),
+                    webfinger_url.format(uri=f"acct:{handle}"),
                     follow_redirects=True,
+                    headers={"Accept": "application/json"},
                 )
-        except httpx.RequestError:
-            return None, None
+                response.raise_for_status()
+            except httpx.HTTPError as ex:
+                response = getattr(ex, "response", None)
+                if (
+                    response
+                    and response.status_code < 500
+                    and response.status_code not in [404, 410]
+                ):
+                    raise ValueError(
+                        f"Client error fetching webfinger: {response.status_code}",
+                        response.content,
+                    )
+                return None, None
 
-        if response.status_code in [404, 410]:
-            return None, None
-        if response.status_code >= 500:
-            return None, None
-        if response.status_code >= 400:
-            raise ValueError(
-                f"Client error fetching webfinger: {response.status_code}",
-                response.content,
-            )
         try:
             data = response.json()
         except ValueError:
@@ -736,12 +783,27 @@ class Identity(StatorModel):
                 await sync_to_async(self.save)()
         return True
 
+    ### OpenGraph API ###
+
+    def to_opengraph_dict(self) -> dict:
+        return {
+            "og:title": f"{self.name} (@{self.handle})",
+            "og:type": "profile",
+            "og:description": self.summary,
+            "og:profile:username": self.handle,
+            "og:image:url": self.local_icon_url().absolute,
+            "og:image:height": 85,
+            "og:image:width": 85,
+        }
+
     ### Mastodon Client API ###
 
     def to_mastodon_json(self):
         from activities.models import Emoji
 
         header_image = self.local_image_url()
+        missing = StaticAbsoluteUrl("img/missing.png").absolute
+
         metadata_value_text = (
             " ".join([m["value"] for m in self.metadata]) if self.metadata else ""
         )
@@ -751,14 +813,14 @@ class Identity(StatorModel):
         return {
             "id": self.pk,
             "username": self.username or "",
-            "acct": self.username if self.local else self.handle,
+            "acct": self.handle,
             "url": self.absolute_profile_uri() or "",
             "display_name": self.name or "",
             "note": self.summary or "",
             "avatar": self.local_icon_url().absolute,
             "avatar_static": self.local_icon_url().absolute,
-            "header": header_image.absolute if header_image else None,
-            "header_static": header_image.absolute if header_image else None,
+            "header": header_image.absolute if header_image else missing,
+            "header_static": header_image.absolute if header_image else missing,
             "locked": False,
             "fields": (
                 [

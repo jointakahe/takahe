@@ -2,6 +2,10 @@
 
 {% block body_class %}no-sidebar{% endblock %}
 
+{% block opengraph %}
+    {# Error pages don't have the context loaded, so disable opengraph to keep it from spewing errors #}
+{% endblock %}
+
 {% block body_main %}
     <header>
         <menu>

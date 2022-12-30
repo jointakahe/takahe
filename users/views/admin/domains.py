@@ -54,7 +54,7 @@ class DomainCreate(FormView):
             validators=[DomainValidator()],
         )
         service_domain = forms.CharField(
-            help_text="Optional - a domain that serves Takahē if it is not running on the main domain.\nCannot be changed after the domain has been created.",
+            help_text="Optional - a domain that serves Takahē if it is not running on the main domain.\nCannot be changed after the domain has been created.\nMust be unique for each display domain!",
             required=False,
             validators=[DomainValidator()],
         )

@@ -136,11 +136,31 @@ footer {
     font-size: 90%;
 }
 
+body:not(.no-sidebar) footer {
+    position: fixed;
+    bottom: 0;
+    right: calc((100vw - 920px)/2);
+    width: 250px;
+    margin: 0;
+    padding: 5px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+body:not(.no-sidebar) footer a {
+    flex-basis: 50%;
+    flex-grow: 1;
+}
+
+body:not(.no-sidebar) footer a:hover {
+    color: var(--color-text-dull);
+}
+
 .no-sidebar footer {
     max-width: 800px;
 }
 
-footer a {
+.no-sidebar footer a {
     border-bottom: 1px solid var(--color-text-duller);
     margin-right: 5px;
 }
@@ -263,6 +283,11 @@ header menu a.identity i {
     display: inline-block;
     vertical-align: middle;
     padding: 0 7px 2px 0;
+}
+
+header menu a.identity a.view-profile {
+    display: inline-block;
+    margin-right: 20px;
 }
 
 header menu a img {
@@ -434,11 +459,12 @@ p.authorization-code {
     font-size: 140%;
 }
 
+
 /* Icon menus */
 
 .icon-menu .option {
     display: block;
-    margin: 0px 0 20px 0;
+    margin: 0 0 20px 0;
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     color: inherit;
@@ -455,6 +481,10 @@ p.authorization-code {
 
 .icon-menu .option.empty {
     color: var(--color-text-dull);
+}
+
+.icon-menu .option-actions {
+    text-align: right;
 }
 
 .icon-menu .option.empty:hover,
@@ -482,8 +512,20 @@ p.authorization-code {
     font-size: 200%;
 }
 
-.icon-menu .option .handle {
-    margin-right: 20px;
+.icon-menu .option.hashtags {
+    display: flex;
+    align-items: center;
+}
+
+.icon-menu .option.hashtags .tag {
+    min-width: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.icon-menu .option.hashtags .count {
+    text-align: right;
 }
 
 .icon-menu .option .pill {
@@ -500,19 +542,18 @@ p.authorization-code {
 }
 
 .icon-menu .option time {
-    float: right;
     color: var(--color-text-duller);
     margin: 14px 0 0 0;
-}
-
-.icon-menu .option .right {
-    display: inline-block;
-    float: right;
 }
 
 .icon-menu .option button {
     margin-top: 8px;
     margin-right: 20px;
+}
+
+.icon-menu .option button.right {
+    float: right;
+    margin-right: 0;
 }
 
 .handle {
@@ -556,24 +597,83 @@ form.inline {
     padding: 0;
 }
 
-form.follow-profile {
+div.follow-profile {
     float: right;
     margin: 20px 0 0 0;
     font-size: 16px;
     text-align: center;
 }
 
-form.follow-profile.has-reverse {
+div.follow-profile.has-reverse {
     margin-top: 0;
 }
 
-form.follow-profile .reverse-follow {
+div.follow-profile .reverse-follow {
     display: block;
     margin: 0 0 5px 0;
 }
 
-form.follow-profile button {
+div.follow-profile button,
+div.follow-profile .button {
     margin: 0;
+}
+
+div.follow-profile .actions {
+    /* display: flex; */
+    position: relative;
+    justify-content: space-between;
+    /* padding: 8px 0 0 0; */
+    align-items: center;
+    align-content: center;
+}
+
+div.follow-profile .actions a {
+    border-radius: 4px;
+    min-width: 40px;
+    text-align: center;
+    cursor: pointer;
+}
+
+div.follow-profile .actions menu {
+    display: none;
+    background-color: var(--color-bg-menu);
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    position: absolute;
+    right: 0;
+    top: 43px;
+}
+
+div.follow-profile .actions menu.enabled {
+    display: block;
+    min-width: 160px;
+    z-index: 10;
+}
+
+div.follow-profile .actions menu a {
+    text-align: left;
+    display: block;
+    font-size: 15px;
+    padding: 4px 10px;
+    color: var(--color-text-dull);
+}
+
+div.follow-profile .actions menu a i {
+    margin-right: 4px;
+    width: 16px;
+}
+
+div.follow-profile .actions a:hover {
+    color: var(--color-text-main);
+}
+
+div.follow-profile .actions a.active {
+    color: var(--color-highlight);
+}
+
+form.inline-menu {
+    margin: 0px;
+    display:inline;
 }
 
 form.follow {
@@ -851,10 +951,69 @@ button:hover,
     border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
+button.htmx-request,
+.button.htmx-request {
+    background: var(--color-button-disabled);
+}
+
+button.htmx-request::before,
+.button.htmx-request::before {
+    display: inline-block;
+    content: "\f2f1";
+    font: var(--fa-font-solid);
+    margin-right: 8px;
+    -webkit-animation-delay: var(--fa-animation-delay, 0s);
+    animation-delay: var(--fa-animation-delay, 0s);
+    -webkit-animation-direction: var(--fa-animation-direction, normal);
+    animation-direction: var(--fa-animation-direction, normal);
+    -webkit-animation-name: fa-spin;
+    animation-name: fa-spin;
+    -webkit-animation-duration: var(--fa-animation-duration, 2s);
+    animation-duration: var(--fa-animation-duration, 2s);
+    -webkit-animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+    animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+    -webkit-animation-timing-function: var(--fa-animation-timing, linear);
+    animation-timing-function: var(--fa-animation-timing, linear);
+}
+
 .right-column button,
 .right-column .button {
     padding: 2px 6px;
 }
+
+form .field.multi-option {
+    margin-bottom: 10px;
+}
+
+form .field.multi-option {
+    margin-bottom: 10px;
+}
+
+form .option.option-row {
+    margin: 0px 0px 5px 0px;
+}
+
+.option-row .right {
+    float: right;
+}
+
+form .option-row .option-field {
+    vertical-align: middle;
+    display: inline-block;
+    line-height: normal;
+    width: 40%;
+    min-width: 30px;
+    padding-left: 0px;
+    padding-right: 7px;
+
+}
+
+form .option-row .right button {
+    vertical-align: middle;
+    margin-top: 0px;
+    margin-right: 5px;
+}
+
 
 /* Logged out homepage */
 
@@ -916,6 +1075,33 @@ h1.identity small {
 
 .bio p {
     margin: 0 0 10px 0;
+}
+
+.identity-metadata .metadata-pair {
+    display: block;
+    margin: 0px 0 10px 0;
+    background: var(--color-bg-box);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+    color: inherit;
+    text-decoration: none;
+    padding: 10px 20px;
+    border: 2px solid rgba(255, 255, 255, 0);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.identity-metadata .metadata-pair .metadata-name {
+    display: inline-block;
+    min-width: 80px;
+    margin-right: 15px;
+    text-align: right;
+    color: var(--color-text-dull);
+}
+
+.identity-metadata .metadata-pair .metadata-name::after {
+    padding-left: 3px;
+
+    color: var(--color-text-dull);
 }
 
 .system-note {
@@ -1015,6 +1201,37 @@ table.metadata td .emoji {
     min-width: 16px;
 }
 
+/* Identity banner */
+
+.identity-banner {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.identity-banner .handle {
+    display: block;
+    padding: 0 10px;
+    vertical-align: middle;
+    min-width: 0;
+}
+
+.identity-banner .handle .link,
+.identity-banner .handle .small {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+}
+
+.identity-banner .avatar-link {
+    line-height: 0;
+    /* Fixes a bit of extra padding on the bottom of the link. */
+}
+
+
+
 /* Posts */
 
 .post {
@@ -1043,31 +1260,24 @@ form .post {
 .post .icon {
     height: 48px;
     width: auto;
-    float: left;
 }
 
 .post.mini .icon {
     height: 28px;
     width: auto;
-    float: left;
 }
 
 .post .emoji {
     height: 18px;
 }
 
-.post .handle {
-    display: block;
-    padding: 7px 0 0 64px;
-}
-
-.post.mini .handle {
-    padding: 7px 0 0 36px;
+.post .post-banner {
+    display: flex;
+    align-items: center;
 }
 
 .post time {
     display: block;
-    float: right;
     color: var(--color-text-duller);
     width: 65px;
     text-align: center;
@@ -1082,7 +1292,7 @@ form .post {
 }
 
 .post .summary {
-    margin: 12px 0 4px 64px;
+    margin: 12px 0 4px 58px;
     padding: 3px 6px;
     border-radius: 3px;
     background: var(--color-bg-menu);
@@ -1105,11 +1315,11 @@ form .post {
 .post .edited {
     font-weight: lighter;
     color: var(--color-text-duller);
-    margin-left: 64px;
+    margin-left: 58px;
 }
 
 .post .content {
-    margin-left: 64px;
+    margin-left: 58px;
 }
 
 .post.mini .content,
@@ -1368,13 +1578,7 @@ form .post {
     }
 
     body:not(.no-sidebar) footer {
-        position: fixed;
-        bottom: 0;
         right: 0;
-        width: 250px;
-        margin: 0;
-        padding: 5px;
-        text-align: right;
     }
 
     body:not(.no-sidebar) footer a {
@@ -1522,29 +1726,36 @@ form .post {
 .debug {
     width: 100%;
 }
+
 .debug h2 {
     text-align: center;
     padding-bottom: 5px;
 }
+
 .debug-section {
     text-align: center;
 }
+
 .debug-section .field.payload,
 #canonical_response,
 #raw_response {
     margin-bottom: 10px;
 }
-#canonical_response, #raw_response {
+
+#canonical_response,
+#raw_response {
     background-color: var(--color-bg-box);
     overflow: scroll;
     text-align: left;
 }
+
 .debug-section .field .name {
     display: inline-block;
     min-width: 49%;
     text-align: right;
     padding-right: 10px;
 }
+
 .debug-section .field .value {
     display: inline-block;
     min-width: 49%;
@@ -1556,5 +1767,9 @@ form .post {
 }
 
 .debug-section .hidden {
+    display: none;
+}
+
+.field .hidden {
     display: none;
 }

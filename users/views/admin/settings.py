@@ -51,10 +51,6 @@ class BasicSettings(AdminSettingsPage):
             "help_text": "Displayed on the homepage and the about page.\nUse Markdown for formatting.",
             "display": "textarea",
         },
-        "site_frontpage_posts": {
-            "title": "Show Posts On Front Page",
-            "help_text": "Whether to show some recent posts on the logged-out homepage.",
-        },
         "site_icon": {
             "title": "Site Icon",
             "help_text": "Minimum size 64x64px. Should be square.",
@@ -93,13 +89,20 @@ class BasicSettings(AdminSettingsPage):
             "title": "Unreviewed Emoji Are Public",
             "help_text": "Public Emoji may appear as images, instead of shortcodes",
         },
+        "public_timeline": {
+            "title": "Public Timeline",
+            "help_text": "If enabled, allows anonymous access to the public timeline",
+        },
+        "site_frontpage_posts": {
+            "title": "Show Public Timeline On Front Page",
+            "help_text": "Whether to show some recent posts on the logged-out homepage",
+        },
     }
 
     layout = {
         "Branding": [
             "site_name",
             "site_about",
-            "site_frontpage_posts",
             "site_icon",
             "site_banner",
             "highlight_color",
@@ -114,6 +117,10 @@ class BasicSettings(AdminSettingsPage):
             "content_warning_text",
             "hashtag_unreviewed_are_public",
             "emoji_unreviewed_are_public",
+        ],
+        "Timelines": [
+            "public_timeline",
+            "site_frontpage_posts",
         ],
         "Identities": [
             "identity_max_per_user",

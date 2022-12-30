@@ -372,9 +372,43 @@ schemas = {
             },
         },
     },
+    "funkwhale.audio/ns": {
+        "contentType": "application/ld+json",
+        "documentUrl": "http://funkwhale.audio/ns",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "id": "@id",
+                "type": "@type",
+                "as": "https://www.w3.org/ns/activitystreams#",
+                "schema": "http://schema.org#",
+                "fw": "https://funkwhale.audio/ns#",
+                "xsd": "http://www.w3.org/2001/XMLSchema#",
+                "Album": "fw:Album",
+                "Track": "fw:Track",
+                "Artist": "fw:Artist",
+                "Library": "fw:Library",
+                "bitrate": {"@id": "fw:bitrate", "@type": "xsd:nonNegativeInteger"},
+                "size": {"@id": "fw:size", "@type": "xsd:nonNegativeInteger"},
+                "position": {"@id": "fw:position", "@type": "xsd:nonNegativeInteger"},
+                "disc": {"@id": "fw:disc", "@type": "xsd:nonNegativeInteger"},
+                "library": {"@id": "fw:library", "@type": "@id"},
+                "track": {"@id": "fw:track", "@type": "@id"},
+                "cover": {"@id": "fw:cover", "@type": "as:Link"},
+                "album": {"@id": "fw:album", "@type": "@id"},
+                "artists": {"@id": "fw:artists", "@type": "@id", "@container": "@list"},
+                "released": {"@id": "fw:released", "@type": "xsd:date"},
+                "musicbrainzId": "fw:musicbrainzId",
+                "license": {"@id": "fw:license", "@type": "@id"},
+                "copyright": "fw:copyright",
+                "category": "sc:category",
+                "language": "sc:inLanguage",
+            }
+        },
+    },
 }
 
-DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.Z"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 DATETIME_MS_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
@@ -451,8 +485,22 @@ def get_list(container, key) -> list:
     return value
 
 
+def get_str_or_id(value: str | dict | None) -> str | None:
+    """
+    Given a value that could be a str or {"id": str}, return the str
+    """
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, dict):
+        return value.get("id")
+    return None
+
+
 def format_ld_date(value: datetime.datetime) -> str:
-    return value.strftime(DATETIME_FORMAT)
+    # We chop the timestamp to be identical to the timestamps returned by
+    # Mastodon's API, because some clients like Toot! (for iOS) are especially
+    # picky about timestamp parsing.
+    return f"{value.strftime(DATETIME_MS_FORMAT)[:-4]}Z"
 
 
 def parse_ld_date(value: str | None) -> datetime.datetime | None:
@@ -473,6 +521,20 @@ def get_first_image_url(data) -> str | None:
     elif isinstance(data, dict):
         return data.get("url")
     return None
+
+
+def get_value_or_map(data, key, map_key):
+    """
+    Retrieves a value that can either be a top level key (like "name") or
+    an entry in a map (like nameMap).
+    """
+    if key in data:
+        return data[key]
+    if map_key in data:
+        if "und" in map_key:
+            return data[map_key]["und"]
+        return list(data[map_key].values())[0]
+    raise KeyError(f"Cannot find {key} or {map_key}")
 
 
 def media_type_from_filename(filename):

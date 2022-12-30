@@ -45,14 +45,14 @@ def sanitize_html(post_html: str) -> str:
     return mark_safe(cleaner.clean(post_html))
 
 
-def strip_html(post_html: str) -> str:
+def strip_html(post_html: str, *, linkify: bool = True) -> str:
     """
     Strips all tags from the text, then linkifies it.
     """
     cleaner = bleach.Cleaner(
         tags=[],
         strip=True,
-        filters=[partial(LinkifyFilter, url_re=url_regex)],
+        filters=[partial(LinkifyFilter, url_re=url_regex)] if linkify else [],
     )
     return mark_safe(cleaner.clean(post_html))
 
@@ -94,6 +94,7 @@ class ContentRenderer:
                 identity=post.author,
                 emojis=post.emojis.all(),
             )
+        html = self.remove_extra_newlines(html)
         return mark_safe(html)
 
     def render_identity_summary(self, html: str, identity, strip: bool = False) -> str:
@@ -109,6 +110,7 @@ class ContentRenderer:
         html = self.linkify_hashtags(html, identity=identity)
         if self.local:
             html = self.imageify_emojis(html, identity=identity)
+        html = self.remove_extra_newlines(html)
         return mark_safe(html)
 
     def render_identity_data(self, html: str, identity, strip: bool = False) -> str:
@@ -123,6 +125,7 @@ class ContentRenderer:
             html = sanitize_html(html)
         if self.local:
             html = self.imageify_emojis(html, identity=identity)
+        html = self.remove_extra_newlines(html)
         return mark_safe(html)
 
     def linkify_mentions(self, html: str, post) -> str:
@@ -139,24 +142,29 @@ class ContentRenderer:
                 url = str(mention.urls.view)
             else:
                 url = mention.absolute_profile_uri()
-            possible_matches[mention.username] = url
-            possible_matches[f"{mention.username}@{mention.domain_id}"] = url
+            # Might not have fetched it (yet)
+            if mention.username:
+                username = mention.username.lower()
+                possible_matches[username] = url
+                possible_matches[f"{username}@{mention.domain_id}"] = url
 
         collapse_name: dict[str, str] = {}
 
         def replacer(match):
             precursor = match.group(1)
-            handle = match.group(2).lower()
+            handle = match.group(2)
             if "@" in handle:
                 short_handle = handle.split("@", 1)[0]
             else:
                 short_handle = handle
-            if handle in possible_matches:
-                if short_handle not in collapse_name:
-                    collapse_name[short_handle] = handle
-                elif collapse_name.get(short_handle) != handle:
+            handle_hash = handle.lower()
+            short_hash = short_handle.lower()
+            if handle_hash in possible_matches:
+                if short_hash not in collapse_name:
+                    collapse_name[short_hash] = handle_hash
+                elif collapse_name.get(short_hash) != handle_hash:
                     short_handle = handle
-                return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
+                return f'{precursor}<a href="{possible_matches[handle_hash]}">@{short_handle}</a>'
             else:
                 return match.group()
 
@@ -219,3 +227,10 @@ class ContentRenderer:
             return match.group()
 
         return Emoji.emoji_regex.sub(replacer, html)
+
+    def remove_extra_newlines(self, html: str) -> str:
+        """
+        Some clients are sensitive to extra newlines even though it's HTML
+        """
+        # TODO: More intelligent way to strip these?
+        return html.replace("\n", "")

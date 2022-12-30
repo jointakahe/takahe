@@ -38,7 +38,7 @@ class IdentityService:
         """
         existing_follow = Follow.maybe_get(from_identity, self.identity)
         if not existing_follow:
-            Follow.create_local(from_identity, self.identity)
+            return Follow.create_local(from_identity, self.identity)
         elif existing_follow.state not in FollowStates.group_active():
             existing_follow.transition_perform(FollowStates.unrequested)
         return cast(Follow, existing_follow)

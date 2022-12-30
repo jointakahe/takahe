@@ -12,6 +12,7 @@
     <link rel="shortcut icon" href="{{ config.site_icon }}">
     <script src="{% static "js/hyperscript.min.js" %}"></script>
     <script src="{% static "js/htmx.min.js" %}"></script>
+    <script src="{% static "js/takahe.min.js" %}"></script>
     <style>
         body {
             --color-highlight: {{ config.highlight_color }};
@@ -25,6 +26,9 @@
     {% if config_identity.custom_css %}
       <style>{{ config_identity.custom_css }}</style>
     {% endif %}
+    {% block opengraph %}
+        {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
+    {% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
@@ -46,12 +50,12 @@
                         <i class="fa-solid fa-search"></i>
                     </a>
                     {% if allows_refresh %}
-                        <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s">
+                        <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s[isAtTopOfPage()]">
                             <i class="fa-solid fa-rotate"></i>
                         </a>
                     {% endif %}
                     <div class="gap"></div>
-                    <a href="/identity/select/" role="menuitem" class="identity">
+                    <a href="{{ request.identity.urls.view }}" role="menuitem" class="identity">
                         {% if not request.identity %}
                             No Identity
                             <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">

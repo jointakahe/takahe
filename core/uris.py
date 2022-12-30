@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from urllib.parse import urljoin
 
@@ -27,13 +28,42 @@ class AutoAbsoluteUrl(RelativeAbsoluteUrl):
     or a passed identity's URI domain.
     """
 
-    def __init__(self, relative: str, identity=None):
+    def __init__(
+        self,
+        relative: str,
+        identity=None,
+    ):
         self.relative = relative
         if identity:
             absolute_prefix = f"https://{identity.domain.uri_domain}/"
         else:
             absolute_prefix = f"https://{settings.MAIN_DOMAIN}/"
         self.absolute = urljoin(absolute_prefix, self.relative)
+
+
+class ProxyAbsoluteUrl(AutoAbsoluteUrl):
+    """
+    AutoAbsoluteUrl variant for proxy paths, that also attaches a remote URI hash
+    plus extension to the end if it can.
+    """
+
+    def __init__(
+        self,
+        relative: str,
+        identity=None,
+        remote_url: str | None = None,
+    ):
+        if remote_url:
+            # See if there is a file extension we can grab
+            extension = "bin"
+            remote_filename = remote_url.split("/")[-1]
+            if "." in remote_filename:
+                extension = remote_filename.split(".")[-1]
+            # When provided, attach a hash of the remote URL
+            # SHA1 chosen as it generally has the best performance in modern python, and security is not a concern
+            # Hash truncation is generally fine, as in the typical use case the hash is scoped to the identity PK.
+            relative += f"{hashlib.sha1(remote_url.encode('ascii')).hexdigest()[:10]}.{extension}"
+        super().__init__(relative, identity)
 
 
 class StaticAbsoluteUrl(RelativeAbsoluteUrl):

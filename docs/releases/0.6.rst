@@ -1,7 +1,9 @@
 0.6
 ===
 
-*Released: 2022/12/24*
+*Originally released: 2022/12/24*
+
+*Latest release: 0.6.1 on 2022/12/30*
 
 This release focuses primarily on server completeness and stability, with
 an extra helping of moderation tools as well.
@@ -126,3 +128,27 @@ About Page Format
 The about page and homepage have been merged and have a new format (and
 Markdown is now supported). You should check your layout and formatting still
 looks good.
+
+
+Patch Releases
+--------------
+
+0.6.1 (2022/12/30)
+~~~~~~~~~~~~~~~~~~
+
+This is a bugfix release. Main fixes and some small new features include:
+
+* Significant bugfixes to the client API
+* Reply threads now auto-fetch parent posts and don't error when not available
+* OpenGraph tags for post and identity pages
+* Ability to set profile metadata fields
+* Infinite scroll for timelines (with option to turn it off)
+* CWs persist through to replies
+* Media proxy and caching fixes
+* Federation compatibility fixes
+
+There are no migrations or backwards incompatible changes.
+
+We'd also like to specifically thank the author of
+`Toot! <https://apps.apple.com/ca/app/toot/id1229021451>`_ for their help in
+debugging our client API and helping us work out what to fix!

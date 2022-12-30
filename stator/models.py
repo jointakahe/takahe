@@ -46,6 +46,8 @@ class StatorModel(models.Model):
     concrete model yourself.
     """
 
+    state: StateField
+
     # If this row is up for transition attempts (which it always is on creation!)
     state_ready = models.BooleanField(default=True)
 
@@ -75,11 +77,11 @@ class StatorModel(models.Model):
         return cls._meta.get_field("state").graph
 
     @property
-    def state_age(self) -> int:
+    def state_age(self) -> float:
         return (timezone.now() - self.state_changed).total_seconds()
 
     @classmethod
-    async def atransition_schedule_due(cls, now=None) -> models.QuerySet:
+    async def atransition_schedule_due(cls, now=None):
         """
         Finds instances of this model that need to run and schedule them.
         """
@@ -206,13 +208,29 @@ class StatorModel(models.Model):
         """
         Transitions the instance to the given state name, forcibly.
         """
+        self.transition_perform_queryset(
+            self.__class__.objects.filter(pk=self.pk),
+            state,
+        )
+
+    atransition_perform = sync_to_async(transition_perform)
+
+    @classmethod
+    def transition_perform_queryset(
+        cls,
+        queryset: models.QuerySet,
+        state: State | str,
+    ):
+        """
+        Transitions every instance in the queryset to the given state name, forcibly.
+        """
         if isinstance(state, State):
             state = state.name
-        if state not in self.state_graph.states:
+        if state not in cls.state_graph.states:
             raise ValueError(f"Invalid state {state}")
         # See if it's ready immediately (if not, delay until first try_interval)
-        if self.state_graph.states[state].attempt_immediately:
-            self.__class__.objects.filter(pk=self.pk).update(
+        if cls.state_graph.states[state].attempt_immediately:
+            queryset.update(
                 state=state,
                 state_changed=timezone.now(),
                 state_attempted=None,
@@ -220,15 +238,13 @@ class StatorModel(models.Model):
                 state_ready=True,
             )
         else:
-            self.__class__.objects.filter(pk=self.pk).update(
+            queryset.update(
                 state=state,
                 state_changed=timezone.now(),
                 state_attempted=timezone.now(),
                 state_locked_until=None,
                 state_ready=False,
             )
-
-    atransition_perform = sync_to_async(transition_perform)
 
 
 class Stats(models.Model):

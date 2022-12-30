@@ -8,7 +8,9 @@ def test_webfinger_actor(client, identity):
     """
     identity.generate_keypair()
     # Fetch their webfinger
-    data = client.get("/.well-known/webfinger?resource=acct:test@example.com").json()
+    response = client.get("/.well-known/webfinger?resource=acct:test@example.com")
+    assert response.headers["content-type"] == "application/jrd+json"
+    data = response.json()
     assert data["subject"] == "acct:test@example.com"
     assert data["aliases"][0] == "https://example.com/@test/"
     # Fetch their actor

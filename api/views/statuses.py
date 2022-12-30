@@ -1,6 +1,7 @@
 from typing import Literal
 
 from django.forms import ValidationError
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from ninja import Schema
 
@@ -8,15 +9,17 @@ from activities.models import (
     Post,
     PostAttachment,
     PostInteraction,
-    PostStates,
+    PostInteractionStates,
     TimelineEvent,
 )
 from activities.services import PostService
 from api import schemas
 from api.views.base import api_router
 from core.models import Config
+from users.models import Identity
 
 from ..decorators import identity_required
+from ..pagination import MastodonPaginator
 
 
 class PostStatusSchema(Schema):
@@ -79,8 +82,7 @@ def status(request, id: str):
 @identity_required
 def delete_status(request, id: str):
     post = get_object_or_404(Post, pk=id)
-    post.transition_perform(PostStates.deleted)
-    TimelineEvent.objects.filter(subject_post=post, identity=request.identity).delete()
+    PostService(post).delete()
     return post.to_mastodon_json()
 
 
@@ -121,6 +123,46 @@ def unfavourite_status(request, id: str):
     service.unlike_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return post.to_mastodon_json(interactions=interactions)
+
+
+@api_router.get("/v1/statuses/{id}/favourited_by", response=list[schemas.Account])
+def favourited_by(
+    request: HttpRequest,
+    response: HttpResponse,
+    id: str,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 20,
+):
+    """
+    View who favourited a given status.
+    """
+    # This method should filter out private statuses, but we don't really have
+    # a concept of "private status" yet.
+    post = get_object_or_404(Post, pk=id)
+
+    paginator = MastodonPaginator(Identity, sort_attribute="published")
+    pager = paginator.paginate(
+        post.interactions.filter(
+            type=PostInteraction.Types.like,
+            state__in=PostInteractionStates.group_active(),
+        )
+        .select_related("identity")
+        .order_by("published"),
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+
+    if pager.results:
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit"],
+        )
+
+    return [result.identity.to_mastodon_json() for result in pager.results]
 
 
 @api_router.post("/v1/statuses/{id}/reblog", response=schemas.Status)

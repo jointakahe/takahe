@@ -74,6 +74,7 @@ class ViewIdentity(ListView):
             context["page_obj"],
             self.request.identity,
         )
+        context["post_count"] = self.identity.posts.count()
         if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
                 state__in=FollowStates.group_active()
@@ -164,6 +165,7 @@ class IdentityFollows(ListView):
         context["following_count"] = self.identity.outbound_follows.filter(
             state__in=FollowStates.group_active()
         ).count()
+        context["post_count"] = self.identity.posts.count()
         return context
 
 

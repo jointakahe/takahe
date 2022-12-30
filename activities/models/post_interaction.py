@@ -4,7 +4,7 @@ from django.utils import timezone
 from activities.models.fan_out import FanOut
 from activities.models.post import Post
 from activities.models.timeline_event import TimelineEvent
-from core.ld import format_ld_date, parse_ld_date
+from core.ld import format_ld_date, get_str_or_id, parse_ld_date
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import Follow
 from users.models.identity import Identity
@@ -257,7 +257,7 @@ class PostInteraction(StatorModel):
                 # Resolve the author
                 identity = Identity.by_actor_uri(data["actor"], create=True)
                 # Resolve the post
-                post = Post.by_object_uri(data["object"], fetch=True)
+                post = Post.by_object_uri(get_str_or_id(data["object"]), fetch=True)
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
@@ -322,3 +322,42 @@ class PostInteraction(StatorModel):
             interaction.timeline_events.all().delete()
             # Force it into undone_fanned_out as it's not ours
             interaction.transition_perform(PostInteractionStates.undone_fanned_out)
+
+    ### Mastodon API ###
+
+    def to_mastodon_status_json(self, interactions=None):
+        """
+        This wraps Posts in a fake Status for boost interactions.
+        """
+        if self.type != self.Types.boost:
+            raise ValueError(
+                f"Cannot make status JSON for interaction of type {self.type}"
+            )
+        # Grab our subject post JSON, and just return it if we're a post
+        post_json = self.post.to_mastodon_json(interactions=interactions)
+        return {
+            "id": f"interaction-{self.pk}",
+            "uri": post_json["uri"],
+            "created_at": format_ld_date(self.published),
+            "account": self.identity.to_mastodon_json(),
+            "content": "",
+            "visibility": post_json["visibility"],
+            "sensitive": post_json["sensitive"],
+            "spoiler_text": post_json["spoiler_text"],
+            "media_attachments": [],
+            "mentions": [],
+            "tags": [],
+            "emojis": [],
+            "reblogs_count": 0,
+            "favourites_count": 0,
+            "replies_count": 0,
+            "url": post_json["url"],
+            "in_reply_to_id": None,
+            "in_reply_to_account_id": None,
+            "poll": None,
+            "card": None,
+            "language": None,
+            "text": "",
+            "edited_at": None,
+            "reblog": post_json,
+        }

@@ -221,6 +221,7 @@ class Config(models.Model):
         identity_max_per_user: int = 5
         identity_max_age: int = 24 * 60 * 60
         inbox_message_purge_after: int = 24 * 60 * 60
+        public_timeline: bool = True
 
         hashtag_unreviewed_are_public: bool = True
         hashtag_stats_max_age: int = 60 * 60
@@ -246,5 +247,7 @@ class Config(models.Model):
 
         # wellness Options
         visible_reaction_counts: bool = True
+        expand_linked_cws: bool = True
+        infinite_scroll: bool = True
 
         custom_css: str | None

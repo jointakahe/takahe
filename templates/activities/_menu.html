@@ -36,6 +36,9 @@
         <a href="{% url "settings" %}" {% if top_section == "settings" %}class="selected"{% endif %} title="Settings">
             <i class="fa-solid fa-gear"></i> Settings
         </a>
+        <a href="{% url "identity_select" %}" title="Select Identity">
+            <i class="fa-solid fa-users-viewfinder"></i> Select Identity
+        </a>
     {% else %}
         <a href="{% url "local" %}" {% if current_page == "local" %}class="selected"{% endif %} title="Local Posts">
             <i class="fa-solid fa-city"></i> Local Posts

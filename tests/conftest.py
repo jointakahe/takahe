@@ -106,13 +106,15 @@ def domain2() -> Domain:
 
 @pytest.fixture
 @pytest.mark.django_db
-def identity(user, domain) -> Identity:
+def identity(user, domain, keypair) -> Identity:
     """
     Creates a basic test identity with a user and domain.
     """
     identity = Identity.objects.create(
         actor_uri="https://example.com/@test@example.com/",
         inbox_uri="https://example.com/@test@example.com/inbox/",
+        private_key=keypair["private_key"],
+        public_key=keypair["public_key"],
         username="test",
         domain=domain,
         name="Test User",
@@ -171,6 +173,7 @@ def remote_identity() -> Identity:
         domain=domain,
         name="Test Remote User",
         local=False,
+        state="updated",
     )
 
 

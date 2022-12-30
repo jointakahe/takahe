@@ -3,7 +3,7 @@ from typing import Optional
 import httpx
 from django.db import models, transaction
 
-from core.ld import canonicalise
+from core.ld import canonicalise, get_str_or_id
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity
 
@@ -144,6 +144,8 @@ class Follow(StatorModel):
         Creates a Follow from a local Identity to the target
         (which can be local or remote).
         """
+        from activities.models import TimelineEvent
+
         if not source.local:
             raise ValueError("You cannot initiate follows from a remote Identity")
         try:
@@ -154,6 +156,7 @@ class Follow(StatorModel):
             # TODO: Local follow approvals
             if target.local:
                 follow.state = FollowStates.accepted
+                TimelineEvent.add_follow(follow.target, follow.source)
             follow.save()
         return follow
 
@@ -220,7 +223,7 @@ class Follow(StatorModel):
         """
         # Resolve source and target and see if a Follow exists
         source = Identity.by_actor_uri(data["actor"], create=create)
-        target = Identity.by_actor_uri(data["object"])
+        target = Identity.by_actor_uri(get_str_or_id(data["object"]))
         follow = cls.maybe_get(source=source, target=target)
         # If it doesn't exist, create one in the remote_requested state
         if follow is None:
@@ -267,6 +270,28 @@ class Follow(StatorModel):
             raise ValueError("No Follow locally for incoming Accept", data)
         # If the follow was waiting to be accepted, transition it
         if follow and follow.state in [
+            FollowStates.unrequested,
+            FollowStates.local_requested,
+        ]:
+            follow.transition_perform(FollowStates.accepted)
+
+    @classmethod
+    def handle_accept_ref_ap(cls, data):
+        """
+        Handles an incoming Follow Accept for one of our follows where there is
+        only an object URI reference.
+        """
+        # Ensure the object ref is in a format we expect
+        bits = data["object"].strip("/").split("/")
+        if bits[-2] != "follow":
+            raise ValueError(f"Unknown Follow object URI in Accept: {data['object']}")
+        # Retrieve the object by PK
+        follow = cls.objects.get(pk=bits[-1])
+        # Ensure it's from the right actor
+        if data["actor"] != follow.target.actor_uri:
+            raise ValueError("Accept actor does not match its Follow object", data)
+        # If the follow was waiting to be accepted, transition it
+        if follow.state in [
             FollowStates.unrequested,
             FollowStates.local_requested,
         ]:

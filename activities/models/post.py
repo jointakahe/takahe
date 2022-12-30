@@ -1,6 +1,7 @@
 import re
 from collections.abc import Iterable
 from typing import Optional
+from urllib.parse import urlparse
 
 import httpx
 import urlman
@@ -9,22 +10,28 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
-from django.utils import timezone
-from django.utils.safestring import mark_safe
+from django.utils import text, timezone
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
-from activities.models.hashtag import Hashtag
+from activities.models.hashtag import Hashtag, HashtagStates
 from activities.models.post_types import (
     PostTypeData,
     PostTypeDataDecoder,
     PostTypeDataEncoder,
 )
 from core.html import ContentRenderer, strip_html
-from core.ld import canonicalise, format_ld_date, get_list, parse_ld_date
+from core.ld import (
+    canonicalise,
+    format_ld_date,
+    get_list,
+    get_value_or_map,
+    parse_ld_date,
+)
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity, IdentityStates
+from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
 
 
@@ -110,7 +117,7 @@ class PostQuerySet(models.QuerySet):
                 Post.Visibilities.public,
                 Post.Visibilities.local_only,
             ],
-            author__local=True,
+            local=True,
         )
         if not include_replies:
             return query.filter(in_reply_to__isnull=True)
@@ -345,42 +352,6 @@ class Post(StatorModel):
         r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_\.]+[\w\d\-_]+)?)"
     )
 
-    def linkify_mentions(self, content: str, local: bool = False) -> str:
-        """
-        Links mentions _in the context of the post_ - as in, using the mentions
-        property as the only source (as we might be doing this without other
-        DB access allowed)
-        """
-
-        possible_matches = {}
-        for mention in self.mentions.all():
-            if local:
-                url = str(mention.urls.view)
-            else:
-                url = mention.absolute_profile_uri()
-            possible_matches[mention.username] = url
-            possible_matches[f"{mention.username}@{mention.domain_id}"] = url
-
-        collapse_name: dict[str, str] = {}
-
-        def replacer(match):
-            precursor = match.group(1)
-            handle = match.group(2).lower()
-            if "@" in handle:
-                short_handle = handle.split("@", 1)[0]
-            else:
-                short_handle = handle
-            if handle in possible_matches:
-                if short_handle not in collapse_name:
-                    collapse_name[short_handle] = handle
-                elif collapse_name.get(short_handle) != handle:
-                    short_handle = handle
-                return f'{precursor}<a href="{possible_matches[handle]}">@{short_handle}</a>'
-            else:
-                return match.group()
-
-        return mark_safe(self.mention_regex.sub(replacer, content))
-
     def _safe_content_note(self, *, local: bool = True):
         return ContentRenderer(local=local).render_post(self.content, self)
 
@@ -424,6 +395,14 @@ class Post(StatorModel):
         Returns the content formatted for remote consumption
         """
         return self.safe_content(local=False)
+
+    def summary_class(self) -> str:
+        """
+        Returns a CSS class name to identify this summary value
+        """
+        if not self.summary:
+            return ""
+        return "summary-" + text.slugify(self.summary, allow_unicode=True)
 
     ### Async helpers ###
 
@@ -532,9 +511,10 @@ class Post(StatorModel):
         # Ensure hashtags
         if self.hashtags:
             for hashtag in self.hashtags:
-                await Hashtag.objects.aget_or_create(
+                tag, _ = await Hashtag.objects.aget_or_create(
                     hashtag=hashtag,
                 )
+                await tag.atransition_perform(HashtagStates.outdated)
 
     ### ActivityPub (outbound) ###
 
@@ -688,6 +668,9 @@ class Post(StatorModel):
         Raises DoesNotExist if it's not found and create is False,
         or it's from a blocked domain.
         """
+        # Ensure the domain of the object's actor and ID match to prevent injection
+        if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
+            raise ValueError("Object's ID domain is different to its author")
         # Do we have one with the right ID?
         created = False
         try:
@@ -724,19 +707,10 @@ class Post(StatorModel):
             if post.type in (cls.Types.article, cls.Types.question):
                 type_data = PostTypeData(__root__=data).__root__
                 post.type_data = type_data.dict()
-            # Get content in order of: content value, contentmap.und, any contentmap entry
-            if "content" in data:
-                post.content = data["content"]
-            elif "contentMap" in data:
-                if "und" in data["contentMap"]:
-                    post.content = data["contentMap"]["und"]
-                else:
-                    post.content = list(data["contentMap"].values())[0]
-            else:
-                raise ValueError("Post has no content or content map")
+            post.content = get_value_or_map(data, "content", "contentMap")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
-            post.url = data.get("url")
+            post.url = data.get("url", data["id"])
             post.published = parse_ld_date(data.get("published"))
             post.edited = parse_ld_date(data.get("updated"))
             post.in_reply_to = data.get("inReplyTo")
@@ -747,7 +721,9 @@ class Post(StatorModel):
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
                 elif tag["type"].lower() in ["_:hashtag", "hashtag"]:
-                    post.hashtags.append(tag["name"].lower().lstrip("#"))
+                    post.hashtags.append(
+                        get_value_or_map(tag, "name", "nameMap").lower().lstrip("#")
+                    )
                 elif tag["type"].lower() in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
@@ -782,10 +758,13 @@ class Post(StatorModel):
                     focal_y=focal_y,
                 )
             post.save()
+            # Potentially schedule a fetch of the reply parent
+            if post.in_reply_to:
+                cls.ensure_object_uri(post.in_reply_to)
         return post
 
     @classmethod
-    def by_object_uri(cls, object_uri, fetch=False):
+    def by_object_uri(cls, object_uri, fetch=False) -> "Post":
         """
         Gets the post by URI - either looking up locally, or fetching
         from the other end if it's not here.
@@ -823,6 +802,27 @@ class Post(StatorModel):
                 raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
 
     @classmethod
+    def ensure_object_uri(cls, object_uri: str):
+        """
+        Sees if the post is in our local set, and if not, schedules a fetch
+        for it (in the background)
+        """
+        if not object_uri:
+            raise ValueError("No URI provided!")
+        try:
+            cls.by_object_uri(object_uri)
+        except cls.DoesNotExist:
+            InboxMessage.objects.create(
+                message={
+                    "type": "__internal__",
+                    "object": {
+                        "type": "FetchPost",
+                        "object": object_uri,
+                    },
+                }
+            )
+
+    @classmethod
     def handle_create_ap(cls, data):
         """
         Handles an incoming create request
@@ -856,9 +856,14 @@ class Post(StatorModel):
         Handles an incoming delete request
         """
         with transaction.atomic():
+            # Is this an embedded object or plain ID?
+            if isinstance(data["object"], str):
+                object_uri = data["object"]
+            else:
+                object_uri = data["object"]["id"]
             # Find our post by ID if we have one
             try:
-                post = cls.by_object_uri(data["object"]["id"])
+                post = cls.by_object_uri(object_uri)
             except cls.DoesNotExist:
                 # It's already been deleted
                 return
@@ -866,6 +871,32 @@ class Post(StatorModel):
             if not post.author.actor_uri == data["actor"]:
                 raise ValueError("Actor on delete does not match object")
             post.delete()
+
+    @classmethod
+    def handle_fetch_internal(cls, data):
+        """
+        Handles an internal fetch-request inbox message
+        """
+        try:
+            cls.by_object_uri(data["object"]["object"], fetch=True)
+        except cls.DoesNotExist:
+            pass
+
+    ### OpenGraph API ###
+
+    def to_opengraph_dict(self) -> dict:
+        return {
+            "og:title": f"{self.author.name} (@{self.author.handle})",
+            "og:type": "article",
+            "og:published_time": (self.published or self.created).isoformat(),
+            "og:modified_time": (
+                self.edited or self.published or self.created
+            ).isoformat(),
+            "og:description": (self.summary or self.safe_content_local()),
+            "og:image:url": self.author.local_icon_url().absolute,
+            "og:image:height": 85,
+            "og:image:width": 85,
+        }
 
     ### Mastodon API ###
 
@@ -903,7 +934,13 @@ class Post(StatorModel):
                 if mention.username
             ],
             "tags": (
-                [{"name": tag, "url": "/tag/{tag}/"} for tag in self.hashtags]
+                [
+                    {
+                        "name": tag,
+                        "url": f"https://{self.author.domain.uri_domain}/tags/{tag}/",
+                    }
+                    for tag in self.hashtags
+                ]
                 if self.hashtags
                 else []
             ),
