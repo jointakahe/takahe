@@ -186,7 +186,7 @@ urlpatterns = [
     path("auth/reset/<token>/", auth.PerformReset.as_view(), name="password_reset"),
     # Identity selection
     path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
-    path("identity/select/", identity.SelectIdentity.as_view()),
+    path("identity/select/", identity.SelectIdentity.as_view(), name="identity_select"),
     path("identity/create/", identity.CreateIdentity.as_view()),
     # Flat pages
     path("about/", core.About.as_view(), name="about"),

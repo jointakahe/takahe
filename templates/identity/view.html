@@ -22,29 +22,7 @@
 
         <img src="{{ identity.local_icon_url.relative }}" class="icon">
 
-        {% if request.identity %}
-            {% if identity == request.identity %}
-                <form class="inline follow-profile">
-                    <a class="button" href="{% url "settings_profile" %}">Edit Profile</a>
-                </form>
-            {% else %}
-                <form action="{{ identity.urls.action }}" method="POST" class="inline follow-profile {% if reverse_follow %}has-reverse{% endif %}">
-                    {% csrf_token %}
-                    {% if reverse_follow %}
-                        <span class="reverse-follow">Follows You</span>
-                    {% endif %}
-                    {% if follow %}
-                        <input type="hidden" name="action" value="unfollow">
-                        <button class="destructive">
-                            {% if follow.pending %}Follow Pending{% else %}Unfollow{% endif %}
-                        </button>
-                    {% else %}
-                        <input type="hidden" name="action" value="follow">
-                        <button>Follow</button>
-                    {% endif %}
-                </form>
-            {% endif %}
-        {% endif %}
+        {% if request.identity %}{% include "identity/_view_menu.html" %}{% endif %}
 
         {{ identity.html_name_or_handle }}
         <small>

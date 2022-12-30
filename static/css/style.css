@@ -285,6 +285,11 @@ header menu a.identity i {
     padding: 0 7px 2px 0;
 }
 
+header menu a.identity a.view-profile {
+    display: inline-block;
+    margin-right: 20px;
+}
+
 header menu a img {
     display: inline-block;
     vertical-align: middle;
@@ -592,24 +597,83 @@ form.inline {
     padding: 0;
 }
 
-form.follow-profile {
+div.follow-profile {
     float: right;
     margin: 20px 0 0 0;
     font-size: 16px;
     text-align: center;
 }
 
-form.follow-profile.has-reverse {
+div.follow-profile.has-reverse {
     margin-top: 0;
 }
 
-form.follow-profile .reverse-follow {
+div.follow-profile .reverse-follow {
     display: block;
     margin: 0 0 5px 0;
 }
 
-form.follow-profile button {
+div.follow-profile button,
+div.follow-profile .button {
     margin: 0;
+}
+
+div.follow-profile .actions {
+    /* display: flex; */
+    position: relative;
+    justify-content: space-between;
+    /* padding: 8px 0 0 0; */
+    align-items: center;
+    align-content: center;
+}
+
+div.follow-profile .actions a {
+    border-radius: 4px;
+    min-width: 40px;
+    text-align: center;
+    cursor: pointer;
+}
+
+div.follow-profile .actions menu {
+    display: none;
+    background-color: var(--color-bg-menu);
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    position: absolute;
+    right: 0;
+    top: 43px;
+}
+
+div.follow-profile .actions menu.enabled {
+    display: block;
+    min-width: 160px;
+    z-index: 10;
+}
+
+div.follow-profile .actions menu a {
+    text-align: left;
+    display: block;
+    font-size: 15px;
+    padding: 4px 10px;
+    color: var(--color-text-dull);
+}
+
+div.follow-profile .actions menu a i {
+    margin-right: 4px;
+    width: 16px;
+}
+
+div.follow-profile .actions a:hover {
+    color: var(--color-text-main);
+}
+
+div.follow-profile .actions a.active {
+    color: var(--color-highlight);
+}
+
+form.inline-menu {
+    margin: 0px;
+    display:inline;
 }
 
 form.follow {
@@ -1165,6 +1229,8 @@ table.metadata td .emoji {
     line-height: 0;
     /* Fixes a bit of extra padding on the bottom of the link. */
 }
+
+
 
 /* Posts */
 
