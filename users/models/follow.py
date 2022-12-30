@@ -112,6 +112,10 @@ class Follow(StatorModel):
         related_name="inbound_follows",
     )
 
+    boosts = models.BooleanField(
+        default=True, help_text="Also follow boosts from this user"
+    )
+
     uri = models.CharField(blank=True, null=True, max_length=500)
     note = models.TextField(blank=True, null=True)
 
@@ -139,7 +143,7 @@ class Follow(StatorModel):
             return None
 
     @classmethod
-    def create_local(cls, source, target):
+    def create_local(cls, source, target, boosts=True):
         """
         Creates a Follow from a local Identity to the target
         (which can be local or remote).
@@ -150,8 +154,13 @@ class Follow(StatorModel):
             raise ValueError("You cannot initiate follows from a remote Identity")
         try:
             follow = Follow.objects.get(source=source, target=target)
+            if follow.boosts != boosts:
+                follow.boosts = boosts
+                follow.save()
         except Follow.DoesNotExist:
-            follow = Follow.objects.create(source=source, target=target, uri="")
+            follow = Follow.objects.create(
+                source=source, target=target, boosts=boosts, uri=""
+            )
             follow.uri = source.actor_uri + f"follow/{follow.pk}/"
             # TODO: Local follow approvals
             if target.local:

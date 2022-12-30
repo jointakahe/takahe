@@ -595,6 +595,8 @@ fieldset legend {
 .right-column form,
 form.inline {
     padding: 0;
+    margin: 0;
+    display:inline;
 }
 
 div.follow-profile {
@@ -604,11 +606,11 @@ div.follow-profile {
     text-align: center;
 }
 
-div.follow-profile.has-reverse {
+.follow-profile.has-reverse {
     margin-top: 0;
 }
 
-div.follow-profile .reverse-follow {
+.follow-profile .reverse-follow {
     display: block;
     margin: 0 0 5px 0;
 }
@@ -644,6 +646,7 @@ div.follow-profile .actions menu {
     top: 43px;
 }
 
+
 div.follow-profile .actions menu.enabled {
     display: block;
     min-width: 160px;
@@ -658,7 +661,27 @@ div.follow-profile .actions menu a {
     color: var(--color-text-dull);
 }
 
-div.follow-profile .actions menu a i {
+.follow-profile .actions menu button {
+    background: none !important;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    display: block;
+    font-size: 15px;
+    padding: 4px 10px;
+    color: var(--color-text-dull);
+}
+
+.follow-profile .actions menu button i {
+    margin-right: 4px;
+    width: 16px;
+}
+
+.follow-profile .actions button:hover {
+    color: var(--color-text-main);
+}
+
+.follow-profile .actions menu a i {
     margin-right: 4px;
     width: 16px;
 }

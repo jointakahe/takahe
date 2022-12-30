@@ -175,12 +175,12 @@ def account_statuses(
 
 @api_router.post("/v1/accounts/{id}/follow", response=schemas.Relationship)
 @identity_required
-def account_follow(request, id: str):
+def account_follow(request, id: str, reblogs: bool = True):
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
     service = IdentityService(identity)
-    service.follow_from(request.identity)
+    service.follow_from(request.identity, boosts=reblogs)
     return service.mastodon_json_relationship(request.identity)
 
 

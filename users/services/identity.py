@@ -31,16 +31,20 @@ class IdentityService:
             .select_related("domain")
         )
 
-    def follow_from(self, from_identity: Identity) -> Follow:
+    def follow_from(self, from_identity: Identity, boosts=True) -> Follow:
         """
         Follows a user (or does nothing if already followed).
         Returns the follow.
         """
         existing_follow = Follow.maybe_get(from_identity, self.identity)
         if not existing_follow:
-            return Follow.create_local(from_identity, self.identity)
+            return Follow.create_local(from_identity, self.identity, boosts=boosts)
         elif existing_follow.state not in FollowStates.group_active():
             existing_follow.transition_perform(FollowStates.unrequested)
+
+        if existing_follow.boosts != boosts:
+            existing_follow.boosts = boosts
+            existing_follow.save()
         return cast(Follow, existing_follow)
 
     def unfollow_from(self, from_identity: Identity):
@@ -56,17 +60,20 @@ class IdentityService:
         Returns a Relationship object for the from_identity's relationship
         with this identity.
         """
+
+        follow = self.identity.inbound_follows.filter(
+            source=from_identity,
+            state__in=FollowStates.group_active(),
+        ).first()
+
         return {
             "id": self.identity.pk,
-            "following": self.identity.inbound_follows.filter(
-                source=from_identity,
-                state__in=FollowStates.group_active(),
-            ).exists(),
+            "following": follow is not None,
             "followed_by": self.identity.outbound_follows.filter(
                 target=from_identity,
                 state__in=FollowStates.group_active(),
             ).exists(),
-            "showing_reblogs": True,
+            "showing_reblogs": follow.boosts,
             "notifying": False,
             "blocking": False,
             "blocked_by": False,
@@ -75,7 +82,7 @@ class IdentityService:
             "requested": False,
             "domain_blocking": False,
             "endorsed": False,
-            "note": "",
+            "note": follow.note or "",
         }
 
     def set_summary(self, summary: str):
