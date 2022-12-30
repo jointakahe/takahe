@@ -203,7 +203,7 @@ def account_following(
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
-    limit: int = 20,
+    limit: int = 40,
 ):
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
@@ -214,7 +214,7 @@ def account_following(
 
     service = IdentityService(identity)
 
-    paginator = MastodonPaginator(Identity)
+    paginator = MastodonPaginator(Identity, max_limit=80)
     pager = paginator.paginate(
         service.following(),
         min_id=min_id,
