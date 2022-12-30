@@ -4,7 +4,6 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.syndication.views import Feed
 from django.core import validators
-from django.db import models
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
