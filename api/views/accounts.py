@@ -214,7 +214,7 @@ def account_following(
 
     service = IdentityService(identity)
 
-    paginator = MastodonPaginator(Identity, max_limit=80)
+    paginator = MastodonPaginator(Identity, max_limit=80, sort_attribute="username")
     pager = paginator.paginate(
         service.following(),
         min_id=min_id,
