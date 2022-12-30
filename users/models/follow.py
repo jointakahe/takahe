@@ -144,6 +144,8 @@ class Follow(StatorModel):
         Creates a Follow from a local Identity to the target
         (which can be local or remote).
         """
+        from activities.models import TimelineEvent
+
         if not source.local:
             raise ValueError("You cannot initiate follows from a remote Identity")
         try:
@@ -154,6 +156,7 @@ class Follow(StatorModel):
             # TODO: Local follow approvals
             if target.local:
                 follow.state = FollowStates.accepted
+                TimelineEvent.add_follow(follow.target, follow.source)
             follow.save()
         return follow
 
