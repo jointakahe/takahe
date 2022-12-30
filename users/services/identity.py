@@ -31,19 +31,19 @@ class IdentityService:
             .select_related("domain")
         )
 
-    def follow_from(self, from_identity: Identity, reblogs=True) -> Follow:
+    def follow_from(self, from_identity: Identity, boosts=True) -> Follow:
         """
         Follows a user (or does nothing if already followed).
         Returns the follow.
         """
         existing_follow = Follow.maybe_get(from_identity, self.identity)
         if not existing_follow:
-            return Follow.create_local(from_identity, self.identity, reblogs=True)
+            return Follow.create_local(from_identity, self.identity, boosts=boosts)
         elif existing_follow.state not in FollowStates.group_active():
             existing_follow.transition_perform(FollowStates.unrequested)
 
-        if existing_follow.reblogs != reblogs:
-            existing_follow.reblogs = reblogs
+        if existing_follow.boosts != boosts:
+            existing_follow.boosts = boosts
             existing_follow.save()
         return cast(Follow, existing_follow)
 
@@ -73,7 +73,7 @@ class IdentityService:
                 target=from_identity,
                 state__in=FollowStates.group_active(),
             ).exists(),
-            "showing_reblogs": follow.reblogs,
+            "showing_reblogs": follow.boosts,
             "notifying": False,
             "blocking": False,
             "blocked_by": False,

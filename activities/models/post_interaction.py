@@ -33,7 +33,7 @@ class PostInteractionStates(StateGraph):
         # Boost: send a copy to all people who follow this user
         if interaction.type == interaction.Types.boost:
             async for follow in interaction.identity.inbound_follows.filter(
-                reblogs=True
+                boosts=True
             ).select_related("source", "target"):
                 if follow.source.local or follow.target.local:
                     await FanOut.objects.acreate(
@@ -294,7 +294,7 @@ class PostInteraction(StatorModel):
             # Boosts (announces) go to everyone who follows locally
             if interaction.type == cls.Types.boost:
                 for follow in Follow.objects.filter(
-                    target=interaction.identity, source__local=True, reblogs=True
+                    target=interaction.identity, source__local=True, boosts=True
                 ):
                     TimelineEvent.add_post_interaction(follow.source, interaction)
             # Likes go to just the author of the post

@@ -112,8 +112,7 @@ class Follow(StatorModel):
         related_name="inbound_follows",
     )
 
-    # whether following include boosts called reblogs in AP and client API
-    reblogs = models.BooleanField(
+    boosts = models.BooleanField(
         default=True, help_text="Also follow boosts from this user"
     )
 
@@ -144,7 +143,7 @@ class Follow(StatorModel):
             return None
 
     @classmethod
-    def create_local(cls, source, target, reblogs=True):
+    def create_local(cls, source, target, boosts=True):
         """
         Creates a Follow from a local Identity to the target
         (which can be local or remote).
@@ -155,12 +154,12 @@ class Follow(StatorModel):
             raise ValueError("You cannot initiate follows from a remote Identity")
         try:
             follow = Follow.objects.get(source=source, target=target)
-            if follow.reblogs != reblogs:
-                follow.reblogs = reblogs
+            if follow.boosts != boosts:
+                follow.boosts = boosts
                 follow.save()
         except Follow.DoesNotExist:
             follow = Follow.objects.create(
-                source=source, target=target, reblogs=reblogs, uri=""
+                source=source, target=target, boosts=boosts, uri=""
             )
             follow.uri = source.actor_uri + f"follow/{follow.pk}/"
             # TODO: Local follow approvals

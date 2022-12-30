@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="follow",
-            name="reblogs",
+            name="boosts",
             field=models.BooleanField(default=True),
         ),
     ]

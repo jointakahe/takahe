@@ -180,7 +180,7 @@ def account_follow(request, id: str, reblogs: bool = True):
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
     service = IdentityService(identity)
-    service.follow_from(request.identity, reblogs=reblogs)
+    service.follow_from(request.identity, boosts=reblogs)
     return service.mastodon_json_relationship(request.identity)
 
 
