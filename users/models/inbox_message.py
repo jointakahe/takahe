@@ -109,9 +109,8 @@ class InboxMessageStates(StateGraph):
                     ).aexists():
                         await sync_to_async(Post.handle_delete_ap)(instance.message)
                     else:
-                        raise ValueError(
-                            f"Cannot handle activity of type delete on URI {instance.message['object']}"
-                        )
+                        # It is presumably already deleted
+                        pass
                 else:
                     match instance.message_object_type:
                         case "tombstone":
