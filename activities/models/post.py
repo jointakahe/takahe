@@ -1,3 +1,4 @@
+import hashlib
 import re
 from collections.abc import Iterable
 from typing import Optional
@@ -10,7 +11,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
-from django.utils import text, timezone
+from django.utils import timezone
 
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
@@ -405,7 +406,7 @@ class Post(StatorModel):
         """
         if not self.summary:
             return ""
-        return "summary-" + text.slugify(self.summary, allow_unicode=True)
+        return "summary-" + hashlib.md5(self.summary.encode("utf8")).hexdigest()
 
     @property
     def stats_with_defaults(self):
