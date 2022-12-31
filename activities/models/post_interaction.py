@@ -302,6 +302,8 @@ class PostInteraction(StatorModel):
                 TimelineEvent.add_post_interaction(interaction.post.author, interaction)
             # Force it into fanned_out as it's not ours
             interaction.transition_perform(PostInteractionStates.fanned_out)
+            # Recalculate post stats
+            interaction.post.calculate_stats()
 
     @classmethod
     def handle_undo_ap(cls, data):
@@ -322,6 +324,8 @@ class PostInteraction(StatorModel):
             interaction.timeline_events.all().delete()
             # Force it into undone_fanned_out as it's not ours
             interaction.transition_perform(PostInteractionStates.undone_fanned_out)
+            # Recalculate post stats
+            interaction.post.calculate_stats()
 
     ### Mastodon API ###
 

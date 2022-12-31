@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="follow",
             name="boosts",
-            field=models.BooleanField(default=True),
+            field=models.BooleanField(
+                default=True,
+                help_text="Also follow boosts from this user",
+            ),
         ),
     ]

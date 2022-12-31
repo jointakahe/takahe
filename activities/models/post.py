@@ -279,6 +279,9 @@ class Post(StatorModel):
         blank=True,
     )
 
+    # Like/Boost/etc counts
+    stats = models.JSONField(blank=True, null=True)
+
     # When the post was originally created (as opposed to when we received it)
     published = models.DateTimeField(default=timezone.now)
 
@@ -404,6 +407,17 @@ class Post(StatorModel):
             return ""
         return "summary-" + text.slugify(self.summary, allow_unicode=True)
 
+    @property
+    def stats_with_defaults(self):
+        """
+        Returns the stats dict with counts of likes/etc. in it
+        """
+        return {
+            "likes": self.stats.get("likes", 0) if self.stats else 0,
+            "boosts": self.stats.get("boosts", 0) if self.stats else 0,
+            "replies": self.stats.get("replies", 0) if self.stats else 0,
+        }
+
     ### Async helpers ###
 
     async def afetch_full(self) -> "Post":
@@ -461,6 +475,9 @@ class Post(StatorModel):
             if attachments:
                 post.attachments.set(attachments)
             post.save()
+            # Recalculate parent stats for replies
+            if reply_to:
+                reply_to.calculate_stats()
         return post
 
     def edit_local(
@@ -515,6 +532,26 @@ class Post(StatorModel):
                     hashtag=hashtag,
                 )
                 await tag.atransition_perform(HashtagStates.outdated)
+
+    def calculate_stats(self, save=True):
+        """
+        Recalculates our stats dict
+        """
+        from activities.models import PostInteraction, PostInteractionStates
+
+        self.stats = {
+            "likes": self.interactions.filter(
+                type=PostInteraction.Types.like,
+                state__in=PostInteractionStates.group_active(),
+            ).count(),
+            "boosts": self.interactions.filter(
+                type=PostInteraction.Types.boost,
+                state__in=PostInteractionStates.group_active(),
+            ).count(),
+            "replies": Post.objects.filter(in_reply_to=self.object_uri).count(),
+        }
+        if save:
+            self.save()
 
     ### ActivityPub (outbound) ###
 
@@ -674,7 +711,7 @@ class Post(StatorModel):
         # Do we have one with the right ID?
         created = False
         try:
-            post = cls.objects.select_related("author__domain").get(
+            post: Post = cls.objects.select_related("author__domain").get(
                 object_uri=data["id"]
             )
         except cls.DoesNotExist:
@@ -757,10 +794,18 @@ class Post(StatorModel):
                     focal_x=focal_x,
                     focal_y=focal_y,
                 )
+            # Calculate stats in case we have existing replies
+            post.calculate_stats(save=False)
             post.save()
-            # Potentially schedule a fetch of the reply parent
+            # Potentially schedule a fetch of the reply parent, and recalculate
+            # its stats if it's here already.
             if post.in_reply_to:
-                cls.ensure_object_uri(post.in_reply_to)
+                try:
+                    parent = cls.by_object_uri(post.in_reply_to)
+                except cls.DoesNotExist:
+                    cls.ensure_object_uri(post.in_reply_to)
+                else:
+                    parent.calculate_stats()
         return post
 
     @classmethod
@@ -945,9 +990,9 @@ class Post(StatorModel):
                 else []
             ),
             "emojis": [emoji.to_mastodon_json() for emoji in self.emojis.usable()],
-            "reblogs_count": self.interactions.filter(type="boost").count(),
-            "favourites_count": self.interactions.filter(type="like").count(),
-            "replies_count": 0,
+            "reblogs_count": self.stats_with_defaults["boosts"],
+            "favourites_count": self.stats_with_defaults["likes"],
+            "replies_count": self.stats_with_defaults["replies"],
             "url": self.absolute_object_uri(),
             "in_reply_to_id": reply_parent.pk if reply_parent else None,
             "in_reply_to_account_id": reply_parent.author.pk if reply_parent else None,
