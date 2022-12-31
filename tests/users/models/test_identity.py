@@ -1,5 +1,6 @@
 import pytest
 from asgiref.sync import async_to_sync
+from pytest_httpx import HTTPXMock
 
 from core.models import Config
 from users.models import Domain, Identity, User
@@ -176,3 +177,57 @@ def test_fetch_actor(httpx_mock, config_system):
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"
     assert "ts-a-faaaake" in identity.public_key
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
+    """
+    Ensures that we can deal with various kinds of webfinger URLs
+    """
+
+    # With no host-meta, it should be the default
+    assert (
+        await Identity.fetch_webfinger_url("example.com")
+        == "https://example.com/.well-known/webfinger?resource={uri}"
+    )
+
+    # Inject a host-meta directing it to a subdomain
+    httpx_mock.add_response(
+        url="https://example.com/.well-known/host-meta",
+        text="""<?xml version="1.0" encoding="UTF-8"?>
+        <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+        <Link rel="lrdd" template="https://fedi.example.com/.well-known/webfinger?resource={uri}"/>
+        </XRD>""",
+    )
+    assert (
+        await Identity.fetch_webfinger_url("example.com")
+        == "https://fedi.example.com/.well-known/webfinger?resource={uri}"
+    )
+
+    # Inject a host-meta directing it to a different URL format
+    httpx_mock.add_response(
+        url="https://example.com/.well-known/host-meta",
+        text="""<?xml version="1.0" encoding="UTF-8"?>
+        <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+        <Link rel="lrdd" template="https://example.com/amazing-webfinger?query={uri}"/>
+        </XRD>""",
+    )
+    assert (
+        await Identity.fetch_webfinger_url("example.com")
+        == "https://example.com/amazing-webfinger?query={uri}"
+    )
+
+    # Inject a host-meta directing it to a different url THAT SUPPORTS XML ONLY
+    # (we want to ignore that one)
+    httpx_mock.add_response(
+        url="https://example.com/.well-known/host-meta",
+        text="""<?xml version="1.0" encoding="UTF-8"?>
+        <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+        <Link rel="lrdd" template="https://xmlfedi.example.com/webfinger?q={uri}" type="application/xrd+xml"/>
+        </XRD>""",
+    )
+    assert (
+        await Identity.fetch_webfinger_url("example.com")
+        == "https://example.com/.well-known/webfinger?resource={uri}"
+    )

@@ -601,14 +601,11 @@ class Identity(StatorModel):
     ### Actor/Webfinger fetching ###
 
     @classmethod
-    async def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
+    async def fetch_webfinger_url(cls, domain: str):
         """
-        Given a username@domain handle, returns a tuple of
-        (actor uri, canonical handle) or None, None if it does not resolve.
+        Given a domain (hostname), returns the correct webfinger URL to use
+        based on probing host-meta.
         """
-        domain = handle.split("@")[1].lower()
-        webfinger_url = f"https://{domain}/.well-known/webfinger?resource={{uri}}"
-
         async with httpx.AsyncClient(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
@@ -626,13 +623,29 @@ class Identity(StatorModel):
                 if response.status_code == 200 and response.content.strip():
                     tree = etree.fromstring(response.content)
                     template = tree.xpath(
-                        "string(.//*[local-name() = 'Link' and @rel='lrdd']/@template)"
+                        "string(.//*[local-name() = 'Link' and @rel='lrdd' and (not(@type) or @type='application/jrd+json')]/@template)"
                     )
                     if template:
-                        webfinger_url = template
+                        return template
             except (httpx.RequestError, etree.ParseError):
                 pass
 
+        return f"https://{domain}/.well-known/webfinger?resource={{uri}}"
+
+    @classmethod
+    async def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
+        """
+        Given a username@domain handle, returns a tuple of
+        (actor uri, canonical handle) or None, None if it does not resolve.
+        """
+        domain = handle.split("@")[1].lower()
+        webfinger_url = await cls.fetch_webfinger_url(domain)
+
+        # Go make a Webfinger request
+        async with httpx.AsyncClient(
+            timeout=settings.SETUP.REMOTE_TIMEOUT,
+            headers={"User-Agent": settings.TAKAHE_USER_AGENT},
+        ) as client:
             try:
                 response = await client.get(
                     webfinger_url.format(uri=f"acct:{handle}"),
@@ -640,12 +653,12 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                 )
                 response.raise_for_status()
-            except httpx.HTTPError as ex:
+            except httpx.RequestError as ex:
                 response = getattr(ex, "response", None)
                 if (
                     response
                     and response.status_code < 500
-                    and response.status_code not in [404, 410]
+                    and response.status_code not in [401, 403, 404, 410]
                 ):
                     raise ValueError(
                         f"Client error fetching webfinger: {response.status_code}",
