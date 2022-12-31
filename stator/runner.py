@@ -63,6 +63,10 @@ class StatorRunner:
                             print(f"  {label}: {number}")
                         print("Running cleaning and scheduling")
                         await self.run_scheduling()
+                        # Write liveness file if configured
+                        if self.liveness_file:
+                            with open(self.liveness_file, "w") as fh:
+                                fh.write(str(int(time.time())))
 
                     # Clear the cleaning breadcrumbs/extra for the main part of the loop
                     sentry.scope_clear(scope)
