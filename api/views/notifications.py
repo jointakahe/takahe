@@ -33,7 +33,7 @@ def notifications(
     requested_types.difference_update(excluded_types)
     # Use that to pull relevant events
     queryset = TimelineService(request.identity).notifications(
-        [base_types[r] for r in requested_types]
+        [base_types[r] for r in requested_types if r in base_types]
     )
     paginator = MastodonPaginator(TimelineEvent)
     pager = paginator.paginate(
