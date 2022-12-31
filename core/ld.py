@@ -377,7 +377,7 @@ schemas = {
             }
         },
     },
-    "https://w3id.org/security/data-integrity/v1": {
+    "w3id.org/security/data-integrity/v1": {
         "contentType": "application/ld+json",
         "documentUrl": "https://w3id.org/security/data-integrity/v1",
         "contextUrl": None,
