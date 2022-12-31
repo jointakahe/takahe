@@ -315,6 +315,147 @@ schemas = {
             }
         },
     },
+    "www.w3.org/ns/did/v1": {
+        "contentType": "application/ld+json",
+        "documentUrl": "www.w3.org/ns/did/v1",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "@protected": True,
+                "id": "@id",
+                "type": "@type",
+                "alsoKnownAs": {
+                    "@id": "https://www.w3.org/ns/activitystreams#alsoKnownAs",
+                    "@type": "@id",
+                },
+                "assertionMethod": {
+                    "@id": "https://w3id.org/security#assertionMethod",
+                    "@type": "@id",
+                    "@container": "@set",
+                },
+                "authentication": {
+                    "@id": "https://w3id.org/security#authenticationMethod",
+                    "@type": "@id",
+                    "@container": "@set",
+                },
+                "capabilityDelegation": {
+                    "@id": "https://w3id.org/security#capabilityDelegationMethod",
+                    "@type": "@id",
+                    "@container": "@set",
+                },
+                "capabilityInvocation": {
+                    "@id": "https://w3id.org/security#capabilityInvocationMethod",
+                    "@type": "@id",
+                    "@container": "@set",
+                },
+                "controller": {
+                    "@id": "https://w3id.org/security#controller",
+                    "@type": "@id",
+                },
+                "keyAgreement": {
+                    "@id": "https://w3id.org/security#keyAgreementMethod",
+                    "@type": "@id",
+                    "@container": "@set",
+                },
+                "service": {
+                    "@id": "https://www.w3.org/ns/did#service",
+                    "@type": "@id",
+                    "@context": {
+                        "@protected": True,
+                        "id": "@id",
+                        "type": "@type",
+                        "serviceEndpoint": {
+                            "@id": "https://www.w3.org/ns/did#serviceEndpoint",
+                            "@type": "@id",
+                        },
+                    },
+                },
+                "verificationMethod": {
+                    "@id": "https://w3id.org/security#verificationMethod",
+                    "@type": "@id",
+                },
+            }
+        },
+    },
+    "https://w3id.org/security/data-integrity/v1": {
+        "contentType": "application/ld+json",
+        "documentUrl": "https://w3id.org/security/data-integrity/v1",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "id": "@id",
+                "type": "@type",
+                "@protected": True,
+                "proof": {
+                    "@id": "https://w3id.org/security#proof",
+                    "@type": "@id",
+                    "@container": "@graph",
+                },
+                "DataIntegrityProof": {
+                    "@id": "https://w3id.org/security#DataIntegrityProof",
+                    "@context": {
+                        "@protected": True,
+                        "id": "@id",
+                        "type": "@type",
+                        "challenge": "https://w3id.org/security#challenge",
+                        "created": {
+                            "@id": "http://purl.org/dc/terms/created",
+                            "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+                        },
+                        "domain": "https://w3id.org/security#domain",
+                        "expires": {
+                            "@id": "https://w3id.org/security#expiration",
+                            "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+                        },
+                        "nonce": "https://w3id.org/security#nonce",
+                        "proofPurpose": {
+                            "@id": "https://w3id.org/security#proofPurpose",
+                            "@type": "@vocab",
+                            "@context": {
+                                "@protected": True,
+                                "id": "@id",
+                                "type": "@type",
+                                "assertionMethod": {
+                                    "@id": "https://w3id.org/security#assertionMethod",
+                                    "@type": "@id",
+                                    "@container": "@set",
+                                },
+                                "authentication": {
+                                    "@id": "https://w3id.org/security#authenticationMethod",
+                                    "@type": "@id",
+                                    "@container": "@set",
+                                },
+                                "capabilityInvocation": {
+                                    "@id": "https://w3id.org/security#capabilityInvocationMethod",
+                                    "@type": "@id",
+                                    "@container": "@set",
+                                },
+                                "capabilityDelegation": {
+                                    "@id": "https://w3id.org/security#capabilityDelegationMethod",
+                                    "@type": "@id",
+                                    "@container": "@set",
+                                },
+                                "keyAgreement": {
+                                    "@id": "https://w3id.org/security#keyAgreementMethod",
+                                    "@type": "@id",
+                                    "@container": "@set",
+                                },
+                            },
+                        },
+                        "cryptosuite": "https://w3id.org/security#cryptosuite",
+                        "proofValue": {
+                            "@id": "https://w3id.org/security#proofValue",
+                            "@type": "https://w3id.org/security#multibase",
+                        },
+                        "verificationMethod": {
+                            "@id": "https://w3id.org/security#verificationMethod",
+                            "@type": "@id",
+                        },
+                    },
+                },
+            }
+        },
+    },
     "*/schemas/litepub-0.1.jsonld": {
         "contentType": "application/ld+json",
         "documentUrl": "http://w3id.org/security/v1",
