@@ -128,7 +128,7 @@ main {
 }
 
 footer {
-    max-width: 900px;
+    max-width: 800px;
     margin: 0 auto;
     padding: 0 0 10px 0;
     color: var(--color-text-duller);
@@ -136,31 +136,7 @@ footer {
     font-size: 90%;
 }
 
-body:not(.no-sidebar) footer {
-    position: fixed;
-    bottom: 0;
-    right: calc((100vw - 920px)/2);
-    width: 250px;
-    margin: 0;
-    padding: 5px;
-    display: flex;
-    flex-wrap: wrap;
-}
-
-body:not(.no-sidebar) footer a {
-    flex-basis: 50%;
-    flex-grow: 1;
-}
-
-body:not(.no-sidebar) footer a:hover {
-    color: var(--color-text-dull);
-}
-
-.no-sidebar footer {
-    max-width: 800px;
-}
-
-.no-sidebar footer a {
+footer a {
     border-bottom: 1px solid var(--color-text-duller);
     margin-right: 5px;
 }
@@ -404,6 +380,14 @@ nav a i {
     text-transform: uppercase;
 }
 
+.right-column footer {
+    padding: 0 10px 20px 10px;
+    font-size: 90%;
+    text-align: left;
+}
+
+.right-column footer a {}
+
 img.emoji {
     height: 0.8em;
 }
@@ -416,6 +400,10 @@ img.emoji {
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     margin: 25px auto 45px auto;
     padding: 5px 15px;
+}
+
+.no-sidebar section:last-of-type {
+    margin-bottom: 10px;
 }
 
 .no-sidebar section.shell {
@@ -596,7 +584,7 @@ fieldset legend {
 form.inline {
     padding: 0;
     margin: 0;
-    display:inline;
+    display: inline;
 }
 
 div.follow-profile {
@@ -696,7 +684,7 @@ div.follow-profile .actions a.active {
 
 form.inline-menu {
     margin: 0px;
-    display:inline;
+    display: inline;
 }
 
 form.follow {
@@ -823,6 +811,10 @@ form .clear {
 form .clear input {
     display: inline;
     width: 32px;
+}
+
+.right-column form.compose .buttons {
+    margin-bottom: 20px;
 }
 
 .right-column form.compose input,
@@ -1600,19 +1592,6 @@ form .post {
         margin: 20px auto 20px auto;
     }
 
-    body:not(.no-sidebar) footer {
-        right: 0;
-    }
-
-    body:not(.no-sidebar) footer a {
-        display: block;
-        border: 0;
-    }
-
-    body:not(.no-sidebar) header .logo {
-        border-radius: 0;
-    }
-
     .post .attachments a.image img {
         max-height: 300px;
     }
@@ -1666,7 +1645,7 @@ form .post {
         display: none;
     }
 
-    body:not(.no-sidebar) footer {
+    .right-column footer {
         display: none;
     }
 

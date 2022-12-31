@@ -83,19 +83,15 @@
                     {% block right_content %}
                         {% include "activities/_menu.html" %}
                     {% endblock %}
+                    {% include "_footer.html" %}
                 </div>
             </div>
         {% endblock %}
         {% endblock %}
     </main>
 
-    <footer>
-        {% if config.site_about %}<a href="{% url "about" %}">About</a>{% endif %}
-        {% if config.policy_rules %}<a href="{% url "rules" %}">Server&nbsp;Rules</a>{% endif %}
-        {% if config.policy_terms %}<a href="{% url "terms" %}">Terms&nbsp;of&nbsp;Service</a>{% endif %}
-        {% if config.policy_privacy %}<a href="{% url "privacy" %}">Privacy&nbsp;Policy</a>{% endif %}
-        <a href="https://jointakahe.org">Takahē&nbsp;{{ config.version }}</a>
-    </footer>
+    {% block footer %}
+    {% endblock %}
 
 </body>
 </html>
