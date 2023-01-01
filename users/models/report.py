@@ -2,9 +2,12 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import models
 
 from core.ld import canonicalise, get_list
+from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models import Domain
 
@@ -23,6 +26,8 @@ class ReportStates(StateGraph):
         from users.models import SystemActor
 
         report = await instance.afetch_full()
+        moderators = await list(User.objects.filter(moderator=True).values_list("email", flat=True))
+        admins = await list(User.objects.filter(admins=True).values_list("email", flat=True))
         if report.forward and not report.subject_identity.domain.local:
             system_actor = SystemActor()
             try:
@@ -33,6 +38,19 @@ class ReportStates(StateGraph):
                 )
             except httpx.RequestError:
                 return
+        await sync_to_async(send_mail)(
+            subject=f"{Config.system.site_name}: New Moderation Report",
+            message=render_to_string(
+                "emails/report_new.txt",
+                {
+                    "report": report,
+                    "config": Config.system,
+                    "settings": settings,
+                },
+            ),
+            from_email=settings.SERVER_EMAIL,
+            recipient_list=moderators + admins,
+            )
         return cls.sent
 
 
