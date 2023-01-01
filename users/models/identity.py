@@ -203,7 +203,7 @@ class Identity(StatorModel):
     # Admin-only moderation fields
     sensitive = models.BooleanField(default=False)
     restriction = models.IntegerField(
-        choices=Restriction.choices, default=Restriction.none
+        choices=Restriction.choices, default=Restriction.none, db_index=True
     )
     admin_notes = models.TextField(null=True, blank=True)
 
