@@ -30,15 +30,18 @@ class AutoAbsoluteUrl(RelativeAbsoluteUrl):
 
     def __init__(
         self,
-        relative: str,
+        url: str,
         identity=None,
     ):
-        self.relative = relative
-        if identity:
-            absolute_prefix = f"https://{identity.domain.uri_domain}/"
+        if "://" in url:
+            super().__init__(url)
         else:
-            absolute_prefix = f"https://{settings.MAIN_DOMAIN}/"
-        self.absolute = urljoin(absolute_prefix, self.relative)
+            self.relative = url
+            if identity:
+                absolute_prefix = f"https://{identity.domain.uri_domain}/"
+            else:
+                absolute_prefix = f"https://{settings.MAIN_DOMAIN}/"
+            self.absolute = urljoin(absolute_prefix, self.relative)
 
 
 class ProxyAbsoluteUrl(AutoAbsoluteUrl):

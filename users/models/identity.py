@@ -272,7 +272,7 @@ class Identity(StatorModel):
         Returns an icon for use by us, with fallbacks to a placeholder
         """
         if self.icon:
-            return RelativeAbsoluteUrl(self.icon.url)
+            return AutoAbsoluteUrl(self.icon.url)
         elif self.icon_uri:
             return ProxyAbsoluteUrl(
                 f"/proxy/identity_icon/{self.pk}/",
