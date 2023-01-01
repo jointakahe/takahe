@@ -32,6 +32,7 @@
                     {% if "push" in scope %}<li>Receive push notifications</li>{% endif %}
                 </ul>
                 <input type="hidden" name="client_id" value="{{ application.client_id }}">
+                <input type="hidden" name="state" value="{{ state }}">
                 <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
                 <input type="hidden" name="scope" value="{{ scope }}">
             </fieldset>

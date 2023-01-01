@@ -1,17 +1,15 @@
 from django.db import models
 
 
-class Token(models.Model):
+class Authorization(models.Model):
     """
-    An (access) token to call the API with.
-
-    Can be either tied to a user, or app-level only.
+    An authorization code as part of the OAuth flow
     """
 
     application = models.ForeignKey(
         "api.Application",
         on_delete=models.CASCADE,
-        related_name="tokens",
+        related_name="authorizations",
     )
 
     user = models.ForeignKey(
@@ -19,7 +17,7 @@ class Token(models.Model):
         blank=True,
         null=True,
         on_delete=models.CASCADE,
-        related_name="tokens",
+        related_name="authorizations",
     )
 
     identity = models.ForeignKey(
@@ -27,12 +25,20 @@ class Token(models.Model):
         blank=True,
         null=True,
         on_delete=models.CASCADE,
-        related_name="tokens",
+        related_name="authorizations",
     )
 
-    token = models.CharField(max_length=500, unique=True)
+    code = models.CharField(max_length=128, blank=True, null=True, unique=True)
+    token = models.OneToOneField(
+        "api.Token",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+    )
+
     scopes = models.JSONField()
+    redirect_uri = models.TextField(blank=True, null=True)
+    valid_for_seconds = models.IntegerField(default=60)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    revoked = models.DateTimeField(blank=True, null=True)
