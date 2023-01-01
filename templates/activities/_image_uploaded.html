@@ -1,11 +1,20 @@
 <div class="uploaded-image">
     <input type="hidden" name="attachment" value="{{ attachment.pk }}">
-    <img src="{{ attachment.thumbnail_url.relative }}">
-    <p>
-        {{ attachment.name|default:"(no description)" }}
-    </p>
-    <div class="buttons">
+    <div class="uploaded-entry">
+      <div class="uploaded-description">
+        <div class="uploaded-filename">{{ attachment.original_filename }}</div>
+        <small class="uploaded-description">
+          {{ attachment.name|default:"(no description)" }}
+        </small>
+      </div>
+      {% if attachment.is_image %}
+        <div class="uploaded-preview">
+          <img src="{{ attachment.thumbnail_url.relative }}" alt="Preview of uploaded file"/>
+        </div>
+      {% endif %}
+      <div class="buttons">
         <a class="button delete left" _="on click remove closest .uploaded-image">Remove</a>
+      </div>
     </div>
 </div>
 {% if request.htmx %}
@@ -14,6 +23,6 @@
     hx-target="this"
     hx-swap="outerHTML"
     _="on load if length of <.uploaded-image/> > 3 then hide me">
-    Add Image
+    Add New File
 </a>
 {% endif %}

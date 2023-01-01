@@ -24,6 +24,7 @@ pymemcache~=4.0.0
 pytest-asyncio~=0.20.3
 python-dateutil~=2.8.2
 python-dotenv~=0.21.0
+python-magic~=0.4.27
 redis~=4.4.0
 sentry-sdk~=1.11.0
 sphinx~=5.3.0

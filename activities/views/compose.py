@@ -1,3 +1,4 @@
+import magic
 from django import forms
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -199,11 +200,11 @@ class ImageUpload(FormView):
     template_name = "activities/_image_upload.html"
 
     class form_class(forms.Form):
-        image = forms.ImageField()
+        file = forms.FileField()
         description = forms.CharField(required=False)
 
-        def clean_image(self):
-            value = self.cleaned_data["image"]
+        def clean_file(self):
+            value = self.cleaned_data["file"]
             max_mb = settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB
             max_bytes = max_mb * 1024 * 1024
             if value.size > max_bytes:
@@ -216,34 +217,28 @@ class ImageUpload(FormView):
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        # Make a PostAttachment
-        main_file = resize_image(
-            form.cleaned_data["image"],
-            size=(2000, 2000),
-            cover=False,
-        )
-        thumbnail_file = resize_image(
-            form.cleaned_data["image"],
-            size=(400, 225),
-            cover=True,
-        )
-        attachment = PostAttachment.objects.create(
-            blurhash=blurhash_image(thumbnail_file),
-            mimetype="image/webp",
-            width=main_file.image.width,
-            height=main_file.image.height,
+        file = form.cleaned_data["file"]
+        mime = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+
+        attachment = PostAttachment(
+            mimetype=mime,
             name=form.cleaned_data.get("description"),
             state=PostAttachmentStates.fetched,
+            original_filename=file.name,
         )
 
-        attachment.file.save(
-            main_file.name,
-            main_file,
-        )
-        attachment.thumbnail.save(
-            thumbnail_file.name,
-            thumbnail_file,
-        )
+        if mime.startswith("image/"):
+            main_file = resize_image(file, size=(2000, 2000), cover=False)
+            thumbnail_file = resize_image(file, size=(400, 225), cover=True)
+            attachment.blurhash = blurhash_image(thumbnail_file)
+            attachment.width = main_file.image.width  # noqa
+            attachment.height = main_file.image.height  # noqa
+            attachment.file.save(main_file.name, main_file)
+            attachment.thumbnail.save(thumbnail_file.name, thumbnail_file)
+        else:
+            attachment.file.save(file.name, file)
+
         attachment.save()
         # Return the response, with a hidden input plus a note
         return render(

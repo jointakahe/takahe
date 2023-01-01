@@ -18,7 +18,7 @@
             {% include "forms/_field.html" with field=form.visibility %}
         </fieldset>
         <fieldset>
-            <legend>Images</legend>
+            <legend>Attachments</legend>
             {% if post %}
                 {% for attachment in post.attachments.all %}
                     {% include "activities/_image_uploaded.html" %}
@@ -29,7 +29,7 @@
                     hx-get='{% url "compose_image_upload" %}'
                     hx-target="this"
                     hx-swap="outerHTML">
-                    Add Image
+                    Add File
                 </a>
             {% endif %}
         </fieldset>
