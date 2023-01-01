@@ -73,7 +73,7 @@ class IdentityService:
                 target=from_identity,
                 state__in=FollowStates.group_active(),
             ).exists(),
-            "showing_reblogs": follow.boosts,
+            "showing_reblogs": follow and follow.boosts or False,
             "notifying": False,
             "blocking": False,
             "blocked_by": False,
@@ -82,7 +82,7 @@ class IdentityService:
             "requested": False,
             "domain_blocking": False,
             "endorsed": False,
-            "note": follow.note or "",
+            "note": (follow and follow.note) or "",
         }
 
     def set_summary(self, summary: str):
