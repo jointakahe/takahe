@@ -400,6 +400,10 @@ if SETUP.MEDIA_BACKEND:
             raise ValueError(
                 "You must provide MEDIA_ROOT and MEDIA_URL for a local media backend"
             )
+        if "://" not in MEDIA_URL and not DEBUG:
+            raise ValueError(
+                "The MEDIA_URL setting must start with https://your-domain"
+            )
     else:
         raise ValueError(f"Unsupported media backend {parsed.scheme}")
 

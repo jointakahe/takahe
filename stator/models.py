@@ -4,6 +4,7 @@ from typing import ClassVar, cast
 
 from asgiref.sync import sync_to_async
 from django.db import models, transaction
+from django.db.models.signals import class_prepared
 from django.utils import timezone
 from django.utils.functional import classproperty
 
@@ -35,6 +36,40 @@ class StateField(models.CharField):
         if isinstance(value, State):
             return value.name
         return value
+
+
+def add_stator_indexes(sender, **kwargs):
+    """
+    Inject Indexes used by StatorModel in to any subclasses. This sidesteps the
+    current Django inability to inherit indexes when the Model subclass defines
+    its own indexes.
+    """
+    if issubclass(sender, StatorModel):
+        indexes = [
+            models.Index(
+                fields=["state", "state_attempted"],
+                name=f"ix_{sender.__name__.lower()[:11]}_state_attempted",
+            ),
+            models.Index(
+                fields=["state_locked_until", "state"],
+                condition=models.Q(state_locked_until__isnull=False),
+                name=f"ix_{sender.__name__.lower()[:11]}_state_locked",
+            ),
+        ]
+
+        if not sender._meta.indexes:
+            # Meta.indexes needs to not be None to trigger Django behaviors
+            sender.Meta.indexes = []
+
+        for idx in indexes:
+            sender._meta.indexes.append(idx)
+
+
+# class_prepared might become deprecated [1]. If it's removed, the named Index
+# injection would need to happen in a metaclass subclass of ModelBase's _prepare()
+#
+# [1] https://code.djangoproject.com/ticket/24313
+class_prepared.connect(add_stator_indexes)
 
 
 class StatorModel(models.Model):

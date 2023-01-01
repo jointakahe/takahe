@@ -297,6 +297,14 @@ class Post(StatorModel):
     class Meta:
         indexes = [
             GinIndex(fields=["hashtags"], name="hashtags_gin"),
+            models.Index(
+                fields=["visibility", "local", "published"],
+                name="ix_post_local_public_published",
+            ),
+            models.Index(
+                fields=["visibility", "local", "created"],
+                name="ix_post_local_public_created",
+            ),
         ]
 
     class urls(urlman.Urls):

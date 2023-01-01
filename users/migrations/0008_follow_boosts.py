@@ -14,8 +14,7 @@ class Migration(migrations.Migration):
             model_name="follow",
             name="boosts",
             field=models.BooleanField(
-                default=True,
-                help_text="Also follow boosts from this user",
+                default=True, help_text="Also follow boosts from this user"
             ),
         ),
     ]
