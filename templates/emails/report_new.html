@@ -1,8 +1,8 @@
 {% extends "emails/base.html" %}
 {% load mail_tags %}
 {% autoescape off %}
-{% block title %}{{settings.MAIN_DOMAIN}} - New Moderation Report{% endblock title %}
-{% block subtitle %}{{settings.MAIN_DOMAIN}} - New Moderation Report{% endblock subtitle %}
+{% block title %}{{config.site_name}} - New Moderation Report{% endblock title %}
+{% block subtitle %}{{config.site_name}} - New Moderation Report{% endblock subtitle %}
 
 {% block body_greeting %}
     {% email_body_content "Moderation Team," %}
@@ -11,7 +11,13 @@
 
 {% block body_content %}
     {% email_body_content "=============== Report Summary ===============" %}
+
+    {% if report.source_identity %}
     {% email_body_content "Reporter Identity: {{report.source_identity}} @ {{report.source_domain}}" %}
+    {% else %}
+    {% email_body_content "Reporter Identity: Anonymous Report from {{report.source_domain}}" %}
+    {% endif %}
+
     {% email_body_content "Reported Identity: {{report.subject_identity}}" %}
     {% email_body_content "Complaint Type: {{report.type}}" %}
     {% email_body_content "Complaint Notes: {{report.complaint}}" %}

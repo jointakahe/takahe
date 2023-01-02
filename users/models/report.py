@@ -43,7 +43,7 @@ class ReportStates(StateGraph):
                     body=canonicalise(report.to_ap()),
                 )
             except httpx.RequestError:
-                return
+                pass
         email = EmailMultiAlternatives(
             subject=f"{Config.system.site_name}: New Moderation Report",
             body=render_to_string(
