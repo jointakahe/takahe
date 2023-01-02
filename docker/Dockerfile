@@ -35,6 +35,8 @@ RUN apt-get update \
 
 RUN mkdir -p /cache
 
+# Python mimetypes package is missing some common mappings
+COPY docker/mime.types /etc/mime.types
 COPY . /takahe
 
 WORKDIR /takahe
