@@ -102,6 +102,9 @@ class StatorModel(models.Model):
 
     class Meta:
         abstract = True
+        # Need this empty indexes to ensure child Models have a Meta.indexes
+        # that will look to add indexes (that we inject with class_prepared)
+        indexes: list = []
 
     def __init_subclass__(cls) -> None:
         if cls is not StatorModel:
