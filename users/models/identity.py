@@ -203,7 +203,7 @@ class Identity(StatorModel):
     # Admin-only moderation fields
     sensitive = models.BooleanField(default=False)
     restriction = models.IntegerField(
-        choices=Restriction.choices, default=Restriction.none
+        choices=Restriction.choices, default=Restriction.none, db_index=True
     )
     admin_notes = models.TextField(null=True, blank=True)
 
@@ -718,7 +718,8 @@ class Identity(StatorModel):
             return False
         if response.status_code >= 400:
             raise ValueError(
-                f"Client error fetching actor: {response.status_code}", response.content
+                f"Client error fetching actor at {self.actor_uri}: {response.status_code}",
+                response.content,
             )
         document = canonicalise(response.json(), include_security=True)
         if "type" not in document:

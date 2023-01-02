@@ -1,5 +1,3 @@
-from django.db import models
-
 from activities.models import (
     Post,
     PostInteraction,
@@ -31,22 +29,6 @@ class PostService:
                 "author",
                 "author__domain",
             )
-            .annotate(
-                like_count=models.Count(
-                    "interactions",
-                    filter=models.Q(
-                        interactions__type=PostInteraction.Types.like,
-                        interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-                boost_count=models.Count(
-                    "interactions",
-                    filter=models.Q(
-                        interactions__type=PostInteraction.Types.boost,
-                        interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-            )
         )
 
     def __init__(self, post: Post):
@@ -63,6 +45,7 @@ class PostService:
         )[0]
         if interaction.state not in PostInteractionStates.group_active():
             interaction.transition_perform(PostInteractionStates.new)
+        self.post.calculate_stats()
 
     def uninteract_as(self, identity, type):
         """
@@ -74,6 +57,7 @@ class PostService:
             post=self.post,
         ):
             interaction.transition_perform(PostInteractionStates.undone)
+        self.post.calculate_stats()
 
     def like_as(self, identity: Identity):
         self.interact_as(identity, PostInteraction.Types.like)

@@ -1,17 +1,19 @@
 from asgiref.sync import sync_to_async
 from django.db import models
 
-from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class InboxMessageStates(StateGraph):
     received = State(try_interval=300)
-    processed = State(try_interval=86400, attempt_immediately=False)
-    purged = State()  # This is actually deletion, it will never get here
+    processed = State(externally_progressed=True)
+    purge = State(try_interval=300)
+    purged = State()  # Not actually real, nothing gets here
 
     received.transitions_to(processed)
-    processed.transitions_to(purged)
+    processed.times_out_to(purge, 86400 * 1)
+    received.times_out_to(purge, 86400 * 3)
+    purge.transitions_to(purged)
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
@@ -151,9 +153,11 @@ class InboxMessageStates(StateGraph):
         return cls.processed
 
     @classmethod
-    async def handle_processed(cls, instance: "InboxMessage"):
-        if instance.state_age > Config.system.inbox_message_purge_after:
-            await InboxMessage.objects.filter(pk=instance.pk).adelete()
+    async def handle_purge(cls, instance: "InboxMessage"):
+        """
+        Just delete them!
+        """
+        await InboxMessage.objects.filter(pk=instance.pk).adelete()
 
 
 class InboxMessage(StatorModel):

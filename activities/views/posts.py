@@ -93,10 +93,8 @@ class Like(View):
         service = PostService(post)
         if self.undo:
             service.unlike_as(request.identity)
-            post.like_count = max(0, post.like_count - 1)
         else:
             service.like_as(request.identity)
-            post.like_count += 1
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(
@@ -127,10 +125,8 @@ class Boost(View):
         service = PostService(post)
         if self.undo:
             service.unboost_as(request.identity)
-            post.boost_count = max(0, post.boost_count - 1)
         else:
             service.boost_as(request.identity)
-            post.boost_count += 1
         # Return either a redirect or a HTMX snippet
         if request.htmx:
             return render(

@@ -220,7 +220,6 @@ class Config(models.Model):
         identity_min_length: int = 2
         identity_max_per_user: int = 5
         identity_max_age: int = 24 * 60 * 60
-        inbox_message_purge_after: int = 24 * 60 * 60
         public_timeline: bool = True
 
         hashtag_unreviewed_are_public: bool = True

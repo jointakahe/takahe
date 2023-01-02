@@ -1,12 +1,6 @@
 from django.db import models
 
-from activities.models import (
-    Hashtag,
-    Post,
-    PostInteraction,
-    PostInteractionStates,
-    TimelineEvent,
-)
+from activities.models import Hashtag, Post, TimelineEvent
 from activities.services import PostService
 from users.models import Identity
 
@@ -21,38 +15,19 @@ class TimelineService:
 
     @classmethod
     def event_queryset(cls):
-        return (
-            TimelineEvent.objects.select_related(
-                "subject_post",
-                "subject_post__author",
-                "subject_post__author__domain",
-                "subject_identity",
-                "subject_identity__domain",
-                "subject_post_interaction",
-                "subject_post_interaction__identity",
-                "subject_post_interaction__identity__domain",
-            )
-            .prefetch_related(
-                "subject_post__attachments",
-                "subject_post__mentions",
-                "subject_post__emojis",
-            )
-            .annotate(
-                like_count=models.Count(
-                    "subject_post__interactions",
-                    filter=models.Q(
-                        subject_post__interactions__type=PostInteraction.Types.like,
-                        subject_post__interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-                boost_count=models.Count(
-                    "subject_post__interactions",
-                    filter=models.Q(
-                        subject_post__interactions__type=PostInteraction.Types.boost,
-                        subject_post__interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-            )
+        return TimelineEvent.objects.select_related(
+            "subject_post",
+            "subject_post__author",
+            "subject_post__author__domain",
+            "subject_identity",
+            "subject_identity__domain",
+            "subject_post_interaction",
+            "subject_post_interaction__identity",
+            "subject_post_interaction__identity__domain",
+        ).prefetch_related(
+            "subject_post__attachments",
+            "subject_post__mentions",
+            "subject_post__emojis",
         )
 
     def home(self) -> models.QuerySet[TimelineEvent]:

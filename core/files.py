@@ -24,6 +24,16 @@ def resize_image(
     to fit if needed)
     """
     with Image.open(image) as img:
+        try:
+            # Take any orientation EXIF data, apply it, and strip the
+            # orientation data from the new image.
+            img = ImageOps.exif_transpose(img)
+        except Exception:  # noqa
+            # exif_transpose can crash with different errors depending on
+            # the EXIF keys. Just ignore them all, better to have a rotated
+            # image than no image.
+            pass
+
         if cover:
             resized_image = ImageOps.fit(img, size, method=Image.Resampling.BILINEAR)
         else:

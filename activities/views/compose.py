@@ -29,7 +29,6 @@ class Compose(FormView):
             widget=forms.Textarea(
                 attrs={
                     "autofocus": "autofocus",
-                    "maxlength": Config.lazy_system_value("post_length"),
                     "placeholder": "What's on your mind?",
                 },
             )
@@ -62,7 +61,8 @@ class Compose(FormView):
                 "_"
             ] = f"""
                 on load or input
-                set characters to my.value.trim().length
+                -- Unicode-aware counting to match Python
+                set characters to Array.from(my.value.trim()).length
                 put {Config.system.post_length} - characters into #character-counter
 
                 if characters > {Config.system.post_length} then
