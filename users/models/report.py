@@ -2,9 +2,14 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
+from asgiref.sync import sync_to_async
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
+from django.template.loader import render_to_string
 
 from core.ld import canonicalise, get_list
+from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models import Domain
 
@@ -20,9 +25,15 @@ class ReportStates(StateGraph):
         """
         Sends the report to the remote server if we need to
         """
-        from users.models import SystemActor
+        from users.models import SystemActor, User
 
+        recipients = []
         report = await instance.afetch_full()
+        async for mod in User.objects.filter(
+            models.Q(moderator=True) | models.Q(admin=True)
+        ).values_list("email", flat=True):
+            recipients.append(mod)
+
         if report.forward and not report.subject_identity.domain.local:
             system_actor = SystemActor()
             try:
@@ -32,7 +43,32 @@ class ReportStates(StateGraph):
                     body=canonicalise(report.to_ap()),
                 )
             except httpx.RequestError:
-                return
+                pass
+        email = EmailMultiAlternatives(
+            subject=f"{Config.system.site_name}: New Moderation Report",
+            body=render_to_string(
+                "emails/report_new.txt",
+                {
+                    "report": report,
+                    "config": Config.system,
+                    "settings": settings,
+                },
+            ),
+            from_email=settings.SERVER_EMAIL,
+            bcc=recipients,
+        )
+        email.attach_alternative(
+            content=render_to_string(
+                "emails/report_new.html",
+                {
+                    "report": report,
+                    "config": Config.system,
+                    "settings": settings,
+                },
+            ),
+            mimetype="text/html",
+        )
+        await sync_to_async(email.send)()
         return cls.sent
 
 
