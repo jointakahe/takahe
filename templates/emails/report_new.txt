@@ -1,4 +1,4 @@
-A new report has been recieved for {{config.site_name}}. 
+A new report has been recieved for {{config.site_name}}.
 
 Please review the report at the link below:
 
