@@ -5,8 +5,11 @@ Please review the report at the link below:
 https://{{settings.MAIN_DOMAIN}}/admin/reports/{{report.id}}/
 
 =============== Report Summary ===============
-
+{% if report.source_identity %}
 Reporter Identity: {{report.source_identity}} @ {{report.source_domain}}
+{% else %}
+Reporter Identity: Anonymous Report from {{report.source_domain}}
+{% endif %}
 
 Reported Identity: {{report.subject_identity}}
 
