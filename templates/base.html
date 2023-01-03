@@ -88,6 +88,25 @@
             </div>
         {% endblock %}
         {% endblock %}
+
+        <figure id="image-viewer" style="display: none" _="
+          on click
+            transition #image-viewer's opacity to 0 over 300ms
+            hide me
+            set <#image-viewer img /> @src to ''
+            set <#image-viewer img /> @alt to ''
+            set <#image-viewer figcaption />'s textContent to ''
+          end
+          "
+        >
+          <picture>
+            <img src="" alt="" />
+          </picture>
+          <figcaption></figcaption>
+          <button aria-label="Close">
+            <i class="fa fa-3x fa-times"></i>
+          </button>
+        </figure>
     </main>
 
     {% block footer %}
