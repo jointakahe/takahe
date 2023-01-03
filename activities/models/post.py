@@ -136,7 +136,9 @@ class PostQuerySet(models.QuerySet):
             return query.filter(in_reply_to__isnull=True)
         return query
 
-    def visible_to(self, identity, include_replies: bool = False):
+    def visible_to(self, identity: Identity | None, include_replies: bool = False):
+        if identity is None:
+            return self.unlisted(include_replies=include_replies)
         query = self.filter(
             models.Q(
                 visibility__in=[

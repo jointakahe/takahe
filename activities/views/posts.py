@@ -30,7 +30,9 @@ class Individual(TemplateView):
         if self.identity.blocked:
             raise Http404("Blocked user")
         self.post_obj = get_object_or_404(
-            PostService.queryset().filter(author=self.identity),
+            PostService.queryset()
+            .filter(author=self.identity)
+            .visible_to(request.identity),
             pk=post_id,
         )
         if self.post_obj.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
@@ -87,7 +89,7 @@ class Like(View):
     def post(self, request, handle, post_id):
         identity = by_handle_or_404(self.request, handle, local=False)
         post = get_object_or_404(
-            PostService.queryset().filter(author=identity),
+            PostService.queryset().filter(author=identity).visible_to(request.identity),
             pk=post_id,
         )
         service = PostService(post)
@@ -119,7 +121,7 @@ class Boost(View):
     def post(self, request, handle, post_id):
         identity = by_handle_or_404(self.request, handle, local=False)
         post = get_object_or_404(
-            PostService.queryset().filter(author=identity),
+            PostService.queryset().filter(author=identity).visible_to(request.identity),
             pk=post_id,
         )
         service = PostService(post)
