@@ -155,6 +155,7 @@ def favourited_by(
         since_id=since_id,
         limit=limit,
     )
+    pager.jsonify_identities()
 
     if pager.results:
         response.headers["Link"] = pager.link_header(
@@ -162,7 +163,7 @@ def favourited_by(
             ["limit"],
         )
 
-    return [result.identity.to_mastodon_json() for result in pager.results]
+    return pager.json_results
 
 
 @api_router.post("/v1/statuses/{id}/reblog", response=schemas.Status)

@@ -1,5 +1,7 @@
 import dataclasses
 import urllib.parse
+from collections.abc import Callable
+from typing import Any
 
 from django.db import models
 from django.http import HttpRequest
@@ -19,6 +21,9 @@ class PaginationResult:
     #: The actual applied limit, which may be different from what was requested.
     limit: int
 
+    #: A list of transformed JSON objects
+    json_results: list[dict] | None = None
+
     @classmethod
     def empty(cls):
         return cls(results=[], limit=20)
@@ -29,9 +34,10 @@ class PaginationResult:
         """
         if not self.results:
             return None
-
+        if self.json_results is None:
+            raise ValueError("You must JSONify the results first")
         params = self.filter_params(request, allowed_params)
-        params["max_id"] = self.results[-1].pk
+        params["max_id"] = self.json_results[-1]["id"]
 
         return f"{request.build_absolute_uri(request.path)}?{urllib.parse.urlencode(params)}"
 
@@ -41,9 +47,10 @@ class PaginationResult:
         """
         if not self.results:
             return None
-
+        if self.json_results is None:
+            raise ValueError("You must JSONify the results first")
         params = self.filter_params(request, allowed_params)
-        params["min_id"] = self.results[0].pk
+        params["min_id"] = self.json_results[0]["id"]
 
         return f"{request.build_absolute_uri(request.path)}?{urllib.parse.urlencode(params)}"
 
@@ -57,6 +64,45 @@ class PaginationResult:
                 f'<{self.prev(request, allowed_params)}>; rel="prev"',
             )
         )
+
+    def jsonify_results(self, map_function: Callable[[Any], Any]):
+        """
+        Replaces our results with ones transformed via map_function
+        """
+        self.json_results = [map_function(result) for result in self.results]
+
+    def jsonify_posts(self, identity):
+        """
+        Predefined way of JSON-ifying Post objects
+        """
+        interactions = PostInteraction.get_post_interactions(self.results, identity)
+        self.jsonify_results(
+            lambda post: post.to_mastodon_json(interactions=interactions)
+        )
+
+    def jsonify_status_events(self, identity):
+        """
+        Predefined way of JSON-ifying TimelineEvent objects representing statuses
+        """
+        interactions = PostInteraction.get_event_interactions(self.results, identity)
+        self.jsonify_results(
+            lambda event: event.to_mastodon_status_json(interactions=interactions)
+        )
+
+    def jsonify_notification_events(self, identity):
+        """
+        Predefined way of JSON-ifying TimelineEvent objects representing notifications
+        """
+        interactions = PostInteraction.get_event_interactions(self.results, identity)
+        self.jsonify_results(
+            lambda event: event.to_mastodon_notification_json(interactions=interactions)
+        )
+
+    def jsonify_identities(self):
+        """
+        Predefined way of JSON-ifying Identity objects
+        """
+        self.jsonify_results(lambda identity: identity.to_mastodon_json())
 
     @staticmethod
     def filter_params(request: HttpRequest, allowed_params: list[str]):

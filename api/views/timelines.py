@@ -1,6 +1,6 @@
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
-from activities.models import Post, PostInteraction
+from activities.models import Post
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
@@ -19,6 +19,7 @@ def home(
     min_id: str | None = None,
     limit: int = 20,
 ):
+    # Grab a paginated result set of instances
     paginator = MastodonPaginator(Post, sort_attribute="published")
     queryset = TimelineService(request.identity).home()
     pager = paginator.paginate(
@@ -28,17 +29,12 @@ def home(
         since_id=since_id,
         limit=limit,
     )
-    interactions = PostInteraction.get_event_interactions(
-        pager.results, request.identity
-    )
-
+    # Convert those to the JSON form
+    pager.jsonify_status_events(identity=request.identity)
+    # Add the link header if needed
     if pager.results:
         response.headers["Link"] = pager.link_header(request, ["limit"])
-
-    return [
-        event.to_mastodon_status_json(interactions=interactions)
-        for event in pager.results
-    ]
+    return pager.json_results
 
 
 @api_router.get("/v1/timelines/public", response=list[schemas.Status])
@@ -64,6 +60,7 @@ def public(
         queryset = queryset.filter(local=False)
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
+    # Grab a paginated result set of instances
     paginator = MastodonPaginator(Post, sort_attribute="published")
     pager = paginator.paginate(
         queryset,
@@ -72,17 +69,15 @@ def public(
         since_id=since_id,
         limit=limit,
     )
-
+    # Convert those to the JSON form
+    pager.jsonify_posts(identity=request.identity)
+    # Add the link header if needed
     if pager.results:
         response.headers["Link"] = pager.link_header(
             request,
             ["limit", "local", "remote", "only_media"],
         )
-
-    interactions = PostInteraction.get_post_interactions(
-        pager.results, request.identity
-    )
-    return [post.to_mastodon_json(interactions=interactions) for post in pager.results]
+    return pager.json_results
 
 
 @api_router.get("/v1/timelines/tag/{hashtag}", response=list[schemas.Status])
@@ -105,6 +100,7 @@ def hashtag(
         queryset = queryset.filter(local=True)
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
+    # Grab a paginated result set of instances
     paginator = MastodonPaginator(Post, sort_attribute="published")
     pager = paginator.paginate(
         queryset,
@@ -113,17 +109,15 @@ def hashtag(
         since_id=since_id,
         limit=limit,
     )
-
+    # Convert those to the JSON form
+    pager.jsonify_posts(identity=request.identity)
+    # Add a link header if we need to
     if pager.results:
         response.headers["Link"] = pager.link_header(
             request,
             ["limit", "local", "remote", "only_media"],
         )
-
-    interactions = PostInteraction.get_post_interactions(
-        pager.results, request.identity
-    )
-    return [post.to_mastodon_json(interactions=interactions) for post in pager.results]
+    return pager.json_results
 
 
 @api_router.get("/v1/conversations", response=list[schemas.Status])

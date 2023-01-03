@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field
 
-from activities.models import Post, PostInteraction
+from activities.models import Post
 from activities.services import SearchService
 from api import schemas
 from api.decorators import identity_required
@@ -143,7 +143,7 @@ def account_statuses(
         queryset = queryset.filter(attachments__pk__isnull=False)
     if tagged:
         queryset = queryset.tagged_with(tagged)
-
+    # Get user posts with pagination
     paginator = MastodonPaginator(Post, sort_attribute="published")
     pager = paginator.paginate(
         queryset,
@@ -152,7 +152,9 @@ def account_statuses(
         since_id=since_id,
         limit=limit,
     )
-
+    # Convert those to the JSON form
+    pager.jsonify_posts(identity=request.identity)
+    # Add a link header if we need to
     if pager.results:
         response.headers["Link"] = pager.link_header(
             request,
@@ -166,11 +168,7 @@ def account_statuses(
                 "tagged",
             ],
         )
-
-    interactions = PostInteraction.get_post_interactions(
-        pager.results, request.identity
-    )
-    return [post.to_mastodon_json(interactions=interactions) for post in pager.results]
+    return pager.json_results
 
 
 @api_router.post("/v1/accounts/{id}/follow", response=schemas.Relationship)
@@ -222,6 +220,7 @@ def account_following(
         since_id=since_id,
         limit=limit,
     )
+    pager.jsonify_identities()
 
     if pager.results:
         response.headers["Link"] = pager.link_header(
@@ -229,4 +228,4 @@ def account_following(
             ["limit"],
         )
 
-    return [result.to_mastodon_json() for result in pager.results]
+    return pager.json_results
