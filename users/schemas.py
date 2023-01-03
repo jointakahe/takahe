@@ -26,7 +26,7 @@ class NodeInfo(BaseModel):
     open_registrations: bool = Field(alias="openRegistrations")
     usage: NodeInfoUsage
 
-    metadata: dict[str, Any]
+    metadata: dict[str, Any] | None
 
     class Config:
         extra = "ignore"
