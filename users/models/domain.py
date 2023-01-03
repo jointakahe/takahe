@@ -12,7 +12,7 @@ from users.schemas import NodeInfo
 
 
 class DomainStates(StateGraph):
-    outdated = State(try_interval=60 * 15, force_initial=True)
+    outdated = State(try_interval=60 * 30, force_initial=True)
     updated = State(try_interval=60 * 60 * 24, attempt_immediately=False)
     connection_issue = State(externally_progressed=True)
     purged = State()
@@ -22,9 +22,10 @@ class DomainStates(StateGraph):
 
     outdated.transitions_to(connection_issue)
     outdated.transitions_to(purged)
+    connection_issue.transitions_to(outdated)
     connection_issue.transitions_to(purged)
 
-    outdated.times_out_to(connection_issue, 60 * 60 * 12)
+    outdated.times_out_to(connection_issue, 60 * 60 * 24)
 
     @classmethod
     async def handle_outdated(cls, instance: "Domain"):
