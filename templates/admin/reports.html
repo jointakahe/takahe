@@ -31,9 +31,12 @@
                 There are no {% if all %}reports yet{% else %}unresolved reports{% endif %}.
             </p>
         {% endfor %}
-        <div class="load-more">
+        <div class="pagination">
             {% if page_obj.has_previous %}
                 <a class="button" href=".?page={{ page_obj.previous_page_number }}{% if all %}&amp;all=true{% endif %}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.paginator.count %}
+                <span class="count">{{ page_obj.paginator.count }} report{{page_obj.paginator.count|pluralize }}</span>
             {% endif %}
             {% if page_obj.has_next %}
                 <a class="button" href=".?page={{ page_obj.next_page_number }}{% if all %}&amp;all=true{% endif %}">Next Page</a>

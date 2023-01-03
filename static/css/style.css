@@ -1538,14 +1538,14 @@ form .post {
 .pagination {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 1em;
 }
 
-.load-more {
-    margin: 10px 0;
-    text-align: center;
+.pagination .count {
+    display: inline-block;
+    color: var(--color-text-dull);
 }
-
 
 @media (max-width: 920px),
 (display-mode: standalone) {

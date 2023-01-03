@@ -79,17 +79,25 @@ class Signup(FormView):
             return email
 
     def dispatch(self, request, token=None, *args, **kwargs):
+        # See if we have an invite token
         if token:
             self.invite = get_object_or_404(Invite, token=token)
             if not self.invite.valid:
                 raise Http404()
         else:
             self.invite = None
+        # Calculate if we're at or over the user limit
+        self.at_max_users = False
+        if (
+            Config.system.signup_max_users
+            and User.objects.count() >= Config.system.signup_max_users
+        ):
+            self.at_max_users = True
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         # Don't allow anything if there's no invite and no signup allowed
-        if not Config.system.signup_allowed and not self.invite:
+        if (not Config.system.signup_allowed or self.at_max_users) and not self.invite:
             return self.render_to_response(self.get_context_data())
         # Make the new user
         user = User.objects.create(email=form.cleaned_data["email"])
@@ -113,7 +121,7 @@ class Signup(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if not Config.system.signup_allowed and not self.invite:
+        if (not Config.system.signup_allowed or self.at_max_users) and not self.invite:
             del context["form"]
         if Config.system.signup_text:
             context["signup_text"] = mark_safe(

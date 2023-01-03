@@ -39,9 +39,12 @@
                 There are no unused invites.
             </p>
         {% endfor %}
-        <div class="load-more">
+        <div class="pagination">
             {% if page_obj.has_previous %}
                 <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.paginator.count %}
+                <span class="count">{{ page_obj.paginator.count }} invite{{page_obj.paginator.count|pluralize }}</span>
             {% endif %}
             {% if page_obj.has_next %}
                 <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>

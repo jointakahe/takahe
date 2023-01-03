@@ -76,6 +76,10 @@ class BasicSettings(AdminSettingsPage):
             "help_text": "Shown above the signup form.\nUse Markdown for formatting.",
             "display": "textarea",
         },
+        "signup_max_users": {
+            "title": "Maximum User Limit",
+            "help_text": "Signups will be auto-disabled if your server grows to this many users.\nUse 0 for unlimited.",
+        },
         "restricted_usernames": {
             "title": "Restricted Usernames",
             "help_text": "Usernames that only admins can register for identities. One per line.",
@@ -109,6 +113,7 @@ class BasicSettings(AdminSettingsPage):
         ],
         "Signups": [
             "signup_allowed",
+            "signup_max_users",
             "signup_text",
         ],
         "Posts": [

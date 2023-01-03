@@ -97,7 +97,9 @@
         {% endfor %}
 
         {% if page_obj.has_next %}
-            <div class="load-more"><a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a></div>
+            <div class="pagination">
+                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+            </div>
         {% endif %}
 
     {% endblock %}
