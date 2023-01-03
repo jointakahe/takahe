@@ -152,9 +152,9 @@ class PostQuerySet(models.QuerySet):
                 author__inbound_follows__source=identity,
             )
             | models.Q(
-                visibility=Post.Visibilities.mentioned,
                 mentions=identity,
             )
+            | models.Q(author=identity)
         ).distinct()
         if not include_replies:
             return query.filter(in_reply_to__isnull=True)
