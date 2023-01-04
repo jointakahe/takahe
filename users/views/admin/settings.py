@@ -101,6 +101,11 @@ class BasicSettings(AdminSettingsPage):
             "title": "Show Public Timeline On Front Page",
             "help_text": "Whether to show some recent posts on the logged-out homepage",
         },
+        "custom_head": {
+            "title": "HTML <head> Extra",
+            "help_text": "Add custom HTML to the &lt;head&gt; of all pages (except /djadmin/).\nNote: This can break page rendering/layout.",
+            "display": "textarea",
+        },
     }
 
     layout = {
@@ -110,6 +115,7 @@ class BasicSettings(AdminSettingsPage):
             "site_icon",
             "site_banner",
             "highlight_color",
+            "custom_head",
         ],
         "Signups": [
             "signup_allowed",
