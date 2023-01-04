@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db import models
+from django.utils import formats
 from django.utils.translation import gettext_lazy as _
 
 from activities.admin import IdentityLocalFilter
@@ -18,9 +19,60 @@ from users.models import (
 
 @admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
-    list_display = ["domain", "service_domain", "local", "blocked", "public"]
+    list_display = [
+        "domain",
+        "service_domain",
+        "local",
+        "blocked",
+        "software",
+        "user_count",
+        "public",
+    ]
     list_filter = ("local", "blocked")
     search_fields = ("domain", "service_domain")
+    actions = ["force_outdated", "force_updated", "force_connection_issue"]
+
+    @admin.action(description="Force State: outdated")
+    def force_outdated(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("outdated")
+
+    @admin.action(description="Force State: updated")
+    def force_updated(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("updated")
+
+    @admin.action(description="Force State: connection_issue")
+    def force_connection_issue(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("connection_issue")
+
+    @admin.display(description="Software")
+    def software(self, instance):
+        if instance.nodeinfo:
+            software = instance.nodeinfo.get("software", {})
+            name = software.get("name", "unknown")
+            version = software.get("version", "unknown")
+            return f"{name:.10} - {version:.10}"
+
+        return "-"
+
+    @admin.display(description="# Users")
+    def user_count(self, instance):
+        if instance.nodeinfo:
+            usage = instance.nodeinfo.get("usage", {})
+            total = usage.get("users", {}).get("total")
+            if total:
+                try:
+                    return formats.number_format(
+                        "%d" % (int(total)),
+                        0,
+                        use_l10n=True,
+                        force_grouping=True,
+                    )
+                except ValueError:
+                    pass
+        return "-"
 
 
 @admin.register(User)
