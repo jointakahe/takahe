@@ -59,6 +59,7 @@ class InviteCreate(FormView):
                 else None
             ),
             note=form.cleaned_data.get("notes"),
+            created_by=self.request.user,
         )
         return redirect(invite.urls.admin_view)
 
@@ -73,6 +74,7 @@ class InviteView(FormView):
 
     class form_class(InviteCreate.form_class):
         link = forms.CharField(disabled=True, required=False)
+        created_by = forms.CharField(disabled=True, required=False)
 
     def dispatch(self, request, id, *args, **kwargs):
         self.invite = get_object_or_404(Invite, id=id)
@@ -89,6 +91,7 @@ class InviteView(FormView):
             "notes": self.invite.note,
             "uses": self.invite.uses,
             "link": f"https://{settings.MAIN_DOMAIN}/auth/signup/{self.invite.token}/",
+            "created_by": str(self.invite.created_by or ""),
         }
 
     def form_valid(self, form):

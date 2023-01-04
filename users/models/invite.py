@@ -22,6 +22,15 @@ class Invite(models.Model):
     # Expiry date
     expires = models.DateTimeField(null=True, blank=True)
 
+    # Track who created the Invite, so users created from it can be linked back to them
+    created_by = models.ForeignKey(
+        "users.User",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="invitations",
+    )
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -31,7 +40,7 @@ class Invite(models.Model):
         admin_view = "{admin}{self.pk}/"
 
     @classmethod
-    def create_random(cls, uses=None, expires=None, note=None):
+    def create_random(cls, uses=None, expires=None, note=None, created_by=None):
         return cls.objects.create(
             token="".join(
                 random.choice("abcdefghkmnpqrstuvwxyz23456789") for i in range(20)
@@ -39,6 +48,7 @@ class Invite(models.Model):
             uses=uses,
             expires=expires,
             note=note,
+            created_by=created_by,
         )
 
     @property

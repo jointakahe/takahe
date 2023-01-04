@@ -92,7 +92,10 @@ class Signup(FormView):
         if not Config.system.signup_allowed and not self.invite:
             return self.render_to_response(self.get_context_data())
         # Make the new user
-        user = User.objects.create(email=form.cleaned_data["email"])
+        user = User.objects.create(
+            email=form.cleaned_data["email"],
+            invited_by=self.invite.created_by if self.invite else None,
+        )
         # Auto-promote the user to admin if that setting is set
         if settings.AUTO_ADMIN_EMAIL and user.email == settings.AUTO_ADMIN_EMAIL:
             user.admin = True
