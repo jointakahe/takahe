@@ -11,11 +11,11 @@
 /build
 /cache/
 /docs/_build
+/fly.*
 /media/
 /static-collected
 /takahe/local_settings.py
 __pycache__/
 api-test.*
-fly.toml
 notes.md
 notes.py
