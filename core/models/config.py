@@ -235,6 +235,8 @@ class Config(models.Model):
 
         restricted_usernames: str = "admin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
 
+        custom_head: str | None
+
     class UserOptions(pydantic.BaseModel):
 
         pass

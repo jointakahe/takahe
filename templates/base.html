@@ -30,6 +30,7 @@
         {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
     {% endblock %}
     {% block extra_head %}{% endblock %}
+    {% block custom_head %}{% if config.custom_head %}{{ config.custom_head|safe }}{% endif %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <a id='skip-to-main' class='screenreader-text' href='#main-content'>Skip to Content</a>
