@@ -5,7 +5,7 @@
 .mypy_cache
 .pre-commit-config.yaml
 .venv
-fly.toml
+/fly.*
 media
 notes.md
 venv
