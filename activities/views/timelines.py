@@ -25,14 +25,15 @@ class Home(TemplateView):
         events = TimelineService(self.request.identity).home()
         paginator = Paginator(events, 25)
         page_number = self.request.GET.get("page")
+        event_page = paginator.get_page(page_number)
         context = {
             "interactions": PostInteraction.get_event_interactions(
-                events,
+                event_page,
                 self.request.identity,
             ),
             "current_page": "home",
             "allows_refresh": True,
-            "page_obj": paginator.get_page(page_number),
+            "page_obj": event_page,
             "form": self.form_class(request=self.request),
         }
         return context
