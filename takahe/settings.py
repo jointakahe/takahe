@@ -335,10 +335,13 @@ if SETUP.USE_PROXY_HEADERS:
 
 
 if SETUP.SENTRY_DSN:
+    from sentry_sdk.integrations.httpx import HttpxIntegration
+
     sentry_sdk.init(
         dsn=SETUP.SENTRY_DSN,
         integrations=[
             DjangoIntegration(),
+            HttpxIntegration(),
         ],
         traces_sample_rate=SETUP.SENTRY_TRACES_SAMPLE_RATE,
         sample_rate=SETUP.SENTRY_SAMPLE_RATE,
