@@ -43,7 +43,7 @@ stopdb:
 	docker compose -f docker/docker-compose.yml stop db
 
 _PHONY: superuser
-superuser: .env pydev startdb
+createsuperuser: .env pydev startdb
 	python3 -m manage createsuperuser
 
 _PHONY: pydev
@@ -58,8 +58,8 @@ _PHONY: migrations server stator
 migrations: startdb
 	python3 -m manage migrate
 
-server: startdb
+runserver: startdb
 	python3 -m manage runserver
 
-stator: startdb
+runstator: startdb
 	python3 -m manage runstator
