@@ -25,15 +25,10 @@ compose_down:
 	python3 -m pre_commit install
 
 .env:
-	# afterwords, set in .env
-	# TAKAHE_DATABASE_SERVER="postgres://postgres:insecure_password@localhost:5433/takahe"
 	cp development.env .env
 
-_PHONY: pydev
-pydev: .venv
-
-_PHONY: precommit
-precommit: pydev .git/hooks/pre-commit
+_PHONY: setup_local
+setup_local: .venv .env .git/hooks/pre-commit
 
 _PHONY: startdb stopdb
 startdb:
@@ -43,23 +38,20 @@ stopdb:
 	docker compose -f docker/docker-compose.yml stop db
 
 _PHONY: superuser
-createsuperuser: .env pydev startdb
+createsuperuser: setup_local startdb
 	python3 -m manage createsuperuser
 
-_PHONY: pydev
-pydev: pydev precommit
-
 _PHONY: test
-test: pydev
+test: setup_local
 	python3 -m pytest
 
 # Active development
 _PHONY: migrations server stator
-migrations: startdb
+migrations: setup_local startdb
 	python3 -m manage migrate
 
-runserver: startdb
+runserver: setup_local startdb
 	python3 -m manage runserver
 
-runstator: startdb
+runstator: setup_local startdb
 	python3 -m manage runstator
