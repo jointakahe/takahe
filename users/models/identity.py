@@ -812,7 +812,15 @@ class Identity(StatorModel):
 
     ### Mastodon Client API ###
 
-    def to_mastodon_json(self):
+    def to_mastodon_mention_json(self):
+        return {
+            "id": self.id,
+            "username": self.username or "",
+            "url": self.absolute_profile_uri() or "",
+            "acct": self.handle or "",
+        }
+
+    def to_mastodon_json(self, include_counts=True):
         from activities.models import Emoji
 
         header_image = self.local_image_url()
