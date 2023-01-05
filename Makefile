@@ -29,11 +29,11 @@ compose_down:
 	# TAKAHE_DATABASE_SERVER="postgres://postgres:insecure_password@localhost:5433/takahe"
 	cp development.env .env
 
-_PHONY: python-dev
-python-dev: .venv
+_PHONY: pydev
+pydev: .venv
 
 _PHONY: precommit
-precommit: python-dev .git/hooks/pre-commit
+precommit: pydev .git/hooks/pre-commit
 
 _PHONY: startdb stopdb
 startdb:
@@ -43,11 +43,11 @@ stopdb:
 	docker compose -f docker/docker-compose.yml stop db
 
 _PHONY: superuser
-superuser: .env python-dev startdb
+superuser: .env pydev startdb
 	python3 -m manage createsuperuser
 
 _PHONY: pydev
-pydev: python-dev precommit
+pydev: pydev precommit
 
 _PHONY: test
 test: pydev
