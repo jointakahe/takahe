@@ -253,6 +253,25 @@ class StatorModel(models.Model):
 
     atransition_perform = sync_to_async(transition_perform)
 
+    def transition_set_state(self, state: State | str):
+        """
+        Sets the instance to the given state name for when it is saved.
+        """
+        if isinstance(state, State):
+            state = state.name
+        if state not in self.state_graph.states:
+            raise ValueError(f"Invalid state {state}")
+        self.state = state  # type: ignore
+        self.state_changed = timezone.now()
+        self.state_locked_until = None
+
+        if self.state_graph.states[state].attempt_immediately:
+            self.state_attempted = None
+            self.state_ready = True
+        else:
+            self.state_attempted = timezone.now()
+            self.state_ready = False
+
     @classmethod
     def transition_perform_queryset(
         cls,
