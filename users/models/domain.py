@@ -169,7 +169,7 @@ class Domain(StatorModel):
                     and response.status_code not in [401, 403, 404, 410]
                 ):
                     raise ValueError(
-                        f"Client error fetching nodeinfo: domain={self.domain_id}, code={response.status_code}",
+                        f"Client error fetching nodeinfo: domain={self.domain}, code={response.status_code}",
                         response.content,
                     )
                 return None
@@ -178,6 +178,6 @@ class Domain(StatorModel):
                 info = NodeInfo(**response.json())
             except json.JSONDecodeError as ex:
                 raise ValueError(
-                    f"Client error decoding nodeinfo: domain={self.domain_id}, error={str(ex)}"
+                    f"Client error decoding nodeinfo: domain={self.domain}, error={str(ex)}"
                 )
             return info
