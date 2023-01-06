@@ -134,7 +134,7 @@ def account_statuses(
         identity.posts.not_hidden()
         .unlisted(include_replies=not exclude_replies)
         .select_related("author")
-        .prefetch_related("attachments")
+        .prefetch_related("attachments", "mentions__domain", "emojis")
         .order_by("-created")
     )
     if pinned:

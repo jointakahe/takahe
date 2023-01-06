@@ -245,6 +245,26 @@ class Emoji(StatorModel):
         # create
         shortcode = name.lower().strip(":")
         category = (icon.get("category") or "")[:100]
+
+        if not domain.local:
+            try:
+                emoji = cls.objects.get(shortcode=shortcode, domain=domain)
+            except cls.DoesNotExist:
+                pass
+            else:
+                # Domain previously provided this shortcode. Trample in the new emoji
+                if emoji.remote_url != icon["url"] or emoji.mimetype != mimetype:
+                    emoji.object_uri = data["id"]
+                    emoji.remote_url = icon["url"]
+                    emoji.mimetype = mimetype
+                    emoji.category = category
+                    emoji.transition_set_state("outdated")
+                    if emoji.file:
+                        emoji.file.delete(save=True)
+                    else:
+                        emoji.save()
+                return emoji
+
         emoji = cls.objects.create(
             shortcode=shortcode,
             domain=None if domain.local else domain,
