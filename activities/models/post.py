@@ -965,7 +965,12 @@ class Post(StatorModel):
     def to_mastodon_json(self, interactions=None):
         reply_parent = None
         if self.in_reply_to:
-            reply_parent = Post.objects.filter(object_uri=self.in_reply_to).first()
+            # Load the PK and author.id explicitly to prevent a SELECT on the entire author Identity
+            reply_parent = (
+                Post.objects.filter(object_uri=self.in_reply_to)
+                .only("pk", "author_id")
+                .first()
+            )
         visibility_mapping = {
             self.Visibilities.public: "public",
             self.Visibilities.unlisted: "unlisted",
@@ -986,14 +991,7 @@ class Post(StatorModel):
                 attachment.to_mastodon_json() for attachment in self.attachments.all()
             ],
             "mentions": [
-                {
-                    "id": mention.id,
-                    "username": mention.username or "",
-                    "url": mention.absolute_profile_uri() or "",
-                    "acct": mention.handle or "",
-                }
-                for mention in self.mentions.all()
-                if mention.username
+                mention.to_mastodon_mention_json() for mention in self.mentions.all()
             ],
             "tags": (
                 [
@@ -1006,13 +1004,21 @@ class Post(StatorModel):
                 if self.hashtags
                 else []
             ),
-            "emojis": [emoji.to_mastodon_json() for emoji in self.emojis.usable()],
+            # Filter in the list comp rather than query because the common case is no emoji in the resultset
+            # When filter is on emojis like `emojis.usable()` it causes a query that is not cached by prefetch_related
+            "emojis": [
+                emoji.to_mastodon_json()
+                for emoji in self.emojis.all()
+                if emoji.is_usable
+            ],
             "reblogs_count": self.stats_with_defaults["boosts"],
             "favourites_count": self.stats_with_defaults["likes"],
             "replies_count": self.stats_with_defaults["replies"],
             "url": self.absolute_object_uri(),
             "in_reply_to_id": reply_parent.pk if reply_parent else None,
-            "in_reply_to_account_id": reply_parent.author.pk if reply_parent else None,
+            "in_reply_to_account_id": (
+                reply_parent.author_id if reply_parent else None
+            ),
             "reblog": None,
             "poll": None,
             "card": None,

@@ -133,8 +133,15 @@ def account_statuses(
     queryset = (
         identity.posts.not_hidden()
         .unlisted(include_replies=not exclude_replies)
-        .select_related("author")
-        .prefetch_related("attachments", "mentions__domain", "emojis")
+        .select_related("author", "author__domain")
+        .prefetch_related(
+            "attachments",
+            "mentions__domain",
+            "emojis",
+            "author__inbound_follows",
+            "author__outbound_follows",
+            "author__posts",
+        )
         .order_by("-created")
     )
     if pinned:
