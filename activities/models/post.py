@@ -1,4 +1,5 @@
 import hashlib
+import mimetypes
 import re
 from collections.abc import Iterable
 from typing import Optional
@@ -795,9 +796,14 @@ class Post(StatorModel):
                     focal_x, focal_y = attachment["focalPoint"]
                 else:
                     focal_x, focal_y = None, None
+                mimetype = attachment.get("mediaType")
+                if not mimetype:
+                    mimetype, _ = mimetypes.guess_type(attachment["url"])
+                    if not mimetype:
+                        mimetype = "application/octet-stream"
                 post.attachments.create(
                     remote_url=attachment["url"],
-                    mimetype=attachment["mediaType"],
+                    mimetype=mimetype,
                     name=attachment.get("name"),
                     width=attachment.get("width"),
                     height=attachment.get("height"),
