@@ -1467,8 +1467,8 @@ form .post {
 #imageModal img {
     display: block;
     margin: auto;
-    width: 80%;
-    max-width: fit-content;
+    max-width: 90%;
+    max-height: 90%;
 }
 
 #imageModal .close {
