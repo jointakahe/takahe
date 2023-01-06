@@ -1449,6 +1449,41 @@ form .post {
     text-decoration: underline;
 }
 
+#imageModal {
+    position: fixed;
+    z-index: 20;
+    padding-top: 20px;
+    left: 0;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--color-bg-main);
+}
+#imageModal.hidden {
+    display: none;
+}
+
+#imageModal img {
+    display: block;
+    margin: auto;
+    width: 80%;
+    max-width: fit-content;
+}
+
+#imageModal .close {
+    position: absolute;
+    right: 10px;
+}
+
+#imageModal .caption {
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin: auto;
+    width: 80%;
+}
+
 /* Special Type Posts */
 .post .notice a:hover {
     text-decoration: underline;

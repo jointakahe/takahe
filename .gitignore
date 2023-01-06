@@ -13,6 +13,7 @@
 /docs/_build
 /fly.*
 /media/
+/mediaroot/
 /static-collected
 /takahe/local_settings.py
 __pycache__/

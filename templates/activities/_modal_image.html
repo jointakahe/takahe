@@ -1,0 +1,18 @@
+<script type="text/hyperscript">
+    def imagemodal.show(source)
+        set image to the (first <img/> in #imageModal)
+        set src_img to the (first <img/> in source)
+        set image@src to source@href
+        set image@alt to src_img@alt
+        (get the first <div.caption/> in #imageModal) then set it's innerHTML to src_img@alt
+        remove .hidden from #imageModal
+    end
+    def imagemodal.close()
+        add .hidden to #imageModal
+    end
+</script>
+<div id="imageModal" class="hidden">
+    <button class="fa-solid fa-close close" _="on click imagemodal.close()"> Close</button>
+    <img src="" alt="">
+    <div class="caption"></div>
+</div>
