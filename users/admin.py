@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from django.contrib import admin
 from django.db import models
 from django.utils import formats
@@ -30,7 +31,12 @@ class DomainAdmin(admin.ModelAdmin):
     ]
     list_filter = ("local", "blocked")
     search_fields = ("domain", "service_domain")
-    actions = ["force_outdated", "force_updated", "force_connection_issue"]
+    actions = [
+        "force_outdated",
+        "force_updated",
+        "force_connection_issue",
+        "fetch_nodeinfo",
+    ]
 
     @admin.action(description="Force State: outdated")
     def force_outdated(self, request, queryset):
@@ -46,6 +52,14 @@ class DomainAdmin(admin.ModelAdmin):
     def force_connection_issue(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("connection_issue")
+
+    @admin.action(description="Fetch nodeinfo")
+    def fetch_nodeinfo(self, request, queryset):
+        for instance in queryset:
+            info = async_to_sync(instance.fetch_nodeinfo)()
+            if info:
+                instance.nodeinfo = info.dict()
+                instance.save()
 
     @admin.display(description="Software")
     def software(self, instance):
