@@ -43,22 +43,8 @@
           <div class="attachments">
             {% for attachment in post.attachments.all %}
               {% if attachment.is_image %}
-                <a href="{{ attachment.full_url.relative }}" class="image" target="_blank" _="
-                  on click or keyup[key is 'Enter']
-                    halt the event
-                    -- fill information'
-                    if @alt of <img/> in me == ''
-                      set @alt of <img/> in me to '(no description)'
-                    end
-                    set <#image-viewer img /> @src to @data-original-url of <img/> in me
-                    set <#image-viewer img /> @alt to @alt of <img/> in me
-                    set <#image-viewer figcaption />'s textContent to @alt of <img/> in me
-                    -- show image viewer
-                    show #image-viewer with display:flex
-                    transition #image-viewer's opacity from 0 to 1 over 300ms
-                    js document.querySelector('#image-viewer button').focus()
-                  end
-                ">
+                <a href="{{ attachment.full_url.relative }}" class="image" target="_blank"
+                  _="on click halt the event then call imageviewer.show(me)">
                   <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" loading="lazy" data-original-url="{{ attachment.full_url.relative }}">
                 </a>
               {% elif attachment.is_video %}
