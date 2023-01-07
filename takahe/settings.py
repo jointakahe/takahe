@@ -41,7 +41,7 @@ def as_bool(v: str | list[str] | None):
     return v[0].lower() in ("true", "yes", "t", "1")
 
 
-Environments = Literal["development", "production", "test"]
+Environments = Literal["debug", "development", "production", "test"]
 
 TAKAHE_ENV_FILE = os.environ.get(
     "TAKAHE_ENV_FILE", "test.env" if "pytest" in sys.modules else ".env"
@@ -95,6 +95,7 @@ class Settings(BaseSettings):
     SENTRY_SAMPLE_RATE: float = 1.0
     SENTRY_TRACES_SAMPLE_RATE: float = 0.01
     SENTRY_CAPTURE_MESSAGES: bool = False
+    SENTRY_EXPERIMENTAL_PROFILES_TRACES_SAMPLE_RATE: float = 0.0
 
     #: Fallback domain for links.
     MAIN_DOMAIN: str = "example.com"
@@ -337,6 +338,13 @@ if SETUP.USE_PROXY_HEADERS:
 if SETUP.SENTRY_DSN:
     from sentry_sdk.integrations.httpx import HttpxIntegration
 
+    sentry_experiments = {}
+
+    if SETUP.SENTRY_EXPERIMENTAL_PROFILES_TRACES_SAMPLE_RATE > 0:
+        sentry_experiments[
+            "profiles_sample_rate"
+        ] = SETUP.SENTRY_EXPERIMENTAL_PROFILES_TRACES_SAMPLE_RATE
+
     sentry_sdk.init(
         dsn=SETUP.SENTRY_DSN,
         integrations=[
@@ -347,6 +355,7 @@ if SETUP.SENTRY_DSN:
         sample_rate=SETUP.SENTRY_SAMPLE_RATE,
         send_default_pii=True,
         environment=SETUP.ENVIRONMENT,
+        _experiments=sentry_experiments,
     )
     sentry_sdk.set_tag("takahe.version", __version__)
 
