@@ -1549,11 +1549,6 @@ form .post {
 
 @media (max-width: 920px),
 (display-mode: standalone) {
-    div.columns {
-        height: calc(100vh - 50px);
-        align-items: stretch;
-    }
-
     .left-column {
         margin: var(--md-header-height) var(--md-sidebar-width) 0 0;
     }
