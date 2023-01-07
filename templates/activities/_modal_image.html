@@ -13,7 +13,7 @@
         -- show image viewer
         show #image-viewer with display:flex
         transition #image-viewer's opacity from 0 to 1 over 300ms
-        js document.querySelector('#image-viewer button').focus()
+        focus() on first <#image-viewer button />
     end
     def imageviewer.close()
         transition #image-viewer's opacity to 0 over 300ms
