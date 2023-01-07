@@ -1720,12 +1720,17 @@ form .post {
     z-index: 100;
 }
 
+#image-viewer picture, #image-viewer img {
+    display: block;
+}
+
 #image-viewer img {
     max-height: calc(100dvh - 8em);
     max-width: 100dvw;
 }
 
 #image-viewer figcaption {
+    width: 100%;
     padding: 1em;
     background-color: black;
     color: var(--color-text-main);
