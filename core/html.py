@@ -214,16 +214,15 @@ class ContentRenderer:
             shortcode = match.group(1).lower()
             if shortcode in cached_emojis:
                 return cached_emojis[shortcode].as_html()
-            try:
-                emoji = Emoji.get_by_domain(shortcode, identity.domain)
-                if emoji.is_usable:
+
+            emoji = Emoji.get_by_domain(shortcode, identity.domain)
+            if emoji and emoji.is_usable:
+                return emoji.as_html()
+            elif not emoji and include_local:
+                emoji = Emoji.get_by_domain(shortcode, None)
+                if emoji:
                     return emoji.as_html()
-            except Emoji.DoesNotExist:
-                if include_local:
-                    try:
-                        return Emoji.get_by_domain(shortcode, identity.domain).as_html()
-                    except Emoji.DoesNotExist:
-                        pass
+
             return match.group()
 
         return Emoji.emoji_regex.sub(replacer, html)
