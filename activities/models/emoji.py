@@ -146,15 +146,18 @@ class Emoji(StatorModel):
 
     @classmethod
     @cached(cache=TTLCache(maxsize=1000, ttl=60))
-    def get_by_domain(cls, shortcode, domain: Domain | None) -> "Emoji":
+    def get_by_domain(cls, shortcode, domain: Domain | None) -> "Emoji | None":
         """
         Given an emoji shortcode and optional domain, looks up the single
         emoji and returns it. Raises Emoji.DoesNotExist if there isn't one.
         """
-        if domain is None or domain.local:
-            return cls.objects.get(local=True, shortcode=shortcode)
-        else:
-            return cls.objects.get(domain=domain, shortcode=shortcode)
+        try:
+            if domain is None or domain.local:
+                return cls.objects.get(local=True, shortcode=shortcode)
+            else:
+                return cls.objects.get(domain=domain, shortcode=shortcode)
+        except Emoji.DoesNotExist:
+            return None
 
     @property
     def fullcode(self):
