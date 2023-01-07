@@ -1,0 +1,34 @@
+<script type="text/hyperscript">
+    def imageviewer.show(source)
+        set source_url to (<img /> in source) @data-original-url
+        set source_alt to (<img /> in source) @alt
+        set image to <#image-viewer img />
+        set figcaption to <#image-viewer figcaption />
+
+        -- fill information
+        set image@src to source_url
+        set image@alt to source_alt
+        set figcaption's textContent to source_alt
+
+        -- show image viewer
+        show #image-viewer with display:flex
+        transition #image-viewer's opacity from 0 to 1 over 300ms
+        focus() on first <#image-viewer button />
+    end
+    def imageviewer.close()
+        transition #image-viewer's opacity to 0 over 300ms
+        hide #image-viewer
+        set <#image-viewer img /> @src to ''
+        set <#image-viewer img /> @alt to ''
+        set <#image-viewer figcaption />'s textContent to ''
+    end
+</script>
+<figure id="image-viewer" style="display: none" _="on click imageviewer.close()">
+    <picture>
+        <img src="" alt=""/>
+    </picture>
+    <figcaption></figcaption>
+    <button aria-label="Close">
+        <i class="fa fa-3x fa-times"></i>
+    </button>
+</figure>

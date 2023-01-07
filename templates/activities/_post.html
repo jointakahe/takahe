@@ -43,8 +43,9 @@
           <div class="attachments">
             {% for attachment in post.attachments.all %}
               {% if attachment.is_image %}
-                <a href="{{ attachment.full_url.relative }}" class="image">
-                  <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name }}" loading="lazy" />
+                <a href="{{ attachment.full_url.relative }}" class="image" target="_blank"
+                  _="on click halt the event then call imageviewer.show(me)">
+                  <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name|default:'(no description)' }}" loading="lazy" data-original-url="{{ attachment.full_url.relative }}">
                 </a>
               {% elif attachment.is_video %}
                 <a href="{{ attachment.full_url.relative }}" class="video">

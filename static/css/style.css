@@ -1699,6 +1699,47 @@ form .post {
     transition: 0.2s;
 }
 
+/* Image viewer */
+#image-viewer {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 0;
+    width: 100dvw;
+    height: 100dvh;
+    background: rgb(0 0 0 / 75%);
+    transition: opacity 350ms;
+    z-index: 100;
+}
+
+#image-viewer picture, #image-viewer img {
+    display: block;
+}
+
+#image-viewer img {
+    max-height: calc(100dvh - 8em);
+    max-width: 100dvw;
+}
+
+#image-viewer figcaption {
+    width: 100%;
+    padding: 1em;
+    background-color: black;
+    color: var(--color-text-main);
+    text-align: center;
+}
+
+#image-viewer button {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    color: var(--color-text-main);
+    background: transparent;
+    cursor: pointer;
+}
 
 /* Accessibility */
 .screenreader-text {
