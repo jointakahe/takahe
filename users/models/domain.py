@@ -150,13 +150,35 @@ class Domain(StatorModel):
         """
         Fetch the /NodeInfo/2.0 for the domain
         """
+        nodeinfo20_url = f"https://{self.domain}/nodeinfo/2.0"
+
         async with httpx.AsyncClient(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
         ) as client:
             try:
                 response = await client.get(
-                    f"https://{self.domain}/nodeinfo/2.0",
+                    f"https://{self.domain}/.well-known/nodeinfo",
+                    follow_redirects=True,
+                    headers={"Accept": "application/json"},
+                )
+            except httpx.HTTPError:
+                pass
+            else:
+                try:
+                    for link in response.json().get("links", []):
+                        if (
+                            link.get("rel")
+                            == "http://nodeinfo.diaspora.software/ns/schema/2.0"
+                        ):
+                            nodeinfo20_url = link.get("href", nodeinfo20_url)
+                            break
+                except json.JSONDecodeError:
+                    pass
+
+            try:
+                response = await client.get(
+                    nodeinfo20_url,
                     follow_redirects=True,
                     headers={"Accept": "application/json"},
                 )
