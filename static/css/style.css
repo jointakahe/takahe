@@ -1631,6 +1631,11 @@ form .post {
         font-size: 22px;
     }
 
+    .right-column nav a .fa-solid {
+        display: flex;
+        justify-content: center;
+    }
+
     .right-column h3 {
         visibility: hidden;
     }
