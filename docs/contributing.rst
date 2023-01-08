@@ -76,10 +76,46 @@ near the top of the docker-compose file; the default set are designed for a
 local installation, though.
 
 
-Direct installation
+Direct Installation
 ~~~~~~~~~~~~~~~~~~~
 
 Takahē requires Python 3.10 or above, so you'll need that first. Clone the repo::
+
+    git clone https://github.com/jointakahe/takahe/
+
+Using Make
+^^^^^^^^^^
+
+The repo comes with a ``Makefile`` that simplifies some of the local development setup:
+
+Setup the local python and git environment::
+
+    make setup_local
+
+Start the postgres db in Docker::
+
+    make startdb
+
+Create your superuser::
+
+    make createsuperuser
+
+Run tests::
+
+    make test
+
+To run the development server::
+
+    make runserver
+
+To run Stator::
+
+    make runstator
+
+Local Virtualenv Installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Clone the repo::
 
     git clone https://github.com/jointakahe/takahe/
 
