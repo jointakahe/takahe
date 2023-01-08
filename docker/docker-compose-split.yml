@@ -1,0 +1,55 @@
+version: "3.4"
+
+# This compose file is meant to create a debugging surface for IDEs and should not be used for production
+# To minimize drift, this file should extend the base rather than creating any new services.
+#
+# Note: The `app` service extends from stator rather than web because extend won't let us null out the `ports` in
+# the base file. So we have to extend a service that doesn't expose any ports. A bit of a hack.
+
+services:
+  db:
+    extends:
+      service: db
+      file: docker-compose.yml
+
+  nginx:
+    extends:
+      service: web
+      file: docker-compose.yml
+    environment:
+      DISABLE_GUNICORN_RUN: true
+      NGINX_GUNICORN_HOST: app
+    depends_on:
+      - app
+      - stator
+
+  app:
+    extends:
+      service: stator
+      file: docker-compose.yml
+    environment:
+      DISABLE_NGINX_RUN: true
+    command: ["/takahe/docker/run.sh"]
+    depends_on:
+      - setup
+      - db
+
+  stator:
+    extends:
+      service: stator
+      file: docker-compose.yml
+    depends_on:
+      - setup
+      - db
+
+  setup:
+    extends:
+      service: setup
+      file: docker-compose.yml
+
+networks:
+  internal_network:
+  external_network:
+
+volumes:
+  dbdata:
