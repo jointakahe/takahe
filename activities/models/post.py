@@ -32,6 +32,7 @@ from core.ld import (
 )
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models.follow import FollowStates
 from users.models.identity import Identity, IdentityStates
 from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
@@ -684,7 +685,9 @@ class Post(StatorModel):
             targets.add(mention)
         # Then, if it's not mentions only, also deliver to followers
         if self.visibility != Post.Visibilities.mentioned:
-            async for follower in self.author.inbound_follows.select_related("source"):
+            async for follower in self.author.inbound_follows.filter(
+                state__in=FollowStates.group_active()
+            ).select_related("source"):
                 targets.add(follower.source)
         # If it's a reply, always include the original author if we know them
         reply_post = await self.ain_reply_to_post()
@@ -693,9 +696,9 @@ class Post(StatorModel):
             # And if it's a reply to one of our own, we have to re-fan-out to
             # the original author's followers
             if reply_post.author.local:
-                async for follower in reply_post.author.inbound_follows.select_related(
-                    "source"
-                ):
+                async for follower in reply_post.author.inbound_follows.filter(
+                    state__in=FollowStates.group_active()
+                ).select_related("source"):
                     targets.add(follower.source)
         # If this is a remote post or local-only, filter to only include
         # local identities
