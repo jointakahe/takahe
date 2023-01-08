@@ -94,6 +94,14 @@ class ProfilePage(FormView):
                 resize_image(image, size=(1500, 500)),
             )
         identity.metadata = form.cleaned_data.get("metadata")
+
+        # Clear images if specified
+        if "icon__clear" in self.request.POST:
+            identity.icon = None
+        if "image__clear" in self.request.POST:
+            identity.image = None
+
+        # Save and propagate
         identity.save()
         identity.transition_perform(IdentityStates.edited)
 
