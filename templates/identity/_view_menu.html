@@ -23,7 +23,7 @@
         {% endif %}
 
         {% if request.user.admin %}
-        <a title="Menu" class="menu button" _="on click toggle .enabled on the next <menu/> then halt" aria-haspopup="menu">
+        <a title="Menu" class="menu button" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" aria-haspopup="menu" tabindex="0">
             <i class="fa-solid fa-bars"></i>
         </a>
         <menu>

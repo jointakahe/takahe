@@ -28,9 +28,9 @@
 
     {% if post.summary %}
         {% if config_identity.expand_linked_cws %}
-        <div class="summary" _="on click toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt">
+        <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt" tabindex="0">
         {% else %}
-        <div class="summary" _="on click toggle .enabled then toggle .hidden on the next .content then halt">
+        <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled then toggle .hidden on the next .content then halt" tabindex="0">
         {% endif %}
             {{ post.summary }}
         </div>
@@ -70,7 +70,7 @@
         {% include "activities/_reply.html" %}
         {% include "activities/_like.html" %}
         {% include "activities/_boost.html" %}
-        <a title="Menu" class="menu" _="on click toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu">
+        <a title="Menu" class="menu" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu" tabindex="0">
           <i class="fa-solid fa-bars"></i>
         </a>
         <menu>

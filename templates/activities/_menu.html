@@ -64,7 +64,7 @@
         <input type="hidden" name="visibility" value="{{ config_identity.default_post_visibility }}">
         <div class="buttons">
             <span id="character-counter">{{ config.post_length }}</span>
-            <span class="button toggle" _="on click toggle .enabled then toggle .hidden on #id_content_warning">CW</span>
+            <button class="toggle" _="on click or keyup[key is 'Enter'] toggle .enabled then toggle .hidden on #id_content_warning">CW</button>
             <button id="post-button">{% if config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
         </div>
     </form>

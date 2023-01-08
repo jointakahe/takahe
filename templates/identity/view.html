@@ -29,7 +29,8 @@
             @{{ identity.handle }}
             <a title="Copy handle"
                class="copy"
-               _="on click
+               tabindex="0"
+               _="on click or keyup[key is 'Enter']
                     writeText('@{{ identity.handle }}') into the navigator's clipboard
                     then add .copied
                     wait 2s
