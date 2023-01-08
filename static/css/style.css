@@ -1706,6 +1706,7 @@ form .post {
 
 /* Image viewer */
 #image-viewer {
+    display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -1715,8 +1716,8 @@ form .post {
     margin: 0;
     width: 100dvw;
     height: 100dvh;
+    opacity: 0;
     background: rgb(0 0 0 / 75%);
-    transition: opacity 350ms;
     z-index: 100;
 }
 
