@@ -60,6 +60,11 @@ class Compose(FormView):
             self.fields["text"].widget.attrs[
                 "_"
             ] = f"""
+                init
+                    -- Move cursor to the end of existing text
+                    set my.selectionStart to my.value.length
+                end
+
                 on load or input
                 -- Unicode-aware counting to match Python
                 set characters to Array.from(my.value.trim()).length
