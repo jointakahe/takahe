@@ -42,7 +42,7 @@ class PostStates(StateGraph):
     new = State(try_interval=300)
     fanned_out = State(externally_progressed=True)
     deleted = State(try_interval=300)
-    deleted_fanned_out = State()
+    deleted_fanned_out = State(delete_after=24 * 60 * 60)
 
     edited = State(try_interval=300)
     edited_fanned_out = State(externally_progressed=True)

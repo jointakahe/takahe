@@ -116,6 +116,7 @@ class StatorRunner:
                 asyncio.create_task(self.submit_stats(model))
                 asyncio.create_task(model.atransition_clean_locks())
                 asyncio.create_task(model.atransition_schedule_due())
+                asyncio.create_task(model.atransition_delete_due())
             self.last_clean = time.monotonic()
 
     async def submit_stats(self, model):

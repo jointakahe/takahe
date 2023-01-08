@@ -12,7 +12,7 @@ class PostInteractionStates(StateGraph):
     new = State(try_interval=300)
     fanned_out = State(externally_progressed=True)
     undone = State(try_interval=300)
-    undone_fanned_out = State()
+    undone_fanned_out = State(delete_after=24 * 60 * 60)
 
     new.transitions_to(fanned_out)
     fanned_out.transitions_to(undone)

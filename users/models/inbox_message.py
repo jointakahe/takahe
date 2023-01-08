@@ -5,15 +5,12 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class InboxMessageStates(StateGraph):
-    received = State(try_interval=300)
-    processed = State(externally_progressed=True)
-    purge = State(try_interval=300)
-    purged = State()  # Not actually real, nothing gets here
+    received = State(try_interval=300, delete_after=86400 * 3)
+    processed = State(externally_progressed=True, delete_after=86400)
+    purge = State(delete_after=24 * 60 * 60)  # Delete after release (back compat)
 
     received.transitions_to(processed)
-    processed.times_out_to(purge, 86400 * 1)
-    received.times_out_to(purge, 86400 * 3)
-    purge.transitions_to(purged)
+    processed.transitions_to(purge)  # Delete after release (back compat)
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
@@ -151,13 +148,6 @@ class InboxMessageStates(StateGraph):
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed
-
-    @classmethod
-    async def handle_purge(cls, instance: "InboxMessage"):
-        """
-        Just delete them!
-        """
-        await InboxMessage.objects.filter(pk=instance.pk).adelete()
 
 
 class InboxMessage(StatorModel):

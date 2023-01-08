@@ -48,7 +48,7 @@ class IdentityStates(StateGraph):
 
     edited = State(try_interval=300, attempt_immediately=True)
     deleted = State(try_interval=300, attempt_immediately=True)
-    deleted_fanned_out = State(externally_progressed=True)
+    deleted_fanned_out = State(delete_after=86400 * 7)
 
     deleted.transitions_to(deleted_fanned_out)
 

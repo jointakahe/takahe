@@ -123,6 +123,8 @@ class StatorModel(models.Model):
         """
         Finds instances of this model that need to run and schedule them.
         """
+        if now is None:
+            now = timezone.now()
         q = models.Q()
         for state in cls.state_graph.states.values():
             state = cast(State, state)
@@ -130,9 +132,11 @@ class StatorModel(models.Model):
                 q = q | models.Q(
                     (
                         models.Q(
-                            state_attempted__lte=timezone.now()
-                            - datetime.timedelta(
-                                seconds=cast(float, state.try_interval)
+                            state_attempted__lte=(
+                                now
+                                - datetime.timedelta(
+                                    seconds=cast(float, state.try_interval)
+                                )
                             )
                         )
                         | models.Q(state_attempted__isnull=True)
@@ -140,6 +144,23 @@ class StatorModel(models.Model):
                     state=state.name,
                 )
         await cls.objects.filter(q).aupdate(state_ready=True)
+
+    @classmethod
+    async def atransition_delete_due(cls, now=None):
+        """
+        Finds instances of this model that need to be deleted and deletes them.
+        """
+        if now is None:
+            now = timezone.now()
+        for state in cls.state_graph.states.values():
+            state = cast(State, state)
+            if state.delete_after:
+                await cls.objects.filter(
+                    state=state,
+                    state_changed__lte=(
+                        now - datetime.timedelta(seconds=state.delete_after)
+                    ),
+                ).adelete()
 
     @classmethod
     def transition_get_with_lock(

@@ -11,7 +11,7 @@ from users.models import FollowStates
 class FanOutStates(StateGraph):
     new = State(try_interval=600)
     sent = State()
-    failed = State()
+    failed = State(delete_after=86400)
 
     new.transitions_to(sent)
     new.times_out_to(failed, seconds=86400 * 3)

@@ -14,7 +14,7 @@ class FollowStates(StateGraph):
     remote_requested = State(try_interval=24 * 60 * 60)
     accepted = State(externally_progressed=True)
     undone = State(try_interval=60 * 60)
-    undone_remotely = State()
+    undone_remotely = State(delete_after=24 * 60 * 60)
     failed = State()
     rejected = State()
 
