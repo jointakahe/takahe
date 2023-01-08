@@ -1,10 +1,10 @@
 {% if post.pk in interactions.boost %}
-    <a title="Unboost" class="active" hx-post="{{ post.urls.action_unboost }}" hx-swap="outerHTML">
+    <a title="Unboost" class="active" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ post.urls.action_unboost }}" hx-swap="outerHTML" tabindex="0">
         <i class="fa-solid fa-retweet"></i>
         <span class="like-count">{{ post.stats_with_defaults.boosts }}</span>
     </a>
 {% else %}
-    <a title="Boost" hx-post="{{ post.urls.action_boost }}" hx-swap="outerHTML">
+    <a title="Boost" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ post.urls.action_boost }}" hx-swap="outerHTML" tabindex="0">
         <i class="fa-solid fa-retweet"></i>
         <span class="like-count">{{ post.stats_with_defaults.boosts }}</span>
     </a>

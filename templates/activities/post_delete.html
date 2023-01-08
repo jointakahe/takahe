@@ -7,7 +7,7 @@
     {% include "activities/_mini_post.html" %}
     <form action="." method="POST">
         {% csrf_token %}
-        <a class="button" onclick="history.back()">Cancel</a>
+        <button onclick="history.back()" autofocus>Cancel</button>
         <button class="delete">Delete</button>
     </form>
 

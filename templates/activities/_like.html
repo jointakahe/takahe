@@ -1,10 +1,10 @@
 {% if post.pk in interactions.like %}
-    <a title="Unlike" class="active" hx-post="{{ post.urls.action_unlike }}" hx-swap="outerHTML" role="menuitem">
+    <a title="Unlike" class="active" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ post.urls.action_unlike }}" hx-swap="outerHTML" role="menuitem" tabindex="0">
         <i class="fa-solid fa-star"></i>
         <span class="like-count">{{ post.stats_with_defaults.likes }}</span>
     </a>
 {% else %}
-    <a title="Like" hx-post="{{ post.urls.action_like }}" hx-swap="outerHTML" role="menuitem">
+    <a title="Like" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ post.urls.action_like }}" hx-swap="outerHTML" role="menuitem" tabindex="0">
         <i class="fa-solid fa-star"></i>
         <span class="like-count">{{ post.stats_with_defaults.likes }}</span>
     </a>
