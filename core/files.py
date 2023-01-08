@@ -44,7 +44,7 @@ def resize_image(
             resized_image.save(new_image_bytes, format=img.format)
             file = ImageFile(new_image_bytes)
         else:
-            resized_image.save(new_image_bytes, format="webp")
+            resized_image.save(new_image_bytes, format="webp", save_all=True)
             file = ImageFile(new_image_bytes, name="image.webp")
         file.image = resized_image
         return file
