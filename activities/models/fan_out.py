@@ -72,7 +72,10 @@ class FanOutStates(StateGraph):
                 try:
                     await post.author.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(post.to_create_ap()),
                     )
                 except httpx.RequestError:
@@ -85,7 +88,10 @@ class FanOutStates(StateGraph):
                 try:
                     await post.author.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(post.to_update_ap()),
                     )
                 except httpx.RequestError:
@@ -108,7 +114,10 @@ class FanOutStates(StateGraph):
                 try:
                     await post.author.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(post.to_delete_ap()),
                     )
                 except httpx.RequestError:
@@ -130,7 +139,10 @@ class FanOutStates(StateGraph):
                 try:
                     await interaction.identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(interaction.to_ap()),
                     )
                 except httpx.RequestError:
@@ -153,7 +165,10 @@ class FanOutStates(StateGraph):
                 try:
                     await interaction.identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(interaction.to_undo_ap()),
                     )
                 except httpx.RequestError:
@@ -165,7 +180,10 @@ class FanOutStates(StateGraph):
                 try:
                     await identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(fan_out.subject_identity.to_update_ap()),
                     )
                 except httpx.RequestError:
@@ -177,7 +195,10 @@ class FanOutStates(StateGraph):
                 try:
                     await identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(fan_out.subject_identity.to_delete_ap()),
                     )
                 except httpx.RequestError:
@@ -214,6 +235,9 @@ class FanOut(StatorModel):
     state = StateField(FanOutStates)
 
     # The user this event is targeted at
+    # We always need this, but if there is a shared inbox URL on the user
+    # we'll deliver to that and won't have fanouts for anyone else with the
+    # same one.
     identity = models.ForeignKey(
         "users.Identity",
         on_delete=models.CASCADE,

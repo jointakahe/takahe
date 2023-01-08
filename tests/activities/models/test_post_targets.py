@@ -2,7 +2,7 @@ import pytest
 from asgiref.sync import async_to_sync
 
 from activities.models import Post
-from users.models import Follow
+from users.models import Domain, Follow, Identity
 
 
 @pytest.mark.django_db
@@ -48,6 +48,59 @@ def test_post_targets_simple(identity, other_identity, remote_identity):
     targets = async_to_sync(post.aget_targets)()
     # Only targets locals who are mentioned
     assert targets == {other_identity}
+
+
+@pytest.mark.django_db
+def test_post_targets_shared(identity, other_identity):
+    """
+    Tests that remote identities with the same shared inbox only get one target.
+    """
+    # Create a pair of remote identities that share an inbox URI
+    domain = Domain.objects.create(domain="remote.test", local=False, state="updated")
+    remote1 = Identity.objects.create(
+        actor_uri="https://remote.test/test1/",
+        inbox_uri="https://remote.test/@test1/inbox/",
+        shared_inbox_uri="https://remote.test/inbox/",
+        profile_uri="https://remote.test/@test1/",
+        username="test1",
+        domain=domain,
+        name="Test1",
+        local=False,
+        state="updated",
+    )
+    remote2 = Identity.objects.create(
+        actor_uri="https://remote.test/test2/",
+        inbox_uri="https://remote.test/@test2/inbox/",
+        shared_inbox_uri="https://remote.test/inbox/",
+        profile_uri="https://remote.test/@test2/",
+        username="test2",
+        domain=domain,
+        name="Test2",
+        local=False,
+        state="updated",
+    )
+
+    # Make a post mentioning one local and two remote identities
+    post = Post.objects.create(
+        content="<p>Test</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(other_identity)
+    post.mentions.add(remote1)
+    post.mentions.add(remote2)
+    targets = async_to_sync(post.aget_targets)()
+
+    # We should only have one of remote1 or remote2 in there as they share a
+    # shared inbox URI
+    assert (targets == {identity, other_identity, remote1}) or (
+        targets
+        == {
+            identity,
+            other_identity,
+            remote2,
+        }
+    )
 
 
 @pytest.mark.django_db

@@ -707,7 +707,20 @@ class Post(StatorModel):
         # If it's a local post, include the author
         if self.local:
             targets.add(self.author)
-        return targets
+        # Now dedupe the targets based on shared inboxes (we only keep one per
+        # shared inbox)
+        deduped_targets = set()
+        shared_inboxes = set()
+        for target in targets:
+            if target.local or not target.shared_inbox_uri:
+                deduped_targets.add(target)
+            elif target.shared_inbox_uri not in shared_inboxes:
+                shared_inboxes.add(target.shared_inbox_uri)
+                deduped_targets.add(target)
+            else:
+                # Their shared inbox is already being sent to
+                pass
+        return deduped_targets
 
     ### ActivityPub (inbound) ###
 
