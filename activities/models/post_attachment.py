@@ -35,6 +35,7 @@ class PostAttachment(StatorModel):
     state = StateField(graph=PostAttachmentStates)
 
     mimetype = models.CharField(max_length=200)
+    original_filename = models.CharField(max_length=2048, null=True, blank=True)
 
     # Files may not be populated if it's remote and not cached on our side yet
     file = models.FileField(

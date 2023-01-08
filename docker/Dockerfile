@@ -9,6 +9,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
         libxslt1.1 \
+        libmagic-dev \
         nginx \
         busybox \
     && rm -rf /var/lib/apt/lists/*

@@ -6,7 +6,7 @@
   _="on htmx:xhr:progress(loaded, total)
        set #attachmentProgress.value to (loaded/total)*100">
     {% csrf_token %}
-    {% include "forms/_field.html" with field=form.image %}
+    {% include "forms/_field.html" with field=form.file %}
     {% include "forms/_field.html" with field=form.description %}
     <div class="buttons">
         <button _="on click show #attachmentProgress with display:block then hide me">Upload</button>
