@@ -38,12 +38,12 @@ class FanOutStates(StateGraph):
                 # or it's a reply to us or the author
                 add = True
                 mentioned = {identity.id for identity in post.mentions.all()}
-                followed = await sync_to_async(set)(
-                    fan_out.identity.outbound_follows.filter(
-                        state__in=FollowStates.group_active()
-                    ).values_list("target_id", flat=True)
-                )
                 if post.in_reply_to:
+                    followed = await sync_to_async(set)(
+                        fan_out.identity.outbound_follows.filter(
+                            state__in=FollowStates.group_active()
+                        ).values_list("target_id", flat=True)
+                    )
                     interested_in = followed.union(
                         {post.author_id, fan_out.identity_id}
                     )
