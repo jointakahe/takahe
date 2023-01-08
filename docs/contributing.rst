@@ -83,10 +83,9 @@ Takahē requires Python 3.10 or above, so you'll need that first. Clone the repo
 
     git clone https://github.com/jointakahe/takahe/
 
-Using Make
-^^^^^^^^^^
-
 The repo comes with a ``Makefile`` that simplifies some of the local development setup:
+
+*Note: The default* ``make`` *targets use the postgres container from the Docker setup, so once built the db and migrations are already done. See below for instructions on setting up a local PostgreSQL instance for development.*
 
 Setup the local python and git environment::
 
@@ -96,75 +95,41 @@ Start the postgres db in Docker::
 
     make startdb
 
-Create your superuser::
-
-    make createsuperuser
-
-Run tests::
-
-    make test
-
-To run the development server::
-
-    make runserver
-
-To run Stator::
-
-    make runstator
-
-Local Virtualenv Installation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Clone the repo::
-
-    git clone https://github.com/jointakahe/takahe/
-
-Then, ``cd`` into that directory and create and activate a virtual environment
-(you can use other options, but this is the basic example)::
-
-    python3 -m venv .venv
-    . .venv/bin/activate
-
-Then install the development requirements::
-
-    python3 -m pip install -r requirements-dev.txt
-
-Enable the git commit hooks to do auto-formatting and linting
-(if you don't do this, our CI system will reject your PRs until they match)::
-
-    python3 -m pre_commit install
-
-Create a databse in your local PostgreSQL instance::
-
-    sudo -u postgres createdb takahe
-
-You will need to set up some (i.e. `TAKAHE_DATABASE_SERVER`) development settings
-(you can edit `.env` later)::
-
-    cp development.env .env
-
-Now you can apply migrations::
-
-    python3 -m manage migrate
+.. _start-web:
 
 You can run the web interface to see it at http://localhost:8000::
 
-    python3 -m manage runserver
+    make runserver
 
 You will need to run Stator in order to have background actions work::
 
-    python3 -m manage runstator
+    make runstator
 
 Make yourself a superuser account in order to log in::
 
-    python3 -m manage createsuperuser
+    make createsuperuser
 
 And you can run the tests with pytest::
 
-    python3 -m pytest
+    make test
 
 If you want to edit settings, you can edit the ``.env`` file.
 
+Local PostgreSQL Setup
+^^^^^^^^^^^^^^^^^^^^^^
+
+Create a database in your local PostgreSQL instance::
+
+    sudo -u postgres createdb takahe
+
+Update the ``.env`` file produced by ``make setup_local`` to comment out the Docker-based ``TAKAHE_DATABASE_SERVER`` setting, and uncomment the other one (see the comments in the ``.env`` file).
+
+Now you can apply migrations::
+
+    . .venv/bin/activate
+    python3 -m manage migrate
+
+With the database connection changed, `the rest <#start-web>`_ of the Direct Installation instructions are the same.
 
 Building Documentation
 ----------------------
