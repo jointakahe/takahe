@@ -136,13 +136,13 @@ class MastodonPaginator:
         since_id: str | None,
         limit: int | None,
     ) -> PaginationResult:
-        if max_id:
+        # These "does not start with interaction" checks can be removed after a
+        # couple months, when clients have flushed them out.
+        if max_id and not max_id.startswith("interaction"):
             queryset = queryset.filter(id__lt=max_id)
-
-        if since_id:
+        if since_id and not since_id.startswith("interaction"):
             queryset = queryset.filter(id__gt=since_id)
-
-        if min_id:
+        if min_id and not min_id.startswith("interaction"):
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
             queryset = queryset.filter(id__gt=min_id).order_by("id")
@@ -167,19 +167,19 @@ class MastodonPaginator:
         The home timeline requires special handling where we mix Posts and
         PostInteractions together.
         """
-        if max_id:
+        if max_id and not max_id.startswith("interaction"):
             queryset = queryset.filter(
                 models.Q(subject_post_id__lt=max_id)
                 | models.Q(subject_post_interaction_id__lt=max_id)
             )
 
-        if since_id:
+        if since_id and not since_id.startswith("interaction"):
             queryset = queryset.filter(
                 models.Q(subject_post_id__gt=since_id)
                 | models.Q(subject_post_interaction_id__gt=since_id)
             )
 
-        if min_id:
+        if min_id and not min_id.startswith("interaction"):
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
             queryset = queryset.filter(
