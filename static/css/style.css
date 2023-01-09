@@ -1607,8 +1607,11 @@ form .post {
         font-size: 22px;
     }
 
-    .left-column {
+    #main-content {
         padding: 8px;
+    }
+
+    .left-column {
         margin: var(--sm-header-height) var(--sm-sidebar-width) 0 0;
     }
 
