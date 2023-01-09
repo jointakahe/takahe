@@ -30,6 +30,7 @@ from core.ld import (
     get_value_or_map,
     parse_ld_date,
 )
+from core.snowflake import Snowflake
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import FollowStates
@@ -214,6 +215,8 @@ class Post(StatorModel):
         page = "Page"
         question = "Question"
         video = "Video"
+
+    id = models.BigIntegerField(primary_key=True, default=Snowflake.generate_post)
 
     # The author (attributedTo) of the post
     author = models.ForeignKey(
@@ -998,7 +1001,7 @@ class Post(StatorModel):
             "id": self.pk,
             "uri": self.object_uri,
             "created_at": format_ld_date(self.published),
-            "account": self.author.to_mastodon_json(),
+            "account": self.author.to_mastodon_json(include_counts=False),
             "content": self.safe_content_remote(),
             "visibility": visibility_mapping[self.visibility],
             "sensitive": self.sensitive,

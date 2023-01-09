@@ -4,6 +4,7 @@ import httpx
 from django.db import models, transaction
 
 from core.ld import canonicalise, get_str_or_id
+from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity
 
@@ -100,6 +101,8 @@ class Follow(StatorModel):
     """
     When one user (the source) follows other (the target)
     """
+
+    id = models.BigIntegerField(primary_key=True, default=Snowflake.generate_follow)
 
     source = models.ForeignKey(
         "users.Identity",

@@ -22,6 +22,7 @@ from core.ld import (
 )
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
+from core.snowflake import Snowflake
 from core.uploads import upload_namer
 from core.uris import (
     AutoAbsoluteUrl,
@@ -148,6 +149,8 @@ class Identity(StatorModel):
         blocked = 2
 
     ACTOR_TYPES = ["person", "service", "application", "group", "organization"]
+
+    id = models.BigIntegerField(primary_key=True, default=Snowflake.generate_identity)
 
     # The Actor URI is essentially also a PK - we keep the default numeric
     # one around as well for making nice URLs etc.
@@ -862,9 +865,9 @@ class Identity(StatorModel):
                 self.created.replace(hour=0, minute=0, second=0, microsecond=0)
             ),
             "last_status_at": None,  # TODO: populate
-            "statuses_count": self.posts.count(),
-            "followers_count": self.inbound_follows.count(),
-            "following_count": self.outbound_follows.count(),
+            "statuses_count": self.posts.count() if include_counts else 0,
+            "followers_count": self.inbound_follows.count() if include_counts else 0,
+            "following_count": self.outbound_follows.count() if include_counts else 0,
         }
 
     ### Cryptography ###

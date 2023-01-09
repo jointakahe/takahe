@@ -4,6 +4,7 @@ from django.utils import timezone
 from activities.models.fan_out import FanOut
 from activities.models.post import Post
 from core.ld import format_ld_date, get_str_or_id, parse_ld_date
+from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity
 
@@ -124,6 +125,11 @@ class PostInteraction(StatorModel):
     class Types(models.TextChoices):
         like = "like"
         boost = "boost"
+
+    id = models.BigIntegerField(
+        primary_key=True,
+        default=Snowflake.generate_post_interaction,
+    )
 
     # The state the boost is in
     state = StateField(PostInteractionStates)
@@ -327,13 +333,13 @@ class PostInteraction(StatorModel):
             raise ValueError(
                 f"Cannot make status JSON for interaction of type {self.type}"
             )
-        # Grab our subject post JSON, and just return it if we're a post
+        # Make a fake post for this boost (because mastodon treats boosts as posts)
         post_json = self.post.to_mastodon_json(interactions=interactions)
         return {
-            "id": f"interaction-{self.pk}",
+            "id": f"{self.pk}",
             "uri": post_json["uri"],
             "created_at": format_ld_date(self.published),
-            "account": self.identity.to_mastodon_json(),
+            "account": self.identity.to_mastodon_json(include_counts=False),
             "content": "",
             "visibility": post_json["visibility"],
             "sensitive": post_json["sensitive"],

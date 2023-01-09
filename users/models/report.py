@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 
 from core.ld import canonicalise, get_list
 from core.models import Config
+from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models import Domain
 
@@ -83,6 +84,8 @@ class Report(StatorModel):
         illegal = "illegal"
         remote = "remote"
         other = "other"
+
+    id = models.BigIntegerField(primary_key=True, default=Snowflake.generate_report)
 
     state = StateField(ReportStates)
 

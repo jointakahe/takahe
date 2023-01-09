@@ -10,6 +10,7 @@ import activities.models.fan_out
 import activities.models.post
 import activities.models.post_attachment
 import activities.models.post_interaction
+import core.snowflake
 import core.uploads
 import stator.models
 
@@ -28,11 +29,10 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigAutoField(
-                        auto_created=True,
+                    models.BigIntegerField(
+                        default=core.snowflake.Snowflake.generate_post,
                         primary_key=True,
                         serialize=False,
-                        verbose_name="ID",
                     ),
                 ),
                 ("state_ready", models.BooleanField(default=True)),
@@ -111,11 +111,10 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigAutoField(
-                        auto_created=True,
+                    models.BigIntegerField(
+                        default=core.snowflake.Snowflake.generate_post_interaction,
                         primary_key=True,
                         serialize=False,
-                        verbose_name="ID",
                     ),
                 ),
                 ("state_ready", models.BooleanField(default=True)),
