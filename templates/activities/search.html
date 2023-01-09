@@ -21,17 +21,17 @@
     {% if results.posts %}
         <h2>Posts</h2>
         <section class="icon-menu">
-        {% for post in results.posts %}
-            {% include "activities/_post.html" %}
-        {% endfor %}
+            {% for post in results.posts %}
+                {% include "activities/_post.html" %}
+            {% endfor %}
         </section>
     {% endif %}
     {% if results.hashtags %}
         <h2>Hashtags</h2>
         <section class="icon-menu">
-        {% for hashtag in results.hashtags %}
-            {% include "activities/_hashtag.html" with hide_stats=True %}
-        {% endfor %}
+            {% for hashtag in results.hashtags %}
+                {% include "activities/_hashtag.html" with hide_stats=True %}
+            {% endfor %}
         </section>
     {% endif %}
     {% if results and not results.identities and not results.hashtags and not results.posts %}

@@ -1,99 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>{% block title %}{% endblock %} - {{ config.site_name }}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% load static %}
-    <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
-    <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
-    <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="shortcut icon" href="{{ config.site_icon }}">
-    <script src="{% static "js/hyperscript.min.js" %}"></script>
-    <script src="{% static "js/htmx.min.js" %}"></script>
-    <script src="{% static "js/takahe.min.js" %}"></script>
-    <style>
-        body {
-            --color-highlight: {{ config.highlight_color }};
-        }
-        {% if not config_identity.visible_reaction_counts %}
-        .like-count {
-            display: none;
-        }
+    <head>
+        <title>{% block title %}{% endblock %} - {{ config.site_name }}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {% load static %}
+        <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
+        <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
+        <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="shortcut icon" href="{{ config.site_icon }}">
+        <script src="{% static "js/hyperscript.min.js" %}"></script>
+        <script src="{% static "js/htmx.min.js" %}"></script>
+        <script src="{% static "js/takahe.min.js" %}"></script>
+        <style>
+            body {
+                --color-highlight: {{ config.highlight_color }};
+            }
+            {% if not config_identity.visible_reaction_counts %}
+                .like-count {
+                    display: none;
+                }
+            {% endif %}
+        </style>
+        {% if config_identity.custom_css %}
+            <style>{{ config_identity.custom_css }}</style>
         {% endif %}
-    </style>
-    {% if config_identity.custom_css %}
-      <style>{{ config_identity.custom_css }}</style>
-    {% endif %}
-    {% block opengraph %}
-        {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
-    {% endblock %}
-    {% block extra_head %}{% endblock %}
-    {% block custom_head %}{% if config.custom_head %}{{ config.custom_head|safe }}{% endif %}{% endblock %}
-</head>
-<body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-    <a id='skip-to-main' class='screenreader-text' href='#main-content'>Skip to Content</a>
-    <a id='skip-to-nav' class='screenreader-text' href='#side-navigation'>Skip to Navigation</a>
-    <main>
-        {% block body_main %}
-        <header>
-            <a class="logo" href="/">
-                <img src="{{ config.site_icon }}" width="32">
-                {{ config.site_name }}
-            </a>
-            <menu>
-                {% if user.is_authenticated %}
-                    <a href="{% url "compose" %}" title="Compose" role="menuitem" {% if top_section == "compose" %}class="selected"{% endif %}>
-                        <i class="fa-solid fa-feather"></i>
+        {% block opengraph %}
+            {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
+        {% endblock %}
+        {% block extra_head %}{% endblock %}
+        {% block custom_head %}{% if config.custom_head %}{{ config.custom_head|safe }}{% endif %}{% endblock %}
+    </head>
+    <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <a id='skip-to-main' class='screenreader-text' href='#main-content'>Skip to Content</a>
+        <a id='skip-to-nav' class='screenreader-text' href='#side-navigation'>Skip to Navigation</a>
+        <main>
+            {% block body_main %}
+                <header>
+                    <a class="logo" href="/">
+                        <img src="{{ config.site_icon }}" width="32">
+                        {{ config.site_name }}
                     </a>
-                    <a href="{% url "search" %}" title="Search" role="menuitem" class="search {% if top_section == "search" %}selected{% endif %}">
-                        <i class="fa-solid fa-search"></i>
-                    </a>
-                    {% if allows_refresh %}
-                        <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s[isAtTopOfPage()]">
-                            <i class="fa-solid fa-rotate"></i>
-                        </a>
-                    {% endif %}
-                    <div class="gap"></div>
-                    <a href="{{ request.identity.urls.view }}" role="menuitem" class="identity">
-                        {% if not request.identity %}
-                            No Identity
-                            <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
+                    <menu>
+                        {% if user.is_authenticated %}
+                            <a href="{% url "compose" %}" title="Compose" role="menuitem" {% if top_section == "compose" %}class="selected"{% endif %}>
+                                <i class="fa-solid fa-feather"></i>
+                            </a>
+                            <a href="{% url "search" %}" title="Search" role="menuitem" class="search {% if top_section == "search" %}selected{% endif %}">
+                                <i class="fa-solid fa-search"></i>
+                            </a>
+                            {% if allows_refresh %}
+                                <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s[isAtTopOfPage()]">
+                                    <i class="fa-solid fa-rotate"></i>
+                                </a>
+                            {% endif %}
+                            <div class="gap"></div>
+                            <a href="{{ request.identity.urls.view }}" role="menuitem" class="identity">
+                                {% if not request.identity %}
+                                    No Identity
+                                    <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
+                                {% else %}
+                                    {{ request.identity.username }}
+                                    <img src="{{ request.identity.local_icon_url.relative }}" title="{{ request.identity.handle }}">
+                                {% endif %}
+                            </a>
                         {% else %}
-                            {{ request.identity.username }}
-                            <img src="{{ request.identity.local_icon_url.relative }}" title="{{ request.identity.handle }}">
+                            <div class="gap"></div>
+                            <a href="/auth/login/" role="menuitem" class="identity"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
                         {% endif %}
-                    </a>
-                {% else %}
-                    <div class="gap"></div>
-                    <a href="/auth/login/" role="menuitem" class="identity"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-                {% endif %}
-            </menu>
-        </header>
+                    </menu>
+                </header>
 
-        {% block full_content %}
-            {% include 'activities/_image_viewer.html' %}
-            {% block pre_content %}
+                {% block full_content %}
+                    {% include 'activities/_image_viewer.html' %}
+                    {% block pre_content %}
+                    {% endblock %}
+                    <div class="columns">
+                        <div class="left-column" id="main-content">
+                            {% block content %}
+                            {% endblock %}
+                        </div>
+                        <div class="right-column" id="side-navigation">
+                            {% block right_content %}
+                                {% include "activities/_menu.html" %}
+                            {% endblock %}
+                            {% include "_footer.html" %}
+                        </div>
+                    </div>
+                {% endblock %}
             {% endblock %}
-            <div class="columns">
-                <div class="left-column" id="main-content">
-                    {% block content %}
-                    {% endblock %}
-                </div>
-                <div class="right-column" id="side-navigation">
-                    {% block right_content %}
-                        {% include "activities/_menu.html" %}
-                    {% endblock %}
-                    {% include "_footer.html" %}
-                </div>
-            </div>
-        {% endblock %}
-        {% endblock %}
-    </main>
+        </main>
 
-    {% block footer %}
-    {% endblock %}
+        {% block footer %}
+        {% endblock %}
 
-</body>
+    </body>
 </html>

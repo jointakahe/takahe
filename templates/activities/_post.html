@@ -3,36 +3,36 @@
 <div class="post {% if reply %}reply{% endif %} {{ post.summary_class }}" data-takahe-id="{{ post.id }}" role="article" tabindex="0">
 
     <div class="post-banner">
-      {% include "identity/_identity_banner.html" with identity=post.author %}
-      <div>
-        <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
-            {% if post.visibility == 0 %}
-                <i class="visibility fa-solid fa-earth-oceania" title="Public" aria-label="public"></i>
-            {% elif post.visibility == 1 %}
-                <i class="visibility fa-solid fa-lock-open" title="Unlisted" aria-label="unlisted"></i>
-            {% elif post.visibility == 2 %}
-                <i class="visibility fa-solid fa-lock" title="Followers Only" aria-label="followers only"></i>
-            {% elif post.visibility == 3 %}
-                <i class="visibility fa-solid fa-at" title="Mentioned Only" aria-label="mentioned only"></i>
-            {% elif post.visibility == 4 %}
-            <i class="visibility fa-solid fa-link-slash" title="Local Only" aria-label="local only"></i>
-            {% endif %}
-            {% if post.published %}
-                <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
-            {% else %}
-                <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
-            {% endif %}
-        </time>
-      </div>
+        {% include "identity/_identity_banner.html" with identity=post.author %}
+        <div>
+            <time _="on click go url {% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %} then halt">
+                {% if post.visibility == 0 %}
+                    <i class="visibility fa-solid fa-earth-oceania" title="Public" aria-label="public"></i>
+                {% elif post.visibility == 1 %}
+                    <i class="visibility fa-solid fa-lock-open" title="Unlisted" aria-label="unlisted"></i>
+                {% elif post.visibility == 2 %}
+                    <i class="visibility fa-solid fa-lock" title="Followers Only" aria-label="followers only"></i>
+                {% elif post.visibility == 3 %}
+                    <i class="visibility fa-solid fa-at" title="Mentioned Only" aria-label="mentioned only"></i>
+                {% elif post.visibility == 4 %}
+                    <i class="visibility fa-solid fa-link-slash" title="Local Only" aria-label="local only"></i>
+                {% endif %}
+                {% if post.published %}
+                    <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.published }}">{{ post.published | timedeltashort }}</a>
+                {% else %}
+                    <a href="{% if link_original %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}" title="{{ post.created }}">{{ post.created | timedeltashort }}</a>
+                {% endif %}
+            </time>
+        </div>
     </div>
 
     {% if post.summary %}
         {% if config_identity.expand_linked_cws %}
-        <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt" tabindex="0">
+            <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt" tabindex="0">
         {% else %}
-        <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled then toggle .hidden on the next .content then halt" tabindex="0">
+            <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled then toggle .hidden on the next .content then halt" tabindex="0">
         {% endif %}
-            {{ post.summary }}
+        {{ post.summary }}
         </div>
     {% endif %}
 
@@ -40,65 +40,65 @@
         {{ post.safe_content_local }}
 
         {% if post.attachments.exists %}
-          <div class="attachments">
-            {% for attachment in post.attachments.all %}
-              {% if attachment.is_image %}
-                <a href="{{ attachment.full_url.relative }}" class="image" target="_blank"
-                  _="on click halt the event then call imageviewer.show(me)">
-                  <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name|default:'(no description)' }}" loading="lazy" data-original-url="{{ attachment.full_url.relative }}">
-                </a>
-              {% elif attachment.is_video %}
-                <a href="{{ attachment.full_url.relative }}" class="video">
-                  <video muted controls loop>
-                    <source src="{{ attachment.full_url.relative }}">
-                  </video>
-                </a>
-              {% endif %}
-            {% endfor %}
-          </div>
+            <div class="attachments">
+                {% for attachment in post.attachments.all %}
+                    {% if attachment.is_image %}
+                        <a href="{{ attachment.full_url.relative }}" class="image" target="_blank"
+                            _="on click halt the event then call imageviewer.show(me)">
+                            <img src="{{ attachment.thumbnail_url.relative }}" title="{{ attachment.name }}" alt="{{ attachment.name|default:'(no description)' }}" loading="lazy" data-original-url="{{ attachment.full_url.relative }}">
+                        </a>
+                    {% elif attachment.is_video %}
+                        <a href="{{ attachment.full_url.relative }}" class="video">
+                            <video muted controls loop>
+                                <source src="{{ attachment.full_url.relative }}">
+                            </video>
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
 
     {% if post.edited %}
-    <div class="edited" title="{{ post.edited }}">
-        <small>Edited {{ post.edited | timedeltashort }} ago</small>
-    </div>
+        <div class="edited" title="{{ post.edited }}">
+            <small>Edited {{ post.edited | timedeltashort }} ago</small>
+        </div>
     {% endif %}
 
     {% if request.identity %}
-      <div class="actions" role="menubar">
-        {% include "activities/_reply.html" %}
-        {% include "activities/_like.html" %}
-        {% include "activities/_boost.html" %}
-        <a title="Menu" class="menu" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu" tabindex="0">
-          <i class="fa-solid fa-bars"></i>
-        </a>
-        <menu>
-          <a href="{{ post.urls.view }}" role="menuitem">
-            <i class="fa-solid fa-comment"></i> View Post &amp; Replies
-          </a>
-          <a href="{{ post.urls.action_report }}" role="menuitem">
-            <i class="fa-solid fa-flag"></i> Report
-          </a>
-          {% if post.author == request.identity %}
-            <a href="{{ post.urls.action_edit }}" role="menuitem">
-              <i class="fa-solid fa-pen-to-square"></i> Edit
+        <div class="actions" role="menubar">
+            {% include "activities/_reply.html" %}
+            {% include "activities/_like.html" %}
+            {% include "activities/_boost.html" %}
+            <a title="Menu" class="menu" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu" tabindex="0">
+                <i class="fa-solid fa-bars"></i>
             </a>
-            <a href="{{ post.urls.action_delete }}" role="menuitem">
-              <i class="fa-solid fa-trash"></i> Delete
-            </a>
-          {% elif not post.local and post.url %}
-            <a href="{{ post.url }}" role="menuitem">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
-            </a>
-          {% endif %}
-          {% if request.user.admin %}
-            <a href="{{ post.urls.admin_edit }}" role="menuitem">
-              <i class="fa-solid fa-gear"></i> View In Admin
-            </a>
-          {% endif %}
-        </menu>
-      </div>
+            <menu>
+                <a href="{{ post.urls.view }}" role="menuitem">
+                    <i class="fa-solid fa-comment"></i> View Post &amp; Replies
+                </a>
+                <a href="{{ post.urls.action_report }}" role="menuitem">
+                    <i class="fa-solid fa-flag"></i> Report
+                </a>
+                {% if post.author == request.identity %}
+                    <a href="{{ post.urls.action_edit }}" role="menuitem">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </a>
+                    <a href="{{ post.urls.action_delete }}" role="menuitem">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </a>
+                {% elif not post.local and post.url %}
+                    <a href="{{ post.url }}" role="menuitem">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
+                    </a>
+                {% endif %}
+                {% if request.user.admin %}
+                    <a href="{{ post.urls.admin_edit }}" role="menuitem">
+                        <i class="fa-solid fa-gear"></i> View In Admin
+                    </a>
+                {% endif %}
+            </menu>
+        </div>
     {% endif %}
 
 </div>

@@ -14,42 +14,42 @@
         <i class="fa-solid fa-right-from-bracket" title="Logout"></i> Logout
     </a>
     {% if request.user.moderator or request.user.admin %}
-    <h3>Moderation</h3>
-    <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %} title="Identities">
-        <i class="fa-solid fa-id-card"></i> Identities
-    </a>
-    <a href="{% url "admin_invites" %}" {% if section == "invites" %}class="selected"{% endif %} title="Invites">
-        <i class="fa-solid fa-envelope"></i> Invites
-    </a>
-    <a href="{% url "admin_hashtags" %}" {% if section == "hashtags" %}class="selected"{% endif %} title="Hashtags">
-        <i class="fa-solid fa-hashtag"></i> Hashtags
-    </a>
-    <a href="{% url "admin_reports" %}" {% if section == "reports" %}class="selected"{% endif %} title="Reports">
-        <i class="fa-solid fa-flag"></i> Reports
-    </a>
+        <h3>Moderation</h3>
+        <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %} title="Identities">
+            <i class="fa-solid fa-id-card"></i> Identities
+        </a>
+        <a href="{% url "admin_invites" %}" {% if section == "invites" %}class="selected"{% endif %} title="Invites">
+            <i class="fa-solid fa-envelope"></i> Invites
+        </a>
+        <a href="{% url "admin_hashtags" %}" {% if section == "hashtags" %}class="selected"{% endif %} title="Hashtags">
+            <i class="fa-solid fa-hashtag"></i> Hashtags
+        </a>
+        <a href="{% url "admin_reports" %}" {% if section == "reports" %}class="selected"{% endif %} title="Reports">
+            <i class="fa-solid fa-flag"></i> Reports
+        </a>
     {% endif %}
     {% if request.user.admin %}
-    <h3>Administration</h3>
-    <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %} title="Basic">
-        <i class="fa-solid fa-book"></i> Basic
-    </a>
-    <a href="{% url "admin_policies" %}" {% if section == "policies" %}class="selected"{% endif %} title="Policies">
-        <i class="fa-solid fa-file-lines"></i> Policies
-    </a>
-    <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
-        <i class="fa-solid fa-globe"></i> Domains
-    </a>
-    <a href="{% url "admin_federation" %}" {% if section == "federation" %}class="selected"{% endif %} title="Federation">
-        <i class="fa-solid fa-diagram-project"></i> Federation
-    </a>
-    <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %} title="Users">
-        <i class="fa-solid fa-users"></i> Users
-    </a>
-    <a href="{% url "admin_stator" %}" {% if section == "stator" %}class="selected"{% endif %} title="Stator">
-        <i class="fa-solid fa-clock-rotate-left"></i> Stator
-    </a>
-    <a href="/djadmin" title="Django Admin" class="danger">
-        <i class="fa-solid fa-gear"></i> Django Admin
-    </a>
+        <h3>Administration</h3>
+        <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %} title="Basic">
+            <i class="fa-solid fa-book"></i> Basic
+        </a>
+        <a href="{% url "admin_policies" %}" {% if section == "policies" %}class="selected"{% endif %} title="Policies">
+            <i class="fa-solid fa-file-lines"></i> Policies
+        </a>
+        <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
+            <i class="fa-solid fa-globe"></i> Domains
+        </a>
+        <a href="{% url "admin_federation" %}" {% if section == "federation" %}class="selected"{% endif %} title="Federation">
+            <i class="fa-solid fa-diagram-project"></i> Federation
+        </a>
+        <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %} title="Users">
+            <i class="fa-solid fa-users"></i> Users
+        </a>
+        <a href="{% url "admin_stator" %}" {% if section == "stator" %}class="selected"{% endif %} title="Stator">
+            <i class="fa-solid fa-clock-rotate-left"></i> Stator
+        </a>
+        <a href="/djadmin" title="Django Admin" class="danger">
+            <i class="fa-solid fa-gear"></i> Django Admin
+        </a>
     {% endif %}
 </nav>

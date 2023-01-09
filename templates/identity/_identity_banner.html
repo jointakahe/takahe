@@ -1,33 +1,33 @@
 <div class="identity-banner">
-  {% if link_avatar is False %}
-    <div class="avatar-link">
-  {% else %}
-    <a href="{{ identity.urls.view }}" tabindex="-1" class="avatar-link">
-  {% endif %}
+    {% if link_avatar is False %}
+        <div class="avatar-link">
+    {% else %}
+        <a href="{{ identity.urls.view }}" tabindex="-1" class="avatar-link">
+    {% endif %}
     <img
-      src="{{ identity.local_icon_url.relative }}"
-      class="icon"
-      alt="Avatar for {{ identity.name_or_handle }}"
-      loading="lazy"
-      data-handle="{{ identity.name_or_handle }}"
-      _="on error set my.src to generate_avatar(@data-handle)"
+        src="{{ identity.local_icon_url.relative }}"
+        class="icon"
+        alt="Avatar for {{ identity.name_or_handle }}"
+        loading="lazy"
+        data-handle="{{ identity.name_or_handle }}"
+        _="on error set my.src to generate_avatar(@data-handle)"
     >
-  {% if link_avatar is False%}
-    </div>
-  {% else %}
-    </a>
-  {% endif %}
+    {% if link_avatar is False%}
+        </div>
+    {% else %}
+        </a>
+    {% endif %}
 
-  {% if link_handle is False%}
-    <div class="handle">
-  {% else %}
-    <a href="{{ identity.urls.view }}" class="handle">
-  {% endif %}
-      <div class="link">{{ identity.html_name_or_handle }}</div>
-      <small>@{{ identity.handle }}</small>
-  {% if link_handle is False %}
-    </div>
-  {% else %}
-    </a>
-  {% endif %}
+    {% if link_handle is False%}
+        <div class="handle">
+    {% else %}
+        <a href="{{ identity.urls.view }}" class="handle">
+    {% endif %}
+    <div class="link">{{ identity.html_name_or_handle }}</div>
+    <small>@{{ identity.handle }}</small>
+    {% if link_handle is False %}
+        </div>
+    {% else %}
+        </a>
+    {% endif %}
 </div>

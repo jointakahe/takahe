@@ -4,15 +4,15 @@
 
 <div class="poll">
     <h3 style="display: none;">Options: {% if post.type_data.mode == "oneOf" %}<small>(choose one)</small>{% endif %}</h3>
-{% for item in post.type_data.options %}
-{% if forloop.first %}<ul>{% endif %}{% widthratio item.votes post.type_data.voter_count 100 as item_percent %}
-    <li><label class="poll-option">
-        <input style="display:none" name="vote-options" type="{% if post.type_data.mode == "oneOf" %}radio{% else %}checkbox{% endif %}" value="0">
-        <span class="poll-number" title="{{ item.votes }} votes">{{ item_percent }}%</span>
-        <span class="poll-option-text">{{ item.name }}</span>
-    </label>
-{% if forloop.last %}</ul>{% endif %}
-{% endfor %}
+    {% for item in post.type_data.options %}
+        {% if forloop.first %}<ul>{% endif %}{% widthratio item.votes post.type_data.voter_count 100 as item_percent %}
+        <li><label class="poll-option">
+            <input style="display:none" name="vote-options" type="{% if post.type_data.mode == "oneOf" %}radio{% else %}checkbox{% endif %}" value="0">
+            <span class="poll-number" title="{{ item.votes }} votes">{{ item_percent }}%</span>
+            <span class="poll-option-text">{{ item.name }}</span>
+        </label>
+            {% if forloop.last %}</ul>{% endif %}
+    {% endfor %}
     <div class="poll-footer">
         <span class="vote-total">{{ post.type_data.voter_count }} people</span>
         &mdash;

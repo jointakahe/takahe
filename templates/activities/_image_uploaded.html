@@ -9,11 +9,11 @@
     </div>
 </div>
 {% if request.htmx %}
-<button class="add-image"
-    hx-get='{% url "compose_image_upload" %}'
-    hx-target="this"
-    hx-swap="outerHTML"
-    _="on load if length of <.uploaded-image/> > 3 then hide me">
-    Add Image
-</button>
+    <button class="add-image"
+        hx-get='{% url "compose_image_upload" %}'
+        hx-target="this"
+        hx-swap="outerHTML"
+        _="on load if length of <.uploaded-image/> > 3 then hide me">
+        Add Image
+    </button>
 {% endif %}

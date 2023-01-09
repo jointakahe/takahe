@@ -11,9 +11,9 @@
         {% endif %}
         {{ field.errors }}
         {% if field.field.widget.input_type == "file" and field.value %}
-        <div class="clear">
-            <input type="checkbox" class="clear" name="{{ field.name }}__clear"> Clear current value</input>
-        </div>
+            <div class="clear">
+                <input type="checkbox" class="clear" name="{{ field.name }}__clear"> Clear current value</input>
+            </div>
         {% endif %}
         {{ field }}
     </div>

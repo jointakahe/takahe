@@ -17,31 +17,31 @@
     <section class="icon-menu">
         {% for identity in page_obj %}
             <a class="option " href="{{ identity.urls.view }}">
-              <div class="option-content">
-                {% include "identity/_identity_banner.html" with identity=identity link_avatar=False link_handle=False %}
-              </div>
-              <div class="option-actions">
-                {% if identity.id in outbound_ids %}
-                  <span class="pill">Following</span>
-                {% endif %}
-                {% if identity.id in inbound_ids %}
-                    <span class="pill">Follows You</span>
-                {% endif %}
+                <div class="option-content">
+                    {% include "identity/_identity_banner.html" with identity=identity link_avatar=False link_handle=False %}
+                </div>
+                <div class="option-actions">
+                    {% if identity.id in outbound_ids %}
+                        <span class="pill">Following</span>
+                    {% endif %}
+                    {% if identity.id in inbound_ids %}
+                        <span class="pill">Follows You</span>
+                    {% endif %}
 
-                  {% if inbound %}
-                    <form action="{{ identity.urls.action }}" method="POST" class="follow">
-                        {% csrf_token %}
-                        {% if identity.id in outbound_ids %}
-                            <input type="hidden" name="action" value="unfollow">
-                            <button class="destructive">Unfollow</button>
-                        {% else %}
-                            <input type="hidden" name="action" value="follow">
-                            <button>Follow</button>
-                        {% endif %}
-                    </form>
-                  {% endif %}
-                  <time>{{ identity.follow_date | timedeltashort }} ago</time>
-              </div>
+                    {% if inbound %}
+                        <form action="{{ identity.urls.action }}" method="POST" class="follow">
+                            {% csrf_token %}
+                            {% if identity.id in outbound_ids %}
+                                <input type="hidden" name="action" value="unfollow">
+                                <button class="destructive">Unfollow</button>
+                            {% else %}
+                                <input type="hidden" name="action" value="follow">
+                                <button>Follow</button>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                    <time>{{ identity.follow_date | timedeltashort }} ago</time>
+                </div>
             </a>
         {% empty %}
             <p class="option empty">You {% if inbound %}have no followers{% else %}are not following anyone{% endif %}.</p>

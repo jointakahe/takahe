@@ -9,9 +9,9 @@
         <i class="fa-solid fa-right-from-bracket"></i> Logout
     </a>
     {% if request.user.admin %}
-    <h3>Administration</h3>
-    <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
-        <i class="fa-solid fa-globe"></i> Domains
-    </a>
+        <h3>Administration</h3>
+        <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
+            <i class="fa-solid fa-globe"></i> Domains
+        </a>
     {% endif %}
 </nav>

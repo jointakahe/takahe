@@ -10,44 +10,44 @@
             {% endif %}
             <form action="{{ identity.urls.action }}" method="POST" class="inline-menu">
                 {% csrf_token %}
-            {% if follow %}
-                <input type="hidden" name="action" value="unfollow">
-                <button class="destructive" title="Unfollow"><i class="fa-solid fa-user-minus"></i>
-                {% if follow.pending %}Follow Pending{% else %}Unfollow{% endif %}
-                </button>
-            {% else %}
-                <input type="hidden" name="action" value="follow">
-                <button><i class="fa-solid fa-user-plus"></i> Follow</button>
-            {% endif %}
+                {% if follow %}
+                    <input type="hidden" name="action" value="unfollow">
+                    <button class="destructive" title="Unfollow"><i class="fa-solid fa-user-minus"></i>
+                        {% if follow.pending %}Follow Pending{% else %}Unfollow{% endif %}
+                    </button>
+                {% else %}
+                    <input type="hidden" name="action" value="follow">
+                    <button><i class="fa-solid fa-user-plus"></i> Follow</button>
+                {% endif %}
             </form>
         {% endif %}
 
         {% if request.user.admin %}
-        <a title="Menu" class="menu button" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" aria-haspopup="menu" tabindex="0">
-            <i class="fa-solid fa-bars"></i>
-        </a>
-        <menu>
-            {% if follow %}
-                <form action="{{ identity.urls.action }}" method="POST" class="inline">
-                {% csrf_token %}
-                {% if follow.boosts %}
-                    <input type="hidden" name="action" value="hide_boosts">
-                    <button role="menuitem"><i class="fa-solid fa-retweet"></i> Hide boosts</button>
-                {% else %}
-                    <input type="hidden" name="action" value="show_boosts">
-                    <button role="menuitem"><i class="fa-solid fa-retweet"></i> Show boosts</button>
+            <a title="Menu" class="menu button" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" aria-haspopup="menu" tabindex="0">
+                <i class="fa-solid fa-bars"></i>
+            </a>
+            <menu>
+                {% if follow %}
+                    <form action="{{ identity.urls.action }}" method="POST" class="inline">
+                        {% csrf_token %}
+                        {% if follow.boosts %}
+                            <input type="hidden" name="action" value="hide_boosts">
+                            <button role="menuitem"><i class="fa-solid fa-retweet"></i> Hide boosts</button>
+                        {% else %}
+                            <input type="hidden" name="action" value="show_boosts">
+                            <button role="menuitem"><i class="fa-solid fa-retweet"></i> Show boosts</button>
+                        {% endif %}
+                    </form>
                 {% endif %}
-                </form>
-            {% endif %}
-            {% if request.user.admin %}
-            <a href="{{ identity.urls.admin_edit }}" role="menuitem">
-                <i class="fa-solid fa-user-gear"></i> View in Admin
-            </a>
-            <a href="{{ identity.urls.djadmin_edit }}" role="menuitem">
-                <i class="fa-solid fa-gear"></i> View in djadmin
-            </a>
-            {% endif %}
-        </menu>
-    {% endif %}
+                {% if request.user.admin %}
+                    <a href="{{ identity.urls.admin_edit }}" role="menuitem">
+                        <i class="fa-solid fa-user-gear"></i> View in Admin
+                    </a>
+                    <a href="{{ identity.urls.djadmin_edit }}" role="menuitem">
+                        <i class="fa-solid fa-gear"></i> View in djadmin
+                    </a>
+                {% endif %}
+            </menu>
+        {% endif %}
     </div>
 </div>

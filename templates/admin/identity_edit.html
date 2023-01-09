@@ -59,14 +59,14 @@
             </table>
         </fieldset>
         {% if identity.local %}
-        <fieldset>
-            <legend>Users</legend>
-            <p>
-                {% for user in identity.users.all %}
-                    <a href="{{ user.urls.admin_edit }}">{{ user.email }}</a>{% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            </p>
-        </fieldset>
+            <fieldset>
+                <legend>Users</legend>
+                <p>
+                    {% for user in identity.users.all %}
+                        <a href="{{ user.urls.admin_edit }}">{{ user.email }}</a>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            </fieldset>
         {% endif %}
         <fieldset>
             <legend>Technical</legend>
