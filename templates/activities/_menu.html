@@ -29,9 +29,9 @@
             <i class="fa-solid fa-search"></i> Search
         </a>
         {% if current_page == "tag" %}
-        <a href="{% url "tag" hashtag.hashtag %}" class="selected" title="Tag {{ hashtag.display_name }}">
-            <i class="fa-solid fa-hashtag"></i> {{ hashtag.display_name }}
-        </a>
+            <a href="{% url "tag" hashtag.hashtag %}" class="selected" title="Tag {{ hashtag.display_name }}">
+                <i class="fa-solid fa-hashtag"></i> {{ hashtag.display_name }}
+            </a>
         {% endif %}
         <a href="{% url "settings" %}" {% if top_section == "settings" %}class="selected"{% endif %} title="Settings">
             <i class="fa-solid fa-gear"></i> Settings

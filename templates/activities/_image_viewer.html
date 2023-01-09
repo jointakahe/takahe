@@ -1,4 +1,5 @@
 <script type="text/hyperscript">
+    {# fmt:off #}
     def imageviewer.show(source)
         set source_url to (<img /> in source) @data-original-url
         set source_alt to (<img /> in source) @alt
@@ -22,6 +23,7 @@
         set <#image-viewer img /> @alt to ''
         set <#image-viewer figcaption />'s textContent to ''
     end
+    {# fmt:on #}
 </script>
 <figure id="image-viewer" _="on click imageviewer.close()">
     <picture>

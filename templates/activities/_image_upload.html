@@ -1,10 +1,10 @@
 <form
-  hx-encoding='multipart/form-data'
-  hx-post='{% url "compose_image_upload" %}'
-  hx-target="this"
-  hx-swap="outerHTML"
-  _="on htmx:xhr:progress(loaded, total)
-       set #attachmentProgress.value to (loaded/total)*100">
+    hx-encoding='multipart/form-data'
+    hx-post='{% url "compose_image_upload" %}'
+    hx-target="this"
+    hx-swap="outerHTML"
+    _="on htmx:xhr:progress(loaded, total)
+        set #attachmentProgress.value to (loaded/total)*100">
     {% csrf_token %}
     {% include "forms/_field.html" with field=form.image %}
     {% include "forms/_field.html" with field=form.description %}

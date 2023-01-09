@@ -3,14 +3,14 @@
 {% block title %}#{{ hashtag.display_name }} Timeline{% endblock %}
 
 {% block content %}
-<div class="timeline-name">Explore Trending Tags</div>
+    <div class="timeline-name">Explore Trending Tags</div>
 
-<section class="icon-menu">
-    {% for hashtag in page_obj %}
-        {% include "activities/_hashtag.html" %}
-    {% empty %}
-        No tags are trending yet.
-    {% endfor %}
+    <section class="icon-menu">
+        {% for hashtag in page_obj %}
+            {% include "activities/_hashtag.html" %}
+        {% empty %}
+            No tags are trending yet.
+        {% endfor %}
 
-</section>
+    </section>
 {% endblock %}

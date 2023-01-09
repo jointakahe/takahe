@@ -10,9 +10,9 @@
             <legend>Permissions</legend>
             {% include "forms/_field.html" with field=form.status %}
             {% if same_user %}
-            <ul class="errorlist">
-                <li>You cannot edit your own permission status!</li>
-            </ul>
+                <ul class="errorlist">
+                    <li>You cannot edit your own permission status!</li>
+                </ul>
             {% endif %}
         </fieldset>
         <fieldset>

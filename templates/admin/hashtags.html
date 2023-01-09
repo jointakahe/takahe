@@ -6,33 +6,33 @@
     <section class="icon-menu">
         {% for hashtag in page_obj %}
             <a class="option hashtags" href="{{ hashtag.urls.admin_edit }}">
-              <div class="tag">
-                <i class="fa-solid fa-hashtag"></i>
-                <span class="handle">
-                    {{ hashtag.display_name }}
-                    <small>
-                        {% if hashtag.public %}Public{% elif hashtag.public is None %}Unreviewed{% else %}Private{% endif %}
-                    </small>
-                </span>
-              </div>
-              {% if hashtag.stats %}
-                <div class="count">
-                  <span class="handle">
-                      {{ hashtag.stats.total }}
-                      <small>Total</small>
-                  </span>
+                <div class="tag">
+                    <i class="fa-solid fa-hashtag"></i>
+                    <span class="handle">
+                        {{ hashtag.display_name }}
+                        <small>
+                            {% if hashtag.public %}Public{% elif hashtag.public is None %}Unreviewed{% else %}Private{% endif %}
+                        </small>
+                    </span>
                 </div>
-              {% endif %}
-              {% if hashtag.aliases %}
-                <div class="count">
-                  <span class="handle">
-                    {% for alias in hashtag.aliases %}
-                        {{ alias }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                    <small>Aliases</small>
-                  </span>
-                </div>
-              {% endif %}
+                {% if hashtag.stats %}
+                    <div class="count">
+                        <span class="handle">
+                            {{ hashtag.stats.total }}
+                            <small>Total</small>
+                        </span>
+                    </div>
+                {% endif %}
+                {% if hashtag.aliases %}
+                    <div class="count">
+                        <span class="handle">
+                            {% for alias in hashtag.aliases %}
+                                {{ alias }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                            <small>Aliases</small>
+                        </span>
+                    </div>
+                {% endif %}
             </a>
         {% empty %}
             <p class="option empty">There are no hashtags yet.</p>

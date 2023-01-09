@@ -14,7 +14,7 @@
         </a> liked your post
     </div>
     {% if not event.collapsed %}
-    {% include "activities/_post.html" with post=event.subject_post %}
+        {% include "activities/_post.html" with post=event.subject_post %}
     {% endif %}
 {% elif event.type == "mentioned" %}
     <div class="mention-banner">
@@ -23,7 +23,7 @@
         </a> mentioned you
     </div>
     {% if not event.collapsed %}
-    {% include "activities/_post.html" with post=event.subject_post %}
+        {% include "activities/_post.html" with post=event.subject_post %}
     {% endif %}
 {% elif event.type == "boosted" %}
     <div class="boost-banner">
@@ -32,7 +32,7 @@
         </a> boosted your post
     </div>
     {% if not event.collapsed %}
-    {% include "activities/_post.html" with post=event.subject_post event=event %}
+        {% include "activities/_post.html" with post=event.subject_post event=event %}
     {% endif %}
 {% else %}
     Unknown event type {{event.type}}
