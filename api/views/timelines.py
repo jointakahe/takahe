@@ -1,6 +1,5 @@
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
-from activities.models import Post
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
@@ -20,9 +19,9 @@ def home(
     limit: int = 20,
 ):
     # Grab a paginated result set of instances
-    paginator = MastodonPaginator(Post, sort_attribute="published")
+    paginator = MastodonPaginator()
     queryset = TimelineService(request.identity).home()
-    pager = paginator.paginate(
+    pager = paginator.paginate_home(
         queryset,
         min_id=min_id,
         max_id=max_id,
@@ -61,7 +60,7 @@ def public(
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
     # Grab a paginated result set of instances
-    paginator = MastodonPaginator(Post, sort_attribute="published")
+    paginator = MastodonPaginator()
     pager = paginator.paginate(
         queryset,
         min_id=min_id,
@@ -101,7 +100,7 @@ def hashtag(
     if only_media:
         queryset = queryset.filter(attachments__id__isnull=True)
     # Grab a paginated result set of instances
-    paginator = MastodonPaginator(Post, sort_attribute="published")
+    paginator = MastodonPaginator()
     pager = paginator.paginate(
         queryset,
         min_id=min_id,

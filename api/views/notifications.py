@@ -35,7 +35,7 @@ def notifications(
     queryset = TimelineService(request.identity).notifications(
         [base_types[r] for r in requested_types if r in base_types]
     )
-    paginator = MastodonPaginator(TimelineEvent)
+    paginator = MastodonPaginator()
     pager = paginator.paginate(
         queryset,
         min_id=min_id,

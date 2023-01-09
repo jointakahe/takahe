@@ -3,7 +3,6 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field
 
-from activities.models import Post
 from activities.services import SearchService
 from api import schemas
 from api.decorators import identity_required
@@ -151,7 +150,7 @@ def account_statuses(
     if tagged:
         queryset = queryset.tagged_with(tagged)
     # Get user posts with pagination
-    paginator = MastodonPaginator(Post, sort_attribute="published")
+    paginator = MastodonPaginator()
     pager = paginator.paginate(
         queryset,
         min_id=min_id,
@@ -219,7 +218,7 @@ def account_following(
 
     service = IdentityService(identity)
 
-    paginator = MastodonPaginator(Identity, max_limit=80, sort_attribute="username")
+    paginator = MastodonPaginator(max_limit=80)
     pager = paginator.paginate(
         service.following(),
         min_id=min_id,

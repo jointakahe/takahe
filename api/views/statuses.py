@@ -16,7 +16,6 @@ from activities.services import PostService
 from api import schemas
 from api.views.base import api_router
 from core.models import Config
-from users.models import Identity
 
 from ..decorators import identity_required
 from ..pagination import MastodonPaginator
@@ -142,20 +141,18 @@ def favourited_by(
     # a concept of "private status" yet.
     post = get_object_or_404(Post, pk=id)
 
-    paginator = MastodonPaginator(Identity, sort_attribute="published")
+    paginator = MastodonPaginator()
     pager = paginator.paginate(
         post.interactions.filter(
             type=PostInteraction.Types.like,
             state__in=PostInteractionStates.group_active(),
-        )
-        .select_related("identity")
-        .order_by("published"),
+        ).select_related("identity"),
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    pager.jsonify_identities()
+    pager.jsonify_results(lambda r: r.identity.to_mastodon_json(include_counts=False))
 
     if pager.results:
         response.headers["Link"] = pager.link_header(

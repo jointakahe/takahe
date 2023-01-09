@@ -38,15 +38,18 @@ def test_webfinger_system_actor(client):
 
 
 @pytest.mark.django_db
-def test_delete_actor(client, identity):
+def test_delete_unknown_actor(client, identity):
+    """
+    Tests that unknown actor delete messages are dropped
+    """
     data = {
         "@context": "https://www.w3.org/ns/activitystreams",
-        "actor": "https://mastodon.social/users/fakec8b6984105c8f15070a2",
-        "id": "https://mastodon.social/users/fakec8b6984105c8f15070a2#delete",
-        "object": "https://mastodon.social/users/fakec8b6984105c8f15070a2",
+        "actor": "https://mastodon.test/users/fakec8b6984105c8f15070a2",
+        "id": "https://mastodon.test/users/fakec8b6984105c8f15070a2#delete",
+        "object": "https://mastodon.test/users/fakec8b6984105c8f15070a2",
         "signature": {
             "created": "2022-12-06T03:54:28Z",
-            "creator": "https://mastodon.social/users/fakec8b6984105c8f15070a2#main-key",
+            "creator": "https://mastodon.test/users/fakec8b6984105c8f15070a2#main-key",
             "signatureValue": "This value doesn't matter",
             "type": "RsaSignature2017",
         },
@@ -56,4 +59,5 @@ def test_delete_actor(client, identity):
     resp = client.post(
         identity.inbox_uri, data=data, content_type="application/activity+json"
     )
+    print(resp.content)
     assert resp.status_code == 202

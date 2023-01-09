@@ -117,35 +117,16 @@ class PaginationResult:
 class MastodonPaginator:
     """
     Paginates in the Mastodon style (max_id, min_id, etc).
+    Note that this basically _requires_ us to always do it on IDs, so we do.
     """
 
     def __init__(
         self,
-        anchor_model: type[models.Model],
-        sort_attribute: str = "created",
         default_limit: int = 20,
         max_limit: int = 40,
     ):
-        self.anchor_model = anchor_model
-        self.sort_attribute = sort_attribute
         self.default_limit = default_limit
         self.max_limit = max_limit
-
-    def get_anchor(self, anchor_id: str):
-        """
-        Gets an anchor object by ID.
-        It's possible that the anchor object might be an interaction, in which
-        case we recurse down to its post.
-        """
-        if anchor_id.startswith("interaction-"):
-            try:
-                return PostInteraction.objects.get(pk=anchor_id[12:])
-            except PostInteraction.DoesNotExist:
-                return None
-        try:
-            return self.anchor_model.objects.get(pk=anchor_id)
-        except self.anchor_model.DoesNotExist:
-            return None
 
     def paginate(
         self,
@@ -156,32 +137,57 @@ class MastodonPaginator:
         limit: int | None,
     ) -> PaginationResult:
         if max_id:
-            anchor = self.get_anchor(max_id)
-            if anchor is None:
-                return PaginationResult.empty()
+            queryset = queryset.filter(id__lt=max_id)
+
+        if since_id:
+            queryset = queryset.filter(id__gt=since_id)
+
+        if min_id:
+            # Min ID requires items _immediately_ newer than specified, so we
+            # invert the ordering to accommodate
+            queryset = queryset.filter(id__gt=min_id).order_by("id")
+        else:
+            queryset = queryset.order_by("-id")
+
+        limit = min(limit or self.default_limit, self.max_limit)
+        return PaginationResult(
+            results=list(queryset[:limit]),
+            limit=limit,
+        )
+
+    def paginate_home(
+        self,
+        queryset,
+        min_id: str | None,
+        max_id: str | None,
+        since_id: str | None,
+        limit: int | None,
+    ) -> PaginationResult:
+        """
+        The home timeline requires special handling where we mix Posts and
+        PostInteractions together.
+        """
+        if max_id:
             queryset = queryset.filter(
-                **{self.sort_attribute + "__lt": getattr(anchor, self.sort_attribute)}
+                models.Q(subject_post_id__lt=max_id)
+                | models.Q(subject_post_interaction_id__lt=max_id)
             )
 
         if since_id:
-            anchor = self.get_anchor(since_id)
-            if anchor is None:
-                return PaginationResult.empty()
             queryset = queryset.filter(
-                **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
+                models.Q(subject_post_id__gt=max_id)
+                | models.Q(subject_post_interaction_id__gt=max_id)
             )
 
         if min_id:
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
-            anchor = self.get_anchor(min_id)
-            if anchor is None:
-                return PaginationResult.empty()
             queryset = queryset.filter(
-                **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
-            ).order_by(self.sort_attribute)
+                models.Q(subject_post_id__gt=max_id)
+                | models.Q(subject_post_interaction_id__gt=max_id)
+            ).order_by("id")
         else:
-            queryset = queryset.order_by("-" + self.sort_attribute)
+            queryset = queryset.order_by("-id")
 
         limit = min(limit or self.default_limit, self.max_limit)
         return PaginationResult(
