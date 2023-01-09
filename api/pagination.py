@@ -175,16 +175,16 @@ class MastodonPaginator:
 
         if since_id:
             queryset = queryset.filter(
-                models.Q(subject_post_id__gt=max_id)
-                | models.Q(subject_post_interaction_id__gt=max_id)
+                models.Q(subject_post_id__gt=since_id)
+                | models.Q(subject_post_interaction_id__gt=since_id)
             )
 
         if min_id:
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
             queryset = queryset.filter(
-                models.Q(subject_post_id__gt=max_id)
-                | models.Q(subject_post_interaction_id__gt=max_id)
+                models.Q(subject_post_id__gt=min_id)
+                | models.Q(subject_post_interaction_id__gt=min_id)
             ).order_by("id")
         else:
             queryset = queryset.order_by("-id")
