@@ -167,6 +167,19 @@ standard Google authentication environment variables, or machine roles).
 Your bucket must be set to world-readable and have individual object
 permissions disabled.
 
+Azure BlobStorage
+#################
+
+To use Azure, provide a URL in one of these forms:
+
+* ``az://storage-account.blob.core.windows.net/container``
+* ``az://:access-key@storage-account.blob.core.windows.net/container``
+
+If you omit the key, then Takahē will try to use implicit authentication for them.
+
+Your Azure container *must* be set Public access level 'Blob'. We randomise uploaded file
+names to prevent enumeration attacks.
+
 
 Local Directory
 ###############

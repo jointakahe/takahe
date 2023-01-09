@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from django.utils import timezone
 from storages.backends.gcloud import GoogleCloudStorage
 from storages.backends.s3boto3 import S3Boto3Storage
+from storages.backends.azure_storage import AzureStorage
 
 if TYPE_CHECKING:
     from activities.models import Emoji
@@ -35,6 +36,18 @@ def upload_emoji_namer(prefix, instance: "Emoji", filename):
 
 
 class TakaheS3Storage(S3Boto3Storage):
+    """
+    Custom override backend that makes webp files store correctly
+    """
+
+    def get_object_parameters(self, name: str):
+        params = self.object_parameters.copy()
+        if name.endswith(".webp"):
+            params["ContentDisposition"] = "inline"
+            params["ContentType"] = "image/webp"
+        return params
+
+class TakaheAzureStorage(AzureStorage):
     """
     Custom override backend that makes webp files store correctly
     """

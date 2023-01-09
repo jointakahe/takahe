@@ -28,7 +28,7 @@ class ImplicitHostname(AnyUrl):
 
 class MediaBackendUrl(AnyUrl):
     host_required = False
-    allowed_schemes = {"s3", "gs", "local"}
+    allowed_schemes = {"s3", "gs", "local", "az"}
 
 
 def as_bool(v: str | list[str] | None):
@@ -395,6 +395,15 @@ if SETUP.MEDIA_BACKEND:
         if SETUP.MEDIA_URL is not None:
             media_url_parsed = urllib.parse.urlparse(SETUP.MEDIA_URL)
             AWS_S3_CUSTOM_DOMAIN = media_url_parsed.hostname
+    elif parsed.scheme == "az":
+        DEFAULT_FILE_STORAGE = "core.uploads.TakaheAzureStorage"
+        AZURE_ACCOUNT_NAME = parsed.hostname.split('.')[0]
+        if parsed.username is not None:
+            AZURE_ACCOUNT_KEY = urllib.parse.unquote(parsed.password)
+        AZURE_CONTAINER = parsed.path.lstrip("/")
+        if SETUP.MEDIA_URL is not None:
+            media_url_parsed = urllib.parse.urlparse(SETUP.MEDIA_URL)
+            AZURE_CUSTOM_DOMAIN = media_url_parsed.hostname
     elif parsed.scheme == "local":
         if not (MEDIA_ROOT and MEDIA_URL):
             raise ValueError(
