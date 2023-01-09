@@ -3,7 +3,7 @@ import secrets
 import sys
 import urllib.parse
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 import dj_database_url
 import django_cache_url
@@ -111,6 +111,10 @@ class Settings(BaseSettings):
     #: S3 ACL to apply to all media objects when MEDIA_BACKEND is set to S3. If using a CDN
     #: and/or have public access blocked to buckets this will likely need to be 'private'
     MEDIA_BACKEND_S3_ACL: str = "public-read"
+
+    #: Azure connection string to write to blob storage when MEDIA_BACKEND is set to AZ, if not set takahe
+    #: will try to use the default environment to connect.
+    AZURE_CONNECTION_STRING: Optional[str] = None
 
     #: Maximum filesize when uploading images. Increasing this may increase memory utilization
     #: because all images with a dimension greater than 2000px are resized to meet that limit, which
@@ -397,9 +401,8 @@ if SETUP.MEDIA_BACKEND:
             AWS_S3_CUSTOM_DOMAIN = media_url_parsed.hostname
     elif parsed.scheme == "az":
         DEFAULT_FILE_STORAGE = "core.uploads.TakaheAzureStorage"
+
         AZURE_ACCOUNT_NAME = parsed.hostname.split('.')[0]
-        if parsed.username is not None:
-            AZURE_ACCOUNT_KEY = urllib.parse.unquote(parsed.password)
         AZURE_CONTAINER = parsed.path.lstrip("/")
         if SETUP.MEDIA_URL is not None:
             media_url_parsed = urllib.parse.urlparse(SETUP.MEDIA_URL)
