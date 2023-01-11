@@ -812,7 +812,10 @@ class Post(StatorModel):
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
                 if "focalPoint" in attachment:
-                    focal_x, focal_y = attachment["focalPoint"]
+                    try:
+                        focal_x, focal_y = attachment["focalPoint"]
+                    except (ValueError, TypeError):
+                        focal_x, focal_y = None, None
                 else:
                     focal_x, focal_y = None, None
                 mimetype = attachment.get("mediaType")
