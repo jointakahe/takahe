@@ -1,7 +1,8 @@
 from django import forms
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, ListView
+from django.views.generic import FormView, ListView, View
+from django_htmx.http import HttpResponseClientRefresh
 
 from activities.models import Hashtag, HashtagStates
 from users.decorators import moderator_required
@@ -78,3 +79,18 @@ class HashtagEdit(FormView):
             "name_override": self.hashtag.name_override,
             "public": self.hashtag.public,
         }
+
+
+@method_decorator(moderator_required, name="dispatch")
+class HashtagEnable(View):
+    """
+    Sets a hashtag to be enabled (or not!)
+    """
+
+    enable = True
+
+    def post(self, request, hashtag):
+        self.hashtag = get_object_or_404(Hashtag, hashtag=hashtag)
+        self.hashtag.public = self.enable
+        self.hashtag.save()
+        return HttpResponseClientRefresh()

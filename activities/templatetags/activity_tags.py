@@ -1,4 +1,5 @@
 import datetime
+from urllib.parse import urlencode
 
 from django import template
 from django.utils import timezone
@@ -31,3 +32,18 @@ def timedeltashort(value: datetime.datetime):
         years = max(days // 365.25, 1)
         text = f"{years:0n}y"
     return text
+
+
+@register.simple_tag(takes_context=True)
+def urlparams(context, **kwargs):
+    """
+    Generates a URL parameter string the same as the current page but with
+    the given items changed.
+    """
+    params = dict(context["request"].GET.items())
+    for name, value in kwargs.items():
+        if value:
+            params[name] = value
+        elif name in params:
+            del params[name]
+    return urlencode(params)

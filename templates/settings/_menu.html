@@ -24,6 +24,9 @@
         <a href="{% url "admin_hashtags" %}" {% if section == "hashtags" %}class="selected"{% endif %} title="Hashtags">
             <i class="fa-solid fa-hashtag"></i> Hashtags
         </a>
+        <a href="{% url "admin_emoji" %}" {% if section == "emoji" %}class="selected"{% endif %} title="Emoji">
+            <i class="fa-solid fa-icons"></i> Emoji
+        </a>
         <a href="{% url "admin_reports" %}" {% if section == "reports" %}class="selected"{% endif %} title="Reports">
             <i class="fa-solid fa-flag"></i> Reports
         </a>

@@ -555,6 +555,92 @@ p.authorization-code {
     color: var(--color-text-dull);
 }
 
+/* Item tables */
+
+table.items {
+    margin: 10px 0;
+    border: 1px solid var(--color-bg-menu);
+    border-spacing: 0;
+    border-radius: 5px;
+    width: 100%;
+}
+
+table.items td {
+    padding: 10px;
+    vertical-align: middle;
+    line-height: 1.1em;
+    height: 55px;
+    position: relative;
+}
+
+table.items td small {
+    display: block;
+    color: var(--color-text-dull);
+}
+
+table.items tr:nth-of-type(2n+1) {
+    background-color: var(--color-bg-box);
+}
+
+table.items td.name {
+    width: 100%;
+}
+
+table.items td.name a.overlay,
+table.items td.icon a.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+table.items td.icon {
+    width: 40px;
+    padding-left: 20px;
+}
+
+table.items td.icon img {
+    width: 32px;
+    display: block;
+}
+
+table.items td .bad {
+    background: var(--color-delete);
+    padding: 4px 6px;
+    border-radius: 3px;
+}
+
+table.items td.stat {
+    white-space: nowrap;
+}
+
+table.items td.actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+table.items td.actions a {
+    color: var(--color-text-dull);
+    padding: 3px 4px;
+    border-radius: 3px;
+    text-decoration: none;
+    border: 3px solid transparent;
+    margin: 0 0 0 3px;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    width: 30px;
+}
+
+table.items td.actions a:hover {
+    color: var(--color-text-main);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+table.items td.actions a.danger:hover {
+    background-color: var(--color-delete);
+}
 
 /* Forms */
 
@@ -1189,13 +1275,14 @@ table.metadata td .emoji {
 
 .view-options {
     margin: 0 0 10px 0px;
+    display: flex;
 }
 
 .view-options.follows {
     margin: 0 0 20px 0px;
 }
 
-.view-options a {
+.view-options a:not(.button) {
     display: inline-block;
     margin: 0 10px 5px 0;
     padding: 4px 12px;
@@ -1204,11 +1291,17 @@ table.metadata td .emoji {
     border-radius: 3px;
 }
 
-.view-options a:hover {
+.view-options a.button {
+    display: inline-block;
+    margin: 0 0 5px auto;
+    padding: 1px 8px;
+}
+
+.view-options a:not(.button):hover {
     color: var(--color-text-dull);
 }
 
-.view-options a.selected {
+.view-options a:not(.button).selected {
     color: var(--color-text-highlight);
 }
 
@@ -1723,7 +1816,8 @@ form .post {
     z-index: 100;
 }
 
-#image-viewer picture, #image-viewer img {
+#image-viewer picture,
+#image-viewer img {
     display: block;
 }
 

@@ -11,36 +11,48 @@
             <a href=".?all=true"><i class="fa-solid fa-xmark"></i> Show Resolved</a>
         {% endif %}
     </div>
-    <section class="icon-menu">
+    <table class="items">
         {% for report in page_obj %}
-            <a class="option" href="{{ report.urls.admin_view }}">
-                <img src="{{ report.subject_identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ report.subject_identity.name_or_handle }}">
-                <span class="handle">
+            <tr>
+                <td class="icon">
+                    <a href="{{ report.urls.admin_view }}" class="overlay"></a>
+                    <img src="{{ report.subject_identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ report.subject_identity.name_or_handle }}">
+                </td>
+                <td class="name">
+                    <a href="{{ report.urls.admin_view }}" class="overlay"></a>
                     {{ report.subject_identity.html_name_or_handle }}
                     {% if report.subject_post %}
-                        (post {{ report.subject_post.pk }})
+                        <small>
+                            Post on {{ report.subject_post.published }}
+                        </small>
                     {% endif %}
-                    <small>
-                        {{ report.type|title }}
-                    </small>
-                </span>
-                <time>{{ report.created|timedeltashort }} ago</time>
-            </a>
+                </td>
+                <td class="stat">
+                    {{ report.type|title }}
+                    <small>Type</small>
+                </td>
+                <td class="stat">
+                    {{ report.created|timedeltashort }}
+                    <small>Reported</small>
+                </td>
+            </tr>
         {% empty %}
-            <p class="option empty">
-                There are no {% if all %}reports yet{% else %}unresolved reports{% endif %}.
-            </p>
+            <tr class="empty">
+                <td>
+                    There are no {% if all %}reports yet{% else %}unresolved reports{% endif %}.
+                </td>
+            </tr>
         {% endfor %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a class="button" href=".?page={{ page_obj.previous_page_number }}{% if all %}&amp;all=true{% endif %}">Previous Page</a>
-            {% endif %}
-            {% if page_obj.paginator.count %}
-                <span class="count">{{ page_obj.paginator.count }} report{{page_obj.paginator.count|pluralize }}</span>
-            {% endif %}
-            {% if page_obj.has_next %}
-                <a class="button" href=".?page={{ page_obj.next_page_number }}{% if all %}&amp;all=true{% endif %}">Next Page</a>
-            {% endif %}
-        </div>
-    </section>
+    </table>
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a class="button" href=".?page={{ page_obj.previous_page_number }}{% if all %}&amp;all=true{% endif %}">Previous Page</a>
+        {% endif %}
+        {% if page_obj.paginator.count %}
+            <span class="count">{{ page_obj.paginator.count }} report{{page_obj.paginator.count|pluralize }}</span>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="button" href=".?page={{ page_obj.next_page_number }}{% if all %}&amp;all=true{% endif %}">Next Page</a>
+        {% endif %}
+    </div>
 {% endblock %}

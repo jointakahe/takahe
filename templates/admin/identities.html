@@ -1,4 +1,5 @@
 {% extends "settings/base.html" %}
+{% load activity_tags %}
 
 {% block subtitle %}Identities{% endblock %}
 
@@ -12,42 +13,71 @@
     </form>
     <div class="view-options">
         {% if local_only %}
-            <a href=".?{% if query %}query={{ query }}{% endif %}" class="selected"><i class="fa-solid fa-check"></i> Local Only</a>
+            <a href=".?{% urlparams local_only=False %}" class="selected"><i class="fa-solid fa-check"></i> Local Only</a>
         {% else %}
-            <a href=".?local_only=true{% if query %}&amp;query={{ query }}{% endif %}"><i class="fa-solid fa-xmark"></i> Local Only</a>
+            <a href=".?{% urlparams local_only=True %}"><i class="fa-solid fa-xmark"></i> Local Only</a>
         {% endif %}
     </div>
-    <section class="icon-menu">
+    <table class="items">
         {% for identity in page_obj %}
-            <a class="option" href="{{ identity.urls.admin_edit }}">
-                <div class="option-content">
-                    {% include "identity/_identity_banner.html" with identity=identity link_avatar=False link_handle=False %}
-                </div>
-                <div class="option-actions">
-                    {% if identity.banned %}
-                        <span class="pill bad">Banned</span>
+            <tr>
+                <td class="icon">
+                    <a href="{{ identity.urls.admin_edit }}" class="overlay"></a>
+                    <img
+                        src="{{ identity.local_icon_url.relative }}"
+                        class="icon"
+                        alt="Avatar for {{ identity.name_or_handle }}"
+                        loading="lazy"
+                        data-handle="{{ identity.name_or_handle }}"
+                        _="on error set my.src to generate_avatar(@data-handle)"
+                    >
+                </td>
+                <td class="name">
+                    <a href="{{ identity.urls.admin_edit }}" class="overlay"></a>
+                    {{ identity.html_name_or_handle }}
+                    <small>@{{ identity.handle }}</small>
+                </td>
+                <td>
+                    {% if identity.restriction == 1 %}
+                        <span class="bad">Limited</span>
+                    {% elif identity.restriction == 2 %}
+                        <span class="bad">Blocked</span>
                     {% endif %}
-                </div>
-            </a>
+                </td>
+                <td class="stat">
+                    {% if identity.local %}
+                        Local
+                        <small>{{ identity.followers_count }} follower{{ identity.followers_count|pluralize }}</small>
+                    {% else %}
+                        Remote
+                        <small>{{ identity.followers_count }} local follower{{ identity.followers_count|pluralize }}</small>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="{{ identity.urls.admin_edit }}" title="View"><i class="fa-solid fa-eye"></i></a>
+                </td>
+            </tr>
         {% empty %}
-            <p class="option empty">
-                {% if query %}
-                    No identities match your query.
-                {% else %}
-                    There are no identities yet.
-                {% endif %}
-            </p>
+            <tr class="empty">
+                <td>
+                    {% if query %}
+                        No identities match your query.
+                    {% else %}
+                        There are no identities yet.
+                    {% endif %}
+                </td>
+            </tr>
         {% endfor %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a class="button" href=".?page={{ page_obj.previous_page_number }}{% if local_only %}&amp;local_only=true{% endif %}{% if query %}&amp;query={{ query }}{% endif %}">Previous Page</a>
-            {% endif %}
-            {% if page_obj.paginator.count %}
-                <span class="count">{{ page_obj.paginator.count }} identit{{page_obj.paginator.count|pluralize:"y,ies" }}</span>
-            {% endif %}
-            {% if page_obj.has_next %}
-                <a class="button" href=".?page={{ page_obj.next_page_number }}{% if local_only %}&amp;local_only=true{% endif %}{% if query %}&amp;query={{ query }}{% endif %}">Next Page</a>
-            {% endif %}
-        </div>
-    </section>
+    </table>
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a class="button" href=".?{% urlparams page=page_obj.previous_page_number %}">Previous Page</a>
+        {% endif %}
+        {% if page_obj.paginator.count %}
+            <span class="count">{{ page_obj.paginator.count }} identit{{page_obj.paginator.count|pluralize:"y,ies" }}</span>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="button" href=".?{% urlparams page=page_obj.next_page_number %}">Next Page</a>
+        {% endif %}
+    </div>
 {% endblock %}

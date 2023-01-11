@@ -8,8 +8,14 @@ from users.views.admin.domains import (  # noqa
     DomainEdit,
     Domains,
 )
+from users.views.admin.emoji import (  # noqa
+    EmojiCreate,
+    EmojiDelete,
+    EmojiEnable,
+    EmojiRoot,
+)
 from users.views.admin.federation import FederationEdit, FederationRoot  # noqa
-from users.views.admin.hashtags import HashtagEdit, Hashtags  # noqa
+from users.views.admin.hashtags import HashtagEdit, HashtagEnable, Hashtags  # noqa
 from users.views.admin.identities import IdentitiesRoot, IdentityEdit  # noqa
 from users.views.admin.invites import InviteCreate, InvitesRoot, InviteView  # noqa
 from users.views.admin.reports import ReportsRoot, ReportView  # noqa

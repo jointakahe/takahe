@@ -1,4 +1,5 @@
 {% extends "settings/base.html" %}
+{% load activity_tags %}
 
 {% block subtitle %}Federation{% endblock %}
 
@@ -7,33 +8,49 @@
         <input type="search" name="query" value="{{ query }}" placeholder="Search by domain">
         <button><i class="fa-solid fa-search"></i></button>
     </form>
-    <section class="icon-menu">
+    <table class="items">
         {% for domain in page_obj %}
-            <a class="option" href="{{ domain.urls.edit_federation }}">
-                <i class="fa-solid fa-globe"></i>
-                <span class="handle">
+            <tr>
+                <td class="icon">
+                    <a href="{{ domain.urls.edit_federation }}" class="overlay"></a>
+                    <i class="fa-solid fa-globe"></i>
+                </td>
+                <td class="name">
+                    <a href="{{ domain.urls.edit_federation }}" class="overlay"></a>
                     {{ domain.domain }}
-                    <small>
-                        {{ domain.num_users }} remote identit{{ domain.num_users|pluralize:"y,ies" }}
-                    </small>
-                </span>
-                {% if domain.blocked %}
-                    <span class="pill bad">Blocked</span>
-                {% endif %}
-            </a>
+                    <small>{{ domain.software }}</small>
+                </td>
+                <td>
+                    {% if domain.blocked %}
+                        <span class="bad">Blocked</span>
+                    {% endif %}
+                </td>
+                <td class="stat">
+                    {{ domain.num_users }}
+                    <small>identit{{ domain.num_users|pluralize:"y,ies" }}</small>
+                </td>
+            </tr>
         {% empty %}
-            <p class="option empty">There are no federation links yet.</p>
+            <tr class="empty">
+                <td>
+                    {% if query %}
+                        There are no domains matching your query.
+                    {% else %}
+                        There are no federation links yet.
+                    {% endif %}
+                </td>
+            </tr>
         {% endfor %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-            {% endif %}
-            {% if page_obj.paginator.count %}
-                <span class="count">{{ page_obj.paginator.count }} domain{{page_obj.paginator.count|pluralize }}</span>
-            {% endif %}
-            {% if page_obj.has_next %}
-                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
-            {% endif %}
-        </div>
-    </section>
+    </table>
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a class="button" href=".?{% urlparams page=page_obj.previous_page_number %}">Previous Page</a>
+        {% endif %}
+        {% if page_obj.paginator.count %}
+            <span class="count">{{ page_obj.paginator.count }} domain{{page_obj.paginator.count|pluralize }}</span>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="button" href=".?{% urlparams page=page_obj.next_page_number %}">Next Page</a>
+        {% endif %}
+    </div>
 {% endblock %}

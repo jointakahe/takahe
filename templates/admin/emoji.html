@@ -1,0 +1,67 @@
+{% extends "settings/base.html" %}
+{% load activity_tags %}
+
+{% block subtitle %}Emoji{% endblock %}
+
+{% block content %}
+    <form action="." class="search">
+        <input type="search" name="query" value="{{ query }}" placeholder="Search by shortcode or domain">
+        {% if local_only %}
+            <input type="hidden" name="local_only" value="true">
+        {% endif %}
+        <button><i class="fa-solid fa-search"></i></button>
+    </form>
+    <div class="view-options">
+        {% if local_only %}
+            <a href=".?{% urlparams local_only=False %}" class="selected"><i class="fa-solid fa-check"></i> Local Only</a>
+        {% else %}
+            <a href=".?{% urlparams local_only=True %}"><i class="fa-solid fa-xmark"></i> Local Only</a>
+        {% endif %}
+        <a href="{% url "admin_emoji_create" %}" class="button">Add Emoji</a>
+    </div>
+    <table class="items">
+        {% for emoji in page_obj %}
+            <tr>
+                <td class="icon">
+                    <img src="{{ emoji.full_url_admin.relative }}" class="icon">
+                </td>
+                <td class="name">
+                    {{ emoji.shortcode }}
+                    {% if emoji.domain %}<small>{{ emoji.domain }}</small>{% endif %}
+                </td>
+                <td>
+                </td>
+                <td class="actions">
+                    {% if not emoji.is_usable %}
+                        <span class="bad">Disabled</span>
+                        <a hx-post="{{ emoji.urls.admin_enable }}" title="Enable"><i class="fa-solid fa-circle-check"></i></a>
+                    {% else %}
+                        <a hx-post="{{ emoji.urls.admin_disable }}" class="danger" title="Disable"><i class="fa-solid fa-circle-xmark"></i></a>
+                    {% endif %}
+                    <a hx-post="{{ emoji.urls.admin_delete }}" hx-confirm="Are you sure you want to delete :{{ emoji.shortcode }}:?" class="danger" title="Delete"><i class="fa-solid fa-trash"></i></a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="empty">
+                <td>
+                    {% if query %}
+                        No emoji match your query.
+                    {% else %}
+                        There are no emoji yet.
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a class="button" href=".?{% urlparams page=page_obj.previous_page_number %}">Previous Page</a>
+        {% endif %}
+        {% if page_obj.paginator.count %}
+            <span class="count">{{ page_obj.paginator.count }} emoji</span>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="button" href=".?{% urlparams page=page_obj.next_page_number %}">Next Page</a>
+        {% endif %}
+    </div>
+{% endblock %}

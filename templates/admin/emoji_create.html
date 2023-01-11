@@ -1,0 +1,18 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}{{ emoji.shortcode }}{% endblock %}
+
+{% block content %}
+    <form action="." method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Emoji Details</legend>
+            {% include "forms/_field.html" with field=form.shortcode %}
+            {% include "forms/_field.html" with field=form.image hide_existing=True %}
+        </fieldset>
+        <div class="buttons">
+            <a href="{% url "admin_emoji" %}" class="button secondary left">Back</a>
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

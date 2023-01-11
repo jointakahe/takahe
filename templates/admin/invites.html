@@ -4,51 +4,62 @@
 {% block subtitle %}Invites{% endblock %}
 
 {% block content %}
-    <form>
-        <div class="buttons">
-            <a href="{% url "admin_invite_create" %}" class="button">Create New</a>
-        </div>
-    </form>
-    <section class="icon-menu">
+    <div class="view-options">
+        <span class="spacer"></span>
+        <a href="{% url "admin_invite_create" %}" class="button">Create New</a>
+    </div>
+    <table class="items">
         {% for invite in page_obj %}
-            <a class="option" href="{{ invite.urls.admin_view }}">
-                <i class="fa-solid fa-envelope"></i>
-                <span class="handle">
+            <tr>
+                <td class="icon">
+                    <a href="{{ invite.urls.admin_view }}" class="overlay"></a>
+                    <i class="fa-solid fa-envelope"></i>
+                </td>
+                <td class="name">
+                    <a href="{{ invite.urls.admin_view }}" class="overlay"></a>
                     {{ invite.token }}
-
                     <small>
-                        {% if invite.expires %}
-                            Expires in {{ invite.expires|timeuntil }}
-                            {% if invite.note %}|{% endif %}
-                        {% endif %}
                         {% if invite.note %}
                             {{ invite.note }}
                         {% endif %}
                     </small>
-                </span>
-                <time>
-                    {% if invite.uses %}
-                        {{ invite.uses }} use{{ invite.uses|pluralize }} left
-                    {% else %}
-                        Infinite uses
+                </td>
+                <td class="stat">
+                    {% if invite.expires %}
+                        {% if invite.valid %}
+                            {{ invite.expires|timeuntil }}
+                            <small>until expiry</small>
+                        {% else %}
+                            <span class="bad">Expired</span>
+                        {% endif %}
                     {% endif %}
                 </time>
-            </a>
+                <td class="stat">
+                    {% if invite.uses %}
+                        {{ invite.uses }}
+                    {% else %}
+                        Infinite
+                    {% endif %}
+                    <small>use{{ invite.uses|pluralize }} left</small>
+                </time>
+            </tr>
         {% empty %}
-            <p class="option empty">
-                There are no unused invites.
-            </p>
+            <tr class="empty">
+                <td>
+                    There are no invites yet.
+                </td>
+            </tr>
         {% endfor %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-            {% endif %}
-            {% if page_obj.paginator.count %}
-                <span class="count">{{ page_obj.paginator.count }} invite{{page_obj.paginator.count|pluralize }}</span>
-            {% endif %}
-            {% if page_obj.has_next %}
-                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
-            {% endif %}
-        </div>
-    </section>
+    </table>
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+        {% endif %}
+        {% if page_obj.paginator.count %}
+            <span class="count">{{ page_obj.paginator.count }} invite{{page_obj.paginator.count|pluralize }}</span>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+        {% endif %}
+    </div>
 {% endblock %}

@@ -117,6 +117,8 @@ class Hashtag(StatorModel):
         view = "/tags/{self.hashtag}/"
         admin = "/admin/hashtags/"
         admin_edit = "{admin}{self.hashtag}/"
+        admin_enable = "{admin_edit}enable/"
+        admin_disable = "{admin_edit}disable/"
         timeline = "/tags/{self.hashtag}/"
 
     hashtag_regex = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;)")

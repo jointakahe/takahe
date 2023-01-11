@@ -148,6 +148,23 @@ urlpatterns = [
         "admin/hashtags/<hashtag>/",
         admin.HashtagEdit.as_view(),
     ),
+    path("admin/hashtags/<hashtag>/enable/", admin.HashtagEnable.as_view()),
+    path(
+        "admin/hashtags/<hashtag>/disable/", admin.HashtagEnable.as_view(enable=False)
+    ),
+    path(
+        "admin/emoji/",
+        admin.EmojiRoot.as_view(),
+        name="admin_emoji",
+    ),
+    path(
+        "admin/emoji/create/",
+        admin.EmojiCreate.as_view(),
+        name="admin_emoji_create",
+    ),
+    path("admin/emoji/<id>/enable/", admin.EmojiEnable.as_view()),
+    path("admin/emoji/<id>/disable/", admin.EmojiEnable.as_view(enable=False)),
+    path("admin/emoji/<id>/delete/", admin.EmojiDelete.as_view()),
     path(
         "admin/stator/",
         admin.Stator.as_view(),

@@ -203,3 +203,12 @@ class Domain(StatorModel):
                     f"Client error decoding nodeinfo: domain={self.domain}, error={str(ex)}"
                 )
             return info
+
+    @property
+    def software(self):
+        if self.nodeinfo:
+            software = self.nodeinfo.get("software", {})
+            name = software.get("name", "unknown")
+            version = software.get("version", "unknown")
+            return f"{name:.10} - {version:.10}"
+        return None

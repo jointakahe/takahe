@@ -3,26 +3,31 @@
 {% block subtitle %}Domains{% endblock %}
 
 {% block content %}
-    <section class="icon-menu">
+    <div class="view-options">
+        <span class="spacer"></span>
+        <a href="{% url "admin_domains_create" %}" class="button"><i class="fa-solid fa-plus"></i> Add Domain</a>
+    </div>
+    <table class="items">
         {% for domain in domains %}
-            <a class="option" href="{{ domain.urls.edit }}">
-                <i class="fa-solid fa-globe"></i>
-                <span class="handle">
+            <tr>
+                <td class="icon">
+                    <a href="{{ domain.urls.edit }}" class="overlay"></a>
+                    <i class="fa-solid fa-globe"></i>
+                </td>
+                <td class="name">
+                    <a href="{{ domain.urls.edit }}" class="overlay"></a>
                     {{ domain.domain }}
                     <small>
-                        {% if domain.public %}Public{% else %}Private{% endif %}
-                        {% if domain.service_domain %}({{ domain.service_domain }}){% endif %}
+                        {% if domain.service_domain %}{{ domain.service_domain }}{% endif %}
                     </small>
                 </span>
-                {% if domain.default %}
-                    <span class="pill">Default</span>
-                {% endif %}
-            </a>
+                <td class="stat">
+                    {% if domain.public %}Public{% else %}Private{% endif %}
+                    {% if domain.default %}(Default){% endif %}
+                </td>
+            </tr>
         {% empty %}
-            <p class="option empty">You have no domains set up.</p>
+            <tr class="empty"><td>You have no domains set up.</td></tr>
         {% endfor %}
-        <a href="{% url "admin_domains_create" %}" class="option new">
-            <i class="fa-solid fa-plus"></i> Add a domain
-        </a>
-    </section>
+    </table>
 {% endblock %}

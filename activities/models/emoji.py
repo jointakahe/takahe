@@ -125,10 +125,12 @@ class Emoji(StatorModel):
         unique_together = ("domain", "shortcode")
 
     class urls(urlman.Urls):
-        root = "/admin/emoji/"
-        create = "{root}/create/"
-        edit = "{root}{self.Emoji}/"
-        delete = "{edit}delete/"
+        admin = "/admin/emoji/"
+        admin_create = "{admin}create/"
+        admin_edit = "{admin}{self.pk}/"
+        admin_delete = "{admin}{self.pk}/delete/"
+        admin_enable = "{admin}{self.pk}/enable/"
+        admin_disable = "{admin}{self.pk}/disable/"
 
     emoji_regex = re.compile(r"\B:([a-zA-Z0-9(_)-]+):\B")
 
@@ -172,8 +174,11 @@ class Emoji(StatorModel):
             self.public is None and Config.system.emoji_unreviewed_are_public
         )
 
-    def full_url(self) -> RelativeAbsoluteUrl:
-        if self.is_usable:
+    def full_url_admin(self) -> RelativeAbsoluteUrl:
+        return self.full_url(always_show=True)
+
+    def full_url(self, always_show=False) -> RelativeAbsoluteUrl:
+        if self.is_usable or always_show:
             if self.file:
                 return AutoAbsoluteUrl(self.file.url)
             elif self.remote_url:
