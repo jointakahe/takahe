@@ -35,6 +35,14 @@ class User(AbstractBaseUser):
     banned = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
 
+    invited_by = models.ForeignKey(
+        "users.User",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="invited",
+    )
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     last_seen = models.DateTimeField(auto_now_add=True)

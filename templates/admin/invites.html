@@ -16,15 +16,19 @@
                 <span class="handle">
                     {{ invite.token }}
 
-                    <small>
-                        {% if invite.expires %}
-                            Expires in {{ invite.expires|timeuntil }}
-                            {% if invite.note %}|{% endif %}
-                        {% endif %}
-                        {% if invite.note %}
-                            {{ invite.note }}
-                        {% endif %}
-                    </small>
+                    <small>Created by {{ invite.created_by }}</small>
+
+                    {% if invite.expires or invite.note %}
+                        <small>
+                            {% if invite.expires %}
+                                Expires in {{ invite.expires|timeuntil }}
+                                {% if invite.note %}|{% endif %}
+                            {% endif %}
+                            {% if invite.note %}
+                                {{ invite.note }}
+                            {% endif %}
+                        </small>
+                    {% endif %}
                 </span>
                 <time>
                     {% if invite.uses %}
