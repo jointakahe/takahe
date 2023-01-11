@@ -40,6 +40,13 @@ class Command(BaseCommand):
             default=0,
             help="How long to run for before exiting (defaults to infinite)",
         )
+        parser.add_argument(
+            "--exclude",
+            "-x",
+            type=str,
+            action="append",
+            help="Model labels that should not be processed",
+        )
         parser.add_argument("model_labels", nargs="*", type=str)
 
     def handle(
@@ -49,6 +56,7 @@ class Command(BaseCommand):
         liveness_file: str,
         schedule_interval: int,
         run_for: int,
+        exclude: list[str],
         *args,
         **options
     ):
@@ -59,8 +67,13 @@ class Command(BaseCommand):
             list[type[StatorModel]],
             [apps.get_model(label) for label in model_labels],
         )
+        excluded = cast(
+            list[type[StatorModel]],
+            [apps.get_model(label) for label in (exclude or [])],
+        )
         if not models:
             models = StatorModel.subclasses
+        models = [model for model in models if model not in excluded]
         print("Running for models: " + " ".join(m._meta.label_lower for m in models))
         # Run a runner
         runner = StatorRunner(
