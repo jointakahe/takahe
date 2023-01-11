@@ -28,21 +28,13 @@ def home(
     )
     queryset = queryset.prefetch_related(
         "subject_post__mentions__domain",
-        "subject_post__author__inbound_follows",
-        "subject_post__author__outbound_follows",
         "subject_post__author__posts",
-        "subject_post__author__inbound_follows",
-        "subject_post__author__outbound_follows",
         "subject_post__author__posts",
         "subject_post_interaction__post__attachments",
         "subject_post_interaction__post__mentions",
         "subject_post_interaction__post__emojis",
         "subject_post_interaction__post__mentions__domain",
-        "subject_post_interaction__post__author__inbound_follows",
-        "subject_post_interaction__post__author__outbound_follows",
         "subject_post_interaction__post__author__posts",
-        "subject_post_interaction__post__author__inbound_follows",
-        "subject_post_interaction__post__author__outbound_follows",
         "subject_post_interaction__post__author__posts",
     )
     pager = paginator.paginate_home(
