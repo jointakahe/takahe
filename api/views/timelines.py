@@ -21,6 +21,19 @@ def home(
     # Grab a paginated result set of instances
     paginator = MastodonPaginator()
     queryset = TimelineService(request.identity).home()
+    queryset = queryset.select_related(
+        "subject_post_interaction__post",
+        "subject_post_interaction__post__author",
+        "subject_post_interaction__post__author__domain",
+    )
+    queryset = queryset.prefetch_related(
+        "subject_post__mentions__domain",
+        "subject_post_interaction__post__attachments",
+        "subject_post_interaction__post__mentions",
+        "subject_post_interaction__post__emojis",
+        "subject_post_interaction__post__mentions__domain",
+        "subject_post_interaction__post__author__posts",
+    )
     pager = paginator.paginate_home(
         queryset,
         min_id=min_id,
