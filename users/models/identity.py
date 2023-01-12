@@ -835,6 +835,7 @@ class Identity(StatorModel):
         emojis = Emoji.emojis_from_content(
             f"{self.name} {self.summary} {metadata_value_text}", self.domain
         )
+        renderer = ContentRenderer(local=False)
         return {
             "id": self.pk,
             "username": self.username or "",
@@ -849,7 +850,11 @@ class Identity(StatorModel):
             "locked": False,
             "fields": (
                 [
-                    {"name": m["name"], "value": m["value"], "verified_at": None}
+                    {
+                        "name": m["name"],
+                        "value": renderer.render_identity_data(m["value"], self),
+                        "verified_at": None,
+                    }
                     for m in self.metadata
                 ]
                 if self.metadata
