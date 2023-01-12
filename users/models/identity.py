@@ -781,7 +781,7 @@ class Identity(StatorModel):
             self.domain = await get_domain(actor_url_parts.hostname)
         # Emojis (we need the domain so we do them here)
         for tag in get_list(document, "tag"):
-            if tag["type"].lower() == "toot:emoji":
+            if tag["type"].lower() in ["toot:emoji", "emoji"]:
                 await sync_to_async(Emoji.by_ap_tag)(self.domain, tag, create=True)
         # Mark as fetched
         self.fetched = timezone.now()
