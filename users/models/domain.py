@@ -1,4 +1,5 @@
 import json
+import ssl
 from typing import Optional
 
 import httpx
@@ -164,6 +165,8 @@ class Domain(StatorModel):
                 )
             except httpx.HTTPError:
                 pass
+            except ssl.SSLCertVerificationError:
+                return None
             else:
                 try:
                     for link in response.json().get("links", []):
@@ -183,7 +186,7 @@ class Domain(StatorModel):
                     headers={"Accept": "application/json"},
                 )
                 response.raise_for_status()
-            except httpx.HTTPError as ex:
+            except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if (
                     response
