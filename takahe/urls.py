@@ -173,6 +173,7 @@ urlpatterns = [
     path("admin/emoji/<pk>/enable/", admin.EmojiEnable.as_view()),
     path("admin/emoji/<pk>/disable/", admin.EmojiEnable.as_view(enable=False)),
     path("admin/emoji/<pk>/delete/", admin.EmojiDelete.as_view()),
+    path("admin/emoji/<pk>/copy/", admin.EmojiCopyLocal.as_view()),
     path(
         "admin/announcements/",
         admin.AnnouncementsRoot.as_view(),

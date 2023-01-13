@@ -9,6 +9,7 @@ from asgiref.sync import sync_to_async
 from cachetools import TTLCache, cached
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.safestring import mark_safe
 
@@ -131,8 +132,14 @@ class Emoji(StatorModel):
         admin_delete = "{admin}{self.pk}/delete/"
         admin_enable = "{admin}{self.pk}/enable/"
         admin_disable = "{admin}{self.pk}/disable/"
+        admin_copy = "{admin}{self.pk}/copy/"
 
     emoji_regex = re.compile(r"\B:([a-zA-Z0-9(_)-]+):\B")
+
+    def delete(self, using=None, keep_parents=False):
+        if self.file:
+            self.file.delete()
+        return super().delete(using=using, keep_parents=keep_parents)
 
     def clean(self):
         super().clean()
@@ -194,6 +201,40 @@ class Emoji(StatorModel):
                 f'<img src="{self.full_url().relative}" class="emoji" alt="Emoji {self.shortcode}">'
             )
         return self.fullcode
+
+    @property
+    def can_copy_local(self):
+        if not hasattr(Emoji, "locals"):
+            Emoji.locals = Emoji.load_locals()
+        return not self.local and self.is_usable and self.shortcode not in Emoji.locals
+
+    def copy_to_local(self, *, save: bool = True):
+        """
+        Copy this (non-local) Emoji to local for use by Users of this instance. Returns
+        the Emoji instance, or None if the copy failed to happen. Specify save=False to
+        return the object without saving to database (for bulk saving).
+        """
+        if not self.can_copy_local:
+            return None
+
+        emoji = None
+        if self.file:
+            # new emoji gets its own copy of the file
+            file = ContentFile(self.file.read())
+            file.name = self.file.name
+            emoji = Emoji(
+                shortcode=self.shortcode,
+                domain=None,
+                local=True,
+                mimetype=self.mimetype,
+                file=file,
+                category=self.category,
+            )
+            if save:
+                emoji.save()
+                # add this new one to the locals cache
+                Emoji.locals[self.shortcode] = emoji
+        return emoji
 
     @classmethod
     def emojis_from_content(cls, content: str, domain: Domain | None) -> list["Emoji"]:

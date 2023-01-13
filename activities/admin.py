@@ -73,7 +73,15 @@ class EmojiAdmin(admin.ModelAdmin):
 
     readonly_fields = ["preview", "created", "updated", "to_ap_tag"]
 
-    actions = ["force_execution", "approve_emoji", "reject_emoji"]
+    actions = ["force_execution", "approve_emoji", "reject_emoji", "copy_to_local"]
+
+    def delete_queryset(self, request, queryset):
+        for instance in queryset:
+            # individual deletes to ensure file is deleted
+            instance.delete()
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
 
     @admin.action(description="Force Execution")
     def force_execution(self, request, queryset):
@@ -95,6 +103,17 @@ class EmojiAdmin(admin.ModelAdmin):
         return mark_safe(
             f'<img src="{instance.full_url().relative}" style="height: 22px">'
         )
+
+    @admin.action(description="Copy Emoji to Local")
+    def copy_to_local(self, request, queryset):
+        emojis = {}
+        for instance in queryset:
+            emoji = instance.copy_to_local(save=False)
+            if emoji:
+                emojis[emoji.shortcode] = emoji
+
+        Emoji.objects.bulk_create(emojis.values(), batch_size=50, ignore_conflicts=True)
+        Emoji.locals = Emoji.load_locals()
 
 
 @admin.register(PostAttachment)
