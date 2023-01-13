@@ -737,9 +737,13 @@ class Post(StatorModel):
         Raises DoesNotExist if it's not found and create is False,
         or it's from a blocked domain.
         """
-        # Ensure the domain of the object's actor and ID match to prevent injection
-        if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
-            raise ValueError("Object's ID domain is different to its author")
+        try:
+            # Ensure the domain of the object's actor and ID match to prevent injection
+            if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
+                raise ValueError("Object's ID domain is different to its author")
+        except (TypeError, KeyError):
+            raise ValueError("Object data is not a recognizable ActivityPub object")
+
         # Do we have one with the right ID?
         created = False
         try:
