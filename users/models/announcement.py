@@ -4,6 +4,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from core.ld import format_ld_date
+
 
 class Announcement(models.Model):
     """
@@ -61,3 +63,23 @@ class Announcement(models.Model):
     @property
     def before_end(self) -> bool:
         return timezone.now() <= self.end if self.end else True
+
+    def to_mastodon_json(self, user=None):
+        value = {
+            "id": str(self.id),
+            "content": self.html,
+            "starts_at": format_ld_date(self.start) if self.start else None,
+            "ends_at": format_ld_date(self.end) if self.end else None,
+            "all_day": False,
+            "published_at": format_ld_date(self.start or self.created),
+            "updated_at": format_ld_date(self.updated),
+            "mentions": [],
+            "statuses": [],
+            "tags": [],
+            "emojis": [],
+            "reactions": [],
+        }
+        if user:
+            # TODO: Aggregate query
+            value["read"] = self.seen.filter(id=user.id).exists()
+        return value
