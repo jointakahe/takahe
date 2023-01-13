@@ -786,16 +786,22 @@ class Post(StatorModel):
             # Mentions and hashtags
             post.hashtags = []
             for tag in get_list(data, "tag"):
-                if tag["type"].lower() == "mention":
+                tag_type = tag["type"].lower()
+                if tag_type == "mention":
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
-                elif tag["type"].lower() in ["_:hashtag", "hashtag"]:
+                elif tag_type in ["_:hashtag", "hashtag"]:
                     post.hashtags.append(
                         get_value_or_map(tag, "name", "nameMap").lower().lstrip("#")
                     )
-                elif tag["type"].lower() in ["toot:emoji", "emoji"]:
+                elif tag_type in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
+                elif tag_type == "edition":
+                    # Bookwyrm Edition is similar to hashtags. There should be a link to
+                    # the book in the Note's content and a post attachment of the cover
+                    # image. No special processing should be needed for ingest.
+                    pass
                 else:
                     raise ValueError(f"Unknown tag type {tag['type']}")
             # Visibility and to
