@@ -1,4 +1,5 @@
 import json
+import ssl
 from typing import Optional
 
 import httpx
@@ -7,6 +8,7 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.db import models
 
+from core.exceptions import capture_message
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.schemas import NodeInfo
 
@@ -164,6 +166,8 @@ class Domain(StatorModel):
                 )
             except httpx.HTTPError:
                 pass
+            except ssl.SSLCertVerificationError:
+                return None
             else:
                 try:
                     for link in response.json().get("links", []):
@@ -183,7 +187,7 @@ class Domain(StatorModel):
                     headers={"Accept": "application/json"},
                 )
                 response.raise_for_status()
-            except httpx.HTTPError as ex:
+            except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if (
                     response
@@ -199,9 +203,10 @@ class Domain(StatorModel):
             try:
                 info = NodeInfo(**response.json())
             except json.JSONDecodeError as ex:
-                raise ValueError(
+                capture_message(
                     f"Client error decoding nodeinfo: domain={self.domain}, error={str(ex)}"
                 )
+                return None
             return info
 
     @property

@@ -1,4 +1,5 @@
 import hashlib
+import json
 import mimetypes
 import re
 from collections.abc import Iterable
@@ -872,12 +873,15 @@ class Post(StatorModel):
                         f"Error fetching post from {object_uri}: {response.status_code}",
                         {response.content},
                     )
-                post = cls.by_ap(
-                    canonicalise(response.json(), include_security=True),
-                    create=True,
-                    update=True,
-                    fetch_author=True,
-                )
+                try:
+                    post = cls.by_ap(
+                        canonicalise(response.json(), include_security=True),
+                        create=True,
+                        update=True,
+                        fetch_author=True,
+                    )
+                except (json.JSONDecodeError, ValueError):
+                    raise cls.DoesNotExist(f"Invalid ld+json response for {object_uri}")
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:
                     async_to_sync(post.author.fetch_actor)()
