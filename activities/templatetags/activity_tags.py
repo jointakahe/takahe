@@ -14,10 +14,11 @@ def timedeltashort(value: datetime.datetime):
     """
     if not value:
         return ""
-    # TODO: Handle things in the future properly
     delta = timezone.now() - value
     seconds = int(delta.total_seconds())
-    days = delta.days
+    sign = "-" if seconds < 0 else ""
+    seconds = abs(seconds)
+    days = abs(delta.days)
     if seconds < 60:
         text = f"{seconds:0n}s"
     elif seconds < 60 * 60:
@@ -31,7 +32,7 @@ def timedeltashort(value: datetime.datetime):
     else:
         years = max(days // 365.25, 1)
         text = f"{years:0n}y"
-    return text
+    return sign + text
 
 
 @register.simple_tag(takes_context=True)
