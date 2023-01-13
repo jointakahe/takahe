@@ -1,0 +1,49 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Announcements{% endblock %}
+
+{% block content %}
+    <div class="view-options">
+        <a href="{% url "admin_announcement_create" %}" class="button"><i class="fa-solid fa-plus"></i> Create</a>
+    </div>
+    <table class="items">
+        {% for announcement in page_obj %}
+            <tr>
+                <td class="icon">
+                    <a href="{{ announcement.urls.admin_edit }}" class="overlay"></a>
+                    <i class="fa-solid fa-bullhorn"></i>
+                </td>
+                <td class="name">
+                    <a href="{{ announcement.urls.admin_edit }}" class="overlay"></a>
+                    {{ announcement.html|truncatewords_html:"10" }}
+                    <small>
+                        {% if announcement.service_announcement %}{{ domain.service_domain }}{% endif %}
+                    </small>
+                </span>
+                <td class="stat">
+                    {% if not announcement.published %}
+                        Draft
+                    {% elif not announcement.after_start %}
+                        Awaiting Start
+                    {% elif not announcement.before_end %}
+                        Past End
+                    {% else %}
+                        Visible
+                    {% endif %}
+                    <small>State</small>
+                </td>
+                <td class="actions">
+                    {% if not announcement.published %}
+                        <a hx-post="{{ announcement.urls.admin_publish }}" title="Publish"><i class="fa-solid fa-bullhorn"></i></a>
+                    {% else %}
+                        <a hx-post="{{ announcement.urls.admin_unpublish }}" title="Unpublish"><i class="fa-solid fa-rotate-left"></i></a>
+                    {% endif %}
+                    <a href="{{ announcement.urls.admin_delete }}" title="Delete" class="danger"><i class="fa-solid fa-trash"></i></a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="empty"><td>You have no announcements.</td></tr>
+        {% endfor %}
+    </table>
+    {% include "admin/_pagination.html" with nouns="announcement,announcements" %}
+{% endblock %}

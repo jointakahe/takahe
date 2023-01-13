@@ -7,7 +7,15 @@ from api.views import api_router, oauth
 from core import views as core
 from mediaproxy import views as mediaproxy
 from stator import views as stator
-from users.views import activitypub, admin, auth, identity, report, settings
+from users.views import (
+    activitypub,
+    admin,
+    announcements,
+    auth,
+    identity,
+    report,
+    settings,
+)
 
 urlpatterns = [
     path("", core.homepage),
@@ -162,9 +170,35 @@ urlpatterns = [
         admin.EmojiCreate.as_view(),
         name="admin_emoji_create",
     ),
-    path("admin/emoji/<id>/enable/", admin.EmojiEnable.as_view()),
-    path("admin/emoji/<id>/disable/", admin.EmojiEnable.as_view(enable=False)),
-    path("admin/emoji/<id>/delete/", admin.EmojiDelete.as_view()),
+    path("admin/emoji/<pk>/enable/", admin.EmojiEnable.as_view()),
+    path("admin/emoji/<pk>/disable/", admin.EmojiEnable.as_view(enable=False)),
+    path("admin/emoji/<pk>/delete/", admin.EmojiDelete.as_view()),
+    path(
+        "admin/announcements/",
+        admin.AnnouncementsRoot.as_view(),
+        name="admin_announcements",
+    ),
+    path(
+        "admin/announcements/create/",
+        admin.AnnouncementCreate.as_view(),
+        name="admin_announcement_create",
+    ),
+    path(
+        "admin/announcements/<pk>/",
+        admin.AnnouncementEdit.as_view(),
+    ),
+    path(
+        "admin/announcements/<pk>/delete/",
+        admin.AnnouncementDelete.as_view(),
+    ),
+    path(
+        "admin/announcements/<pk>/publish/",
+        admin.AnnouncementPublish.as_view(),
+    ),
+    path(
+        "admin/announcements/<pk>/unpublish/",
+        admin.AnnouncementUnpublish.as_view(),
+    ),
     path(
         "admin/stator/",
         admin.Stator.as_view(),
@@ -222,6 +256,8 @@ urlpatterns = [
         core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
         name="rules",
     ),
+    # Annoucements
+    path("announcements/<id>/dismiss/", announcements.AnnouncementDismiss.as_view()),
     # Debug aids
     path("debug/json/", debug.JsonViewer.as_view()),
     path("debug/404/", debug.NotFound.as_view()),

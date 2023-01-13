@@ -1,0 +1,6 @@
+{% for announcement in announcements %}
+    <div class="announcement">
+        <a hx-post="{{ announcement.urls.dismiss }}" hx-target="closest .announcement" hx-swap="delete" class="dismiss" title="Dismiss announcement"><i class="fa-solid fa-xmark"></i></a>
+        {{ announcement.html }}
+    </div>
+{% endfor %}

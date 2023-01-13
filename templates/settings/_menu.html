@@ -39,6 +39,9 @@
         <a href="{% url "admin_policies" %}" {% if section == "policies" %}class="selected"{% endif %} title="Policies">
             <i class="fa-solid fa-file-lines"></i> Policies
         </a>
+        <a href="{% url "admin_announcements" %}" {% if section == "announcements" %}class="selected"{% endif %} title="Announcements">
+            <i class="fa-solid fa-bullhorn"></i> Announcements
+        </a>
         <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
             <i class="fa-solid fa-globe"></i> Domains
         </a>

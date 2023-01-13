@@ -3,6 +3,10 @@
 {% block title %}Local Timeline{% endblock %}
 
 {% block content %}
+    {% if page_obj.number == 1 %}
+        {% include "_announcements.html" %}
+    {% endif %}
+
     {% for post in page_obj %}
         {% include "activities/_post.html" with feedindex=forloop.counter %}
     {% empty %}

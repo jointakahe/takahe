@@ -1115,6 +1115,11 @@ form .option-row .right button {
     margin-right: 5px;
 }
 
+blockquote {
+    padding-left: 20px;
+    border-left: 2px solid var(--color-bg-menu);
+}
+
 
 /* Logged out homepage */
 
@@ -1307,6 +1312,23 @@ table.metadata td .emoji {
 
 .view-options .fa-solid {
     min-width: 16px;
+}
+
+/* Announcements */
+
+.announcement {
+    background-color: var(--color-highlight);
+    border-radius: 5px;
+    margin: 0 0 20px 0;
+    padding: 5px 30px 5px 8px;
+    position: relative;
+}
+
+.announcement .dismiss {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
 }
 
 /* Identity banner */

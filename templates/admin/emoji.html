@@ -53,15 +53,5 @@
             </tr>
         {% endfor %}
     </table>
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-            <a class="button" href=".?{% urlparams page=page_obj.previous_page_number %}">Previous Page</a>
-        {% endif %}
-        {% if page_obj.paginator.count %}
-            <span class="count">{{ page_obj.paginator.count }} emoji</span>
-        {% endif %}
-        {% if page_obj.has_next %}
-            <a class="button" href=".?{% urlparams page=page_obj.next_page_number %}">Next Page</a>
-        {% endif %}
-    </div>
+    {% include "admin/_pagination.html" with nouns="emoji,emoji" %}
 {% endblock %}

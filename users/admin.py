@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from activities.admin import IdentityLocalFilter
 from users.models import (
+    Announcement,
     Domain,
     Follow,
     Identity,
@@ -197,3 +198,9 @@ class InviteAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ["id", "created", "resolved", "type", "subject_identity"]
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ["id", "published", "start", "end", "text"]
+    raw_id_fields = ["seen"]

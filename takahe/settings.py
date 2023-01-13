@@ -232,6 +232,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context.config_context",
+                "users.context.user_context",
             ],
         },
     },

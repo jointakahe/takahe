@@ -3,6 +3,10 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
+    {% if page_obj.number == 1 %}
+        {% include "_announcements.html" %}
+    {% endif %}
+
     <div class="view-options">
         {% if notification_options.followed %}
             <a href=".?followed=false" class="selected"><i class="fa-solid fa-check"></i> Followers</a>

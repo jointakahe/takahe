@@ -1,13 +1,13 @@
 from django import forms
 from django.conf import settings
 from django.db import models
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, ListView, View
-from django_htmx.http import HttpResponseClientRefresh
+from django.views.generic import FormView, ListView
 
 from activities.models import Emoji
 from users.decorators import moderator_required
+from users.views.admin.generic import HTMXActionView
 
 
 @method_decorator(moderator_required, name="dispatch")
@@ -70,27 +70,26 @@ class EmojiCreate(FormView):
 
 
 @method_decorator(moderator_required, name="dispatch")
-class EmojiDelete(View):
+class EmojiDelete(HTMXActionView):
     """
     Deletes an emoji
     """
 
-    def post(self, request, id):
-        self.emoji = get_object_or_404(Emoji, pk=id)
-        self.emoji.delete()
-        return HttpResponseClientRefresh()
+    model = Emoji
+
+    def action(self, emoji: Emoji):
+        emoji.delete()
 
 
 @method_decorator(moderator_required, name="dispatch")
-class EmojiEnable(View):
+class EmojiEnable(HTMXActionView):
     """
     Sets an emoji to be enabled (or not!)
     """
 
+    model = Emoji
     enable = True
 
-    def post(self, request, id):
-        self.emoji = get_object_or_404(Emoji, pk=id)
-        self.emoji.public = self.enable
-        self.emoji.save()
-        return HttpResponseClientRefresh()
+    def action(self, emoji: Emoji):
+        emoji.public = self.enable
+        emoji.save()

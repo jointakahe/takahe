@@ -2,6 +2,14 @@ from django.utils.decorators import method_decorator
 from django.views.generic import RedirectView
 
 from users.decorators import admin_required
+from users.views.admin.announcements import (  # noqa
+    AnnouncementCreate,
+    AnnouncementDelete,
+    AnnouncementEdit,
+    AnnouncementPublish,
+    AnnouncementsRoot,
+    AnnouncementUnpublish,
+)
 from users.views.admin.domains import (  # noqa
     DomainCreate,
     DomainDelete,
