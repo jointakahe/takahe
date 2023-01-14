@@ -3,3 +3,6 @@ User-Agent: *
 # Don't allow any bot to crawl tags.
 Disallow: /tags/
 Disallow: /tags/*
+
+# Don't allow bots to crawl through the proxy
+Disallow: /proxy/*
