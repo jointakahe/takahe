@@ -4,6 +4,9 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
+    {% if page_obj.number == 1 %}
+        {% include "_announcements.html" %}
+    {% endif %}
     {% for event in page_obj %}
         {% if event.type == "post" %}
             {% include "activities/_post.html" with post=event.subject_post %}

@@ -1,6 +1,6 @@
 import base64
 import json
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, cast
 from urllib.parse import urlparse
 
 import httpx
@@ -125,8 +125,9 @@ class HttpSignature:
         cleartext: str,
         public_key: str,
     ):
-        public_key_instance = serialization.load_pem_public_key(
-            public_key.encode("ascii")
+        public_key_instance: rsa.RSAPublicKey = cast(
+            rsa.RSAPublicKey,
+            serialization.load_pem_public_key(public_key.encode("ascii")),
         )
         try:
             public_key_instance.verify(
@@ -207,9 +208,12 @@ class HttpSignature:
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
         )
-        private_key_instance = serialization.load_pem_private_key(
-            private_key.encode("ascii"),
-            password=None,
+        private_key_instance: rsa.RSAPrivateKey = cast(
+            rsa.RSAPrivateKey,
+            serialization.load_pem_private_key(
+                private_key.encode("ascii"),
+                password=None,
+            ),
         )
         signature = private_key_instance.sign(
             signed_string.encode("ascii"),
@@ -283,8 +287,9 @@ class LDSignature:
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)
         # Verify the signature
-        public_key_instance = serialization.load_pem_public_key(
-            public_key.encode("ascii")
+        public_key_instance: rsa.RSAPublicKey = cast(
+            rsa.RSAPublicKey,
+            serialization.load_pem_public_key(public_key.encode("ascii")),
         )
         try:
             public_key_instance.verify(
@@ -312,9 +317,12 @@ class LDSignature:
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)
         # Create the signature
-        private_key_instance = serialization.load_pem_private_key(
-            private_key.encode("ascii"),
-            password=None,
+        private_key_instance: rsa.RSAPrivateKey = cast(
+            rsa.RSAPrivateKey,
+            serialization.load_pem_private_key(
+                private_key.encode("ascii"),
+                password=None,
+            ),
         )
         signature = base64.b64encode(
             private_key_instance.sign(

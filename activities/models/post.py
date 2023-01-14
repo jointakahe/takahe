@@ -1,4 +1,5 @@
 import hashlib
+import json
 import mimetypes
 import re
 from collections.abc import Iterable
@@ -736,9 +737,13 @@ class Post(StatorModel):
         Raises DoesNotExist if it's not found and create is False,
         or it's from a blocked domain.
         """
-        # Ensure the domain of the object's actor and ID match to prevent injection
-        if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
-            raise ValueError("Object's ID domain is different to its author")
+        try:
+            # Ensure the domain of the object's actor and ID match to prevent injection
+            if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
+                raise ValueError("Object's ID domain is different to its author")
+        except (TypeError, KeyError):
+            raise ValueError("Object data is not a recognizable ActivityPub object")
+
         # Do we have one with the right ID?
         created = False
         try:
@@ -785,16 +790,22 @@ class Post(StatorModel):
             # Mentions and hashtags
             post.hashtags = []
             for tag in get_list(data, "tag"):
-                if tag["type"].lower() == "mention":
+                tag_type = tag["type"].lower()
+                if tag_type == "mention":
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
-                elif tag["type"].lower() in ["_:hashtag", "hashtag"]:
+                elif tag_type in ["_:hashtag", "hashtag"]:
                     post.hashtags.append(
                         get_value_or_map(tag, "name", "nameMap").lower().lstrip("#")
                     )
-                elif tag["type"].lower() in ["toot:emoji", "emoji"]:
+                elif tag_type in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
+                elif tag_type == "edition":
+                    # Bookwyrm Edition is similar to hashtags. There should be a link to
+                    # the book in the Note's content and a post attachment of the cover
+                    # image. No special processing should be needed for ingest.
+                    pass
                 else:
                     raise ValueError(f"Unknown tag type {tag['type']}")
             # Visibility and to
@@ -812,7 +823,10 @@ class Post(StatorModel):
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
                 if "focalPoint" in attachment:
-                    focal_x, focal_y = attachment["focalPoint"]
+                    try:
+                        focal_x, focal_y = attachment["focalPoint"]
+                    except (ValueError, TypeError):
+                        focal_x, focal_y = None, None
                 else:
                     focal_x, focal_y = None, None
                 mimetype = attachment.get("mediaType")
@@ -869,12 +883,15 @@ class Post(StatorModel):
                         f"Error fetching post from {object_uri}: {response.status_code}",
                         {response.content},
                     )
-                post = cls.by_ap(
-                    canonicalise(response.json(), include_security=True),
-                    create=True,
-                    update=True,
-                    fetch_author=True,
-                )
+                try:
+                    post = cls.by_ap(
+                        canonicalise(response.json(), include_security=True),
+                        create=True,
+                        update=True,
+                        fetch_author=True,
+                    )
+                except (json.JSONDecodeError, ValueError):
+                    raise cls.DoesNotExist(f"Invalid ld+json response for {object_uri}")
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:
                     async_to_sync(post.author.fetch_actor)()

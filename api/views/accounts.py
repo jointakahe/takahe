@@ -86,8 +86,8 @@ def lookup(request: HttpRequest, acct: str):
     Quickly lookup a username to see if it is available, skipping WebFinger
     resolution.
     """
-    acct = acct.lstrip("@")
     host = request.get_host()
+    acct = acct.lstrip("@").removesuffix(f"@{host}")
 
     identity = Identity.objects.filter(
         Q(domain__service_domain__iexact=host) | Q(domain__domain__iexact=host),

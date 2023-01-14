@@ -170,3 +170,19 @@ class Context(Schema):
 class FamiliarFollowers(Schema):
     id: str
     accounts: list[Account]
+
+
+class Announcement(Schema):
+    id: str
+    content: str
+    starts_at: str | None = Field(...)
+    ends_at: str | None = Field(...)
+    all_day: bool
+    published_at: str
+    updated_at: str
+    read: bool | None  # Only missing for anonymous responses
+    mentions: list[Account]
+    statuses: list[Status]
+    tags: list[Tag]
+    emojis: list[CustomEmoji]
+    reactions: list

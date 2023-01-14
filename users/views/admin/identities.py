@@ -25,9 +25,11 @@ class IdentitiesRoot(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        identities = Identity.objects.annotate(
-            num_users=models.Count("users")
-        ).order_by("created")
+        identities = (
+            Identity.objects.annotate(num_users=models.Count("users"))
+            .annotate(followers_count=models.Count("inbound_follows"))
+            .order_by("created")
+        )
         if self.local_only:
             identities = identities.filter(local=True)
         if self.query:

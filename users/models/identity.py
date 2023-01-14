@@ -1,3 +1,4 @@
+import ssl
 from functools import cached_property, partial
 from typing import Literal
 from urllib.parse import urlparse
@@ -642,7 +643,10 @@ class Identity(StatorModel):
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1].lower()
-        webfinger_url = await cls.fetch_webfinger_url(domain)
+        try:
+            webfinger_url = await cls.fetch_webfinger_url(domain)
+        except ssl.SSLCertVerificationError:
+            return None, None
 
         # Go make a Webfinger request
         async with httpx.AsyncClient(
@@ -656,7 +660,7 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                 )
                 response.raise_for_status()
-            except httpx.RequestError as ex:
+            except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if (
                     response
@@ -703,25 +707,24 @@ class Identity(StatorModel):
                 method="get",
                 uri=self.actor_uri,
             )
-        except httpx.RequestError:
+        except (httpx.RequestError, ssl.SSLCertVerificationError):
             return False
         content_type = response.headers.get("content-type")
         if content_type and "html" in content_type:
             # Some servers don't properly handle "application/activity+json"
             return False
-        if response.status_code == 410:
-            # Their account got deleted, so let's do the same.
-            if self.pk:
+        status_code = response.status_code
+        if status_code >= 400:
+            if status_code == 410 and self.pk:
+                # Their account got deleted, so let's do the same.
                 await Identity.objects.filter(pk=self.pk).adelete()
-            return False
-        if response.status_code == 404:
-            # We don't trust this as much as 410 Gone, but skip for now
-            return False
-        if response.status_code >= 500:
-            return False
-        if response.status_code >= 400:
+
+            if status_code >= 500 or status_code in [403, 404, 410]:
+                # Common errors with other server, not worth reporting
+                return False
+
             raise ValueError(
-                f"Client error fetching actor at {self.actor_uri}: {response.status_code}",
+                f"Client error fetching actor at {self.actor_uri}: {status_code}",
                 response.content,
             )
         document = canonicalise(response.json(), include_security=True)
@@ -781,7 +784,7 @@ class Identity(StatorModel):
             self.domain = await get_domain(actor_url_parts.hostname)
         # Emojis (we need the domain so we do them here)
         for tag in get_list(document, "tag"):
-            if tag["type"].lower() == "toot:emoji":
+            if tag["type"].lower() in ["toot:emoji", "emoji"]:
                 await sync_to_async(Emoji.by_ap_tag)(self.domain, tag, create=True)
         # Mark as fetched
         self.fetched = timezone.now()
@@ -835,6 +838,7 @@ class Identity(StatorModel):
         emojis = Emoji.emojis_from_content(
             f"{self.name} {self.summary} {metadata_value_text}", self.domain
         )
+        renderer = ContentRenderer(local=False)
         return {
             "id": self.pk,
             "username": self.username or "",
@@ -849,7 +853,11 @@ class Identity(StatorModel):
             "locked": False,
             "fields": (
                 [
-                    {"name": m["name"], "value": m["value"], "verified_at": None}
+                    {
+                        "name": m["name"],
+                        "value": renderer.render_identity_data(m["value"], self),
+                        "verified_at": None,
+                    }
                     for m in self.metadata
                 ]
                 if self.metadata

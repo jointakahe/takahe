@@ -57,7 +57,7 @@
 
 {% if current_page == "home" %}
     <h2>Compose</h2>
-    <form action="/compose/" method="POST" class="compose">
+    <form action="{% url "compose" %}" method="POST" class="compose">
         {% csrf_token %}
         {{ form.text }}
         {{ form.content_warning }}

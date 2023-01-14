@@ -1,4 +1,5 @@
 from .accounts import *  # noqa
+from .announcements import *  # noqa
 from .apps import *  # noqa
 from .emoji import *  # noqa
 from .filters import *  # noqa

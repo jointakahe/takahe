@@ -15,14 +15,8 @@
             and you will <b>not be able to delete a domain with identities on it</b>.
         </p>
         <p>
-            If you will be serving Takahē on the domain you choose, you can leave
-            the "service domain" field blank. If you would like to let users create
-            accounts on a domain serving something else, you must pick a unique
-            "service domain" that pairs up to your chosen domain name, make sure
-            Takahē is served on that, and add redirects
-            for <tt>/.well-known/webfinger</tt>, <tt>/.well-known/host-meta</tt>
-            and <tt>/.well-known/nodeinfo</tt> from the main domain to the
-            service domain.
+            For more information about domain setup, including what service
+            domains are, see <a href="https://docs.jointakahe.org/en/latest/domains/">our documentation on domains</a>.
         </p>
         {% csrf_token %}
         <fieldset>
