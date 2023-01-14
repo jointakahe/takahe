@@ -12,13 +12,13 @@
         data-handle="{{ identity.name_or_handle }}"
         _="on error set my.src to generate_avatar(@data-handle)"
     >
-    {% if link_avatar is False%}
+    {% if link_avatar is False %}
         </div>
     {% else %}
         </a>
     {% endif %}
 
-    {% if link_handle is False%}
+    {% if link_handle is False %}
         <div class="handle">
     {% else %}
         <a href="{{ identity.urls.view }}" class="handle">

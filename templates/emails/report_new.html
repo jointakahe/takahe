@@ -1,33 +1,33 @@
 {% extends "emails/base.html" %}
 {% load mail_tags %}
 {% autoescape off %}
-    {% block title %}{{config.site_name}} - New Moderation Report{% endblock title %}
-    {% block subtitle %}{{config.site_name}} - New Moderation Report{% endblock subtitle %}
+    {% block title %}{{ config.site_name }} - New Moderation Report{% endblock title %}
+    {% block subtitle %}{{ config.site_name }} - New Moderation Report{% endblock subtitle %}
 
     {% block body_greeting %}
         {% email_body_content "Moderation Team," %}
-        {% email_body_content "A new report has been recieved for {{config.site_name}}." %}
+        {% email_body_content "A new report has been recieved for {{ config.site_name }}." %}
     {% endblock body_greeting %}
 
     {% block body_content %}
         {% email_body_content "=============== Report Summary ===============" %}
 
         {% if report.source_identity %}
-            {% email_body_content "Reporter Identity: {{report.source_identity}} @ {{report.source_domain}}" %}
+            {% email_body_content "Reporter Identity: {{ report.source_identity }} @ {{ report.source_domain }}" %}
         {% else %}
-            {% email_body_content "Reporter Identity: Anonymous Report from {{report.source_domain}}" %}
+            {% email_body_content "Reporter Identity: Anonymous Report from {{ report.source_domain }}" %}
         {% endif %}
 
-        {% email_body_content "Reported Identity: {{report.subject_identity}}" %}
-        {% email_body_content "Complaint Type: {{report.type}}" %}
-        {% email_body_content "Complaint Notes: {{report.complaint}}" %}
+        {% email_body_content "Reported Identity: {{ report.subject_identity }}" %}
+        {% email_body_content "Complaint Type: {{ report.type }}" %}
+        {% email_body_content "Complaint Notes: {{ report.complaint }}" %}
     {% endblock body_content %}
 
     {% block body_button %}
-        {% email_button button_text="View Report" button_link="https://{{settings.MAIN_DOMAIN}}/admin/reports/{{report.id}}/" %}
+        {% email_button button_text="View Report" button_link="https://{{ settings.MAIN_DOMAIN }}/admin/reports/{{ report.id }}/" %}
     {% endblock body_button %}
 
     {% block extra_footer %}
-        {% email_footer "You are recieving this email because you are a moderator on the Takahe instance https://{{settings.MAIN_DOMAIN}}" %}
+        {% email_footer "You are recieving this email because you are a moderator on the Takahe instance https://{{ settings.MAIN_DOMAIN }}" %}
     {% endblock extra_footer %}
 {% endautoescape %}
