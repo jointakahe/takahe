@@ -1034,6 +1034,7 @@ button.toggle,
 button[disabled],
 .button[disabled] {
     background: var(--color-button-disabled);
+    cursor: not-allowed;
 }
 
 button.left,
