@@ -58,6 +58,10 @@ class EmojiCreate(FormView):
                 raise forms.ValidationError(
                     f"Image filesize is too large (actual: {data.size // 1024}KB)"
                 )
+            if data.image.width < 40 or data.image.height < 40:
+                raise forms.ValidationError(
+                    f"Image should at least 40 x 40 pixels (actual: {data.image.width} x {data.image.height} pixels)"
+                )
             return data
 
     def form_valid(self, form):
