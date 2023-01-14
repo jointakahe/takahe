@@ -23,12 +23,12 @@ class Announcement(models.Model):
     start = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="When the announcement will start appearing.\nLeave blank to have it begin as soon as it is published.\nFormat: <tt>2023-01-01</tt> or <tt>2023-01-01 12:30:00</tt>",
+        help_text="When the announcement will start appearing.\nLeave blank to have it begin as soon as it is published.\nFormat: <code>2023-01-01</code> or <code>2023-01-01 12:30:00</code>",
     )
     end = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="When the announcement will stop appearing.\nLeave blank to have it display indefinitely.\nFormat: <tt>2023-01-01</tt> or <tt>2023-01-01 12:30:00</tt>",
+        help_text="When the announcement will stop appearing.\nLeave blank to have it display indefinitely.\nFormat: <code>2023-01-01</code> or <code>2023-01-01 12:30:00</code>",
     )
 
     include_unauthenticated = models.BooleanField(default=False)
