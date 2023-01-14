@@ -6,8 +6,9 @@ from django.contrib.syndication.views import Feed
 from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
-from django.utils import feedgenerator
 from django.utils.decorators import method_decorator
+from django.utils.feedgenerator import Rss201rev2Feed
+from django.utils.xmlutils import SimplerXMLGenerator
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView, View
 
@@ -93,6 +94,50 @@ class ViewIdentity(ListView):
         return context
 
 
+class FeedWithImages(Rss201rev2Feed):
+    """Extended Feed class to attach multiple images."""
+
+    def rss_attributes(self):
+        attrs = super().rss_attributes()
+        attrs["xmlns:media"] = "http://search.yahoo.com/mrss/"
+        attrs["xmlns:webfeeds"] = "http://webfeeds.org/rss/1.0"
+        return attrs
+
+    def add_root_elements(self, handler: SimplerXMLGenerator):
+        super().add_root_elements(handler)
+        handler.startElement("image", {})
+        handler.addQuickElement("url", self.feed["image"]["url"])
+        handler.addQuickElement("title", self.feed["image"]["title"])
+        handler.addQuickElement("link", self.feed["image"]["link"])
+        handler.endElement("image")
+        handler.addQuickElement(
+            "webfeeds:icon",
+            self.feed["image"]["url"],
+        )
+
+    def add_item_elements(self, handler: SimplerXMLGenerator, item):
+        super().add_item_elements(handler, item)
+
+        for image in item["images"]:
+            handler.startElement(
+                "media:content",
+                {
+                    "url": image["url"],
+                    "type": image["mime_type"],
+                    "fileSize": image["length"],
+                    "medium": "image",
+                },
+            )
+            if image["description"]:
+                handler.addQuickElement(
+                    "media:description", image["description"], {"type": "plain"}
+                )
+            handler.endElement("media:content")
+
+        for hashtag in item["hashtags"]:
+            handler.addQuickElement("category", hashtag)
+
+
 @method_decorator(
     cache_page("cache_timeout_identity_feed", public_only=True), name="__call__"
 )
@@ -100,6 +145,8 @@ class IdentityFeed(Feed):
     """
     Serves a local user's Public posts as an RSS feed
     """
+
+    feed_type = FeedWithImages
 
     def get_object(self, request, handle):
         return by_handle_or_404(
@@ -117,6 +164,18 @@ class IdentityFeed(Feed):
     def link(self, identity: Identity):
         return identity.absolute_profile_uri()
 
+    def feed_extra_kwargs(self, identity: Identity):
+        """
+        Return attached images data to allow `FeedWithImages.add_item_elements()`
+        to attach multiple images for each `<item>`.
+        """
+        image = {
+            "url": identity.local_icon_url().absolute,
+            "title": identity.name,
+            "link": identity.absolute_profile_uri(),
+        }
+        return {"image": image}
+
     def items(self, identity: Identity):
         return TimelineService(None).identity_public(identity)[:20]
 
@@ -129,17 +188,23 @@ class IdentityFeed(Feed):
     def item_pubdate(self, item: Post):
         return item.published
 
-    def item_enclosures(self, item: Post):
-        attachment = item.attachments.first()
-        if attachment is None:
-            return []
+    def item_extra_kwargs(self, item: Post):
+        """
+        Return attached images data to allow `FeedWithImages.add_root_elements()`
+        to add `<image>` as RSS feed icon.
+        """
+        images = []
+        for attachment in item.attachments.all():
+            images.append(
+                {
+                    "url": attachment.full_url().absolute,
+                    "length": (str(attachment.file.size)),
+                    "mime_type": (attachment.mimetype),
+                    "description": (attachment.name),
+                }
+            )
 
-        enc = feedgenerator.Enclosure(
-            url=attachment.full_url().absolute,
-            length=str(attachment.file.size),
-            mime_type=attachment.mimetype,
-        )
-        return [enc]
+        return {"images": images, "hashtags": item.hashtags or []}
 
 
 class IdentityFollows(ListView):
@@ -203,7 +268,6 @@ class ActionIdentity(View):
 
 @method_decorator(login_required, name="dispatch")
 class SelectIdentity(TemplateView):
-
     template_name = "identity/select.html"
 
     def get_context_data(self):
@@ -228,7 +292,6 @@ class ActivateIdentity(View):
 
 @method_decorator(login_required, name="dispatch")
 class CreateIdentity(FormView):
-
     template_name = "identity/create.html"
 
     class form_class(forms.Form):
