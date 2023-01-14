@@ -62,6 +62,7 @@ class TimelineEvent(models.Model):
             # This relies on a DB that can use left subsets of indexes
             ("identity", "type", "subject_post", "subject_identity"),
             ("identity", "type", "subject_identity"),
+            ("identity", "created"),
         ]
 
     ### Alternate constructors ###
