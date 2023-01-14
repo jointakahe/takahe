@@ -37,7 +37,7 @@ class TimelineService:
                 identity=self.identity,
                 type__in=[TimelineEvent.Types.post, TimelineEvent.Types.boost],
             )
-            .order_by("-published")
+            .order_by("-created")
         )
 
     def local(self) -> models.QuerySet[Post]:
@@ -45,7 +45,7 @@ class TimelineService:
             PostService.queryset()
             .local_public()
             .filter(author__restriction=Identity.Restriction.none)
-            .order_by("-published")
+            .order_by("-id")
         )
 
     def federated(self) -> models.QuerySet[Post]:
@@ -53,7 +53,7 @@ class TimelineService:
             PostService.queryset()
             .public()
             .filter(author__restriction=Identity.Restriction.none)
-            .order_by("-published")
+            .order_by("-id")
         )
 
     def hashtag(self, hashtag: str | Hashtag) -> models.QuerySet[Post]:
@@ -62,14 +62,14 @@ class TimelineService:
             .public()
             .filter(author__restriction=Identity.Restriction.none)
             .tagged_with(hashtag)
-            .order_by("-published")
+            .order_by("-id")
         )
 
     def notifications(self, types: list[str]) -> models.QuerySet[TimelineEvent]:
         return (
             self.event_queryset()
             .filter(identity=self.identity, type__in=types)
-            .order_by("-published")
+            .order_by("-created")
         )
 
     def identity_public(self, identity: Identity):
@@ -80,5 +80,5 @@ class TimelineService:
             PostService.queryset()
             .filter(author=identity)
             .unlisted(include_replies=True)
-            .order_by("-created")
+            .order_by("-id")
         )

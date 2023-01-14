@@ -853,7 +853,7 @@ class Post(StatorModel):
                 try:
                     parent = cls.by_object_uri(post.in_reply_to)
                 except cls.DoesNotExist:
-                    cls.ensure_object_uri(post.in_reply_to)
+                    cls.ensure_object_uri(post.in_reply_to, reason=post.object_uri)
                 else:
                     parent.calculate_stats()
         return post
@@ -900,7 +900,7 @@ class Post(StatorModel):
                 raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")
 
     @classmethod
-    def ensure_object_uri(cls, object_uri: str):
+    def ensure_object_uri(cls, object_uri: str, reason: str | None = None):
         """
         Sees if the post is in our local set, and if not, schedules a fetch
         for it (in the background)
@@ -916,6 +916,7 @@ class Post(StatorModel):
                     "object": {
                         "type": "FetchPost",
                         "object": object_uri,
+                        "reason": reason,
                     },
                 }
             )
