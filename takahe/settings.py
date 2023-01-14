@@ -326,6 +326,9 @@ MEDIA_URL = SETUP.MEDIA_URL
 MEDIA_ROOT = SETUP.MEDIA_ROOT
 MAIN_DOMAIN = SETUP.MAIN_DOMAIN
 
+if not DEBUG and MAIN_DOMAIN == "example.com":
+    raise ValueError("You must set a TAKAHE_MAIN_DOMAIN!")
+
 # Debug toolbar should only be loaded at all when debug is on
 if DEBUG and SETUP.DEBUG_TOOLBAR:
     INSTALLED_APPS.append("debug_toolbar")
