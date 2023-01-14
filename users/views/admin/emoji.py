@@ -49,13 +49,19 @@ class EmojiCreate(FormView):
             help_text="What users type to use the emoji :likethis:",
         )
         image = forms.ImageField(
-            help_text="The emoji image\nShould be at least 40 x 40 pixels, and under 50kb",
+            help_text=f"The emoji image\nShould be at least 40 x 40 pixels, and under {settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB}KB",
         )
 
         def clean_image(self):
             data = self.cleaned_data["image"]
-            if data.size > settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB:
-                raise forms.ValidationError("Image filesize is too large")
+            if data.size > settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB * 1024:
+                raise forms.ValidationError(
+                    f"Image filesize is too large (actual: {data.size // 1024}KB)"
+                )
+            if data.image.width < 40 or data.image.height < 40:
+                raise forms.ValidationError(
+                    f"Image should at least 40 x 40 pixels (actual: {data.image.width} x {data.image.height} pixels)"
+                )
             return data
 
     def form_valid(self, form):
