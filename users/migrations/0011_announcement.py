@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                     "start",
                     models.DateTimeField(
                         blank=True,
-                        help_text="When the announcement will start appearing.\nLeave blank to have it begin as soon as it is published.",
+                        help_text="When the announcement will start appearing.\nLeave blank to have it begin as soon as it is published.\nFormat: <code>2023-01-01</code> or <code>2023-01-01 12:30:00</code>",
                         null=True,
                     ),
                 ),
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                     "end",
                     models.DateTimeField(
                         blank=True,
-                        help_text="When the announcement will stop appearing.\nLeave blank to have it display indefinitely.",
+                        help_text="When the announcement will stop appearing.\nLeave blank to have it display indefinitely.\nFormat: <code>2023-01-01</code> or <code>2023-01-01 12:30:00</code>",
                         null=True,
                     ),
                 ),
