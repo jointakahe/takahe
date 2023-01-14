@@ -683,14 +683,18 @@ class Identity(StatorModel):
                 "JSON parse error fetching webfinger",
                 response.content,
             )
-        if data["subject"].startswith("acct:"):
-            data["subject"] = data["subject"][5:]
-        for link in data["links"]:
-            if (
-                link.get("type") == "application/activity+json"
-                and link.get("rel") == "self"
-            ):
-                return link["href"], data["subject"]
+        try:
+            if data["subject"].startswith("acct:"):
+                data["subject"] = data["subject"][5:]
+            for link in data["links"]:
+                if (
+                    link.get("type") == "application/activity+json"
+                    and link.get("rel") == "self"
+                ):
+                    return link["href"], data["subject"]
+        except KeyError:
+            # Server returning wrong payload structure
+            pass
         return None, None
 
     async def fetch_actor(self) -> bool:
