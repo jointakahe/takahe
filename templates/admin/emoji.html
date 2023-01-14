@@ -32,6 +32,9 @@
                 <td>
                 </td>
                 <td class="actions">
+                    {% if emoji.can_copy_local %}
+                        <a hx-post="{{ emoji.urls.admin_copy }}" title="Copy to Local"><i class="fa-solid fa-copy"></i></a>
+                    {% endif %}
                     {% if not emoji.is_usable %}
                         <span class="bad">Disabled</span>
                         <a hx-post="{{ emoji.urls.admin_enable }}" title="Enable"><i class="fa-solid fa-circle-check"></i></a>

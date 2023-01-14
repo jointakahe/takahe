@@ -17,6 +17,7 @@ from users.views.admin.domains import (  # noqa
     Domains,
 )
 from users.views.admin.emoji import (  # noqa
+    EmojiCopyLocal,
     EmojiCreate,
     EmojiDelete,
     EmojiEnable,

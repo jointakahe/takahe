@@ -99,3 +99,18 @@ class EmojiEnable(HTMXActionView):
     def action(self, emoji: Emoji):
         emoji.public = self.enable
         emoji.save()
+
+
+@method_decorator(moderator_required, name="dispatch")
+class EmojiCopyLocal(HTMXActionView):
+    """
+    Duplicates a domain emoji to be local, as long as it is usable and the
+    shortcode is available.
+    """
+
+    model = Emoji
+
+    def action(self, emoji: Emoji):
+        # Force reload locals cache to avoid potential for shortcode dupes
+        Emoji.locals = Emoji.load_locals()
+        emoji.copy_to_local()
