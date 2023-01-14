@@ -33,7 +33,7 @@
                             <span class="bad">Expired</span>
                         {% endif %}
                     {% endif %}
-                </time>
+                </td>
                 <td class="stat">
                     {% if invite.uses %}
                         {{ invite.uses }}
@@ -41,7 +41,7 @@
                         Infinite
                     {% endif %}
                     <small>use{{ invite.uses|pluralize }} left</small>
-                </time>
+                </td>
             </tr>
         {% empty %}
             <tr class="empty">

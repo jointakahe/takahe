@@ -10,7 +10,7 @@
             <legend>Stats</legend>
             <table class="metadata">
                 <tr>
-                    <th>Status</td>
+                    <th>Status</th>
                     <td>
                         {% if identity.limited %}
                             Limited
@@ -23,37 +23,37 @@
                 </tr>
                 {% if identity.local %}
                     <tr>
-                        <th>Type</td>
+                        <th>Type</th>
                         <td>Local Identity</td>
                     </tr>
                     <tr>
-                        <th>Followers</td>
+                        <th>Followers</th>
                         <td>{{ identity.inbound_follows.count }}</td>
                     </tr>
                     <tr>
-                        <th>Following</td>
+                        <th>Following</th>
                         <td>{{ identity.outbound_follows.count }}</td>
                     </tr>
                 {% else %}
                     <tr>
-                        <th>Type</td>
+                        <th>Type</th>
                         <td>Remote Identity</td>
                     </tr>
                     <tr>
-                        <th>Local Followers</td>
+                        <th>Local Followers</th>
                         <td>{{ identity.inbound_follows.count }}</td>
                     </tr>
                     <tr>
-                        <th>Following Locals</td>
+                        <th>Following Locals</th>
                         <td>{{ identity.outbound_follows.count }}</td>
                     </tr>
                 {% endif %}
                 <tr>
-                    <th>Posts</td>
+                    <th>Posts</th>
                     <td>{{ identity.posts.count }}</td>
                 </tr>
                 <tr>
-                    <th>First Seen</td>
+                    <th>First Seen</th>
                     <td>{{ identity.created|timesince }} ago</td>
                 </tr>
             </table>
@@ -73,23 +73,23 @@
             <table class="metadata">
                 {% if not identity.local %}
                     <tr>
-                        <th>Last Fetched</td>
+                        <th>Last Fetched</th>
                         <td>{{ identity.fetched|timesince }} ago</td>
                     </tr>
                     {% if identity.state == "outdated" %}
                         <tr>
-                            <th>Attempting Fetch Since</td>
+                            <th>Attempting Fetch Since</th>
                             <td>{{ identity.state_changed|timesince }} ago</td>
                         </tr>
                     {% endif %}
                 {% endif %}
                 <tr>
-                    <th>Actor URI</td>
+                    <th>Actor URI</th>
                     <td>{{ identity.actor_uri }}</td>
                 </tr>
                 {% if not identity.local %}
                     <tr>
-                        <th>Inbox URI</td>
+                        <th>Inbox URI</th>
                         <td>{{ identity.inbox_uri }}</td>
                     </tr>
                 {% endif %}
@@ -101,17 +101,17 @@
         </fieldset>
         <div class="buttons">
             {% if not identity.local %}
-                <button class="left" name="fetch">Force Fetch</a>
+                <button class="left" name="fetch">Force Fetch</button>
             {% endif %}
             {% if identity.limited %}
-                <button class="left delete" name="unlimit">Unlimit</a>
+                <button class="left delete" name="unlimit">Unlimit</button>
             {% else %}
-                <button class="left delete" name="limit">Limit</a>
+                <button class="left delete" name="limit">Limit</button>
             {% endif %}
             {% if identity.blocked %}
-                <button class="left delete" name="unblock">Unblock</a>
+                <button class="left delete" name="unblock">Unblock</button>
             {% else %}
-                <button class="left delete" name="block">Block</a>
+                <button class="left delete" name="block">Block</button>
             {% endif %}
         </div>
         <div class="buttons">
