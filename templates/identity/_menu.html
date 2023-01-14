@@ -1,11 +1,11 @@
 <nav>
-    <a href="/identity/select/" {% if identities %}class="selected"{% endif %} title="Select Identity">
+    <a href="{% url "identity_select" %}" {% if identities %}class="selected"{% endif %} title="Select Identity">
         <i class="fa-solid fa-users-viewfinder"></i> Select Identity
     </a>
-    <a href="/identity/create/" {% if form %}class="selected"{% endif %} title="Create Identity">
+    <a href="{% url "identity_create" %}" {% if form %}class="selected"{% endif %} title="Create Identity">
         <i class="fa-solid fa-plus"></i> Create Identity
     </a>
-    <a href="/auth/logout/" title="Logout">
+    <a href="{% url "logout" %}" title="Logout">
         <i class="fa-solid fa-right-from-bracket"></i> Logout
     </a>
     {% if request.user.admin %}

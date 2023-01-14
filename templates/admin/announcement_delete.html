@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1>Confirm Delete</h1>
-    <section class="">
+    <section>
         <form action="." method="POST">
             {% csrf_token %}
 
@@ -16,6 +16,7 @@
                 <a class="button" href="javascript:history.back()">Cancel</a>
                 <button class="delete">Delete</button>
             </div>
-        </section>
+        </form>
+    </section>
 
 {% endblock %}

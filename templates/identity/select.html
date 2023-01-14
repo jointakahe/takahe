@@ -16,7 +16,7 @@
         {% empty %}
             <p class="option empty">You have no identities.</p>
         {% endfor %}
-        <a href="/identity/create/" class="option new">
+        <a href="{% url "identity_create" %}" class="option new">
             <i class="fa-solid fa-plus"></i> Create a new identity
         </a>
     </section>

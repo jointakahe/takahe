@@ -10,7 +10,7 @@
     <a href="{% url "settings_security" %}" {% if section == "security" %}class="selected"{% endif %} title="Login &amp; Security">
         <i class="fa-solid fa-key"></i> Login &amp; Security
     </a>
-    <a href="/auth/logout/">
+    <a href="{% url "logout" %}">
         <i class="fa-solid fa-right-from-bracket" title="Logout"></i> Logout
     </a>
     {% if request.user.moderator or request.user.admin %}
