@@ -1,0 +1,75 @@
+0.7
+===
+
+*Not Yet Released*
+
+This release focuses on the final big "feature delta" we had versus other
+complete servers, and includes a lot of the missing community features that
+we needed for an initial open launch of takahe.social.
+
+If you're curious on the reasons *not* to use Takahē yet, see what's left
+to implement on our :doc:`/features` page, and our federation and client
+compatibility list on our :doc:`/interoperability` page.
+
+Major features:
+
+* Blocking and Muting
+
+  * Timed mutes are supported but only via client apps for now
+
+* Further Mastodon Client API support
+
+  * Announcements, profile editing, viewing followers, and some more bugfixes
+
+* Emoji admin page
+* Server announcements system
+* Notifications to admins when new identities are created
+* Emails to moderators when a new report comes in
+* Shared inbox delivery to remote servers
+
+Other fixes and improvements include:
+
+* Lightbox for viewing images (rather than a full redirect!)
+* Content Warnings of the same type will now all expand together
+* Client compatibility improvements (especially for Elk, Ivory and Tusky)
+* Remote server software tracking and down detection
+* HTML formatted emails along with plain text versions
+* Better display of videos on remote posts (no local upload yet)
+* RSS feeds now support multiple images on a single post
+* Timeline rendering performance improvements
+* Federation compatibility improvements
+* Automatic trimming of old FanOut, InboxMessage, and other data
+
+If you'd like to help with code, design, policy or other areas, see
+:doc:`/contributing` to see how to get in touch.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.7``.
+
+
+Upgrade Notes
+-------------
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations; they are backwards-compatible, so please
+apply them before restarting your webservers and stator processes.
+
+
+Snowflake IDs and Ordering
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As of this release, we have moved Post, Identity, Follow, and several other
+objects to have "snowflake IDs" - ones that include the timestamp as part of
+the ID, such as ``137587476347213336``. These IDs also have implicit ordering
+as a result.
+
+We've also changed all timelines to be ordered by when the post was
+*received* rather than *initially created*; if another server takes a while to
+send Takahē the post, it will now appear at the top of the timeline when it
+arrives. The date on a post will be its *original publish* date, so if other
+servers are a bit slow you may see the timestamps not be entirely in order.
+This is fine, and also the way Mastodon behaves.
+
+You should not notice any major side-effects apart from longer IDs in URLs.

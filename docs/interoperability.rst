@@ -16,12 +16,13 @@ These apps are known to fully work as far as Takahē's
 :doc:`own featureset <features>` allows:
 
 * Tusky
+* Elk
+* Pinafore
 
 
 These apps have had initial testing and work at a basic level:
 
 * Ivory
-* Pinafore
 
 
 Fediverse Servers
@@ -46,13 +47,11 @@ needed:
 
 * Pleroma
 
+* Mitra
+
 
 These servers have the beginnings of support but known bugs that need fixing:
 
 * Gotosocial
 
   * Issues pulling accounts
-
-* Mitra
-
-  * Sends Follow Accept messages in a compact format we don't accept yet
