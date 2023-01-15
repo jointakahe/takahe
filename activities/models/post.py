@@ -23,6 +23,7 @@ from activities.models.post_types import (
     PostTypeDataDecoder,
     PostTypeDataEncoder,
 )
+from core.exceptions import capture_message
 from core.html import ContentRenderer, strip_html
 from core.ld import (
     canonicalise,
@@ -853,7 +854,12 @@ class Post(StatorModel):
                 try:
                     parent = cls.by_object_uri(post.in_reply_to)
                 except cls.DoesNotExist:
-                    cls.ensure_object_uri(post.in_reply_to, reason=post.object_uri)
+                    try:
+                        cls.ensure_object_uri(post.in_reply_to, reason=post.object_uri)
+                    except ValueError:
+                        capture_message(
+                            f"Cannot fetch ancestor of Post={post.pk}, ancestor_uri={post.in_reply_to}"
+                        )
                 else:
                     parent.calculate_stats()
         return post
@@ -905,8 +911,8 @@ class Post(StatorModel):
         Sees if the post is in our local set, and if not, schedules a fetch
         for it (in the background)
         """
-        if not object_uri:
-            raise ValueError("No URI provided!")
+        if not object_uri or "://" not in object_uri:
+            raise ValueError("URI missing or invalid")
         try:
             cls.by_object_uri(object_uri)
         except cls.DoesNotExist:
@@ -977,8 +983,10 @@ class Post(StatorModel):
         Handles an internal fetch-request inbox message
         """
         try:
-            cls.by_object_uri(data["object"]["object"], fetch=True)
-        except cls.DoesNotExist:
+            uri = data["object"]["object"]
+            if "://" in uri:
+                cls.by_object_uri(uri, fetch=True)
+        except (cls.DoesNotExist, KeyError):
             pass
 
     ### OpenGraph API ###
