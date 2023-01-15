@@ -890,7 +890,7 @@ class Identity(StatorModel):
                 Post.Visibilities.mentioned: "direct",
             }
             result["source"] = {
-                "note": html_to_plaintext(self.summary),
+                "note": html_to_plaintext(self.summary) if self.summary else "",
                 "fields": result["fields"],
                 "privacy": privacy_map[
                     Config.load_identity(self).default_post_visibility
