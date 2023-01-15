@@ -53,8 +53,15 @@
                                 <source src="{{ attachment.full_url.relative }}" type="{{ attachment.mimetype }}">
                             </video>
                         </a>
-                    {% else %}
-                        <a href="{{ attachment.full_url }}" class="non-media-file" target="_blank">File: {{ attachment.file_display_name }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% for attachment in post.attachments.all %}
+                    {% if not attachment.is_image and not attachment.is_video %}
+                        <a href="{{ attachment.full_url.relative }}" class="other">
+                            <div class="other-label">
+                                <i class="fa-solid fa-download"></i> {{ attachment.file_display_name }}
+                            </div>
+                        </a>
                     {% endif %}
                 {% endfor %}
             </div>
