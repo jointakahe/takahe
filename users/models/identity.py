@@ -13,7 +13,7 @@ from django.utils.functional import lazy
 from lxml import etree
 
 from core.exceptions import ActorMismatchError
-from core.html import ContentRenderer, strip_html
+from core.html import ContentRenderer, html_to_plaintext, strip_html
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -830,8 +830,8 @@ class Identity(StatorModel):
             "acct": self.handle or "",
         }
 
-    def to_mastodon_json(self, include_counts=True):
-        from activities.models import Emoji
+    def to_mastodon_json(self, source=False, include_counts=True):
+        from activities.models import Emoji, Post
 
         header_image = self.local_image_url()
         missing = StaticAbsoluteUrl("img/missing.png").absolute
@@ -843,7 +843,7 @@ class Identity(StatorModel):
             f"{self.name} {self.summary} {metadata_value_text}", self.domain
         )
         renderer = ContentRenderer(local=False)
-        return {
+        result = {
             "id": self.pk,
             "username": self.username or "",
             "acct": self.handle,
@@ -881,6 +881,25 @@ class Identity(StatorModel):
             "followers_count": self.inbound_follows.count() if include_counts else 0,
             "following_count": self.outbound_follows.count() if include_counts else 0,
         }
+        if source:
+            privacy_map = {
+                Post.Visibilities.public: "public",
+                Post.Visibilities.unlisted: "unlisted",
+                Post.Visibilities.local_only: "unlisted",
+                Post.Visibilities.followers: "private",
+                Post.Visibilities.mentioned: "direct",
+            }
+            result["source"] = {
+                "note": html_to_plaintext(self.summary),
+                "fields": result["fields"],
+                "privacy": privacy_map[
+                    Config.load_identity(self).default_post_visibility
+                ],
+                "sensitive": False,
+                "language": "unk",
+                "follow_requests_count": 0,
+            }
+        return result
 
     ### Cryptography ###
 

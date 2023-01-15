@@ -51,6 +51,7 @@ class Account(Schema):
     statuses_count: int
     followers_count: int
     following_count: int
+    source: dict | None
 
 
 class MediaAttachment(Schema):

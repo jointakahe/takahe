@@ -2,6 +2,7 @@ from django.db import models
 from django.template.defaultfilters import linebreaks_filter
 
 from activities.models import FanOut
+from core.files import resize_image
 from core.html import strip_html
 from users.models import (
     Block,
@@ -185,3 +186,21 @@ class IdentityService:
         else:
             self.identity.summary = None
         self.identity.save()
+
+    def set_icon(self, file):
+        """
+        Sets the user's avatar image
+        """
+        self.identity.icon.save(
+            file.name,
+            resize_image(file, size=(400, 400)),
+        )
+
+    def set_image(self, file):
+        """
+        Sets the user's header image
+        """
+        self.identity.image.save(
+            file.name,
+            resize_image(file, size=(1500, 500)),
+        )

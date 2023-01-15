@@ -4,7 +4,6 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
-from core.files import resize_image
 from core.html import html_to_plaintext
 from core.models.config import Config
 from users.decorators import identity_required
@@ -77,22 +76,17 @@ class ProfilePage(FormView):
     def form_valid(self, form):
         # Update basic info
         identity = self.request.identity
+        service = IdentityService(identity)
         identity.name = form.cleaned_data["name"]
         identity.discoverable = form.cleaned_data["discoverable"]
-        IdentityService(identity).set_summary(form.cleaned_data["summary"])
+        service.set_summary(form.cleaned_data["summary"])
         # Resize images
         icon = form.cleaned_data.get("icon")
         image = form.cleaned_data.get("image")
         if isinstance(icon, File):
-            identity.icon.save(
-                icon.name,
-                resize_image(icon, size=(400, 400)),
-            )
+            service.set_icon(icon)
         if isinstance(image, File):
-            identity.image.save(
-                image.name,
-                resize_image(image, size=(1500, 500)),
-            )
+            service.set_image(image)
         identity.metadata = form.cleaned_data.get("metadata")
 
         # Clear images if specified

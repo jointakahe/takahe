@@ -1,12 +1,15 @@
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, QueryDict
+from django.http.multipartparser import MultiPartParser
 from django.shortcuts import get_object_or_404
 from ninja import Field, Schema
 
+from activities.models import Post
 from activities.services import SearchService
 from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator
 from api.views.base import api_router
+from core.models import Config
 from users.models import Identity
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
@@ -15,7 +18,62 @@ from users.shortcuts import by_handle_or_404
 @api_router.get("/v1/accounts/verify_credentials", response=schemas.Account)
 @identity_required
 def verify_credentials(request):
-    return request.identity.to_mastodon_json()
+    return request.identity.to_mastodon_json(source=True)
+
+
+@api_router.patch("/v1/accounts/update_credentials", response=schemas.Account)
+@identity_required
+def update_credentials(
+    request,
+):
+    # Django won't load POST and FILES for patch methods, so we do it.
+    if request.content_type == "multipart/form-data":
+        POST, FILES = MultiPartParser(
+            request.META, request, request.upload_handlers, request.encoding
+        ).parse()
+    elif request.content_type == "application/x-www-form-urlencoded":
+        POST = QueryDict(request.body, encoding=request._encoding)
+        FILES = {}
+    else:
+        return HttpResponse(status=400)
+    identity = request.identity
+    service = IdentityService(identity)
+    if "display_name" in POST:
+        identity.name = POST["display_name"]
+    if "note" in POST:
+        service.set_summary(POST["note"])
+    if "discoverable" in POST:
+        identity.discoverable = POST["discoverable"] == "checked"
+    if "source[privacy]" in POST:
+        privacy_map = {
+            "public": Post.Visibilities.public,
+            "unlisted": Post.Visibilities.unlisted,
+            "private": Post.Visibilities.followers,
+            "direct": Post.Visibilities.mentioned,
+        }
+        Config.set_identity(
+            identity,
+            "default_post_visibility",
+            privacy_map[POST["source[privacy]"]],
+        )
+    if "fields_attributes[0][name]" in POST:
+        identity.metadata = []
+        for i in range(4):
+            name_name = f"fields_attributes[{i}][name]"
+            value_name = f"fields_attributes[{i}][value]"
+            if name_name and value_name in POST:
+                # Empty value means delete this item
+                if not POST[value_name]:
+                    break
+                identity.metadata.append(
+                    {"name": POST[name_name], "value": POST[value_name]}
+                )
+    if "avatar" in FILES:
+        service.set_icon(FILES["avatar"])
+    if "header" in FILES:
+        service.set_image(FILES["header"])
+    identity.save()
+    return identity.to_mastodon_json(source=True)
 
 
 @api_router.get("/v1/accounts/relationships", response=list[schemas.Relationship])

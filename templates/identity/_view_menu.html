@@ -2,7 +2,7 @@
     <div class="actions" role="menubar">
         {% if request.identity == identity %}
             <a href="{% url "settings_profile" %}" class="button" title="Edit Profile">
-                <i class="fa-solid fa-user-edit"></i>
+                <i class="fa-solid fa-user-edit"></i> Edit
             </a>
         {% elif not inbound_block %}
             {% if inbound_follow or outbound_mute %}
