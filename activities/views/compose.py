@@ -216,7 +216,7 @@ class ImageUpload(FormView):
                                 make <ul.errorlist/> called errorlist
                                 make <li/> called error
                                 set size_in_mb to (me.files[0].size / 1024 / 1024).toFixed(2)
-                                put 'File must be 10MB or less (actual: ' + size_in_mb + 'MB)' into error
+                                put 'File must be {settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB}MB or less (actual: ' + size_in_mb + 'MB)' into error
                                 put error into errorlist
                                 put errorlist before me
                             else
