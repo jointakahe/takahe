@@ -5,6 +5,7 @@ from activities.models import (
     PostStates,
     TimelineEvent,
 )
+from core.exceptions import capture_message
 from users.models import Identity
 
 
@@ -91,7 +92,12 @@ class PostService:
             reason = ancestor.object_uri
             ancestor = self.queryset().filter(object_uri=object_uri).first()
             if ancestor is None:
-                Post.ensure_object_uri(object_uri, reason=reason)
+                try:
+                    Post.ensure_object_uri(object_uri, reason=reason)
+                except ValueError:
+                    capture_message(
+                        f"Cannot fetch ancestor Post={self.post.pk}, ancestor_uri={object_uri}"
+                    )
                 break
             if ancestor.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
                 break
