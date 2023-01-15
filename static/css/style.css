@@ -1497,6 +1497,32 @@ form .post {
     max-width: 100%;
 }
 
+.post .attachments .other {
+    grid-column: span 2;
+    padding: 8px;
+    border: 1px solid var(--color-text-duller);
+    background: var(--color-bg-menu);
+    border-radius: 4px;
+    margin-top: 8px;
+    word-break: break-all;
+}
+
+.post .attachments .other-label {
+    display: flex;
+    align-items: center;
+}
+
+.post .attachments .other-label > i {
+    margin-right: 12px;
+}
+
+.post .attachments .other:hover {
+    text-decoration: none;
+    background: var(--color-bg-main);
+    color: #FFF;
+    border-color: var(--color-highlight);
+}
+
 .post .actions {
     display: flex;
     position: relative;

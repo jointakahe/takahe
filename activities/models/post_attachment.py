@@ -73,7 +73,11 @@ class PostAttachment(StatorModel):
         ]
 
     def is_video(self):
-        return self.mimetype in ["video/webm"]
+        return self.mimetype in [
+            "video/mp4",
+            "video/ogg",
+            "video/webm",
+        ]
 
     def thumbnail_url(self) -> RelativeAbsoluteUrl:
         if self.thumbnail:
@@ -89,11 +93,20 @@ class PostAttachment(StatorModel):
     def full_url(self):
         if self.file:
             return RelativeAbsoluteUrl(self.file.url)
-        else:
+        if self.is_image():
             return ProxyAbsoluteUrl(
                 f"/proxy/post_attachment/{self.pk}/",
                 remote_url=self.remote_url,
             )
+        return RelativeAbsoluteUrl(self.remote_url)
+
+    @property
+    def file_display_name(self):
+        if self.remote_url:
+            return self.remote_url.rsplit("/", 1)[-1]
+        if self.file:
+            return self.file.name
+        return f"attachment ({self.mimetype})"
 
     ### ActivityPub ###
 
