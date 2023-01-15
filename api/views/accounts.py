@@ -269,3 +269,41 @@ def account_following(
         )
 
     return pager.json_results
+
+
+@api_router.get("/v1/accounts/{id}/followers", response=list[schemas.Account])
+def account_followers(
+    request: HttpRequest,
+    response: HttpResponse,
+    id: str,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 40,
+):
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
+
+    if not identity.config_identity.visible_follows and request.identity != identity:
+        return []
+
+    service = IdentityService(identity)
+
+    paginator = MastodonPaginator(max_limit=80)
+    pager = paginator.paginate(
+        service.followers(),
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+    pager.jsonify_identities()
+
+    if pager.results:
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit"],
+        )
+
+    return pager.json_results
