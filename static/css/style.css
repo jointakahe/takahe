@@ -1497,6 +1497,11 @@ form .post {
     max-width: 100%;
 }
 
+.post .content .attachments  a.non-media-file {
+    background-color: var(--color-bg-main);
+    padding: 5px 10px;
+}
+
 .post .actions {
     display: flex;
     position: relative;

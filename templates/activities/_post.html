@@ -50,9 +50,11 @@
                     {% elif attachment.is_video %}
                         <a href="{{ attachment.full_url.relative }}" class="video">
                             <video muted controls loop>
-                                <source src="{{ attachment.full_url.relative }}">
+                                <source src="{{ attachment.full_url.relative }}" type="{{ attachment.mimetype }}">
                             </video>
                         </a>
+                    {% else %}
+                        <a href="{{ attachment.full_url }}" class="non-media-file" target="_blank">File: {{ attachment.file_display_name }}</a>
                     {% endif %}
                 {% endfor %}
             </div>
