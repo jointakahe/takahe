@@ -9,7 +9,7 @@
     {% include "forms/_field.html" with field=form.image %}
     {% include "forms/_field.html" with field=form.description %}
     <div class="buttons">
-        <button _="on click show #attachmentProgress with display:block then hide me">Upload</button>
+        <button id="upload" _="on click show #attachmentProgress with display:block then hide me">Upload</button>
         <progress id="attachmentProgress" value="0" max="100"></progress>
     </div>
 </form>
