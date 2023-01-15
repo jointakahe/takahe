@@ -1287,6 +1287,7 @@ table.metadata td .emoji {
 .view-options {
     margin: 0 0 10px 0px;
     display: flex;
+    flex-wrap: wrap;
 }
 
 .view-options.follows {
@@ -1300,6 +1301,7 @@ table.metadata td .emoji {
     color: var(--color-text-duller);
     background: var(--color-bg-box);
     border-radius: 3px;
+    white-space: nowrap;
 }
 
 .view-options a.button {
@@ -1512,7 +1514,7 @@ form .post {
     align-items: center;
 }
 
-.post .attachments .other-label > i {
+.post .attachments .other-label>i {
     margin-right: 12px;
 }
 
