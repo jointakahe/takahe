@@ -381,15 +381,12 @@ class CreateIdentity(FormView):
         username = form.cleaned_data["username"]
         domain = form.cleaned_data["domain"]
         domain_instance = Domain.get_domain(domain)
-        new_identity = Identity.objects.create(
-            actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/",
+        identity = IdentityService.create(
+            user=self.request.user,
             username=username,
-            domain_id=domain,
+            domain=domain_instance,
             name=form.cleaned_data["name"],
-            local=True,
             discoverable=form.cleaned_data["discoverable"],
         )
-        new_identity.users.add(self.request.user)
-        new_identity.generate_keypair()
-        self.request.session["identity_id"] = new_identity.id
-        return redirect(new_identity.urls.view)
+        self.request.session["identity_id"] = identity.id
+        return redirect(identity.urls.view)

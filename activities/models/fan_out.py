@@ -241,6 +241,13 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.identity_deleted, True):
                 pass
 
+            # Created identities make a timeline event
+            case (FanOut.Types.identity_created, True):
+                await sync_to_async(TimelineEvent.add_identity_created)(
+                    identity=fan_out.identity,
+                    new_identity=fan_out.subject_identity,
+                )
+
             case _:
                 raise ValueError(
                     f"Cannot fan out with type {fan_out.type} local={fan_out.identity.local}"
@@ -262,6 +269,7 @@ class FanOut(StatorModel):
         undo_interaction = "undo_interaction"
         identity_edited = "identity_edited"
         identity_deleted = "identity_deleted"
+        identity_created = "identity_created"
 
     state = StateField(FanOutStates)
 

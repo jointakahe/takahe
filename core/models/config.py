@@ -214,6 +214,7 @@ class Config(models.Model):
         signup_allowed: bool = True
         signup_text: str = ""
         signup_max_users: int = 0
+        signup_email_admins: bool = True
         content_warning_text: str = "Content Warning"
 
         post_length: int = 500

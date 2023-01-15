@@ -18,6 +18,7 @@ class TimelineEvent(models.Model):
         followed = "followed"
         boosted = "boosted"  # Someone boosting one of our posts
         announcement = "announcement"  # Server announcement
+        identity_created = "identity_created"  # New identity created
 
     # The user this event is for
     identity = models.ForeignKey(
@@ -104,6 +105,17 @@ class TimelineEvent(models.Model):
         )[0]
 
     @classmethod
+    def add_identity_created(cls, identity, new_identity):
+        """
+        Adds a new identity item
+        """
+        return cls.objects.get_or_create(
+            identity=identity,
+            type=cls.Types.identity_created,
+            subject_identity=new_identity,
+        )[0]
+
+    @classmethod
     def add_post_interaction(cls, identity, interaction):
         """
         Adds a boost/like to the timeline if it's not there already.
@@ -179,6 +191,8 @@ class TimelineEvent(models.Model):
             )
         elif self.type == self.Types.followed:
             result["type"] = "follow"
+        elif self.type == self.Types.identity_created:
+            result["type"] = "admin.sign_up"
         else:
             raise ValueError(f"Cannot convert {self.type} to notification JSON")
         return result

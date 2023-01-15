@@ -1,6 +1,5 @@
 import markdown_it
 from django import forms
-from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.views import LoginView, LogoutView
@@ -12,6 +11,7 @@ from django.views.generic import FormView
 
 from core.models import Config
 from users.models import Invite, PasswordReset, User
+from users.services import UserService
 
 
 class Login(LoginView):
@@ -99,13 +99,8 @@ class Signup(FormView):
         # Don't allow anything if there's no invite and no signup allowed
         if (not Config.system.signup_allowed or self.at_max_users) and not self.invite:
             return self.render_to_response(self.get_context_data())
-        # Make the new user
-        user = User.objects.create(email=form.cleaned_data["email"])
-        # Auto-promote the user to admin if that setting is set
-        if settings.AUTO_ADMIN_EMAIL and user.email == settings.AUTO_ADMIN_EMAIL:
-            user.admin = True
-            user.save()
-        PasswordReset.create_for_user(user)
+        # Make the user
+        user = UserService.create(email=form.cleaned_data["email"])
         # Drop invite uses down if it has them
         if self.invite and self.invite.uses is not None:
             self.invite.uses -= 1

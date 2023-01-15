@@ -34,6 +34,13 @@
     {% if not event.collapsed %}
         {% include "activities/_post.html" with post=event.subject_post event=event %}
     {% endif %}
+{% elif event.type == "identity_created" %}
+    <div class="follow-banner">
+        <a href="{{ event.subject_identity.urls.view }}">
+            {{ event.subject_identity.html_name_or_handle }}
+        </a> was just created
+    </div>
+    {% include "activities/_identity.html" with identity=event.subject_identity created=event.created %}
 {% else %}
     Unknown event type {{ event.type }}
 {% endif %}

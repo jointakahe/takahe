@@ -80,6 +80,10 @@ class BasicSettings(AdminSettingsPage):
             "title": "Maximum User Limit",
             "help_text": "Signups will be auto-disabled if your server grows to this many users.\nUse 0 for unlimited.",
         },
+        "signup_email_admins": {
+            "title": "Email admins on signup",
+            "help_text": "Send an email to all admins whenever a new user signs up",
+        },
         "restricted_usernames": {
             "title": "Restricted Usernames",
             "help_text": "Usernames that only admins can register for identities. One per line.",
@@ -120,6 +124,7 @@ class BasicSettings(AdminSettingsPage):
         "Signups": [
             "signup_allowed",
             "signup_max_users",
+            # "signup_email_admins",
             "signup_text",
         ],
         "Posts": [

@@ -129,6 +129,7 @@ class Notifications(ListView):
         "boosted": TimelineEvent.Types.boosted,
         "mentioned": TimelineEvent.Types.mentioned,
         "liked": TimelineEvent.Types.liked,
+        "identity_created": TimelineEvent.Types.identity_created,
     }
 
     def get_queryset(self):

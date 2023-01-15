@@ -28,6 +28,13 @@
         {% else %}
             <a href=".?mentioned=true"><i class="fa-solid fa-xmark"></i> Mentions</a>
         {% endif %}
+        {% if request.user.admin %}
+            {% if notification_options.identity_created %}
+                <a href=".?identity_created=false" class="selected"><i class="fa-solid fa-check"></i> New Identities</a>
+            {% else %}
+                <a href=".?identity_created=true"><i class="fa-solid fa-xmark"></i> New Identities</a>
+            {% endif %}
+        {% endif %}
     </div>
 
     {% for event in events %}

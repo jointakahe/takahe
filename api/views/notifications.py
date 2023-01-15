@@ -25,6 +25,7 @@ def notifications(
         "reblog": TimelineEvent.Types.boosted,
         "mention": TimelineEvent.Types.mentioned,
         "follow": TimelineEvent.Types.followed,
+        "admin.sign_up": TimelineEvent.Types.identity_created,
     }
     requested_types = set(request.GET.getlist("types[]"))
     excluded_types = set(request.GET.getlist("exclude_types[]"))

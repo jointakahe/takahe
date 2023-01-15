@@ -1,8 +1,17 @@
 from django.db import models
 from django.template.defaultfilters import linebreaks_filter
 
+from activities.models import FanOut
 from core.html import strip_html
-from users.models import Block, BlockStates, Follow, FollowStates, Identity
+from users.models import (
+    Block,
+    BlockStates,
+    Domain,
+    Follow,
+    FollowStates,
+    Identity,
+    User,
+)
 
 
 class IdentityService:
@@ -12,6 +21,38 @@ class IdentityService:
 
     def __init__(self, identity: Identity):
         self.identity = identity
+
+    @classmethod
+    def create(
+        cls,
+        user: User,
+        username: str,
+        domain: Domain,
+        name: str,
+        discoverable: bool = True,
+    ) -> Identity:
+        identity = Identity.objects.create(
+            actor_uri=f"https://{domain.uri_domain}/@{username}@{domain.domain}/",
+            username=username,
+            domain=domain,
+            name=name,
+            local=True,
+            discoverable=discoverable,
+        )
+        identity.users.add(user)
+        identity.generate_keypair()
+        # Send fanouts to all admin identities
+        for admin_identity in cls.admin_identities():
+            FanOut.objects.create(
+                type=FanOut.Types.identity_created,
+                identity=admin_identity,
+                subject_identity=identity,
+            )
+        return identity
+
+    @classmethod
+    def admin_identities(cls) -> models.QuerySet[Identity]:
+        return Identity.objects.filter(users__admin=True).distinct()
 
     def following(self) -> models.QuerySet[Identity]:
         return (
