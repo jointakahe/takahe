@@ -1,5 +1,4 @@
-from django.db.models import Q
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from ninja import Field, Schema
 
@@ -10,6 +9,7 @@ from api.pagination import MastodonPaginator
 from api.views.base import api_router
 from users.models import Identity
 from users.services import IdentityService
+from users.shortcuts import by_handle_or_404
 
 
 @api_router.get("/v1/accounts/verify_credentials", response=schemas.Account)
@@ -86,18 +86,7 @@ def lookup(request: HttpRequest, acct: str):
     Quickly lookup a username to see if it is available, skipping WebFinger
     resolution.
     """
-    host = request.get_host()
-    acct = acct.lstrip("@").removesuffix(f"@{host}")
-
-    identity = Identity.objects.filter(
-        Q(domain__service_domain__iexact=host) | Q(domain__domain__iexact=host),
-        local=True,
-        username__iexact=acct,
-    ).first()
-
-    if not identity:
-        return JsonResponse({"error": "Record not found"}, status=404)
-
+    identity = by_handle_or_404(request, handle=acct, local=False)
     return identity.to_mastodon_json()
 
 
