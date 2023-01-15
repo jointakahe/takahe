@@ -1078,6 +1078,11 @@ button.htmx-request::before,
     animation-timing-function: var(--fa-animation-timing, linear);
 }
 
+button i:first-child,
+.button i:first-child {
+    margin-right: 3px;
+}
+
 .right-column button,
 .right-column .button {
     padding: 2px 6px;

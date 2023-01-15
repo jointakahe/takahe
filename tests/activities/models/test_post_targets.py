@@ -2,7 +2,7 @@ import pytest
 from asgiref.sync import async_to_sync
 
 from activities.models import Post
-from users.models import Domain, Follow, Identity
+from users.models import Block, Domain, Follow, Identity
 
 
 @pytest.mark.django_db
@@ -158,3 +158,26 @@ def test_post_followers(identity, other_identity, remote_identity):
     post.save()
     targets = async_to_sync(post.aget_targets)()
     assert targets == {identity}
+
+
+@pytest.mark.django_db
+def test_post_blocked(identity, other_identity, remote_identity):
+    """
+    Blocked users should never get a copy of a post even if they're mentioned.
+    """
+    # Block the two other identities, one with mute only
+    Block.create_local_mute(identity, other_identity)
+    Block.create_local_block(identity, remote_identity)
+
+    # Make a post
+    post = Post.objects.create(
+        content="<p>Hello @test and @other</p>",
+        author=identity,
+        local=True,
+    )
+    post.mentions.add(remote_identity)
+    post.mentions.add(other_identity)
+
+    # The muted block should be in targets, the full block should not
+    targets = async_to_sync(post.aget_targets)()
+    assert targets == {identity, other_identity}

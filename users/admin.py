@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from activities.admin import IdentityLocalFilter
 from users.models import (
     Announcement,
+    Block,
     Domain,
     Follow,
     Identity,
@@ -151,6 +152,16 @@ class LocalTargetFilter(IdentityLocalFilter):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
+    list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
+    raw_id_fields = ["source", "target"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Block)
+class BlockAdmin(admin.ModelAdmin):
+    list_display = ["id", "source", "target", "mute", "state"]
     list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
     raw_id_fields = ["source", "target"]
 

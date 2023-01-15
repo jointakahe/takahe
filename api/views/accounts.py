@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-from ninja import Field
+from ninja import Field, Schema
 
 from activities.services import SearchService
 from api import schemas
@@ -196,6 +196,51 @@ def account_unfollow(request, id: str):
     )
     service = IdentityService(identity)
     service.unfollow_from(request.identity)
+    return service.mastodon_json_relationship(request.identity)
+
+
+@api_router.post("/v1/accounts/{id}/block", response=schemas.Relationship)
+@identity_required
+def account_block(request, id: str):
+    identity = get_object_or_404(Identity, pk=id)
+    service = IdentityService(identity)
+    service.block_from(request.identity)
+    return service.mastodon_json_relationship(request.identity)
+
+
+@api_router.post("/v1/accounts/{id}/unblock", response=schemas.Relationship)
+@identity_required
+def account_unblock(request, id: str):
+    identity = get_object_or_404(Identity, pk=id)
+    service = IdentityService(identity)
+    service.unblock_from(request.identity)
+    return service.mastodon_json_relationship(request.identity)
+
+
+class MuteDetailsSchema(Schema):
+    notifications: bool = True
+    duration: int = 0
+
+
+@api_router.post("/v1/accounts/{id}/mute", response=schemas.Relationship)
+@identity_required
+def account_mute(request, id: str, details: MuteDetailsSchema):
+    identity = get_object_or_404(Identity, pk=id)
+    service = IdentityService(identity)
+    service.mute_from(
+        request.identity,
+        duration=details.duration,
+        include_notifications=details.notifications,
+    )
+    return service.mastodon_json_relationship(request.identity)
+
+
+@api_router.post("/v1/accounts/{id}/unmute", response=schemas.Relationship)
+@identity_required
+def account_unmute(request, id: str):
+    identity = get_object_or_404(Identity, pk=id)
+    service = IdentityService(identity)
+    service.unmute_from(request.identity)
     return service.mastodon_json_relationship(request.identity)
 
 

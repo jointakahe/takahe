@@ -5,15 +5,17 @@ from django.db import models
 from activities.models.timeline_event import TimelineEvent
 from core.ld import canonicalise
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models import FollowStates
+from users.models import Block, FollowStates
 
 
 class FanOutStates(StateGraph):
     new = State(try_interval=600)
     sent = State(delete_after=86400)
+    skipped = State(delete_after=86400)
     failed = State(delete_after=86400)
 
     new.transitions_to(sent)
+    new.transitions_to(skipped)
     new.times_out_to(failed, seconds=86400 * 3)
 
     @classmethod
@@ -32,6 +34,13 @@ class FanOutStates(StateGraph):
             # Handle creating/updating local posts
             case ((FanOut.Types.post | FanOut.Types.post_edited), True):
                 post = await fan_out.subject_post.afetch_full()
+                # If the author of the post is blocked or muted, skip out
+                if (
+                    await Block.objects.active()
+                    .filter(source=fan_out.identity, target=post.author)
+                    .aexists()
+                ):
+                    return cls.skipped
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
                 # of the people mentioned AND the author, or we're mentioned,
@@ -126,6 +135,28 @@ class FanOutStates(StateGraph):
             # Handle local boosts/likes
             case (FanOut.Types.interaction, True):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
+                # If the author of the interaction is blocked or their notifications
+                # are muted, skip out
+                if (
+                    await Block.objects.active()
+                    .filter(
+                        models.Q(mute=False) | models.Q(include_notifications=True),
+                        source=fan_out.identity,
+                        target=interaction.identity,
+                    )
+                    .aexists()
+                ):
+                    return cls.skipped
+                # If blocked/muted the underlying post author, skip out
+                if (
+                    await Block.objects.active()
+                    .filter(
+                        source=fan_out.identity,
+                        target_id=interaction.post.author_id,
+                    )
+                    .aexists()
+                ):
+                    return cls.skipped
                 # Make a timeline event directly
                 await sync_to_async(TimelineEvent.add_post_interaction)(
                     identity=fan_out.identity,

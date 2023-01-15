@@ -97,6 +97,20 @@ class FollowStates(StateGraph):
         return cls.undone_remotely
 
 
+class FollowQuerySet(models.QuerySet):
+    def active(self):
+        query = self.filter(state__in=FollowStates.group_active())
+        return query
+
+
+class FollowManager(models.Manager):
+    def get_queryset(self):
+        return FollowQuerySet(self.model, using=self._db)
+
+    def active(self):
+        return self.get_queryset().active()
+
+
 class Follow(StatorModel):
     """
     When one user (the source) follows other (the target)
@@ -127,6 +141,8 @@ class Follow(StatorModel):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    objects = FollowManager()
+
     class Meta:
         unique_together = [("source", "target")]
 
@@ -136,12 +152,15 @@ class Follow(StatorModel):
     ### Alternate fetchers/constructors ###
 
     @classmethod
-    def maybe_get(cls, source, target) -> Optional["Follow"]:
+    def maybe_get(cls, source, target, require_active=False) -> Optional["Follow"]:
         """
         Returns a follow if it exists between source and target
         """
         try:
-            return Follow.objects.get(source=source, target=target)
+            if require_active:
+                return Follow.objects.active().get(source=source, target=target)
+            else:
+                return Follow.objects.get(source=source, target=target)
         except Follow.DoesNotExist:
             return None
 
@@ -157,19 +176,30 @@ class Follow(StatorModel):
             raise ValueError("You cannot initiate follows from a remote Identity")
         try:
             follow = Follow.objects.get(source=source, target=target)
-            if follow.boosts != boosts:
-                follow.boosts = boosts
-                follow.save()
-        except Follow.DoesNotExist:
-            follow = Follow.objects.create(
-                source=source, target=target, boosts=boosts, uri=""
-            )
-            follow.uri = source.actor_uri + f"follow/{follow.pk}/"
-            # TODO: Local follow approvals
-            if target.local:
-                follow.state = FollowStates.accepted
-                TimelineEvent.add_follow(follow.target, follow.source)
+            if not follow.active:
+                follow.state = (
+                    FollowStates.accepted if target.local else FollowStates.unrequested
+                )
+            follow.boosts = boosts
             follow.save()
+        except Follow.DoesNotExist:
+            with transaction.atomic():
+                follow = Follow.objects.create(
+                    source=source,
+                    target=target,
+                    boosts=boosts,
+                    uri="",
+                    state=(
+                        FollowStates.accepted
+                        if target.local
+                        else FollowStates.unrequested
+                    ),
+                )
+                follow.uri = source.actor_uri + f"follow/{follow.pk}/"
+                # TODO: Local follow approvals
+                if target.local:
+                    TimelineEvent.add_follow(follow.target, follow.source)
+                follow.save()
         return follow
 
     ### Async helpers ###
@@ -182,11 +212,15 @@ class Follow(StatorModel):
             "source", "source__domain", "target"
         ).aget(pk=self.pk)
 
-    ### Helper properties ###
+    ### Properties ###
 
     @property
     def pending(self):
         return self.state in [FollowStates.unrequested, FollowStates.local_requested]
+
+    @property
+    def active(self):
+        return self.state in FollowStates.group_active()
 
     ### ActivityPub (outbound) ###
 
@@ -226,32 +260,40 @@ class Follow(StatorModel):
     ### ActivityPub (inbound) ###
 
     @classmethod
-    def by_ap(cls, data, create=False) -> "Follow":
+    def by_ap(cls, data: str | dict, create=False) -> "Follow":
         """
-        Retrieves a Follow instance by its ActivityPub JSON object.
+        Retrieves a Follow instance by its ActivityPub JSON object or its URI.
 
         Optionally creates one if it's not present.
-        Raises KeyError if it's not found and create is False.
+        Raises DoesNotExist if it's not found and create is False.
         """
-        # Resolve source and target and see if a Follow exists
-        source = Identity.by_actor_uri(data["actor"], create=create)
-        target = Identity.by_actor_uri(get_str_or_id(data["object"]))
-        follow = cls.maybe_get(source=source, target=target)
-        # If it doesn't exist, create one in the remote_requested state
-        if follow is None:
-            if create:
-                return cls.objects.create(
-                    source=source,
-                    target=target,
-                    uri=data["id"],
-                    state=FollowStates.remote_requested,
-                )
-            else:
-                raise KeyError(
-                    f"No follow with source {source} and target {target}", data
-                )
+        # If it's a string, do the reference resolve
+        if isinstance(data, str):
+            bits = data.strip("/").split("/")
+            if bits[-2] != "follow":
+                raise ValueError(f"Unknown Follow object URI: {data}")
+            return Follow.objects.get(pk=bits[-1])
+        # Otherwise, do object resolve
         else:
-            return follow
+            # Resolve source and target and see if a Follow exists
+            source = Identity.by_actor_uri(data["actor"], create=create)
+            target = Identity.by_actor_uri(get_str_or_id(data["object"]))
+            follow = cls.maybe_get(source=source, target=target)
+            # If it doesn't exist, create one in the remote_requested state
+            if follow is None:
+                if create:
+                    return cls.objects.create(
+                        source=source,
+                        target=target,
+                        uri=data["id"],
+                        state=FollowStates.remote_requested,
+                    )
+                else:
+                    raise cls.DoesNotExist(
+                        f"No follow with source {source} and target {target}", data
+                    )
+            else:
+                return follow
 
     @classmethod
     def handle_request_ap(cls, data):
@@ -272,14 +314,14 @@ class Follow(StatorModel):
         """
         Handles an incoming Follow Accept for one of our follows
         """
-        # Ensure the Accept actor is the Follow's object
-        if data["actor"] != data["object"]["object"]:
-            raise ValueError("Accept actor does not match its Follow object", data)
         # Resolve source and target and see if a Follow exists (it really should)
         try:
             follow = cls.by_ap(data["object"])
-        except KeyError:
+        except cls.DoesNotExist:
             raise ValueError("No Follow locally for incoming Accept", data)
+        # Ensure the Accept actor is the Follow's target
+        if data["actor"] != follow.target.actor_uri:
+            raise ValueError("Accept actor does not match its Follow object", data)
         # If the follow was waiting to be accepted, transition it
         if follow and follow.state in [
             FollowStates.unrequested,
@@ -288,55 +330,33 @@ class Follow(StatorModel):
             follow.transition_perform(FollowStates.accepted)
 
     @classmethod
-    def handle_accept_ref_ap(cls, data):
+    def handle_reject_ap(cls, data):
         """
-        Handles an incoming Follow Accept for one of our follows where there is
-        only an object URI reference.
+        Handles an incoming Follow Reject for one of our follows
         """
-        # Ensure the object ref is in a format we expect
-        bits = data["object"].strip("/").split("/")
-        if bits[-2] != "follow":
-            raise ValueError(f"Unknown Follow object URI in Accept: {data['object']}")
-        # Retrieve the object by PK
-        follow = cls.objects.get(pk=bits[-1])
-        # Ensure it's from the right actor
+        # Resolve source and target and see if a Follow exists (it really should)
+        try:
+            follow = cls.by_ap(data["object"])
+        except cls.DoesNotExist:
+            raise ValueError("No Follow locally for incoming Reject", data)
+        # Ensure the Accept actor is the Follow's target
         if data["actor"] != follow.target.actor_uri:
-            raise ValueError("Accept actor does not match its Follow object", data)
-        # If the follow was waiting to be accepted, transition it
-        if follow.state in [
-            FollowStates.unrequested,
-            FollowStates.local_requested,
-        ]:
-            follow.transition_perform(FollowStates.accepted)
+            raise ValueError("Reject actor does not match its Follow object", data)
+        # Mark the follow rejected
+        follow.transition_perform(FollowStates.rejected)
 
     @classmethod
     def handle_undo_ap(cls, data):
         """
         Handles an incoming Follow Undo for one of our follows
         """
-        # Ensure the Undo actor is the Follow's actor
-        if data["actor"] != data["object"]["actor"]:
-            raise ValueError("Undo actor does not match its Follow object", data)
         # Resolve source and target and see if a Follow exists (it hopefully does)
         try:
             follow = cls.by_ap(data["object"])
-        except KeyError:
+        except cls.DoesNotExist:
             raise ValueError("No Follow locally for incoming Undo", data)
+        # Ensure the Undo actor is the Follow's source
+        if data["actor"] != follow.source.actor_uri:
+            raise ValueError("Accept actor does not match its Follow object", data)
         # Delete the follow
         follow.delete()
-
-    @classmethod
-    def handle_reject_ap(cls, data):
-        """
-        Handles an incoming Follow Reject for one of our follows
-        """
-        # Ensure the Accept actor is the Follow's object
-        if data["actor"] != data["object"]["object"]:
-            raise ValueError("Accept actor does not match its Follow object", data)
-        # Resolve source and target and see if a Follow exists (it really should)
-        try:
-            follow = cls.by_ap(data["object"])
-        except KeyError:
-            raise ValueError("No Follow locally for incoming Reject", data)
-        # Mark the follow rejected
-        follow.transition_perform(FollowStates.rejected)

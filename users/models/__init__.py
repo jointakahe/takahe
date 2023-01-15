@@ -1,5 +1,5 @@
 from .announcement import Announcement  # noqa
-from .block import Block  # noqa
+from .block import Block, BlockStates  # noqa
 from .domain import Domain  # noqa
 from .follow import Follow, FollowStates  # noqa
 from .identity import Identity, IdentityStates  # noqa

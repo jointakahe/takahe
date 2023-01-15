@@ -15,11 +15,13 @@ class InboxMessageStates(StateGraph):
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
         from activities.models import Post, PostInteraction
-        from users.models import Follow, Identity, Report
+        from users.models import Block, Follow, Identity, Report
 
         match instance.message_type:
             case "follow":
                 await sync_to_async(Follow.handle_request_ap)(instance.message)
+            case "block":
+                await sync_to_async(Block.handle_ap)(instance.message)
             case "announce":
                 await sync_to_async(PostInteraction.handle_ap)(instance.message)
             case "like":
@@ -65,9 +67,8 @@ class InboxMessageStates(StateGraph):
                     case "follow":
                         await sync_to_async(Follow.handle_accept_ap)(instance.message)
                     case None:
-                        await sync_to_async(Follow.handle_accept_ref_ap)(
-                            instance.message
-                        )
+                        # It's a string object, but these will only be for Follows
+                        await sync_to_async(Follow.handle_accept_ap)(instance.message)
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
@@ -75,6 +76,9 @@ class InboxMessageStates(StateGraph):
             case "reject":
                 match instance.message_object_type:
                     case "follow":
+                        await sync_to_async(Follow.handle_reject_ap)(instance.message)
+                    case None:
+                        # It's a string object, but these will only be for Follows
                         await sync_to_async(Follow.handle_reject_ap)(instance.message)
                     case unknown:
                         raise ValueError(
@@ -84,6 +88,8 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "follow":
                         await sync_to_async(Follow.handle_undo_ap)(instance.message)
+                    case "block":
+                        await sync_to_async(Block.handle_undo_ap)(instance.message)
                     case "like":
                         await sync_to_async(PostInteraction.handle_undo_ap)(
                             instance.message

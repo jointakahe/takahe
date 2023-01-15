@@ -18,7 +18,7 @@ from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
-from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
+from users.models import Domain, FollowStates, Identity, IdentityStates
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
@@ -70,8 +70,6 @@ class ViewIdentity(ListView):
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
-        context["follow"] = None
-        context["reverse_follow"] = None
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"],
             self.request.identity,
@@ -85,12 +83,9 @@ class ViewIdentity(ListView):
                 state__in=FollowStates.group_active()
             ).count()
         if self.request.identity:
-            follow = Follow.maybe_get(self.request.identity, self.identity)
-            if follow and follow.state in FollowStates.group_active():
-                context["follow"] = follow
-            reverse_follow = Follow.maybe_get(self.identity, self.request.identity)
-            if reverse_follow and reverse_follow.state in FollowStates.group_active():
-                context["reverse_follow"] = reverse_follow
+            context.update(
+                IdentityService(self.identity).relationships(self.request.identity)
+            )
         return context
 
 
@@ -257,6 +252,14 @@ class ActionIdentity(View):
             IdentityService(identity).follow_from(self.request.identity)
         elif action == "unfollow":
             IdentityService(identity).unfollow_from(self.request.identity)
+        elif action == "block":
+            IdentityService(identity).block_from(self.request.identity)
+        elif action == "unblock":
+            IdentityService(identity).unblock_from(self.request.identity)
+        elif action == "mute":
+            IdentityService(identity).mute_from(self.request.identity)
+        elif action == "unmute":
+            IdentityService(identity).unmute_from(self.request.identity)
         elif action == "hide_boosts":
             IdentityService(identity).follow_from(self.request.identity, boosts=False)
         elif action == "show_boosts":

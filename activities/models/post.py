@@ -712,6 +712,14 @@ class Post(StatorModel):
         # If it's a local post, include the author
         if self.local:
             targets.add(self.author)
+        # Fetch the author's full blocks and remove them as targets
+        blocks = (
+            self.author.outbound_blocks.active()
+            .filter(mute=False)
+            .select_related("target")
+        )
+        async for block in blocks:
+            targets.remove(block.target)
         # Now dedupe the targets based on shared inboxes (we only keep one per
         # shared inbox)
         deduped_targets = set()

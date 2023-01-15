@@ -40,68 +40,75 @@
         </small>
     </h1>
 
-    {% if identity.summary %}
-        <div class="bio">
-            {{ identity.safe_summary }}
-        </div>
-    {% endif %}
+    {% if inbound_block %}
+        <p class="system-note">
+            This user has blocked you.
+        </p>
+    {% else %}
 
-    {% if identity.metadata %}
-        <div class="identity-metadata">
-            {% for entry in identity.safe_metadata %}
-                <div class="metadata-pair">
-                    <span class="metadata-name">{{ entry.name }}</span>
-                    <span class="metadata-value">{{ entry.value }}</span>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    {% if identity.local and identity.config_identity.visible_follows %}
-        <div class="view-options follows">
-            <a href="{{ identity.urls.view }}" {% if not follows_page %}class="selected"{% endif %}><strong>{{ post_count }}</strong> posts</a>
-            <a href="{{ identity.urls.following }}" {% if not inbound and follows_page %}class="selected"{% endif %}><strong>{{ following_count }}</strong> following</a>
-            <a href="{{ identity.urls.followers }}" {% if inbound and follows_page %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</a>
-        </div>
-    {% endif %}
-
-    {% if not identity.local %}
-        {% if identity.outdated and not identity.name %}
-            <p class="system-note">
-                The system is still fetching this profile. Refresh to see updates.
-            </p>
-        {% else %}
-            <p class="system-note">
-                This is a member of another server.
-                <a href="{{ identity.profile_uri|default:identity.actor_uri }}">See their original profile ➔</a>
-            </p>
-        {% endif %}
-    {% endif %}
-
-    {% block subcontent %}
-
-        {% for post in page_obj %}
-            {% include "activities/_post.html" %}
-        {% empty %}
-            <span class="empty">
-                {% if identity.local %}
-                    No posts yet.
-                {% else %}
-                    No posts have been received/retrieved by this server yet.
-
-                    {% if identity.profile_uri %}
-                        You might find historical posts at
-                        <a href="{{ identity.profile_uri }}">their original profile ➔</a>
-                    {% endif %}
-                {% endif %}
-            </span>
-        {% endfor %}
-
-        {% if page_obj.has_next %}
-            <div class="pagination">
-                <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+        {% if identity.summary %}
+            <div class="bio">
+                {{ identity.safe_summary }}
             </div>
         {% endif %}
 
-    {% endblock %}
+        {% if identity.metadata %}
+            <div class="identity-metadata">
+                {% for entry in identity.safe_metadata %}
+                    <div class="metadata-pair">
+                        <span class="metadata-name">{{ entry.name }}</span>
+                        <span class="metadata-value">{{ entry.value }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if identity.local and identity.config_identity.visible_follows %}
+            <div class="view-options follows">
+                <a href="{{ identity.urls.view }}" {% if not follows_page %}class="selected"{% endif %}><strong>{{ post_count }}</strong> posts</a>
+                <a href="{{ identity.urls.following }}" {% if not inbound and follows_page %}class="selected"{% endif %}><strong>{{ following_count }}</strong> following</a>
+                <a href="{{ identity.urls.followers }}" {% if inbound and follows_page %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</a>
+            </div>
+        {% endif %}
+
+        {% if not identity.local %}
+            {% if identity.outdated and not identity.name %}
+                <p class="system-note">
+                    The system is still fetching this profile. Refresh to see updates.
+                </p>
+            {% else %}
+                <p class="system-note">
+                    This is a member of another server.
+                    <a href="{{ identity.profile_uri|default:identity.actor_uri }}">See their original profile ➔</a>
+                </p>
+            {% endif %}
+        {% endif %}
+
+        {% block subcontent %}
+
+            {% for post in page_obj %}
+                {% include "activities/_post.html" %}
+            {% empty %}
+                <span class="empty">
+                    {% if identity.local %}
+                        No posts yet.
+                    {% else %}
+                        No posts have been received/retrieved by this server yet.
+
+                        {% if identity.profile_uri %}
+                            You might find historical posts at
+                            <a href="{{ identity.profile_uri }}">their original profile ➔</a>
+                        {% endif %}
+                    {% endif %}
+                </span>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <div class="pagination">
+                    <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
+                </div>
+            {% endif %}
+
+        {% endblock %}
+    {% endif %}
 {% endblock %}
