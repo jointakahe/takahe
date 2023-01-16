@@ -83,4 +83,7 @@ class Command(BaseCommand):
             schedule_interval=schedule_interval,
             run_for=run_for,
         )
-        async_to_sync(runner.run)()
+        try:
+            async_to_sync(runner.run)()
+        except KeyboardInterrupt:
+            print("Ctrl-C received")
