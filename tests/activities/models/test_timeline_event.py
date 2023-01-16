@@ -1,8 +1,10 @@
 import pytest
+from django.utils import timezone
 
 from activities.models import Post, TimelineEvent
 from activities.services import PostService
-from users.models import Block, Identity, InboxMessage
+from core.ld import format_ld_date
+from users.models import Block, Follow, Identity, InboxMessage
 
 
 @pytest.mark.django_db
@@ -31,7 +33,7 @@ def test_mentioned(
             "object": {
                 "id": "https://remote.test/test-post",
                 "type": "Note",
-                "published": "2022-11-13T23:20:16Z",
+                "published": format_ld_date(timezone.now()),
                 "attributedTo": remote_identity.actor_uri,
                 "content": f"Hello @{identity.handle}!",
                 "tag": {
@@ -137,3 +139,56 @@ def test_interaction_local_post(
         ).first()
         assert event
         assert event.subject_identity == interactor
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("old", [True, False])
+def test_old_new_post(
+    identity: Identity,
+    remote_identity: Identity,
+    stator,
+    old: bool,
+):
+    """
+    Ensures that old remote posts don't appear on the timeline, but new ones do.
+    """
+    # Follow the remote user
+    Follow.create_local(identity, remote_identity)
+    # Create an inbound new post message
+    message = {
+        "id": "test",
+        "type": "Create",
+        "actor": remote_identity.actor_uri,
+        "object": {
+            "id": "https://remote.test/test-post",
+            "type": "Note",
+            "published": "2022-01-01T00:00:00Z"
+            if old
+            else format_ld_date(timezone.now()),
+            "attributedTo": remote_identity.actor_uri,
+            "content": f"Hello @{identity.handle}!",
+            "tag": {
+                "type": "Mention",
+                "href": identity.actor_uri,
+                "name": f"@{identity.handle}",
+            },
+        },
+    }
+    InboxMessage.objects.create(message=message)
+
+    # Run stator twice - to make fanouts and then process them
+    stator.run_single_cycle_sync()
+    stator.run_single_cycle_sync()
+
+    if old:
+        # Verify it did not appear on the timeline
+        assert not TimelineEvent.objects.filter(
+            type=TimelineEvent.Types.post, identity=identity
+        ).exists()
+    else:
+        # Verify it appeared on the timeline
+        event = TimelineEvent.objects.filter(
+            type=TimelineEvent.Types.post, identity=identity
+        ).first()
+        assert event
+        assert "Hello " in event.subject_post.content
