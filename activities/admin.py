@@ -124,6 +124,8 @@ class PostAttachmentAdmin(admin.ModelAdmin):
     search_fields = ["name", "remote_url", "search_handle", "search_service_handle"]
     raw_id_fields = ["post"]
 
+    actions = ["guess_mimetypes"]
+
     def get_search_results(self, request, queryset, search_term):
         from django.db.models.functions import Concat
 
@@ -138,6 +140,18 @@ class PostAttachmentAdmin(admin.ModelAdmin):
             ),
         )
         return super().get_search_results(request, queryset, search_term)
+
+    @admin.action(description="Update mimetype based upon filename")
+    def guess_mimetypes(self, request, queryset):
+        import mimetypes
+
+        for instance in queryset:
+            if instance.remote_url:
+                mimetype, _ = mimetypes.guess_type(instance.remote_url)
+                if not mimetype:
+                    mimetype = "application/octet-stream"
+                instance.mimetype = mimetype
+                instance.save()
 
 
 class PostAttachmentInline(admin.StackedInline):
