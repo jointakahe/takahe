@@ -11,6 +11,7 @@ from users.models import (
     Follow,
     FollowStates,
     Identity,
+    InboxMessage,
     User,
 )
 
@@ -85,13 +86,29 @@ class IdentityService:
         existing_follow = Follow.maybe_get(from_identity, self.identity)
         if existing_follow:
             existing_follow.transition_perform(FollowStates.undone)
+            InboxMessage.create_internal(
+                {
+                    "type": "ClearTimeline",
+                    "actor": from_identity.pk,
+                    "object": self.identity.pk,
+                }
+            )
 
     def block_from(self, from_identity: Identity) -> Block:
         """
         Blocks a user.
         """
         self.unfollow_from(from_identity)
-        return Block.create_local_block(from_identity, self.identity)
+        block = Block.create_local_block(from_identity, self.identity)
+        InboxMessage.create_internal(
+            {
+                "type": "ClearTimeline",
+                "actor": from_identity.pk,
+                "object": self.identity.pk,
+                "fullErase": True,
+            }
+        )
+        return block
 
     def unblock_from(self, from_identity: Identity):
         """

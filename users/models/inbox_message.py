@@ -14,7 +14,7 @@ class InboxMessageStates(StateGraph):
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
-        from activities.models import Post, PostInteraction
+        from activities.models import Post, PostInteraction, TimelineEvent
         from users.models import Block, Follow, Identity, Report
 
         match instance.message_type:
@@ -148,7 +148,11 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "fetchpost":
                         await sync_to_async(Post.handle_fetch_internal)(
-                            instance.message
+                            instance.message["object"]
+                        )
+                    case "cleartimeline":
+                        await sync_to_async(TimelineEvent.handle_clear_timeline)(
+                            instance.message["object"]
                         )
                     case unknown:
                         raise ValueError(
@@ -170,6 +174,18 @@ class InboxMessage(StatorModel):
     message = models.JSONField()
 
     state = StateField(InboxMessageStates)
+
+    @classmethod
+    def create_internal(cls, payload):
+        """
+        Creates an internal action message
+        """
+        cls.objects.create(
+            message={
+                "type": "__internal__",
+                "object": payload,
+            }
+        )
 
     @property
     def message_type(self):

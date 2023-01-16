@@ -5,6 +5,7 @@ from activities.models import Post, TimelineEvent
 from activities.services import PostService
 from core.ld import format_ld_date
 from users.models import Block, Follow, Identity, InboxMessage
+from users.services import IdentityService
 
 
 @pytest.mark.django_db
@@ -192,3 +193,67 @@ def test_old_new_post(
         ).first()
         assert event
         assert "Hello " in event.subject_post.content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("full", [True, False])
+def test_clear_timeline(
+    identity: Identity,
+    remote_identity: Identity,
+    stator,
+    full: bool,
+):
+    """
+    Ensures that timeline clearing works as expected.
+    """
+    # Follow the remote user
+    service = IdentityService(remote_identity)
+    service.follow_from(identity)
+    # Create an inbound new post message mentioning us
+    message = {
+        "id": "test",
+        "type": "Create",
+        "actor": remote_identity.actor_uri,
+        "object": {
+            "id": "https://remote.test/test-post",
+            "type": "Note",
+            "published": format_ld_date(timezone.now()),
+            "attributedTo": remote_identity.actor_uri,
+            "content": f"Hello @{identity.handle}!",
+            "tag": {
+                "type": "Mention",
+                "href": identity.actor_uri,
+                "name": f"@{identity.handle}",
+            },
+        },
+    }
+    InboxMessage.objects.create(message=message)
+
+    # Run stator twice - to make fanouts and then process them
+    stator.run_single_cycle_sync()
+    stator.run_single_cycle_sync()
+
+    # Make sure it appeared on our timeline as a post and a mentioned
+    assert TimelineEvent.objects.filter(
+        type=TimelineEvent.Types.post, identity=identity
+    ).exists()
+    assert TimelineEvent.objects.filter(
+        type=TimelineEvent.Types.mentioned, identity=identity
+    ).exists()
+
+    # Now, submit either a user block (for full clear) or unfollow (for post clear)
+    if full:
+        service.block_from(identity)
+    else:
+        service.unfollow_from(identity)
+
+    # Run stator once to process the timeline clear message
+    stator.run_single_cycle_sync()
+
+    # Verify that the right things vanished
+    assert not TimelineEvent.objects.filter(
+        type=TimelineEvent.Types.post, identity=identity
+    ).exists()
+    assert TimelineEvent.objects.filter(
+        type=TimelineEvent.Types.mentioned, identity=identity
+    ).exists() == (not full)

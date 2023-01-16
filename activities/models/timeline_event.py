@@ -166,6 +166,30 @@ class TimelineEvent(models.Model):
                 subject_identity_id=interaction.identity_id,
             ).delete()
 
+    ### Background tasks ###
+
+    @classmethod
+    def handle_clear_timeline(cls, message):
+        """
+        Internal stator handler for clearing all events by a user off another
+        user's timeline.
+        """
+        actor_id = message["actor"]
+        object_id = message["object"]
+        full_erase = message.get("fullErase", False)
+
+        if full_erase:
+            q = (
+                models.Q(subject_post__author_id=object_id)
+                | models.Q(subject_post_interaction__identity_id=object_id)
+                | models.Q(subject_identity_id=object_id)
+            )
+        else:
+            q = models.Q(
+                type=cls.Types.post, subject_post__author_id=object_id
+            ) | models.Q(type=cls.Types.boost, subject_identity_id=object_id)
+        TimelineEvent.objects.filter(q, identity_id=actor_id).delete()
+
     ### Mastodon Client API ###
 
     def to_mastodon_notification_json(self, interactions=None):

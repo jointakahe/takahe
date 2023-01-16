@@ -928,14 +928,11 @@ class Post(StatorModel):
         try:
             cls.by_object_uri(object_uri)
         except cls.DoesNotExist:
-            InboxMessage.objects.create(
-                message={
-                    "type": "__internal__",
-                    "object": {
-                        "type": "FetchPost",
-                        "object": object_uri,
-                        "reason": reason,
-                    },
+            InboxMessage.create_internal(
+                {
+                    "type": "FetchPost",
+                    "object": object_uri,
+                    "reason": reason,
                 }
             )
 
@@ -995,7 +992,7 @@ class Post(StatorModel):
         Handles an internal fetch-request inbox message
         """
         try:
-            uri = data["object"]["object"]
+            uri = data["object"]
             if "://" in uri:
                 cls.by_object_uri(uri, fetch=True)
         except (cls.DoesNotExist, KeyError):
