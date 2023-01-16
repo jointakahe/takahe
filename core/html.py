@@ -2,6 +2,7 @@ import re
 from functools import partial
 
 import bleach
+import bleach.callbacks
 from bleach.html5lib_shim import Filter
 from bleach.linkifier import LinkifyFilter
 from django.utils.safestring import mark_safe
@@ -90,6 +91,35 @@ def allow_a(tag: str, name: str, value: str):
     return False
 
 
+def shorten_link_text(attrs, new=False):
+    """
+    Applies Mastodon's link shortening behavior where URL text links are
+    shortened by removing the scheme and only showing the first 30 chars.
+
+    Orig:
+        <a>https://social.example.com/a-long/path/2023/01/16/that-should-be-shortened</a>
+
+    Becomes:
+        <a>social.example.com/a-long/path</a>
+
+    """
+    text = attrs.get("_text")
+    if not text:
+        text = attrs.get((None, "href"))
+    if text and "://" in text and len(text) > 30:
+        attrs[(None, "class")] = " ".join(
+            filter(None, [attrs.pop((None, "class"), ""), "ellipsis"])
+        )
+        # Add the full URL in to title for easier user inspection
+        attrs[(None, "title")] = attrs.get((None, "href"))
+        attrs["_text"] = text.split("://", 1)[-1][:30]
+
+    return attrs
+
+
+linkify_callbacks = [bleach.callbacks.nofollow, shorten_link_text]
+
+
 def sanitize_html(post_html: str) -> str:
     """
     Only allows a, br, p and span tags, and class attributes.
@@ -100,7 +130,10 @@ def sanitize_html(post_html: str) -> str:
             "a": allow_a,
             "p": ["class"],
         },
-        filters=[partial(LinkifyFilter, url_re=url_regex), MastodonStrictTagFilter],
+        filters=[
+            partial(LinkifyFilter, url_re=url_regex, callbacks=linkify_callbacks),
+            MastodonStrictTagFilter,
+        ],
         strip=True,
     )
     return mark_safe(cleaner.clean(post_html))
@@ -113,7 +146,9 @@ def strip_html(post_html: str, *, linkify: bool = True) -> str:
     cleaner = bleach.Cleaner(
         tags=[],
         strip=True,
-        filters=[partial(LinkifyFilter, url_re=url_regex)] if linkify else [],
+        filters=[partial(LinkifyFilter, url_re=url_regex, callbacks=linkify_callbacks)]
+        if linkify
+        else [],
     )
     return mark_safe(cleaner.clean(post_html))
 
