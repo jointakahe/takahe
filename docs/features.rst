@@ -6,37 +6,38 @@ of a full ActivityPub server.
 
 Currently, it supports:
 
-* Web UI only (but can be installed as a PWA)
-* Creating, editing and deleting posts, with CWs/summaries and visibility
-* Adding and showing images on posts (with image descriptions)
-* Handling replies and reply threading
-* Creating and receiving boosts and likes
-* Delivering mentions, and notifications for incoming mentions
+* A web UI (which can be installed as a PWA as well)
+* Mastodon-compatible client applications (beta support)
+* Posts with content warnings and visibilities including a local-only option
+* Editing post content
+* Viewing images, videos and other post attachments
+* Uploading images and attaching image captions
+* Replies, loading reply threads, boosts and likes
+* Following, blocking, muting, and disabling boosts from specific users
+* Mentioned, liked, boosted and followed notifications
 * Following and unfollowing, and you-were-followed notifications
-* Post visibilities, including a local-only option
-* A home timeline, a local timeline, and a federated timeline
-* Profile pages with bios, icons, and header images
+* Home, local, federated, user, and hashtag timelines
+* Full profile pages with images, metadata and links
 * RSS feeds for users' public posts
-* Hashtag linking and searching
-* Emoji support
-* Searching for users by exact handle
+* Custom emoji support
+* Searching for users, hashtags and posts by URL
 * Multiple domain support
-* Multiple identity (per user account support)
-* Moderation flagging system and queue
+* Multiple identity support (per user account)
+* Moderation report system and queue
 * Server announcements system
 * Server defederation (blocking)
-* Signup flow
-* Password reset flow
-* Invites system for restricting signups
-* Hashtag trending system with moderation
-* Mastodon-compatible client API for use with apps (alpha stage)
+* Signup flow, including auto-cap by user numbers and invite system
+* Password reset via email
 
 Features planned for releases up to 1.0:
 
 * Video upload support
+* Hashtag explore page/API
 * Handling received polls and voting on them
 * Manual approval of followers
 * IP and email domain banning
+* Two-factor authentication (TOTP and WebAuthn)
+* Metadata verification support
 
 Features that may make it into 1.0, or might be further out:
 
