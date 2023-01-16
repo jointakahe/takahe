@@ -106,7 +106,7 @@ td a {
     --md-sidebar-width: 250px;
     --md-header-height: 50px;
 
-    --emoji-height: 22px;
+    --emoji-height: 1.1em;
 }
 
 body {
@@ -392,6 +392,7 @@ nav a i {
 
 img.emoji {
     height: var(--emoji-height);
+    vertical-align: baseline;
 }
 
 .ellipsis::after {
