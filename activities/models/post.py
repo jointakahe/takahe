@@ -843,7 +843,7 @@ class Post(StatorModel):
                 else:
                     focal_x, focal_y = None, None
                 mimetype = attachment.get("mediaType")
-                if not mimetype:
+                if not mimetype or not isinstance(mimetype, str):
                     mimetype, _ = mimetypes.guess_type(attachment["url"])
                     if not mimetype:
                         mimetype = "application/octet-stream"
