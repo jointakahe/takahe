@@ -1733,6 +1733,7 @@ form .post {
         height: 100%;
         right: 0;
         top: var(--md-header-height);
+        overflow-y: auto;
     }
 
     .right-column nav {
