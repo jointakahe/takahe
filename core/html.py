@@ -107,12 +107,14 @@ def shorten_link_text(attrs, new=False):
     if not text:
         text = attrs.get((None, "href"))
     if text and "://" in text and len(text) > 30:
-        attrs[(None, "class")] = " ".join(
-            filter(None, [attrs.pop((None, "class"), ""), "ellipsis"])
-        )
+        text = text.split("://", 1)[-1]
+        attrs["_text"] = text[:30]
+        if len(text) > 30:
+            attrs[(None, "class")] = " ".join(
+                filter(None, [attrs.pop((None, "class"), ""), "ellipsis"])
+            )
         # Add the full URL in to title for easier user inspection
         attrs[(None, "title")] = attrs.get((None, "href"))
-        attrs["_text"] = text.split("://", 1)[-1][:30]
 
     return attrs
 
