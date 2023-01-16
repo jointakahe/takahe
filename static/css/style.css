@@ -105,6 +105,8 @@ td a {
 
     --md-sidebar-width: 250px;
     --md-header-height: 50px;
+
+    --emoji-height: 22px;
 }
 
 body {
@@ -389,7 +391,7 @@ nav a i {
 .right-column footer a {}
 
 img.emoji {
-    height: 0.8em;
+    height: var(--emoji-height);
 }
 
 .ellipsis::after {
@@ -493,7 +495,7 @@ p.authorization-code {
 }
 
 .icon-menu .option img.emoji {
-    height: 20px;
+    height: var(--emoji-height);
 }
 
 .icon-menu .option i {
@@ -1170,7 +1172,7 @@ h1.identity .icon {
 }
 
 h1.identity .emoji {
-    height: 22px;
+    height: var(--emoji-height);
 }
 
 h1.identity small {
@@ -1186,7 +1188,7 @@ h1.identity small {
 }
 
 .bio .emoji {
-    height: 22px;
+    height: var(--emoji-height);
 }
 
 .bio p {
@@ -1273,7 +1275,7 @@ table.buttons th button {
 }
 
 table.metadata td .emoji {
-    height: 22px;
+    height: var(--emoji-height);
 }
 
 /* Timelines */
@@ -1410,7 +1412,7 @@ form .post {
 }
 
 .post .emoji {
-    height: 18px;
+    height: var(--emoji-height);
 }
 
 .post .post-banner {
@@ -1646,7 +1648,7 @@ form .post {
 .mention-banner .emoji,
 .follow-banner .emoji,
 .like-banner .emoji {
-    height: 22px;
+    height: var(--emoji-height);
 }
 
 .boost-banner a,
