@@ -84,10 +84,10 @@ def test_list_rendering():
 
     assert (
         renderer.render_post(
-            '<p>Ok. The roster so far is:</p><ul><li>Infosec.exchange (mastodon)</li><li>pixel.Infosec.exchange (pixelfed)</li><li>video.Infosec.exchange (peertube)</li><li>relay.Infosec.exchange (activitypub relay)</li><li>risky.af (alt mastodon)</li></ul><p>What’s next?  I think I promised some people here bookwyrm</p>',
+            "<p>Ok. The roster so far is:</p><ul><li>Infosec.exchange (mastodon)</li><li>pixel.Infosec.exchange (pixelfed)</li><li>video.Infosec.exchange (peertube)</li><li>relay.Infosec.exchange (activitypub relay)</li><li>risky.af (alt mastodon)</li></ul><p>What’s next?  I think I promised some people here bookwyrm</p>",
             fake_post,
         )
-        == '<p>Ok. The roster so far is:</p><p>Infosec.exchange (mastodon)<br>pixel.Infosec.exchange (pixelfed)<br>video.Infosec.exchange (peertube)<br>relay.Infosec.exchange (activitypub relay)<br>risky.af (alt mastodon)</p><p>What’s next?  I think I promised some people here bookwyrm</p>'
+        == "<p>Ok. The roster so far is:</p><p>Infosec.exchange (mastodon)<br>pixel.Infosec.exchange (pixelfed)<br>video.Infosec.exchange (peertube)<br>relay.Infosec.exchange (activitypub relay)<br>risky.af (alt mastodon)</p><p>What’s next?  I think I promised some people here bookwyrm</p>"
     )
 
 
