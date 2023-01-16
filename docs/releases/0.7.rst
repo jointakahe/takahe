@@ -1,7 +1,7 @@
 0.7
 ===
 
-*Not Yet Released*
+*Released: 2023/01/16*
 
 This release focuses on the final big "feature delta" we had versus other
 complete servers, and includes a lot of the missing community features that
@@ -32,9 +32,11 @@ Other fixes and improvements include:
 * Lightbox for viewing images (rather than a full redirect!)
 * Content Warnings of the same type will now all expand together
 * Client compatibility improvements (especially for Elk, Ivory and Tusky)
+* Preliminary light theme for the interface
 * Remote server software tracking and down detection
 * HTML formatted emails along with plain text versions
 * Better display of videos on remote posts (no local upload yet)
+* Unfollowing users clears them from your timeline (as does blocking)
 * RSS feeds now support multiple images on a single post
 * Timeline rendering performance improvements
 * Federation compatibility improvements
