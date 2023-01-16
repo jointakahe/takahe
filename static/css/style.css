@@ -118,7 +118,7 @@ body {
 }
 
 main {
-    width: 900px;
+    width: 1100px;
     margin: 20px auto;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     border-radius: 5px;
@@ -344,7 +344,7 @@ nav a i {
 .left-column {
     flex-grow: 1;
     width: 300px;
-    max-width: 700px;
+    max-width: 900px;
     padding: 15px;
 }
 
@@ -1700,6 +1700,12 @@ form .post {
 .pagination .count {
     display: inline-block;
     color: var(--color-text-dull);
+}
+
+@media (max-width: 1100px) {
+    main {
+        max-width: 900px;
+    }
 }
 
 @media (max-width: 920px),
