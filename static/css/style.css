@@ -88,16 +88,20 @@ td a {
     --color-bg-error: rgb(87, 32, 32);
     --color-highlight: #449c8c;
     --color-delete: #8b2821;
+    --color-header-menu: rgba(0, 0, 0, 0.5);
+    --color-main-shadow: rgba(0, 0, 0, 0.6);
+    --size-main-shadow: 50px;
 
     --color-text-duller: #5f6983;
     --color-text-dull: #99a;
     --color-text-main: #fff;
-    --color-text-link: rgb(176, 194, 206);
+    --color-text-link: var(--color-highlight);
+    --color-text-in-highlight: #fff;
 
+    --color-input-background: #26323c;
     --color-input-border: #000;
     --color-input-border-active: #444b5d;
-    --color-button-main: #444b5d;
-    --color-button-main-hover: #515d7c;
+    --color-button-secondary: #2e3e4c;
     --color-button-disabled: #7c9c97;
 
     --sm-header-height: 50px;
@@ -107,6 +111,29 @@ td a {
     --md-header-height: 50px;
 
     --emoji-height: 1.1em;
+}
+
+body.light-theme {
+    --color-bg-main: #dfe3e7;
+    --color-bg-menu: #cfd6dd;
+    --color-bg-box: #f2f5f8;
+    --color-bg-error: rgb(219, 144, 144);
+    --color-highlight: #449c8c;
+    --color-delete: #884743;
+    --color-header-menu: rgba(0, 0, 0, 0.1);
+    --color-main-shadow: rgba(0, 0, 0, 0.1);
+    --size-main-shadow: 20px;
+
+    --color-text-duller: #3a3b3d;
+    --color-text-dull: rgb(44, 44, 48);
+    --color-text-main: rgb(0, 0, 0);
+    --color-text-link: var(--color-highlight);
+
+    --color-input-background: #fff;
+    --color-input-border: rgb(109, 109, 109);
+    --color-input-border-active: #464646;
+    --color-button-secondary: #5c6770;
+    --color-button-disabled: #a1a1a1;
 }
 
 body {
@@ -120,7 +147,7 @@ body {
 main {
     width: 1100px;
     margin: 20px auto;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 var(--size-main-shadow) var(--color-main-shadow);
     border-radius: 5px;
 }
 
@@ -162,7 +189,7 @@ header .logo {
     padding: 10px 11px 9px 10px;
     height: 50px;
     font-size: 130%;
-    color: var(--color-text-main);
+    color: var(--color-text-in-highlight);
     border-bottom: 3px solid rgba(0, 0, 0, 0);
     z-index: 10;
     overflow: hidden;
@@ -197,7 +224,7 @@ header menu {
 
 header menu a {
     padding: 10px 20px 4px 20px;
-    color: #eee;
+    color: var(--color-text-main);
     line-height: 30px;
     border-bottom: 3px solid rgba(0, 0, 0, 0);
 }
@@ -376,6 +403,7 @@ nav a i {
 
 .right-column h2 {
     background: var(--color-highlight);
+    color: var(--color-text-in-highlight);
     padding: 8px 10px;
     font-weight: bold;
     font-size: 90%;
@@ -772,7 +800,7 @@ div.follow-profile .actions a:hover {
 }
 
 div.follow-profile .actions a.active {
-    color: var(--color-highlight);
+    color: var(--color-text-link);
 }
 
 form.inline-menu {
@@ -889,7 +917,7 @@ form select,
 form textarea {
     width: 100%;
     padding: 5px 7px;
-    background: var(--color-bg-main);
+    background: var(--color-input-background);
     border: 1px solid var(--color-input-border);
     border-radius: 3px;
     color: var(--color-text-main);
@@ -928,21 +956,6 @@ form select:focus,
 form textarea:focus {
     outline: none;
     border: 1px solid var(--color-input-border-active);
-}
-
-form input[type=submit] {
-    width: 100%;
-    padding: 4px 6px;
-    margin: 0 0 10px;
-    background: var(--color-button-main);
-    border: 0;
-    border-radius: 3px;
-    color: var(--color-text-main);
-    cursor: pointer;
-}
-
-form input[type=submit]:hover {
-    background: var(--color-button-main-hover);
 }
 
 form img.preview {
@@ -1012,7 +1025,7 @@ button,
     cursor: pointer;
     font-weight: bold;
     background-color: var(--color-highlight);
-    color: var(--color-text-main);
+    color: var(--color-text-in-highlight);
     display: inline-block;
 }
 
@@ -1030,7 +1043,7 @@ button.destructive:hover,
 
 button.secondary,
 .button.secondary {
-    background: var(--color-bg-menu);
+    background: var(--color-button-secondary);
 }
 
 button.toggle,
@@ -1587,7 +1600,7 @@ form .post {
 }
 
 .post .actions a.active {
-    color: var(--color-highlight);
+    color: var(--color-text-link);
 }
 
 .post .handle .link:hover {
@@ -1597,7 +1610,7 @@ form .post {
 .post .content a {
     word-break: break-all;
     text-decoration: none;
-    color: var(--color-highlight);
+    color: var(--color-text-link);
 }
 
 .post .content a:hover {
@@ -1734,7 +1747,7 @@ form .post {
     }
 
     body:not(.no-sidebar) header menu a {
-        background: rgba(0, 0, 0, 0.5);
+        background: var(--color-header-menu);
     }
 
     main {

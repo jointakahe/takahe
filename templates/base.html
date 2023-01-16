@@ -16,6 +16,7 @@
         <style>
             body {
                 --color-highlight: {{ config.highlight_color }};
+                --color-text-link: {{ config.highlight_color }};
             }
             {% if not config_identity.visible_reaction_counts %}
                 .like-count {
@@ -32,7 +33,7 @@
         {% block extra_head %}{% endblock %}
         {% block custom_head %}{% if config.custom_head %}{{ config.custom_head|safe }}{% endif %}{% endblock %}
     </head>
-    <body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <body class="{% if config_identity.light_theme %}light-theme {% endif %}{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <a id="skip-to-main" class="screenreader-text" href="#main-content">Skip to Content</a>
         <a id="skip-to-nav" class="screenreader-text" href="#side-navigation">Skip to Navigation</a>
         <main>
