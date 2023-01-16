@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import json
 import mimetypes
@@ -75,7 +76,10 @@ class PostStates(StateGraph):
         Creates all needed fan-out objects for a new Post.
         """
         post = await instance.afetch_full()
-        await cls.targets_fan_out(post, FanOut.Types.post)
+        # Only fan out if the post was published in the last day or it's local
+        # (we don't want to fan out anything older that that which is remote)
+        if post.local or (timezone.now() - post.published) < datetime.timedelta(days=1):
+            await cls.targets_fan_out(post, FanOut.Types.post)
         await post.ensure_hashtags()
         return cls.fanned_out
 
