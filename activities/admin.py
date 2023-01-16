@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.contrib import admin
+from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -118,7 +119,39 @@ class EmojiAdmin(admin.ModelAdmin):
 
 @admin.register(PostAttachment)
 class PostAttachmentAdmin(admin.ModelAdmin):
-    list_display = ["id", "post", "created"]
+    list_display = ["id", "post", "state", "created"]
+    list_filter = ["state", "mimetype"]
+    search_fields = ["name", "remote_url", "search_handle", "search_service_handle"]
+    raw_id_fields = ["post"]
+
+    actions = ["guess_mimetypes"]
+
+    def get_search_results(self, request, queryset, search_term):
+        from django.db.models.functions import Concat
+
+        queryset = queryset.annotate(
+            search_handle=Concat(
+                "post__author__username", models.Value("@"), "post__author__domain_id"
+            ),
+            search_service_handle=Concat(
+                "post__author__username",
+                models.Value("@"),
+                "post__author__domain__service_domain",
+            ),
+        )
+        return super().get_search_results(request, queryset, search_term)
+
+    @admin.action(description="Update mimetype based upon filename")
+    def guess_mimetypes(self, request, queryset):
+        import mimetypes
+
+        for instance in queryset:
+            if instance.remote_url:
+                mimetype, _ = mimetypes.guess_type(instance.remote_url)
+                if not mimetype:
+                    mimetype = "application/octet-stream"
+                instance.mimetype = mimetype
+                instance.save()
 
 
 class PostAttachmentInline(admin.StackedInline):
@@ -132,9 +165,22 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ("type", "local", "visibility", "state", "created")
     raw_id_fields = ["to", "mentions", "author", "emojis"]
     actions = ["reparse_hashtags"]
-    search_fields = ["content"]
+    search_fields = ["content", "search_handle", "search_service_handle"]
     inlines = [PostAttachmentInline]
     readonly_fields = ["created", "updated", "state_changed", "object_json"]
+
+    def get_search_results(self, request, queryset, search_term):
+        from django.db.models.functions import Concat
+
+        queryset = queryset.annotate(
+            search_handle=Concat(
+                "author__username", models.Value("@"), "author__domain_id"
+            ),
+            search_service_handle=Concat(
+                "author__username", models.Value("@"), "author__domain__service_domain"
+            ),
+        )
+        return super().get_search_results(request, queryset, search_term)
 
     @admin.action(description="Reprocess content for hashtags")
     def reparse_hashtags(self, request, queryset):
