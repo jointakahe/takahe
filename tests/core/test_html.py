@@ -65,6 +65,33 @@ def test_link_preservation():
 
 
 @pytest.mark.django_db
+def test_list_rendering():
+    """
+    We want to:
+     - Preserve incoming links from other servers
+     - Linkify mentions and hashtags
+     - Not have these all step on each other!
+    """
+    renderer = ContentRenderer(local=True)
+    fake_mention = Mock()
+    fake_mention.username = "andrew"
+    fake_mention.domain_id = "aeracode.org"
+    fake_mention.urls.view = "/@andrew@aeracode.org/"
+    fake_post = Mock()
+    fake_post.mentions.all.return_value = [fake_mention]
+    fake_post.author.domain.uri_domain = "example.com"
+    fake_post.emojis.all.return_value = []
+
+    assert (
+        renderer.render_post(
+            "<p>Ok. The roster so far is:</p><ul><li>Infosec.exchange (mastodon)</li><li>pixel.Infosec.exchange (pixelfed)</li><li>video.Infosec.exchange (peertube)</li><li>relay.Infosec.exchange (activitypub relay)</li><li>risky.af (alt mastodon)</li></ul><p>What’s next?  I think I promised some people here bookwyrm</p>",
+            fake_post,
+        )
+        == "<p>Ok. The roster so far is:</p><p>Infosec.exchange (mastodon)<br>pixel.Infosec.exchange (pixelfed)<br>video.Infosec.exchange (peertube)<br>relay.Infosec.exchange (activitypub relay)<br>risky.af (alt mastodon)</p><p>What’s next?  I think I promised some people here bookwyrm</p>"
+    )
+
+
+@pytest.mark.django_db
 def test_link_mixcase_mentions():
     renderer = ContentRenderer(local=True)
     fake_mention = Mock()

@@ -2,6 +2,7 @@ import re
 from functools import partial
 
 import bleach
+from bleach.html5lib_shim import Filter
 from bleach.linkifier import LinkifyFilter
 from django.utils.safestring import mark_safe
 
@@ -15,6 +16,66 @@ url_regex = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE | re.UNICODE,
 )
+
+ALLOWED_TAGS = ["br", "p", "a"]
+REWRITTEN_TAGS = [
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
+    "pre",
+    "ul",
+    "ol",
+    "li",
+]
+
+
+class MastodonStrictTagFilter(Filter):
+    """
+    Implements Python equivalent of Mastodon tag rewriter
+
+    Clone of https://github.com/mastodon/mastodon/blob/main/lib/sanitize_ext/sanitize_config.rb#L55
+
+    Broadly this replaces all REWRITTEN_TAGS with `p` except for lists where it formats it into `<br>` lists
+    """
+
+    def __iter__(self):
+        li_pending_break = False
+        break_token = {
+            "name": "br",
+            "data": {},
+            "type": "StartTag",
+        }
+
+        for token in Filter.__iter__(self):
+            if token.get("name") not in REWRITTEN_TAGS or token["type"] not in [
+                "StartTag",
+                "EndTag",
+            ]:
+                yield token
+                continue
+
+            if token["type"] == "StartTag":
+                if token["name"] == "li":
+                    if li_pending_break:
+                        # Another `li` appeared, so break after the last one
+                        yield break_token
+                    continue
+                token["name"] = "p"
+            elif token["type"] == "EndTag":
+                if token["name"] == "li":
+                    # Track that an `li` closed so we know a break should be considered
+                    li_pending_break = True
+                    continue
+                if token["name"] == "ul":
+                    # If the last `li` happened, then don't add a break because Mastodon doesn't
+                    li_pending_break = False
+                token["name"] = "p"
+
+            yield token
 
 
 def allow_a(tag: str, name: str, value: str):
@@ -34,12 +95,12 @@ def sanitize_html(post_html: str) -> str:
     Only allows a, br, p and span tags, and class attributes.
     """
     cleaner = bleach.Cleaner(
-        tags=["br", "p", "a"],
+        tags=ALLOWED_TAGS + REWRITTEN_TAGS,
         attributes={  # type:ignore
             "a": allow_a,
             "p": ["class"],
         },
-        filters=[partial(LinkifyFilter, url_re=url_regex)],
+        filters=[partial(LinkifyFilter, url_re=url_regex), MastodonStrictTagFilter],
         strip=True,
     )
     return mark_safe(cleaner.clean(post_html))
