@@ -37,6 +37,23 @@ def test_sanitize_post():
     )
 
 
+def test_shorten_url():
+    full_url = (
+        "https://social.example.com/a-long/path/2023/01/16/that-should-be-shortened"
+    )
+    assert (
+        sanitize_html(f"<p>{full_url}</p>")
+        == f'<p><a href="{full_url}" rel="nofollow" class="ellipsis" title="{full_url}">social.example.com/a-long/path</a></p>'
+    )
+
+    assert (
+        sanitize_html(
+            f'<p><a href="{full_url}">This is a long link text, but cannot be shortened as a URL</a></p>'
+        )
+        == f'<p><a href="{full_url}" rel="nofollow">This is a long link text, but cannot be shortened as a URL</a></p>'
+    )
+
+
 @pytest.mark.django_db
 def test_link_preservation():
     """

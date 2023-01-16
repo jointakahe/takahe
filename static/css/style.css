@@ -392,6 +392,10 @@ img.emoji {
     height: 0.8em;
 }
 
+.ellipsis::after {
+    content: "…";
+}
+
 /* Generic markdown styling and sections */
 
 .no-sidebar section {
