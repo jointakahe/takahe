@@ -98,6 +98,9 @@ class InboxMessageStates(StateGraph):
                         await sync_to_async(PostInteraction.handle_undo_ap)(
                             instance.message
                         )
+                    case "http://litepub.social/ns#emojireact":
+                        # We're ignoring emoji reactions for now
+                        pass
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type undo.{unknown}"
