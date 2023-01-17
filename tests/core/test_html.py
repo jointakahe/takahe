@@ -18,6 +18,16 @@ def test_html_to_plaintext():
         == "Hi!\n\nHow are\n you?\n\ntoday"
     )
 
+    assert (
+        html_to_plaintext(
+            '<p><a href="https://fedi.takahe.social/with/a/long/path">'
+            '<b>The</b> <img src="takahe.png"> Link</a> '
+            '<a href="">Empty href</a> '
+            "<a>Empty A</a></p>"
+        )
+        == "https://fedi.takahe.social/with/a/long/path Empty href Empty A"
+    )
+
 
 def test_sanitize_post():
 
