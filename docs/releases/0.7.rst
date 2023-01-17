@@ -75,3 +75,6 @@ servers are a bit slow you may see the timestamps not be entirely in order.
 This is fine, and also the way Mastodon behaves.
 
 You should not notice any major side-effects apart from longer IDs in URLs.
+After the inital upgrade, you may notice a couple of old posts at the top of
+the Home timeline; this is due to a switch in handling, and is a one-time bug
+that will go away as more posts come in and build the timeline further.
