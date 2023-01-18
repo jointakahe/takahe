@@ -79,6 +79,35 @@ class MastodonStrictTagFilter(Filter):
             yield token
 
 
+class UnlinkifyFilter(Filter):
+    """
+    Forcibly replaces link text with the href.
+
+    This is intented to be used when stripping <a> tags to preserve the link
+    location at the expense of the link text.
+    """
+
+    def __iter__(self):
+        discarding_a_text = False
+        for token in Filter.__iter__(self):
+            if token.get("name") == "a":
+                if token["type"] == "EndTag":
+                    discarding_a_text = False
+                    continue
+                href = token["data"].get((None, "href"))
+
+                # If <a> has an href, we use it and throw away all content
+                # within the <a>...</a>. If href missing or empty, try to find
+                # text within the <a>...</a>
+                if href:
+                    yield {"data": href, "type": "Characters"}
+                    discarding_a_text = True
+                    continue
+            elif not discarding_a_text:
+                yield token
+            # else: throw away tokens until we're out of the <a>
+
+
 def allow_a(tag: str, name: str, value: str):
     if name in ["href", "title", "class"]:
         return True
@@ -150,7 +179,7 @@ def strip_html(post_html: str, *, linkify: bool = True) -> str:
         strip=True,
         filters=[partial(LinkifyFilter, url_re=url_regex, callbacks=linkify_callbacks)]
         if linkify
-        else [],
+        else [UnlinkifyFilter],
     )
     return mark_safe(cleaner.clean(post_html))
 
@@ -163,7 +192,7 @@ def html_to_plaintext(post_html: str) -> str:
     # Remove all newlines, then replace br with a newline and /p with two (one comes from bleach)
     post_html = post_html.replace("\n", "").replace("<br>", "\n").replace("</p>", "\n")
     # Remove all other HTML and return
-    cleaner = bleach.Cleaner(tags=[], strip=True, filters=[])
+    cleaner = bleach.Cleaner(tags=["a"], strip=True, filters=[UnlinkifyFilter])
     return cleaner.clean(post_html).strip()
 
 
