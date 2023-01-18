@@ -1512,7 +1512,6 @@ form .post {
     object-fit: cover;
     object-position: center;
     max-height: 400px;
-    width: 100%;
 }
 
 .post .attachments video {
