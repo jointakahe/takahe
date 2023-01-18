@@ -14,7 +14,7 @@ class NodeInfoSoftware(BaseModel):
 
 
 class NodeInfoUsage(BaseModel):
-    users: dict[str, int] | None
+    users: dict[str, int | None] | None
     local_posts: int = Field(default=0, alias="localPosts")
 
 

@@ -16,26 +16,30 @@ class ActorMismatchError(ActivityPubError):
     """
 
 
-def capture_message(message: str):
+def capture_message(message: str, level: str | None = None, scope=None, **scope_args):
     """
     Sends the informational message to Sentry if it's configured
     """
     if settings.SETUP.SENTRY_DSN and settings.SETUP.SENTRY_CAPTURE_MESSAGES:
         from sentry_sdk import capture_message
 
-        capture_message(message)
+        capture_message(message, level, scope, **scope_args)
     elif settings.DEBUG:
+        if scope or scope_args:
+            message += f"; {scope=}, {scope_args=}"
         print(message)
 
 
-def capture_exception(exception: BaseException):
+def capture_exception(
+    exception: BaseException, level: str | None = None, scope=None, **scope_args
+):
     """
     Sends the exception to Sentry if it's configured
     """
     if settings.SETUP.SENTRY_DSN:
         from sentry_sdk import capture_exception
 
-        capture_exception(exception)
+        capture_exception(exception, level, scope, **scope_args)
     elif settings.DEBUG:
         traceback.print_exc()
 
