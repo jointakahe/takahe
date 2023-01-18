@@ -3,6 +3,7 @@ import ssl
 from typing import Optional
 
 import httpx
+import pydantic
 import urlman
 from asgiref.sync import sync_to_async
 from django.conf import settings
@@ -202,9 +203,13 @@ class Domain(StatorModel):
 
             try:
                 info = NodeInfo(**response.json())
-            except json.JSONDecodeError as ex:
+            except (json.JSONDecodeError, pydantic.ValidationError) as ex:
                 capture_message(
-                    f"Client error decoding nodeinfo: domain={self.domain}, error={str(ex)}"
+                    f"Client error decoding nodeinfo: {str(ex)}",
+                    extra={
+                        "domain": self.domain,
+                        "nodeinfo20_url": nodeinfo20_url,
+                    },
                 )
                 return None
             return info
