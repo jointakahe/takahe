@@ -12,6 +12,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.http import http_date, parse_http_date
 from httpx._types import TimeoutTypes
+from idna.core import InvalidCodepoint
 from pyld import jsonld
 
 from core.ld import format_ld_date
@@ -235,13 +236,18 @@ class HttpSignature:
         # Send the request with all those headers except the pseudo one
         del headers["(request-target)"]
         async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.request(
-                method,
-                uri,
-                headers=headers,
-                content=body_bytes,
-                follow_redirects=method == "get",
-            )
+            try:
+                response = await client.request(
+                    method,
+                    uri,
+                    headers=headers,
+                    content=body_bytes,
+                    follow_redirects=method == "get",
+                )
+            except InvalidCodepoint as ex:
+                # Convert to a more generic error we handle
+                raise httpx.HTTPError(f"InvalidCodepoint: {str(ex)}") from None
+
             if (
                 method == "post"
                 and response.status_code >= 400

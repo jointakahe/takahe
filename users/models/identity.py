@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.functional import lazy
 from lxml import etree
 
-from core.exceptions import ActorMismatchError
+from core.exceptions import ActorMismatchError, capture_message
 from core.html import ContentRenderer, html_to_plaintext, strip_html
 from core.ld import (
     canonicalise,
@@ -723,14 +723,17 @@ class Identity(StatorModel):
                 # Their account got deleted, so let's do the same.
                 await Identity.objects.filter(pk=self.pk).adelete()
 
-            if status_code >= 500 or status_code in [403, 404, 410]:
-                # Common errors with other server, not worth reporting
-                return False
+            if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
+                capture_message(
+                    f"Client error fetching actor at {self.actor_uri}: {status_code}",
+                    extras={
+                        "identity": self.pk,
+                        "domain": self.domain_id,
+                        "content": response.content,
+                    },
+                )
+            return False
 
-            raise ValueError(
-                f"Client error fetching actor at {self.actor_uri}: {status_code}",
-                response.content,
-            )
         document = canonicalise(response.json(), include_security=True)
         if "type" not in document:
             return False

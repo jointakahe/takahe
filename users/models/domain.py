@@ -195,9 +195,14 @@ class Domain(StatorModel):
                     and response.status_code < 500
                     and response.status_code not in [401, 403, 404, 406, 410]
                 ):
-                    raise ValueError(
-                        f"Client error fetching nodeinfo: domain={self.domain}, code={response.status_code}",
-                        response.content,
+                    capture_message(
+                        f"Client error fetching nodeinfo: {str(ex)}",
+                        extras={
+                            "code": response.status_code,
+                            "content": response.content,
+                            "domain": self.domain,
+                            "nodeinfo20_url": nodeinfo20_url,
+                        },
                     )
                 return None
 
@@ -206,7 +211,7 @@ class Domain(StatorModel):
             except (json.JSONDecodeError, pydantic.ValidationError) as ex:
                 capture_message(
                     f"Client error decoding nodeinfo: {str(ex)}",
-                    extra={
+                    extras={
                         "domain": self.domain,
                         "nodeinfo20_url": nodeinfo20_url,
                     },
