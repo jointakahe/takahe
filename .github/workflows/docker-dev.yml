@@ -29,7 +29,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
         with:
-          images: jointakahe/takahe-dev
+          images: cmoultrie/takahe-dev
           tags: |
             type=edge,branch=main
             type=sha
