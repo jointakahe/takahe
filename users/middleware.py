@@ -35,7 +35,7 @@ class IdentityMiddleware:
 
 class UserHeaderMiddleware:
     """
-    Adds X-Takahe-User and X-Takahe-User-Identity headers to the response, identifying the user/identity as available.
+    Adds X-Takahe-User and X-Takahe-Identity headers to the response, identifying the user/identity as available.
 
     These are stripped away from the response by Nginx, so they exist to enrich logging in Nginx when required/desired.
     """
