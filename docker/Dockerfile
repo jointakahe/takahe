@@ -1,5 +1,5 @@
 ARG IMAGE_HOST=python
-ARG IMAGE_LABEL=3.11.1-slim-buster
+ARG IMAGE_LABEL=3.11-slim-bullseye
 
 FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
