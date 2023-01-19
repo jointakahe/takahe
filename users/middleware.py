@@ -49,6 +49,6 @@ class UserHeaderMiddleware:
         if request.user:
             response.headers["X-Takahe-User"] = str(request.user)
         if request.identity:
-            response.headers["X-Takahe-User-Identity"] = str(request.identity)
+            response.headers["X-Takahe-Identity"] = str(request.identity)
 
         return response
