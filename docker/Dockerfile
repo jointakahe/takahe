@@ -40,7 +40,7 @@ COPY docker/mime.types /etc/mime.types
 
 # Configure nginx
 COPY docker/nginx.conf /etc/nginx/
-COPY docker/default.conf.tpl /etc/nginx/conf.d
+COPY docker/nginx.conf.d/* /etc/nginx/conf.d
 
 COPY . /takahe
 
