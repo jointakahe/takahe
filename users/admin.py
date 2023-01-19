@@ -124,10 +124,15 @@ class IdentityAdmin(admin.ModelAdmin):
         )
         return super().get_search_results(request, queryset, search_term)
 
-    @admin.action(description="Force Update")
+    @admin.action(description="Force update")
     def force_update(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("outdated")
+
+    @admin.action(description="Mark as deleted")
+    def delete(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("deleted")
 
     @admin.display(description="ActivityPub JSON")
     def actor_json(self, instance):
