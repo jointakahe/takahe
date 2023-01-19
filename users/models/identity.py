@@ -891,7 +891,18 @@ class Identity(StatorModel):
             }
             result["source"] = {
                 "note": html_to_plaintext(self.summary) if self.summary else "",
-                "fields": result["fields"],
+                "fields": (
+                    [
+                        {
+                            "name": m["name"],
+                            "value": strip_html(m["value"], linkify=False),
+                            "verified_at": None,
+                        }
+                        for m in self.metadata
+                    ]
+                    if self.metadata
+                    else []
+                ),
                 "privacy": privacy_map[
                     Config.load_identity(self).default_post_visibility
                 ],
