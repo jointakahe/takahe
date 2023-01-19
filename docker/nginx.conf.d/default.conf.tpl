@@ -27,7 +27,7 @@ server {
 
     # The user header is available for logging, but not returned to the client
     proxy_hide_header X-Takahe-User;
-    proxy_hide_header X-Takahe-User-Identity;
+    proxy_hide_header X-Takahe-Identity;
 
     # Serve robots.txt from the non-collected dir as a special case.
     location /robots.txt {
