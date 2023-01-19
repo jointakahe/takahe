@@ -31,3 +31,24 @@ class IdentityMiddleware:
 
         response = self.get_response(request)
         return response
+
+
+class UserHeaderMiddleware:
+    """
+    Adds X-Takahe-User and X-Takahe-User-Identity headers to the response, identifying the user/identity as available.
+
+    These are stripped away from the response by Nginx, so they exist to enrich logging in Nginx when required/desired.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if request.user:
+            response.headers["X-Takahe-User"] = str(request.user)
+        if request.identity:
+            response.headers["X-Takahe-User-Identity"] = str(request.identity)
+
+        return response

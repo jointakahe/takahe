@@ -216,6 +216,7 @@ MIDDLEWARE = [
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
     "users.middleware.IdentityMiddleware",
+    "users.middleware.UserHeaderMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"
