@@ -1,5 +1,5 @@
 ARG IMAGE_HOST=python
-ARG IMAGE_LABEL=3.11.1-slim-buster
+ARG IMAGE_LABEL=3.11-slim-bullseye
 
 FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
@@ -37,7 +37,15 @@ RUN mkdir -p /cache
 
 # Python mimetypes package is missing some common mappings
 COPY docker/mime.types /etc/mime.types
+
+# Configure nginx
+COPY docker/nginx.conf /etc/nginx/
+COPY docker/default.conf.tpl /etc/nginx/conf.d
+
 COPY . /takahe
+
+# Sanity-test the nginx config
+RUN nginx -t
 
 WORKDIR /takahe
 
