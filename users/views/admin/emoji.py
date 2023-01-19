@@ -1,5 +1,6 @@
 from django import forms
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -46,7 +47,10 @@ class EmojiCreate(FormView):
 
     class form_class(forms.Form):
         shortcode = forms.SlugField(
-            help_text="What users type to use the emoji :likethis:",
+            help_text="What users type to use the emoji :likethis:\nShould only contain 0-9, a-z and underscores",
+            validators=[
+                RegexValidator(r"^[a-z0-9_]+$", message="Invalid emoji shortcode")
+            ],
         )
         image = forms.ImageField(
             help_text=f"The emoji image\nShould be at least 40 x 40 pixels, and under {settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB}KB",
