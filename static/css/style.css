@@ -999,11 +999,11 @@ form fieldset .buttons {
     margin-top: 0;
 }
 
-form .button.add-image {
+form button.add-image {
     margin: 10px 0 10px 0;
 }
 
-form legend+.button.add-image {
+form legend+button.add-image {
     margin-top: 0px;
 }
 
