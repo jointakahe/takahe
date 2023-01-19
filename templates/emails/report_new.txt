@@ -1,0 +1,22 @@
+A new report has been recieved for {{config.site_name}}.
+
+Please review the report at the link below:
+
+https://{{settings.MAIN_DOMAIN}}/admin/reports/{{report.id}}/
+
+=============== Report Summary ===============
+{% if report.source_identity %}
+Reporter Identity: {{report.source_identity}} @ {{report.source_domain}}
+{% else %}
+Reporter Identity: Anonymous Report from {{report.source_domain}}
+{% endif %}
+
+Reported Identity: {{report.subject_identity}}
+
+Complaint Type: {{report.type}}
+
+Complaint Notes: {{report.complaint}}
+
+=============== End Report ===============
+
+You are recieving this email because you are a moderator on the Takahe instance https://{{settings.MAIN_DOMAIN}}

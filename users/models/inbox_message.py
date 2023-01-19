@@ -1,26 +1,27 @@
 from asgiref.sync import sync_to_async
 from django.db import models
 
-from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class InboxMessageStates(StateGraph):
-    received = State(try_interval=300)
-    processed = State(try_interval=86400, attempt_immediately=False)
-    purged = State()  # This is actually deletion, it will never get here
+    received = State(try_interval=300, delete_after=86400 * 3)
+    processed = State(externally_progressed=True, delete_after=86400)
+    purge = State(delete_after=24 * 60 * 60)  # Delete after release (back compat)
 
     received.transitions_to(processed)
-    processed.transitions_to(purged)
+    processed.transitions_to(purge)  # Delete after release (back compat)
 
     @classmethod
     async def handle_received(cls, instance: "InboxMessage"):
-        from activities.models import Post, PostInteraction
-        from users.models import Follow, Identity, Report
+        from activities.models import Post, PostInteraction, TimelineEvent
+        from users.models import Block, Follow, Identity, Report
 
         match instance.message_type:
             case "follow":
                 await sync_to_async(Follow.handle_request_ap)(instance.message)
+            case "block":
+                await sync_to_async(Block.handle_ap)(instance.message)
             case "announce":
                 await sync_to_async(PostInteraction.handle_ap)(instance.message)
             case "like":
@@ -66,9 +67,8 @@ class InboxMessageStates(StateGraph):
                     case "follow":
                         await sync_to_async(Follow.handle_accept_ap)(instance.message)
                     case None:
-                        await sync_to_async(Follow.handle_accept_ref_ap)(
-                            instance.message
-                        )
+                        # It's a string object, but these will only be for Follows
+                        await sync_to_async(Follow.handle_accept_ap)(instance.message)
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
@@ -76,6 +76,9 @@ class InboxMessageStates(StateGraph):
             case "reject":
                 match instance.message_object_type:
                     case "follow":
+                        await sync_to_async(Follow.handle_reject_ap)(instance.message)
+                    case None:
+                        # It's a string object, but these will only be for Follows
                         await sync_to_async(Follow.handle_reject_ap)(instance.message)
                     case unknown:
                         raise ValueError(
@@ -85,6 +88,8 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "follow":
                         await sync_to_async(Follow.handle_undo_ap)(instance.message)
+                    case "block":
+                        await sync_to_async(Block.handle_undo_ap)(instance.message)
                     case "like":
                         await sync_to_async(PostInteraction.handle_undo_ap)(
                             instance.message
@@ -93,6 +98,9 @@ class InboxMessageStates(StateGraph):
                         await sync_to_async(PostInteraction.handle_undo_ap)(
                             instance.message
                         )
+                    case "http://litepub.social/ns#emojireact":
+                        # We're ignoring emoji reactions for now
+                        pass
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type undo.{unknown}"
@@ -109,9 +117,8 @@ class InboxMessageStates(StateGraph):
                     ).aexists():
                         await sync_to_async(Post.handle_delete_ap)(instance.message)
                     else:
-                        raise ValueError(
-                            f"Cannot handle activity of type delete on URI {instance.message['object']}"
-                        )
+                        # It is presumably already deleted
+                        pass
                 else:
                     match instance.message_object_type:
                         case "tombstone":
@@ -141,7 +148,11 @@ class InboxMessageStates(StateGraph):
                 match instance.message_object_type:
                     case "fetchpost":
                         await sync_to_async(Post.handle_fetch_internal)(
-                            instance.message
+                            instance.message["object"]
+                        )
+                    case "cleartimeline":
+                        await sync_to_async(TimelineEvent.handle_clear_timeline)(
+                            instance.message["object"]
                         )
                     case unknown:
                         raise ValueError(
@@ -150,11 +161,6 @@ class InboxMessageStates(StateGraph):
             case unknown:
                 raise ValueError(f"Cannot handle activity of type {unknown}")
         return cls.processed
-
-    @classmethod
-    async def handle_processed(cls, instance: "InboxMessage"):
-        if instance.state_age > Config.system.inbox_message_purge_after:
-            await InboxMessage.objects.filter(pk=instance.pk).adelete()
 
 
 class InboxMessage(StatorModel):
@@ -168,6 +174,18 @@ class InboxMessage(StatorModel):
     message = models.JSONField()
 
     state = StateField(InboxMessageStates)
+
+    @classmethod
+    def create_internal(cls, payload):
+        """
+        Creates an internal action message
+        """
+        cls.objects.create(
+            message={
+                "type": "__internal__",
+                "object": payload,
+            }
+        )
 
     @property
     def message_type(self):

@@ -1,5 +1,7 @@
 import asyncio
 import datetime
+import os
+import signal
 import time
 import traceback
 import uuid
@@ -41,6 +43,8 @@ class StatorRunner:
         self.run_for = run_for
         self.minimum_loop_delay = 0.5
         self.maximum_loop_delay = 5
+        # Set up SIGALRM handler
+        signal.signal(signal.SIGALRM, self.alarm_handler)
 
     async def run(self):
         sentry.set_takahe_app("stator")
@@ -56,6 +60,9 @@ class StatorRunner:
                 while True:
                     # Do we need to do cleaning?
                     if (time.monotonic() - self.last_clean) >= self.schedule_interval:
+                        # Set up the watchdog timer (each time we do this the
+                        # previous one is cancelled)
+                        signal.alarm(self.schedule_interval * 2)
                         # Refresh the config
                         Config.system = await Config.aload_system()
                         print("Tasks processed this loop:")
@@ -63,6 +70,10 @@ class StatorRunner:
                             print(f"  {label}: {number}")
                         print("Running cleaning and scheduling")
                         await self.run_scheduling()
+                        # Write liveness file if configured
+                        if self.liveness_file:
+                            with open(self.liveness_file, "w") as fh:
+                                fh.write(str(int(time.time())))
 
                     # Clear the cleaning breadcrumbs/extra for the main part of the loop
                     sentry.scope_clear(scope)
@@ -103,6 +114,14 @@ class StatorRunner:
         print("Complete")
         return self.handled
 
+    def alarm_handler(self, signum, frame):
+        """
+        Called when SIGALRM fires, which means we missed a schedule loop.
+        Just exit as we're likely deadlocked.
+        """
+        print("Watchdog timeout exceeded")
+        os._exit(2)
+
     async def run_scheduling(self):
         """
         Do any transition cleanup tasks
@@ -112,6 +131,7 @@ class StatorRunner:
                 asyncio.create_task(self.submit_stats(model))
                 asyncio.create_task(model.atransition_clean_locks())
                 asyncio.create_task(model.atransition_schedule_due())
+                asyncio.create_task(model.atransition_delete_due())
             self.last_clean = time.monotonic()
 
     async def submit_stats(self, model):

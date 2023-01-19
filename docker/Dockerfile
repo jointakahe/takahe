@@ -1,5 +1,5 @@
 ARG IMAGE_HOST=python
-ARG IMAGE_LABEL=3.11.1-slim-buster
+ARG IMAGE_LABEL=3.11-slim-bullseye
 
 FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
@@ -35,11 +35,21 @@ RUN apt-get update \
 
 RUN mkdir -p /cache
 
+# Python mimetypes package is missing some common mappings
+COPY docker/mime.types /etc/mime.types
+
+# Configure nginx
+COPY docker/nginx.conf /etc/nginx/
+COPY docker/nginx.conf.d/* /etc/nginx/conf.d
+
 COPY . /takahe
+
+# Sanity-test the nginx config
+RUN nginx -t
 
 WORKDIR /takahe
 
-RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" TAKAHE_SECRET_KEY="takahe" python3 manage.py collectstatic --noinput
+RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" TAKAHE_SECRET_KEY="takahe" TAKAHE_MAIN_DOMAIN="static.test" python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
 

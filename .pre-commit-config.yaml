@@ -55,3 +55,10 @@ repos:
             types-cachetools,
             types-python-dateutil,
           ]
+
+  - repo: https://github.com/rtts/djhtml
+    rev: v1.5.2
+    hooks:
+      - id: djhtml
+      - id: djcss
+      - id: djjs

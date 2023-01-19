@@ -25,12 +25,12 @@
                 {% endfor %}
             {% endif %}
             {% if not post or post.attachments.count < 4 %}
-                <a class="button add-image"
+                <button class="add-image"
                     hx-get='{% url "compose_image_upload" %}'
                     hx-target="this"
                     hx-swap="outerHTML">
                     Add Image
-                </a>
+                </button>
             {% endif %}
         </fieldset>
         <div class="buttons">

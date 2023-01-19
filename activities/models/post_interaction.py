@@ -3,10 +3,9 @@ from django.utils import timezone
 
 from activities.models.fan_out import FanOut
 from activities.models.post import Post
-from activities.models.timeline_event import TimelineEvent
 from core.ld import format_ld_date, get_str_or_id, parse_ld_date
+from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models.follow import Follow
 from users.models.identity import Identity
 
 
@@ -14,7 +13,7 @@ class PostInteractionStates(StateGraph):
     new = State(try_interval=300)
     fanned_out = State(externally_progressed=True)
     undone = State(try_interval=300)
-    undone_fanned_out = State()
+    undone_fanned_out = State(delete_after=24 * 60 * 60)
 
     new.transitions_to(fanned_out)
     fanned_out.transitions_to(undone)
@@ -30,33 +29,37 @@ class PostInteractionStates(StateGraph):
         Creates all needed fan-out objects for a new PostInteraction.
         """
         interaction = await instance.afetch_full()
-        # Boost: send a copy to all people who follow this user
+        # Boost: send a copy to all people who follow this user (limiting
+        # to just local follows if it's a remote post)
         if interaction.type == interaction.Types.boost:
-            async for follow in interaction.identity.inbound_follows.select_related(
-                "source", "target"
-            ):
-                if follow.source.local or follow.target.local:
+            async for follow in interaction.identity.inbound_follows.filter(
+                boosts=True
+            ).select_related("source", "target"):
+                if interaction.post.local or follow.source.local:
                     await FanOut.objects.acreate(
                         type=FanOut.Types.interaction,
                         identity_id=follow.source_id,
                         subject_post=interaction.post,
                         subject_post_interaction=interaction,
                     )
-            # And one to the post's author
-            await FanOut.objects.acreate(
-                type=FanOut.Types.interaction,
-                identity_id=interaction.post.author_id,
-                subject_post=interaction.post,
-                subject_post_interaction=interaction,
-            )
-        # Like: send a copy to the original post author only
+            # And one to the post's author, if the booster is local or they are
+            if interaction.identity.local or interaction.post.local:
+                await FanOut.objects.acreate(
+                    type=FanOut.Types.interaction,
+                    identity_id=interaction.post.author_id,
+                    subject_post=interaction.post,
+                    subject_post_interaction=interaction,
+                )
+        # Like: send a copy to the original post author only,
+        # if the liker is local or they are
         elif interaction.type == interaction.Types.like:
-            await FanOut.objects.acreate(
-                type=FanOut.Types.interaction,
-                identity_id=interaction.post.author_id,
-                subject_post=interaction.post,
-                subject_post_interaction=interaction,
-            )
+            if interaction.identity.local or interaction.post.local:
+                await FanOut.objects.acreate(
+                    type=FanOut.Types.interaction,
+                    identity_id=interaction.post.author_id,
+                    subject_post=interaction.post,
+                    subject_post_interaction=interaction,
+                )
         else:
             raise ValueError("Cannot fan out unknown type")
         # And one for themselves if they're local and it's a boost
@@ -122,6 +125,11 @@ class PostInteraction(StatorModel):
     class Types(models.TextChoices):
         like = "like"
         boost = "boost"
+
+    id = models.BigIntegerField(
+        primary_key=True,
+        default=Snowflake.generate_post_interaction,
+    )
 
     # The state the boost is in
     state = StateField(PostInteractionStates)
@@ -291,17 +299,7 @@ class PostInteraction(StatorModel):
                 # That post is gone, boss
                 # TODO: Limited retry state?
                 return
-            # Boosts (announces) go to everyone who follows locally
-            if interaction.type == cls.Types.boost:
-                for follow in Follow.objects.filter(
-                    target=interaction.identity, source__local=True
-                ):
-                    TimelineEvent.add_post_interaction(follow.source, interaction)
-            # Likes go to just the author of the post
-            elif interaction.type == cls.Types.like:
-                TimelineEvent.add_post_interaction(interaction.post.author, interaction)
-            # Force it into fanned_out as it's not ours
-            interaction.transition_perform(PostInteractionStates.fanned_out)
+            interaction.post.calculate_stats()
 
     @classmethod
     def handle_undo_ap(cls, data):
@@ -322,6 +320,8 @@ class PostInteraction(StatorModel):
             interaction.timeline_events.all().delete()
             # Force it into undone_fanned_out as it's not ours
             interaction.transition_perform(PostInteractionStates.undone_fanned_out)
+            # Recalculate post stats
+            interaction.post.calculate_stats()
 
     ### Mastodon API ###
 
@@ -333,13 +333,13 @@ class PostInteraction(StatorModel):
             raise ValueError(
                 f"Cannot make status JSON for interaction of type {self.type}"
             )
-        # Grab our subject post JSON, and just return it if we're a post
+        # Make a fake post for this boost (because mastodon treats boosts as posts)
         post_json = self.post.to_mastodon_json(interactions=interactions)
         return {
-            "id": f"interaction-{self.pk}",
+            "id": f"{self.pk}",
             "uri": post_json["uri"],
             "created_at": format_ld_date(self.published),
-            "account": self.identity.to_mastodon_json(),
+            "account": self.identity.to_mastodon_json(include_counts=False),
             "content": "",
             "visibility": post_json["visibility"],
             "sensitive": post_json["sensitive"],

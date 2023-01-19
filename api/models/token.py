@@ -30,10 +30,9 @@ class Token(models.Model):
         related_name="tokens",
     )
 
-    token = models.CharField(max_length=500)
-    code = models.CharField(max_length=100, blank=True, null=True)
-
+    token = models.CharField(max_length=500, unique=True)
     scopes = models.JSONField()
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    revoked = models.DateTimeField(blank=True, null=True)

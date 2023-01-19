@@ -1,5 +1,3 @@
-from django.db import models
-
 from activities.models import (
     Post,
     PostInteraction,
@@ -7,6 +5,7 @@ from activities.models import (
     PostStates,
     TimelineEvent,
 )
+from core.exceptions import capture_message
 from users.models import Identity
 
 
@@ -31,22 +30,6 @@ class PostService:
                 "author",
                 "author__domain",
             )
-            .annotate(
-                like_count=models.Count(
-                    "interactions",
-                    filter=models.Q(
-                        interactions__type=PostInteraction.Types.like,
-                        interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-                boost_count=models.Count(
-                    "interactions",
-                    filter=models.Q(
-                        interactions__type=PostInteraction.Types.boost,
-                        interactions__state__in=PostInteractionStates.group_active(),
-                    ),
-                ),
-            )
         )
 
     def __init__(self, post: Post):
@@ -63,6 +46,7 @@ class PostService:
         )[0]
         if interaction.state not in PostInteractionStates.group_active():
             interaction.transition_perform(PostInteractionStates.new)
+        self.post.calculate_stats()
 
     def uninteract_as(self, identity, type):
         """
@@ -74,6 +58,7 @@ class PostService:
             post=self.post,
         ):
             interaction.transition_perform(PostInteractionStates.undone)
+        self.post.calculate_stats()
 
     def like_as(self, identity: Identity):
         self.interact_as(identity, PostInteraction.Types.like)
@@ -104,9 +89,15 @@ class PostService:
         ancestor = self.post
         while ancestor.in_reply_to and len(ancestors) < num_ancestors:
             object_uri = ancestor.in_reply_to
+            reason = ancestor.object_uri
             ancestor = self.queryset().filter(object_uri=object_uri).first()
             if ancestor is None:
-                Post.ensure_object_uri(object_uri)
+                try:
+                    Post.ensure_object_uri(object_uri, reason=reason)
+                except ValueError:
+                    capture_message(
+                        f"Cannot fetch ancestor Post={self.post.pk}, ancestor_uri={object_uri}"
+                    )
                 break
             if ancestor.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
                 break

@@ -33,10 +33,14 @@ class InterfacePage(SettingsPage):
             "title": "Infinite Scroll",
             "help_text": "Automatically loads more posts when you get to the bottom of a timeline.",
         },
+        "light_theme": {
+            "title": "Light Mode",
+            "help_text": "Use a light theme rather than the default dark theme.",
+        },
     }
 
     layout = {
         "Posting": ["toot_mode", "default_post_visibility"],
         "Wellness": ["infinite_scroll", "visible_reaction_counts", "expand_linked_cws"],
-        "Appearance": ["custom_css"],
+        "Appearance": ["light_theme", "custom_css"],
     }

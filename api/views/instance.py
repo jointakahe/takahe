@@ -20,7 +20,7 @@ def instance_info(request):
         "urls": {},
         "stats": {
             "user_count": Identity.objects.filter(local=True).count(),
-            "status_count": Post.objects.filter(local=True).count(),
+            "status_count": Post.objects.filter(local=True).not_hidden().count(),
             "domain_count": Domain.objects.count(),
         },
         "thumbnail": Config.system.site_banner,

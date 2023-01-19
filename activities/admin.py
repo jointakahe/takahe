@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.contrib import admin
+from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -73,7 +74,15 @@ class EmojiAdmin(admin.ModelAdmin):
 
     readonly_fields = ["preview", "created", "updated", "to_ap_tag"]
 
-    actions = ["force_execution", "approve_emoji", "reject_emoji"]
+    actions = ["force_execution", "approve_emoji", "reject_emoji", "copy_to_local"]
+
+    def delete_queryset(self, request, queryset):
+        for instance in queryset:
+            # individual deletes to ensure file is deleted
+            instance.delete()
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
 
     @admin.action(description="Force Execution")
     def force_execution(self, request, queryset):
@@ -96,10 +105,53 @@ class EmojiAdmin(admin.ModelAdmin):
             f'<img src="{instance.full_url().relative}" style="height: 22px">'
         )
 
+    @admin.action(description="Copy Emoji to Local")
+    def copy_to_local(self, request, queryset):
+        emojis = {}
+        for instance in queryset:
+            emoji = instance.copy_to_local(save=False)
+            if emoji:
+                emojis[emoji.shortcode] = emoji
+
+        Emoji.objects.bulk_create(emojis.values(), batch_size=50, ignore_conflicts=True)
+        Emoji.locals = Emoji.load_locals()
+
 
 @admin.register(PostAttachment)
 class PostAttachmentAdmin(admin.ModelAdmin):
-    list_display = ["id", "post", "created"]
+    list_display = ["id", "post", "state", "created"]
+    list_filter = ["state", "mimetype"]
+    search_fields = ["name", "remote_url", "search_handle", "search_service_handle"]
+    raw_id_fields = ["post"]
+
+    actions = ["guess_mimetypes"]
+
+    def get_search_results(self, request, queryset, search_term):
+        from django.db.models.functions import Concat
+
+        queryset = queryset.annotate(
+            search_handle=Concat(
+                "post__author__username", models.Value("@"), "post__author__domain_id"
+            ),
+            search_service_handle=Concat(
+                "post__author__username",
+                models.Value("@"),
+                "post__author__domain__service_domain",
+            ),
+        )
+        return super().get_search_results(request, queryset, search_term)
+
+    @admin.action(description="Update mimetype based upon filename")
+    def guess_mimetypes(self, request, queryset):
+        import mimetypes
+
+        for instance in queryset:
+            if instance.remote_url:
+                mimetype, _ = mimetypes.guess_type(instance.remote_url)
+                if not mimetype:
+                    mimetype = "application/octet-stream"
+                instance.mimetype = mimetype
+                instance.save()
 
 
 class PostAttachmentInline(admin.StackedInline):
@@ -113,9 +165,22 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ("type", "local", "visibility", "state", "created")
     raw_id_fields = ["to", "mentions", "author", "emojis"]
     actions = ["reparse_hashtags"]
-    search_fields = ["content"]
+    search_fields = ["content", "search_handle", "search_service_handle"]
     inlines = [PostAttachmentInline]
     readonly_fields = ["created", "updated", "state_changed", "object_json"]
+
+    def get_search_results(self, request, queryset, search_term):
+        from django.db.models.functions import Concat
+
+        queryset = queryset.annotate(
+            search_handle=Concat(
+                "author__username", models.Value("@"), "author__domain_id"
+            ),
+            search_service_handle=Concat(
+                "author__username", models.Value("@"), "author__domain__service_domain"
+            ),
+        )
+        return super().get_search_results(request, queryset, search_term)
 
     @admin.action(description="Reprocess content for hashtags")
     def reparse_hashtags(self, request, queryset):

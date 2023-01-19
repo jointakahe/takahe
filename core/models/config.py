@@ -213,6 +213,8 @@ class Config(models.Model):
 
         signup_allowed: bool = True
         signup_text: str = ""
+        signup_max_users: int = 0
+        signup_email_admins: bool = True
         content_warning_text: str = "Content Warning"
 
         post_length: int = 500
@@ -220,7 +222,6 @@ class Config(models.Model):
         identity_min_length: int = 2
         identity_max_per_user: int = 5
         identity_max_age: int = 24 * 60 * 60
-        inbox_message_purge_after: int = 24 * 60 * 60
         public_timeline: bool = True
 
         hashtag_unreviewed_are_public: bool = True
@@ -235,6 +236,8 @@ class Config(models.Model):
 
         restricted_usernames: str = "admin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
 
+        custom_head: str | None
+
     class UserOptions(pydantic.BaseModel):
 
         pass
@@ -244,6 +247,7 @@ class Config(models.Model):
         toot_mode: bool = False
         default_post_visibility: int = 0  # Post.Visibilities.public
         visible_follows: bool = True
+        light_theme: bool = False
 
         # wellness Options
         visible_reaction_counts: bool = True

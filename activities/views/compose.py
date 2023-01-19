@@ -29,7 +29,6 @@ class Compose(FormView):
             widget=forms.Textarea(
                 attrs={
                     "autofocus": "autofocus",
-                    "maxlength": Config.lazy_system_value("post_length"),
                     "placeholder": "What's on your mind?",
                 },
             )
@@ -61,8 +60,14 @@ class Compose(FormView):
             self.fields["text"].widget.attrs[
                 "_"
             ] = f"""
+                init
+                    -- Move cursor to the end of existing text
+                    set my.selectionStart to my.value.length
+                end
+
                 on load or input
-                set characters to my.value.trim().length
+                -- Unicode-aware counting to match Python
+                set characters to Array.from(my.value.trim()).length
                 put {Config.system.post_length} - characters into #character-counter
 
                 if characters > {Config.system.post_length} then
@@ -199,7 +204,30 @@ class ImageUpload(FormView):
     template_name = "activities/_image_upload.html"
 
     class form_class(forms.Form):
-        image = forms.ImageField()
+        image = forms.ImageField(
+            widget=forms.FileInput(
+                attrs={
+                    "_": f"""
+                        on change
+                            if me.files[0].size > {settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB * 1024 ** 2}
+                                add [@disabled=] to #upload
+
+                                remove <ul.errorlist/>
+                                make <ul.errorlist/> called errorlist
+                                make <li/> called error
+                                set size_in_mb to (me.files[0].size / 1024 / 1024).toFixed(2)
+                                put 'File must be {settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB}MB or less (actual: ' + size_in_mb + 'MB)' into error
+                                put error into errorlist
+                                put errorlist before me
+                            else
+                                remove @disabled from #upload
+                                remove <ul.errorlist/>
+                            end
+                        end
+                    """
+                }
+            )
+        )
         description = forms.CharField(required=False)
 
         def clean_image(self):
@@ -209,7 +237,9 @@ class ImageUpload(FormView):
             if value.size > max_bytes:
                 # Erase the file from our data to stop trying to show it again
                 self.files = {}
-                raise forms.ValidationError(f"File must be {max_mb}MB or less")
+                raise forms.ValidationError(
+                    f"File must be {max_mb}MB or less (actual: {value.size / 1024 ** 2:.2f})"
+                )
             return value
 
     def form_invalid(self, form):

@@ -7,6 +7,8 @@ from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.utils.feedgenerator import Rss201rev2Feed
+from django.utils.xmlutils import SimplerXMLGenerator
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView, View
 
@@ -16,7 +18,7 @@ from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
 from users.decorators import identity_required
-from users.models import Domain, Follow, FollowStates, Identity, IdentityStates
+from users.models import Domain, FollowStates, Identity, IdentityStates
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
@@ -68,8 +70,6 @@ class ViewIdentity(ListView):
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
-        context["follow"] = None
-        context["reverse_follow"] = None
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"],
             self.request.identity,
@@ -83,13 +83,54 @@ class ViewIdentity(ListView):
                 state__in=FollowStates.group_active()
             ).count()
         if self.request.identity:
-            follow = Follow.maybe_get(self.request.identity, self.identity)
-            if follow and follow.state in FollowStates.group_active():
-                context["follow"] = follow
-            reverse_follow = Follow.maybe_get(self.identity, self.request.identity)
-            if reverse_follow and reverse_follow.state in FollowStates.group_active():
-                context["reverse_follow"] = reverse_follow
+            context.update(
+                IdentityService(self.identity).relationships(self.request.identity)
+            )
         return context
+
+
+class FeedWithImages(Rss201rev2Feed):
+    """Extended Feed class to attach multiple images."""
+
+    def rss_attributes(self):
+        attrs = super().rss_attributes()
+        attrs["xmlns:media"] = "http://search.yahoo.com/mrss/"
+        attrs["xmlns:webfeeds"] = "http://webfeeds.org/rss/1.0"
+        return attrs
+
+    def add_root_elements(self, handler: SimplerXMLGenerator):
+        super().add_root_elements(handler)
+        handler.startElement("image", {})
+        handler.addQuickElement("url", self.feed["image"]["url"])
+        handler.addQuickElement("title", self.feed["image"]["title"])
+        handler.addQuickElement("link", self.feed["image"]["link"])
+        handler.endElement("image")
+        handler.addQuickElement(
+            "webfeeds:icon",
+            self.feed["image"]["url"],
+        )
+
+    def add_item_elements(self, handler: SimplerXMLGenerator, item):
+        super().add_item_elements(handler, item)
+
+        for image in item["images"]:
+            handler.startElement(
+                "media:content",
+                {
+                    "url": image["url"],
+                    "type": image["mime_type"],
+                    "fileSize": image["length"],
+                    "medium": "image",
+                },
+            )
+            if image["description"]:
+                handler.addQuickElement(
+                    "media:description", image["description"], {"type": "plain"}
+                )
+            handler.endElement("media:content")
+
+        for hashtag in item["hashtags"]:
+            handler.addQuickElement("category", hashtag)
 
 
 @method_decorator(
@@ -99,6 +140,8 @@ class IdentityFeed(Feed):
     """
     Serves a local user's Public posts as an RSS feed
     """
+
+    feed_type = FeedWithImages
 
     def get_object(self, request, handle):
         return by_handle_or_404(
@@ -116,6 +159,18 @@ class IdentityFeed(Feed):
     def link(self, identity: Identity):
         return identity.absolute_profile_uri()
 
+    def feed_extra_kwargs(self, identity: Identity):
+        """
+        Return attached images data to allow `FeedWithImages.add_item_elements()`
+        to attach multiple images for each `<item>`.
+        """
+        image = {
+            "url": identity.local_icon_url().absolute,
+            "title": identity.name,
+            "link": identity.absolute_profile_uri(),
+        }
+        return {"image": image}
+
     def items(self, identity: Identity):
         return TimelineService(None).identity_public(identity)[:20]
 
@@ -127,6 +182,24 @@ class IdentityFeed(Feed):
 
     def item_pubdate(self, item: Post):
         return item.published
+
+    def item_extra_kwargs(self, item: Post):
+        """
+        Return attached images data to allow `FeedWithImages.add_root_elements()`
+        to add `<image>` as RSS feed icon.
+        """
+        images = []
+        for attachment in item.attachments.all():
+            images.append(
+                {
+                    "url": attachment.full_url().absolute,
+                    "length": (str(attachment.file.size)),
+                    "mime_type": (attachment.mimetype),
+                    "description": (attachment.name),
+                }
+            )
+
+        return {"images": images, "hashtags": item.hashtags or []}
 
 
 class IdentityFollows(ListView):
@@ -179,6 +252,18 @@ class ActionIdentity(View):
             IdentityService(identity).follow_from(self.request.identity)
         elif action == "unfollow":
             IdentityService(identity).unfollow_from(self.request.identity)
+        elif action == "block":
+            IdentityService(identity).block_from(self.request.identity)
+        elif action == "unblock":
+            IdentityService(identity).unblock_from(self.request.identity)
+        elif action == "mute":
+            IdentityService(identity).mute_from(self.request.identity)
+        elif action == "unmute":
+            IdentityService(identity).unmute_from(self.request.identity)
+        elif action == "hide_boosts":
+            IdentityService(identity).follow_from(self.request.identity, boosts=False)
+        elif action == "show_boosts":
+            IdentityService(identity).follow_from(self.request.identity, boosts=True)
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)
@@ -186,7 +271,6 @@ class ActionIdentity(View):
 
 @method_decorator(login_required, name="dispatch")
 class SelectIdentity(TemplateView):
-
     template_name = "identity/select.html"
 
     def get_context_data(self):
@@ -211,7 +295,6 @@ class ActivateIdentity(View):
 
 @method_decorator(login_required, name="dispatch")
 class CreateIdentity(FormView):
-
     template_name = "identity/create.html"
 
     class form_class(forms.Form):
@@ -298,15 +381,12 @@ class CreateIdentity(FormView):
         username = form.cleaned_data["username"]
         domain = form.cleaned_data["domain"]
         domain_instance = Domain.get_domain(domain)
-        new_identity = Identity.objects.create(
-            actor_uri=f"https://{domain_instance.uri_domain}/@{username}@{domain}/",
+        identity = IdentityService.create(
+            user=self.request.user,
             username=username,
-            domain_id=domain,
+            domain=domain_instance,
             name=form.cleaned_data["name"],
-            local=True,
             discoverable=form.cleaned_data["discoverable"],
         )
-        new_identity.users.add(self.request.user)
-        new_identity.generate_keypair()
-        self.request.session["identity_id"] = new_identity.id
-        return redirect(new_identity.urls.view)
+        self.request.session["identity_id"] = identity.id
+        return redirect(identity.urls.view)

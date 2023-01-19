@@ -1,0 +1,23 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Create Announcement{% endblock %}
+
+{% block content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Announcement</legend>
+            {% include "forms/_field.html" with field=form.text %}
+        </fieldset>
+        <fieldset>
+            <legend>Visibility</legend>
+            {% include "forms/_field.html" with field=form.published %}
+            {% include "forms/_field.html" with field=form.start %}
+            {% include "forms/_field.html" with field=form.end %}
+        </fieldset>
+        <div class="buttons">
+            <a href="{{ announcement.urls.admin_root }}" class="button secondary left">Back</a>
+            <button>Create</button>
+        </div>
+    </form>
+{% endblock %}

@@ -1,5 +1,7 @@
 import dataclasses
 import urllib.parse
+from collections.abc import Callable
+from typing import Any
 
 from django.db import models
 from django.http import HttpRequest
@@ -19,6 +21,9 @@ class PaginationResult:
     #: The actual applied limit, which may be different from what was requested.
     limit: int
 
+    #: A list of transformed JSON objects
+    json_results: list[dict] | None = None
+
     @classmethod
     def empty(cls):
         return cls(results=[], limit=20)
@@ -29,9 +34,10 @@ class PaginationResult:
         """
         if not self.results:
             return None
-
+        if self.json_results is None:
+            raise ValueError("You must JSONify the results first")
         params = self.filter_params(request, allowed_params)
-        params["max_id"] = self.results[-1].pk
+        params["max_id"] = self.json_results[-1]["id"]
 
         return f"{request.build_absolute_uri(request.path)}?{urllib.parse.urlencode(params)}"
 
@@ -41,9 +47,10 @@ class PaginationResult:
         """
         if not self.results:
             return None
-
+        if self.json_results is None:
+            raise ValueError("You must JSONify the results first")
         params = self.filter_params(request, allowed_params)
-        params["min_id"] = self.results[0].pk
+        params["min_id"] = self.json_results[0]["id"]
 
         return f"{request.build_absolute_uri(request.path)}?{urllib.parse.urlencode(params)}"
 
@@ -58,6 +65,45 @@ class PaginationResult:
             )
         )
 
+    def jsonify_results(self, map_function: Callable[[Any], Any]):
+        """
+        Replaces our results with ones transformed via map_function
+        """
+        self.json_results = [map_function(result) for result in self.results]
+
+    def jsonify_posts(self, identity):
+        """
+        Predefined way of JSON-ifying Post objects
+        """
+        interactions = PostInteraction.get_post_interactions(self.results, identity)
+        self.jsonify_results(
+            lambda post: post.to_mastodon_json(interactions=interactions)
+        )
+
+    def jsonify_status_events(self, identity):
+        """
+        Predefined way of JSON-ifying TimelineEvent objects representing statuses
+        """
+        interactions = PostInteraction.get_event_interactions(self.results, identity)
+        self.jsonify_results(
+            lambda event: event.to_mastodon_status_json(interactions=interactions)
+        )
+
+    def jsonify_notification_events(self, identity):
+        """
+        Predefined way of JSON-ifying TimelineEvent objects representing notifications
+        """
+        interactions = PostInteraction.get_event_interactions(self.results, identity)
+        self.jsonify_results(
+            lambda event: event.to_mastodon_notification_json(interactions=interactions)
+        )
+
+    def jsonify_identities(self):
+        """
+        Predefined way of JSON-ifying Identity objects
+        """
+        self.jsonify_results(lambda identity: identity.to_mastodon_json())
+
     @staticmethod
     def filter_params(request: HttpRequest, allowed_params: list[str]):
         params = {}
@@ -71,35 +117,16 @@ class PaginationResult:
 class MastodonPaginator:
     """
     Paginates in the Mastodon style (max_id, min_id, etc).
+    Note that this basically _requires_ us to always do it on IDs, so we do.
     """
 
     def __init__(
         self,
-        anchor_model: type[models.Model],
-        sort_attribute: str = "created",
         default_limit: int = 20,
         max_limit: int = 40,
     ):
-        self.anchor_model = anchor_model
-        self.sort_attribute = sort_attribute
         self.default_limit = default_limit
         self.max_limit = max_limit
-
-    def get_anchor(self, anchor_id: str):
-        """
-        Gets an anchor object by ID.
-        It's possible that the anchor object might be an interaction, in which
-        case we recurse down to its post.
-        """
-        if anchor_id.startswith("interaction-"):
-            try:
-                return PostInteraction.objects.get(pk=anchor_id[12:])
-            except PostInteraction.DoesNotExist:
-                return PaginationResult.empty()
-        try:
-            return self.anchor_model.objects.get(pk=anchor_id)
-        except self.anchor_model.DoesNotExist:
-            return PaginationResult.empty()
 
     def paginate(
         self,
@@ -109,27 +136,58 @@ class MastodonPaginator:
         since_id: str | None,
         limit: int | None,
     ) -> PaginationResult:
-        if max_id:
-            anchor = self.get_anchor(max_id)
-            queryset = queryset.filter(
-                **{self.sort_attribute + "__lt": getattr(anchor, self.sort_attribute)}
-            )
-
-        if since_id:
-            anchor = self.get_anchor(since_id)
-            queryset = queryset.filter(
-                **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
-            )
-
-        if min_id:
+        # These "does not start with interaction" checks can be removed after a
+        # couple months, when clients have flushed them out.
+        if max_id and not max_id.startswith("interaction"):
+            queryset = queryset.filter(id__lt=max_id)
+        if since_id and not since_id.startswith("interaction"):
+            queryset = queryset.filter(id__gt=since_id)
+        if min_id and not min_id.startswith("interaction"):
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
-            anchor = self.get_anchor(min_id)
-            queryset = queryset.filter(
-                **{self.sort_attribute + "__gt": getattr(anchor, self.sort_attribute)}
-            ).order_by(self.sort_attribute)
+            queryset = queryset.filter(id__gt=min_id).order_by("id")
         else:
-            queryset = queryset.order_by("-" + self.sort_attribute)
+            queryset = queryset.order_by("-id")
+
+        limit = min(limit or self.default_limit, self.max_limit)
+        return PaginationResult(
+            results=list(queryset[:limit]),
+            limit=limit,
+        )
+
+    def paginate_home(
+        self,
+        queryset,
+        min_id: str | None,
+        max_id: str | None,
+        since_id: str | None,
+        limit: int | None,
+    ) -> PaginationResult:
+        """
+        The home timeline requires special handling where we mix Posts and
+        PostInteractions together.
+        """
+        if max_id and not max_id.startswith("interaction"):
+            queryset = queryset.filter(
+                models.Q(subject_post_id__lt=max_id)
+                | models.Q(subject_post_interaction_id__lt=max_id)
+            )
+
+        if since_id and not since_id.startswith("interaction"):
+            queryset = queryset.filter(
+                models.Q(subject_post_id__gt=since_id)
+                | models.Q(subject_post_interaction_id__gt=since_id)
+            )
+
+        if min_id and not min_id.startswith("interaction"):
+            # Min ID requires items _immediately_ newer than specified, so we
+            # invert the ordering to accommodate
+            queryset = queryset.filter(
+                models.Q(subject_post_id__gt=min_id)
+                | models.Q(subject_post_interaction_id__gt=min_id)
+            ).order_by("id")
+        else:
+            queryset = queryset.order_by("-id")
 
         limit = min(limit or self.default_limit, self.max_limit)
         return PaginationResult(

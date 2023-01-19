@@ -1,6 +1,6 @@
 import base64
 import json
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, cast
 from urllib.parse import urlparse
 
 import httpx
@@ -12,6 +12,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.http import http_date, parse_http_date
 from httpx._types import TimeoutTypes
+from idna.core import InvalidCodepoint
 from pyld import jsonld
 
 from core.ld import format_ld_date
@@ -125,8 +126,9 @@ class HttpSignature:
         cleartext: str,
         public_key: str,
     ):
-        public_key_instance = serialization.load_pem_public_key(
-            public_key.encode("ascii")
+        public_key_instance: rsa.RSAPublicKey = cast(
+            rsa.RSAPublicKey,
+            serialization.load_pem_public_key(public_key.encode("ascii")),
         )
         try:
             public_key_instance.verify(
@@ -207,9 +209,12 @@ class HttpSignature:
         signed_string = "\n".join(
             f"{name.lower()}: {value}" for name, value in headers.items()
         )
-        private_key_instance = serialization.load_pem_private_key(
-            private_key.encode("ascii"),
-            password=None,
+        private_key_instance: rsa.RSAPrivateKey = cast(
+            rsa.RSAPrivateKey,
+            serialization.load_pem_private_key(
+                private_key.encode("ascii"),
+                password=None,
+            ),
         )
         signature = private_key_instance.sign(
             signed_string.encode("ascii"),
@@ -231,13 +236,18 @@ class HttpSignature:
         # Send the request with all those headers except the pseudo one
         del headers["(request-target)"]
         async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.request(
-                method,
-                uri,
-                headers=headers,
-                content=body_bytes,
-                follow_redirects=method == "get",
-            )
+            try:
+                response = await client.request(
+                    method,
+                    uri,
+                    headers=headers,
+                    content=body_bytes,
+                    follow_redirects=method == "get",
+                )
+            except InvalidCodepoint as ex:
+                # Convert to a more generic error we handle
+                raise httpx.HTTPError(f"InvalidCodepoint: {str(ex)}") from None
+
             if (
                 method == "post"
                 and response.status_code >= 400
@@ -283,8 +293,9 @@ class LDSignature:
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)
         # Verify the signature
-        public_key_instance = serialization.load_pem_public_key(
-            public_key.encode("ascii")
+        public_key_instance: rsa.RSAPublicKey = cast(
+            rsa.RSAPublicKey,
+            serialization.load_pem_public_key(public_key.encode("ascii")),
         )
         try:
             public_key_instance.verify(
@@ -312,9 +323,12 @@ class LDSignature:
         # Get the normalised hash of each document
         final_hash = cls.normalized_hash(options) + cls.normalized_hash(document)
         # Create the signature
-        private_key_instance = serialization.load_pem_private_key(
-            private_key.encode("ascii"),
-            password=None,
+        private_key_instance: rsa.RSAPrivateKey = cast(
+            rsa.RSAPrivateKey,
+            serialization.load_pem_private_key(
+                private_key.encode("ascii"),
+                password=None,
+            ),
         )
         signature = base64.b64encode(
             private_key_instance.sign(

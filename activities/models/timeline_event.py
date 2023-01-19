@@ -18,6 +18,7 @@ class TimelineEvent(models.Model):
         followed = "followed"
         boosted = "boosted"  # Someone boosting one of our posts
         announcement = "announcement"  # Server announcement
+        identity_created = "identity_created"  # New identity created
 
     # The user this event is for
     identity = models.ForeignKey(
@@ -62,6 +63,7 @@ class TimelineEvent(models.Model):
             # This relies on a DB that can use left subsets of indexes
             ("identity", "type", "subject_post", "subject_identity"),
             ("identity", "type", "subject_identity"),
+            ("identity", "created"),
         ]
 
     ### Alternate constructors ###
@@ -100,6 +102,17 @@ class TimelineEvent(models.Model):
             subject_post=post,
             subject_identity=post.author,
             defaults={"published": post.published or post.created},
+        )[0]
+
+    @classmethod
+    def add_identity_created(cls, identity, new_identity):
+        """
+        Adds a new identity item
+        """
+        return cls.objects.get_or_create(
+            identity=identity,
+            type=cls.Types.identity_created,
+            subject_identity=new_identity,
         )[0]
 
     @classmethod
@@ -153,6 +166,30 @@ class TimelineEvent(models.Model):
                 subject_identity_id=interaction.identity_id,
             ).delete()
 
+    ### Background tasks ###
+
+    @classmethod
+    def handle_clear_timeline(cls, message):
+        """
+        Internal stator handler for clearing all events by a user off another
+        user's timeline.
+        """
+        actor_id = message["actor"]
+        object_id = message["object"]
+        full_erase = message.get("fullErase", False)
+
+        if full_erase:
+            q = (
+                models.Q(subject_post__author_id=object_id)
+                | models.Q(subject_post_interaction__identity_id=object_id)
+                | models.Q(subject_identity_id=object_id)
+            )
+        else:
+            q = models.Q(
+                type=cls.Types.post, subject_post__author_id=object_id
+            ) | models.Q(type=cls.Types.boost, subject_identity_id=object_id)
+        TimelineEvent.objects.filter(q, identity_id=actor_id).delete()
+
     ### Mastodon Client API ###
 
     def to_mastodon_notification_json(self, interactions=None):
@@ -178,6 +215,8 @@ class TimelineEvent(models.Model):
             )
         elif self.type == self.Types.followed:
             result["type"] = "follow"
+        elif self.type == self.Types.identity_created:
+            result["type"] = "admin.sign_up"
         else:
             raise ValueError(f"Cannot convert {self.type} to notification JSON")
         return result

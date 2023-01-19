@@ -9,6 +9,7 @@ from asgiref.sync import sync_to_async
 from cachetools import TTLCache, cached
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.safestring import mark_safe
 
@@ -125,12 +126,20 @@ class Emoji(StatorModel):
         unique_together = ("domain", "shortcode")
 
     class urls(urlman.Urls):
-        root = "/admin/emoji/"
-        create = "{root}/create/"
-        edit = "{root}{self.Emoji}/"
-        delete = "{edit}delete/"
+        admin = "/admin/emoji/"
+        admin_create = "{admin}create/"
+        admin_edit = "{admin}{self.pk}/"
+        admin_delete = "{admin}{self.pk}/delete/"
+        admin_enable = "{admin}{self.pk}/enable/"
+        admin_disable = "{admin}{self.pk}/disable/"
+        admin_copy = "{admin}{self.pk}/copy/"
 
     emoji_regex = re.compile(r"\B:([a-zA-Z0-9(_)-]+):\B")
+
+    def delete(self, using=None, keep_parents=False):
+        if self.file:
+            self.file.delete()
+        return super().delete(using=using, keep_parents=keep_parents)
 
     def clean(self):
         super().clean()
@@ -146,15 +155,18 @@ class Emoji(StatorModel):
 
     @classmethod
     @cached(cache=TTLCache(maxsize=1000, ttl=60))
-    def get_by_domain(cls, shortcode, domain: Domain | None) -> "Emoji":
+    def get_by_domain(cls, shortcode, domain: Domain | None) -> "Emoji | None":
         """
         Given an emoji shortcode and optional domain, looks up the single
         emoji and returns it. Raises Emoji.DoesNotExist if there isn't one.
         """
-        if domain is None or domain.local:
-            return cls.objects.get(local=True, shortcode=shortcode)
-        else:
-            return cls.objects.get(domain=domain, shortcode=shortcode)
+        try:
+            if domain is None or domain.local:
+                return cls.objects.get(local=True, shortcode=shortcode)
+            else:
+                return cls.objects.get(domain=domain, shortcode=shortcode)
+        except Emoji.DoesNotExist:
+            return None
 
     @property
     def fullcode(self):
@@ -169,8 +181,11 @@ class Emoji(StatorModel):
             self.public is None and Config.system.emoji_unreviewed_are_public
         )
 
-    def full_url(self) -> RelativeAbsoluteUrl:
-        if self.is_usable:
+    def full_url_admin(self) -> RelativeAbsoluteUrl:
+        return self.full_url(always_show=True)
+
+    def full_url(self, always_show=False) -> RelativeAbsoluteUrl:
+        if self.is_usable or always_show:
             if self.file:
                 return AutoAbsoluteUrl(self.file.url)
             elif self.remote_url:
@@ -186,6 +201,40 @@ class Emoji(StatorModel):
                 f'<img src="{self.full_url().relative}" class="emoji" alt="Emoji {self.shortcode}">'
             )
         return self.fullcode
+
+    @property
+    def can_copy_local(self):
+        if not hasattr(Emoji, "locals"):
+            Emoji.locals = Emoji.load_locals()
+        return not self.local and self.is_usable and self.shortcode not in Emoji.locals
+
+    def copy_to_local(self, *, save: bool = True):
+        """
+        Copy this (non-local) Emoji to local for use by Users of this instance. Returns
+        the Emoji instance, or None if the copy failed to happen. Specify save=False to
+        return the object without saving to database (for bulk saving).
+        """
+        if not self.can_copy_local:
+            return None
+
+        emoji = None
+        if self.file:
+            # new emoji gets its own copy of the file
+            file = ContentFile(self.file.read())
+            file.name = self.file.name
+            emoji = Emoji(
+                shortcode=self.shortcode,
+                domain=None,
+                local=True,
+                mimetype=self.mimetype,
+                file=file,
+                category=self.category,
+            )
+            if save:
+                emoji.save()
+                # add this new one to the locals cache
+                Emoji.locals[self.shortcode] = emoji
+        return emoji
 
     @classmethod
     def emojis_from_content(cls, content: str, domain: Domain | None) -> list["Emoji"]:
@@ -245,6 +294,26 @@ class Emoji(StatorModel):
         # create
         shortcode = name.lower().strip(":")
         category = (icon.get("category") or "")[:100]
+
+        if not domain.local:
+            try:
+                emoji = cls.objects.get(shortcode=shortcode, domain=domain)
+            except cls.DoesNotExist:
+                pass
+            else:
+                # Domain previously provided this shortcode. Trample in the new emoji
+                if emoji.remote_url != icon["url"] or emoji.mimetype != mimetype:
+                    emoji.object_uri = data["id"]
+                    emoji.remote_url = icon["url"]
+                    emoji.mimetype = mimetype
+                    emoji.category = category
+                    emoji.transition_set_state("outdated")
+                    if emoji.file:
+                        emoji.file.delete(save=True)
+                    else:
+                        emoji.save()
+                return emoji
+
         emoji = cls.objects.create(
             shortcode=shortcode,
             domain=None if domain.local else domain,

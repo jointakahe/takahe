@@ -3,6 +3,7 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
+import core.snowflake
 import stator.models
 import users.models.report
 
@@ -20,11 +21,10 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigAutoField(
-                        auto_created=True,
+                    models.BigIntegerField(
+                        default=core.snowflake.Snowflake.generate_report,
                         primary_key=True,
                         serialize=False,
-                        verbose_name="ID",
                     ),
                 ),
                 ("state_ready", models.BooleanField(default=True)),

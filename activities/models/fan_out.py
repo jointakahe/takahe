@@ -5,15 +5,17 @@ from django.db import models
 from activities.models.timeline_event import TimelineEvent
 from core.ld import canonicalise
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models import FollowStates
+from users.models import Block, FollowStates
 
 
 class FanOutStates(StateGraph):
     new = State(try_interval=600)
-    sent = State()
-    failed = State()
+    sent = State(delete_after=86400)
+    skipped = State(delete_after=86400)
+    failed = State(delete_after=86400)
 
     new.transitions_to(sent)
+    new.transitions_to(skipped)
     new.times_out_to(failed, seconds=86400 * 3)
 
     @classmethod
@@ -32,18 +34,25 @@ class FanOutStates(StateGraph):
             # Handle creating/updating local posts
             case ((FanOut.Types.post | FanOut.Types.post_edited), True):
                 post = await fan_out.subject_post.afetch_full()
+                # If the author of the post is blocked or muted, skip out
+                if (
+                    await Block.objects.active()
+                    .filter(source=fan_out.identity, target=post.author)
+                    .aexists()
+                ):
+                    return cls.skipped
                 # Make a timeline event directly
                 # If it's a reply, we only add it if we follow at least one
                 # of the people mentioned AND the author, or we're mentioned,
                 # or it's a reply to us or the author
                 add = True
                 mentioned = {identity.id for identity in post.mentions.all()}
-                followed = await sync_to_async(set)(
-                    fan_out.identity.outbound_follows.filter(
-                        state__in=FollowStates.group_active()
-                    ).values_list("target_id", flat=True)
-                )
                 if post.in_reply_to:
+                    followed = await sync_to_async(set)(
+                        fan_out.identity.outbound_follows.filter(
+                            state__in=FollowStates.group_active()
+                        ).values_list("target_id", flat=True)
+                    )
                     interested_in = followed.union(
                         {post.author_id, fan_out.identity_id}
                     )
@@ -72,7 +81,10 @@ class FanOutStates(StateGraph):
                 try:
                     await post.author.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(post.to_create_ap()),
                     )
                 except httpx.RequestError:
@@ -85,7 +97,10 @@ class FanOutStates(StateGraph):
                 try:
                     await post.author.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(post.to_update_ap()),
                     )
                 except httpx.RequestError:
@@ -108,7 +123,10 @@ class FanOutStates(StateGraph):
                 try:
                     await post.author.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(post.to_delete_ap()),
                     )
                 except httpx.RequestError:
@@ -117,6 +135,28 @@ class FanOutStates(StateGraph):
             # Handle local boosts/likes
             case (FanOut.Types.interaction, True):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
+                # If the author of the interaction is blocked or their notifications
+                # are muted, skip out
+                if (
+                    await Block.objects.active()
+                    .filter(
+                        models.Q(mute=False) | models.Q(include_notifications=True),
+                        source=fan_out.identity,
+                        target=interaction.identity,
+                    )
+                    .aexists()
+                ):
+                    return cls.skipped
+                # If blocked/muted the underlying post author, skip out
+                if (
+                    await Block.objects.active()
+                    .filter(
+                        source=fan_out.identity,
+                        target_id=interaction.post.author_id,
+                    )
+                    .aexists()
+                ):
+                    return cls.skipped
                 # Make a timeline event directly
                 await sync_to_async(TimelineEvent.add_post_interaction)(
                     identity=fan_out.identity,
@@ -130,7 +170,10 @@ class FanOutStates(StateGraph):
                 try:
                     await interaction.identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(interaction.to_ap()),
                     )
                 except httpx.RequestError:
@@ -153,7 +196,10 @@ class FanOutStates(StateGraph):
                 try:
                     await interaction.identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(interaction.to_undo_ap()),
                     )
                 except httpx.RequestError:
@@ -165,7 +211,10 @@ class FanOutStates(StateGraph):
                 try:
                     await identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(fan_out.subject_identity.to_update_ap()),
                     )
                 except httpx.RequestError:
@@ -177,7 +226,10 @@ class FanOutStates(StateGraph):
                 try:
                     await identity.signed_request(
                         method="post",
-                        uri=fan_out.identity.inbox_uri,
+                        uri=(
+                            fan_out.identity.shared_inbox_uri
+                            or fan_out.identity.inbox_uri
+                        ),
                         body=canonicalise(fan_out.subject_identity.to_delete_ap()),
                     )
                 except httpx.RequestError:
@@ -188,6 +240,13 @@ class FanOutStates(StateGraph):
                 pass
             case (FanOut.Types.identity_deleted, True):
                 pass
+
+            # Created identities make a timeline event
+            case (FanOut.Types.identity_created, True):
+                await sync_to_async(TimelineEvent.add_identity_created)(
+                    identity=fan_out.identity,
+                    new_identity=fan_out.subject_identity,
+                )
 
             case _:
                 raise ValueError(
@@ -210,10 +269,14 @@ class FanOut(StatorModel):
         undo_interaction = "undo_interaction"
         identity_edited = "identity_edited"
         identity_deleted = "identity_deleted"
+        identity_created = "identity_created"
 
     state = StateField(FanOutStates)
 
     # The user this event is targeted at
+    # We always need this, but if there is a shared inbox URL on the user
+    # we'll deliver to that and won't have fanouts for anyone else with the
+    # same one.
     identity = models.ForeignKey(
         "users.Identity",
         on_delete=models.CASCADE,

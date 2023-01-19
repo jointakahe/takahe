@@ -1,9 +1,13 @@
+from asgiref.sync import async_to_sync
 from django.contrib import admin
 from django.db import models
+from django.utils import formats
 from django.utils.translation import gettext_lazy as _
 
 from activities.admin import IdentityLocalFilter
 from users.models import (
+    Announcement,
+    Block,
     Domain,
     Follow,
     Identity,
@@ -18,9 +22,73 @@ from users.models import (
 
 @admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
-    list_display = ["domain", "service_domain", "local", "blocked", "public"]
+    list_display = [
+        "domain",
+        "service_domain",
+        "local",
+        "blocked",
+        "software",
+        "user_count",
+        "public",
+    ]
     list_filter = ("local", "blocked")
     search_fields = ("domain", "service_domain")
+    actions = [
+        "force_outdated",
+        "force_updated",
+        "force_connection_issue",
+        "fetch_nodeinfo",
+    ]
+
+    @admin.action(description="Force State: outdated")
+    def force_outdated(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("outdated")
+
+    @admin.action(description="Force State: updated")
+    def force_updated(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("updated")
+
+    @admin.action(description="Force State: connection_issue")
+    def force_connection_issue(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("connection_issue")
+
+    @admin.action(description="Fetch nodeinfo")
+    def fetch_nodeinfo(self, request, queryset):
+        for instance in queryset:
+            info = async_to_sync(instance.fetch_nodeinfo)()
+            if info:
+                instance.nodeinfo = info.dict()
+                instance.save()
+
+    @admin.display(description="Software")
+    def software(self, instance):
+        if instance.nodeinfo:
+            software = instance.nodeinfo.get("software", {})
+            name = software.get("name", "unknown")
+            version = software.get("version", "unknown")
+            return f"{name:.10} - {version:.10}"
+
+        return "-"
+
+    @admin.display(description="# Users")
+    def user_count(self, instance):
+        if instance.nodeinfo:
+            usage = instance.nodeinfo.get("usage", {})
+            total = usage.get("users", {}).get("total")
+            if total:
+                try:
+                    return formats.number_format(
+                        "%d" % (int(total)),
+                        0,
+                        use_l10n=True,
+                        force_grouping=True,
+                    )
+                except ValueError:
+                    pass
+        return "-"
 
 
 @admin.register(User)
@@ -56,10 +124,15 @@ class IdentityAdmin(admin.ModelAdmin):
         )
         return super().get_search_results(request, queryset, search_term)
 
-    @admin.action(description="Force Update")
+    @admin.action(description="Force update")
     def force_update(self, request, queryset):
         for instance in queryset:
             instance.transition_perform("outdated")
+
+    @admin.action(description="Mark as deleted")
+    def delete(self, request, queryset):
+        for instance in queryset:
+            instance.transition_perform("deleted")
 
     @admin.display(description="ActivityPub JSON")
     def actor_json(self, instance):
@@ -84,6 +157,16 @@ class LocalTargetFilter(IdentityLocalFilter):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
+    list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
+    raw_id_fields = ["source", "target"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Block)
+class BlockAdmin(admin.ModelAdmin):
+    list_display = ["id", "source", "target", "mute", "state"]
     list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
     raw_id_fields = ["source", "target"]
 
@@ -131,3 +214,9 @@ class InviteAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ["id", "created", "resolved", "type", "subject_identity"]
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ["id", "published", "start", "end", "text"]
+    raw_id_fields = ["seen"]

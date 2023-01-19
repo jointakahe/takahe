@@ -132,7 +132,7 @@ class Inbox(View):
         if (
             document["type"] == "Delete"
             and document["actor"] == document["object"]
-            and not identity.pk
+            and identity._state.adding
         ):
             # We don't have an Identity record for the user. No-op
             exceptions.capture_message(

@@ -76,6 +76,14 @@ class BasicSettings(AdminSettingsPage):
             "help_text": "Shown above the signup form.\nUse Markdown for formatting.",
             "display": "textarea",
         },
+        "signup_max_users": {
+            "title": "Maximum User Limit",
+            "help_text": "Signups will be auto-disabled if your server grows to this many users.\nUse 0 for unlimited.",
+        },
+        "signup_email_admins": {
+            "title": "Email admins on signup",
+            "help_text": "Send an email to all admins whenever a new user signs up",
+        },
         "restricted_usernames": {
             "title": "Restricted Usernames",
             "help_text": "Usernames that only admins can register for identities. One per line.",
@@ -97,6 +105,11 @@ class BasicSettings(AdminSettingsPage):
             "title": "Show Public Timeline On Front Page",
             "help_text": "Whether to show some recent posts on the logged-out homepage",
         },
+        "custom_head": {
+            "title": "HTML <head> Extra",
+            "help_text": "Add custom HTML to the &lt;head&gt; of all pages (except /djadmin/).\nNote: This can break page rendering/layout.",
+            "display": "textarea",
+        },
     }
 
     layout = {
@@ -106,9 +119,12 @@ class BasicSettings(AdminSettingsPage):
             "site_icon",
             "site_banner",
             "highlight_color",
+            "custom_head",
         ],
         "Signups": [
             "signup_allowed",
+            "signup_max_users",
+            # "signup_email_admins",
             "signup_text",
         ],
         "Posts": [

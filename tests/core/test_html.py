@@ -18,6 +18,16 @@ def test_html_to_plaintext():
         == "Hi!\n\nHow are\n you?\n\ntoday"
     )
 
+    assert (
+        html_to_plaintext(
+            '<p><a href="https://fedi.takahe.social/with/a/long/path">'
+            '<b>The</b> <img src="takahe.png"> Link</a> '
+            '<a href="">Empty href</a> '
+            "<a>Empty A</a></p>"
+        )
+        == "https://fedi.takahe.social/with/a/long/path Empty href Empty A"
+    )
+
 
 def test_sanitize_post():
 
@@ -34,6 +44,23 @@ def test_sanitize_post():
     assert (
         sanitize_html("<p>@someone@subdomain.some-domain.com</p>")
         == "<p>@someone@subdomain.some-domain.com</p>"
+    )
+
+
+def test_shorten_url():
+    full_url = (
+        "https://social.example.com/a-long/path/2023/01/16/that-should-be-shortened"
+    )
+    assert (
+        sanitize_html(f"<p>{full_url}</p>")
+        == f'<p><a href="{full_url}" rel="nofollow" class="ellipsis" title="{full_url}">social.example.com/a-long/path</a></p>'
+    )
+
+    assert (
+        sanitize_html(
+            f'<p><a href="{full_url}">This is a long link text, but cannot be shortened as a URL</a></p>'
+        )
+        == f'<p><a href="{full_url}" rel="nofollow">This is a long link text, but cannot be shortened as a URL</a></p>'
     )
 
 
@@ -61,6 +88,33 @@ def test_link_preservation():
             fake_post,
         )
         == 'Hello <a href="/@andrew@aeracode.org/">@andrew</a>, I want to link to this <a href="/tags/hashtag/" class="hashtag">#hashtag</a>: <a href="http://example.com/@andrew/#notahashtag" rel="nofollow">here</a> and rewrite <a href="/tags/thishashtag/" class="hashtag">#thishashtag</a>'
+    )
+
+
+@pytest.mark.django_db
+def test_list_rendering():
+    """
+    We want to:
+     - Preserve incoming links from other servers
+     - Linkify mentions and hashtags
+     - Not have these all step on each other!
+    """
+    renderer = ContentRenderer(local=True)
+    fake_mention = Mock()
+    fake_mention.username = "andrew"
+    fake_mention.domain_id = "aeracode.org"
+    fake_mention.urls.view = "/@andrew@aeracode.org/"
+    fake_post = Mock()
+    fake_post.mentions.all.return_value = [fake_mention]
+    fake_post.author.domain.uri_domain = "example.com"
+    fake_post.emojis.all.return_value = []
+
+    assert (
+        renderer.render_post(
+            "<p>Ok. The roster so far is:</p><ul><li>Infosec.exchange (mastodon)</li><li>pixel.Infosec.exchange (pixelfed)</li><li>video.Infosec.exchange (peertube)</li><li>relay.Infosec.exchange (activitypub relay)</li><li>risky.af (alt mastodon)</li></ul><p>What’s next?  I think I promised some people here bookwyrm</p>",
+            fake_post,
+        )
+        == "<p>Ok. The roster so far is:</p><p>Infosec.exchange (mastodon)<br>pixel.Infosec.exchange (pixelfed)<br>video.Infosec.exchange (peertube)<br>relay.Infosec.exchange (activitypub relay)<br>risky.af (alt mastodon)</p><p>What’s next?  I think I promised some people here bookwyrm</p>"
     )
 
 

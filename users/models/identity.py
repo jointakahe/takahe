@@ -1,3 +1,4 @@
+import ssl
 from functools import cached_property, partial
 from typing import Literal
 from urllib.parse import urlparse
@@ -11,8 +12,8 @@ from django.utils import timezone
 from django.utils.functional import lazy
 from lxml import etree
 
-from core.exceptions import ActorMismatchError
-from core.html import ContentRenderer, strip_html
+from core.exceptions import ActorMismatchError, capture_message
+from core.html import ContentRenderer, html_to_plaintext, strip_html
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -22,6 +23,7 @@ from core.ld import (
 )
 from core.models import Config
 from core.signatures import HttpSignature, RsaKeys
+from core.snowflake import Snowflake
 from core.uploads import upload_namer
 from core.uris import (
     AutoAbsoluteUrl,
@@ -48,7 +50,7 @@ class IdentityStates(StateGraph):
 
     edited = State(try_interval=300, attempt_immediately=True)
     deleted = State(try_interval=300, attempt_immediately=True)
-    deleted_fanned_out = State(externally_progressed=True)
+    deleted_fanned_out = State(delete_after=86400 * 7)
 
     deleted.transitions_to(deleted_fanned_out)
 
@@ -149,6 +151,8 @@ class Identity(StatorModel):
 
     ACTOR_TYPES = ["person", "service", "application", "group", "organization"]
 
+    id = models.BigIntegerField(primary_key=True, default=Snowflake.generate_identity)
+
     # The Actor URI is essentially also a PK - we keep the default numeric
     # one around as well for making nice URLs etc.
     actor_uri = models.CharField(max_length=500, unique=True)
@@ -203,7 +207,7 @@ class Identity(StatorModel):
     # Admin-only moderation fields
     sensitive = models.BooleanField(default=False)
     restriction = models.IntegerField(
-        choices=Restriction.choices, default=Restriction.none
+        choices=Restriction.choices, default=Restriction.none, db_index=True
     )
     admin_notes = models.TextField(null=True, blank=True)
 
@@ -601,14 +605,11 @@ class Identity(StatorModel):
     ### Actor/Webfinger fetching ###
 
     @classmethod
-    async def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
+    async def fetch_webfinger_url(cls, domain: str):
         """
-        Given a username@domain handle, returns a tuple of
-        (actor uri, canonical handle) or None, None if it does not resolve.
+        Given a domain (hostname), returns the correct webfinger URL to use
+        based on probing host-meta.
         """
-        domain = handle.split("@")[1].lower()
-        webfinger_url = f"https://{domain}/.well-known/webfinger?resource={{uri}}"
-
         async with httpx.AsyncClient(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
@@ -626,13 +627,32 @@ class Identity(StatorModel):
                 if response.status_code == 200 and response.content.strip():
                     tree = etree.fromstring(response.content)
                     template = tree.xpath(
-                        "string(.//*[local-name() = 'Link' and @rel='lrdd']/@template)"
+                        "string(.//*[local-name() = 'Link' and @rel='lrdd' and (not(@type) or @type='application/jrd+json')]/@template)"
                     )
                     if template:
-                        webfinger_url = template
+                        return template
             except (httpx.RequestError, etree.ParseError):
                 pass
 
+        return f"https://{domain}/.well-known/webfinger?resource={{uri}}"
+
+    @classmethod
+    async def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
+        """
+        Given a username@domain handle, returns a tuple of
+        (actor uri, canonical handle) or None, None if it does not resolve.
+        """
+        domain = handle.split("@")[1].lower()
+        try:
+            webfinger_url = await cls.fetch_webfinger_url(domain)
+        except ssl.SSLCertVerificationError:
+            return None, None
+
+        # Go make a Webfinger request
+        async with httpx.AsyncClient(
+            timeout=settings.SETUP.REMOTE_TIMEOUT,
+            headers={"User-Agent": settings.TAKAHE_USER_AGENT},
+        ) as client:
             try:
                 response = await client.get(
                     webfinger_url.format(uri=f"acct:{handle}"),
@@ -640,12 +660,12 @@ class Identity(StatorModel):
                     headers={"Accept": "application/json"},
                 )
                 response.raise_for_status()
-            except httpx.HTTPError as ex:
+            except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if (
                     response
                     and response.status_code < 500
-                    and response.status_code not in [404, 410]
+                    and response.status_code not in [401, 403, 404, 406, 410]
                 ):
                     raise ValueError(
                         f"Client error fetching webfinger: {response.status_code}",
@@ -663,14 +683,18 @@ class Identity(StatorModel):
                 "JSON parse error fetching webfinger",
                 response.content,
             )
-        if data["subject"].startswith("acct:"):
-            data["subject"] = data["subject"][5:]
-        for link in data["links"]:
-            if (
-                link.get("type") == "application/activity+json"
-                and link.get("rel") == "self"
-            ):
-                return link["href"], data["subject"]
+        try:
+            if data["subject"].startswith("acct:"):
+                data["subject"] = data["subject"][5:]
+            for link in data["links"]:
+                if (
+                    link.get("type") == "application/activity+json"
+                    and link.get("rel") == "self"
+                ):
+                    return link["href"], data["subject"]
+        except KeyError:
+            # Server returning wrong payload structure
+            pass
         return None, None
 
     async def fetch_actor(self) -> bool:
@@ -687,26 +711,29 @@ class Identity(StatorModel):
                 method="get",
                 uri=self.actor_uri,
             )
-        except httpx.RequestError:
+        except (httpx.RequestError, ssl.SSLCertVerificationError):
             return False
         content_type = response.headers.get("content-type")
         if content_type and "html" in content_type:
             # Some servers don't properly handle "application/activity+json"
             return False
-        if response.status_code == 410:
-            # Their account got deleted, so let's do the same.
-            if self.pk:
+        status_code = response.status_code
+        if status_code >= 400:
+            if status_code == 410 and self.pk:
+                # Their account got deleted, so let's do the same.
                 await Identity.objects.filter(pk=self.pk).adelete()
+
+            if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
+                capture_message(
+                    f"Client error fetching actor at {self.actor_uri}: {status_code}",
+                    extras={
+                        "identity": self.pk,
+                        "domain": self.domain_id,
+                        "content": response.content,
+                    },
+                )
             return False
-        if response.status_code == 404:
-            # We don't trust this as much as 410 Gone, but skip for now
-            return False
-        if response.status_code >= 500:
-            return False
-        if response.status_code >= 400:
-            raise ValueError(
-                f"Client error fetching actor: {response.status_code}", response.content
-            )
+
         document = canonicalise(response.json(), include_security=True)
         if "type" not in document:
             return False
@@ -764,7 +791,7 @@ class Identity(StatorModel):
             self.domain = await get_domain(actor_url_parts.hostname)
         # Emojis (we need the domain so we do them here)
         for tag in get_list(document, "tag"):
-            if tag["type"].lower() == "toot:emoji":
+            if tag["type"].lower() in ["toot:emoji", "emoji"]:
                 await sync_to_async(Emoji.by_ap_tag)(self.domain, tag, create=True)
         # Mark as fetched
         self.fetched = timezone.now()
@@ -798,8 +825,16 @@ class Identity(StatorModel):
 
     ### Mastodon Client API ###
 
-    def to_mastodon_json(self):
-        from activities.models import Emoji
+    def to_mastodon_mention_json(self):
+        return {
+            "id": self.id,
+            "username": self.username or "",
+            "url": self.absolute_profile_uri() or "",
+            "acct": self.handle or "",
+        }
+
+    def to_mastodon_json(self, source=False, include_counts=True):
+        from activities.models import Emoji, Post
 
         header_image = self.local_image_url()
         missing = StaticAbsoluteUrl("img/missing.png").absolute
@@ -810,7 +845,8 @@ class Identity(StatorModel):
         emojis = Emoji.emojis_from_content(
             f"{self.name} {self.summary} {metadata_value_text}", self.domain
         )
-        return {
+        renderer = ContentRenderer(local=False)
+        result = {
             "id": self.pk,
             "username": self.username or "",
             "acct": self.handle,
@@ -824,7 +860,11 @@ class Identity(StatorModel):
             "locked": False,
             "fields": (
                 [
-                    {"name": m["name"], "value": m["value"], "verified_at": None}
+                    {
+                        "name": m["name"],
+                        "value": renderer.render_identity_data(m["value"], self),
+                        "verified_at": None,
+                    }
                     for m in self.metadata
                 ]
                 if self.metadata
@@ -840,10 +880,40 @@ class Identity(StatorModel):
                 self.created.replace(hour=0, minute=0, second=0, microsecond=0)
             ),
             "last_status_at": None,  # TODO: populate
-            "statuses_count": self.posts.count(),
-            "followers_count": self.inbound_follows.count(),
-            "following_count": self.outbound_follows.count(),
+            "statuses_count": self.posts.count() if include_counts else 0,
+            "followers_count": self.inbound_follows.count() if include_counts else 0,
+            "following_count": self.outbound_follows.count() if include_counts else 0,
         }
+        if source:
+            privacy_map = {
+                Post.Visibilities.public: "public",
+                Post.Visibilities.unlisted: "unlisted",
+                Post.Visibilities.local_only: "unlisted",
+                Post.Visibilities.followers: "private",
+                Post.Visibilities.mentioned: "direct",
+            }
+            result["source"] = {
+                "note": html_to_plaintext(self.summary) if self.summary else "",
+                "fields": (
+                    [
+                        {
+                            "name": m["name"],
+                            "value": strip_html(m["value"], linkify=False),
+                            "verified_at": None,
+                        }
+                        for m in self.metadata
+                    ]
+                    if self.metadata
+                    else []
+                ),
+                "privacy": privacy_map[
+                    Config.load_identity(self).default_post_visibility
+                ],
+                "sensitive": False,
+                "language": "unk",
+                "follow_requests_count": 0,
+            }
+        return result
 
     ### Cryptography ###
 

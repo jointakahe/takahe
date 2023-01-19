@@ -90,12 +90,14 @@ class State:
         externally_progressed: bool = False,
         attempt_immediately: bool = True,
         force_initial: bool = False,
+        delete_after: int | None = None,
     ):
         self.try_interval = try_interval
         self.handler_name = handler_name
         self.externally_progressed = externally_progressed
         self.attempt_immediately = attempt_immediately
         self.force_initial = force_initial
+        self.delete_after = delete_after
         self.parents: set["State"] = set()
         self.children: set["State"] = set()
         self.timeout_state: State | None = None

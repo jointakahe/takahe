@@ -4,6 +4,7 @@ from typing import ClassVar, cast
 
 from asgiref.sync import sync_to_async
 from django.db import models, transaction
+from django.db.models.signals import class_prepared
 from django.utils import timezone
 from django.utils.functional import classproperty
 
@@ -37,6 +38,40 @@ class StateField(models.CharField):
         return value
 
 
+def add_stator_indexes(sender, **kwargs):
+    """
+    Inject Indexes used by StatorModel in to any subclasses. This sidesteps the
+    current Django inability to inherit indexes when the Model subclass defines
+    its own indexes.
+    """
+    if issubclass(sender, StatorModel):
+        indexes = [
+            models.Index(
+                fields=["state", "state_attempted"],
+                name=f"ix_{sender.__name__.lower()[:11]}_state_attempted",
+            ),
+            models.Index(
+                fields=["state_locked_until", "state"],
+                condition=models.Q(state_locked_until__isnull=False),
+                name=f"ix_{sender.__name__.lower()[:11]}_state_locked",
+            ),
+        ]
+
+        if not sender._meta.indexes:
+            # Meta.indexes needs to not be None to trigger Django behaviors
+            sender.Meta.indexes = []
+
+        for idx in indexes:
+            sender._meta.indexes.append(idx)
+
+
+# class_prepared might become deprecated [1]. If it's removed, the named Index
+# injection would need to happen in a metaclass subclass of ModelBase's _prepare()
+#
+# [1] https://code.djangoproject.com/ticket/24313
+class_prepared.connect(add_stator_indexes)
+
+
 class StatorModel(models.Model):
     """
     A model base class that has a state machine backing it, with tasks to work
@@ -67,6 +102,9 @@ class StatorModel(models.Model):
 
     class Meta:
         abstract = True
+        # Need this empty indexes to ensure child Models have a Meta.indexes
+        # that will look to add indexes (that we inject with class_prepared)
+        indexes: list = []
 
     def __init_subclass__(cls) -> None:
         if cls is not StatorModel:
@@ -85,6 +123,8 @@ class StatorModel(models.Model):
         """
         Finds instances of this model that need to run and schedule them.
         """
+        if now is None:
+            now = timezone.now()
         q = models.Q()
         for state in cls.state_graph.states.values():
             state = cast(State, state)
@@ -92,9 +132,11 @@ class StatorModel(models.Model):
                 q = q | models.Q(
                     (
                         models.Q(
-                            state_attempted__lte=timezone.now()
-                            - datetime.timedelta(
-                                seconds=cast(float, state.try_interval)
+                            state_attempted__lte=(
+                                now
+                                - datetime.timedelta(
+                                    seconds=cast(float, state.try_interval)
+                                )
                             )
                         )
                         | models.Q(state_attempted__isnull=True)
@@ -102,6 +144,23 @@ class StatorModel(models.Model):
                     state=state.name,
                 )
         await cls.objects.filter(q).aupdate(state_ready=True)
+
+    @classmethod
+    async def atransition_delete_due(cls, now=None):
+        """
+        Finds instances of this model that need to be deleted and deletes them.
+        """
+        if now is None:
+            now = timezone.now()
+        for state in cls.state_graph.states.values():
+            state = cast(State, state)
+            if state.delete_after:
+                await cls.objects.filter(
+                    state=state,
+                    state_changed__lte=(
+                        now - datetime.timedelta(seconds=state.delete_after)
+                    ),
+                ).adelete()
 
     @classmethod
     def transition_get_with_lock(
@@ -214,6 +273,25 @@ class StatorModel(models.Model):
         )
 
     atransition_perform = sync_to_async(transition_perform)
+
+    def transition_set_state(self, state: State | str):
+        """
+        Sets the instance to the given state name for when it is saved.
+        """
+        if isinstance(state, State):
+            state = state.name
+        if state not in self.state_graph.states:
+            raise ValueError(f"Invalid state {state}")
+        self.state = state  # type: ignore
+        self.state_changed = timezone.now()
+        self.state_locked_until = None
+
+        if self.state_graph.states[state].attempt_immediately:
+            self.state_attempted = None
+            self.state_ready = True
+        else:
+            self.state_attempted = timezone.now()
+            self.state_ready = False
 
     @classmethod
     def transition_perform_queryset(

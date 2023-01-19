@@ -2,6 +2,8 @@ import re
 from functools import partial
 
 import bleach
+import bleach.callbacks
+from bleach.html5lib_shim import Filter
 from bleach.linkifier import LinkifyFilter
 from django.utils.safestring import mark_safe
 
@@ -16,6 +18,95 @@ url_regex = re.compile(
     re.IGNORECASE | re.VERBOSE | re.UNICODE,
 )
 
+ALLOWED_TAGS = ["br", "p", "a"]
+REWRITTEN_TAGS = [
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
+    "pre",
+    "ul",
+    "ol",
+    "li",
+]
+
+
+class MastodonStrictTagFilter(Filter):
+    """
+    Implements Python equivalent of Mastodon tag rewriter
+
+    Clone of https://github.com/mastodon/mastodon/blob/main/lib/sanitize_ext/sanitize_config.rb#L55
+
+    Broadly this replaces all REWRITTEN_TAGS with `p` except for lists where it formats it into `<br>` lists
+    """
+
+    def __iter__(self):
+        li_pending_break = False
+        break_token = {
+            "name": "br",
+            "data": {},
+            "type": "StartTag",
+        }
+
+        for token in Filter.__iter__(self):
+            if token.get("name") not in REWRITTEN_TAGS or token["type"] not in [
+                "StartTag",
+                "EndTag",
+            ]:
+                yield token
+                continue
+
+            if token["type"] == "StartTag":
+                if token["name"] == "li":
+                    if li_pending_break:
+                        # Another `li` appeared, so break after the last one
+                        yield break_token
+                    continue
+                token["name"] = "p"
+            elif token["type"] == "EndTag":
+                if token["name"] == "li":
+                    # Track that an `li` closed so we know a break should be considered
+                    li_pending_break = True
+                    continue
+                if token["name"] == "ul":
+                    # If the last `li` happened, then don't add a break because Mastodon doesn't
+                    li_pending_break = False
+                token["name"] = "p"
+
+            yield token
+
+
+class UnlinkifyFilter(Filter):
+    """
+    Forcibly replaces link text with the href.
+
+    This is intented to be used when stripping <a> tags to preserve the link
+    location at the expense of the link text.
+    """
+
+    def __iter__(self):
+        discarding_a_text = False
+        for token in Filter.__iter__(self):
+            if token.get("name") == "a":
+                if token["type"] == "EndTag":
+                    discarding_a_text = False
+                    continue
+                href = token["data"].get((None, "href"))
+
+                # If <a> has an href, we use it and throw away all content
+                # within the <a>...</a>. If href missing or empty, try to find
+                # text within the <a>...</a>
+                if href:
+                    yield {"data": href, "type": "Characters"}
+                    discarding_a_text = True
+                    continue
+            elif not discarding_a_text:
+                yield token
+            # else: throw away tokens until we're out of the <a>
+
 
 def allow_a(tag: str, name: str, value: str):
     if name in ["href", "title", "class"]:
@@ -29,17 +120,51 @@ def allow_a(tag: str, name: str, value: str):
     return False
 
 
+def shorten_link_text(attrs, new=False):
+    """
+    Applies Mastodon's link shortening behavior where URL text links are
+    shortened by removing the scheme and only showing the first 30 chars.
+
+    Orig:
+        <a>https://social.example.com/a-long/path/2023/01/16/that-should-be-shortened</a>
+
+    Becomes:
+        <a>social.example.com/a-long/path</a>
+
+    """
+    text = attrs.get("_text")
+    if not text:
+        text = attrs.get((None, "href"))
+    if text and "://" in text and len(text) > 30:
+        text = text.split("://", 1)[-1]
+        attrs["_text"] = text[:30]
+        if len(text) > 30:
+            attrs[(None, "class")] = " ".join(
+                filter(None, [attrs.pop((None, "class"), ""), "ellipsis"])
+            )
+        # Add the full URL in to title for easier user inspection
+        attrs[(None, "title")] = attrs.get((None, "href"))
+
+    return attrs
+
+
+linkify_callbacks = [bleach.callbacks.nofollow, shorten_link_text]
+
+
 def sanitize_html(post_html: str) -> str:
     """
     Only allows a, br, p and span tags, and class attributes.
     """
     cleaner = bleach.Cleaner(
-        tags=["br", "p", "a"],
+        tags=ALLOWED_TAGS + REWRITTEN_TAGS,
         attributes={  # type:ignore
             "a": allow_a,
             "p": ["class"],
         },
-        filters=[partial(LinkifyFilter, url_re=url_regex)],
+        filters=[
+            partial(LinkifyFilter, url_re=url_regex, callbacks=linkify_callbacks),
+            MastodonStrictTagFilter,
+        ],
         strip=True,
     )
     return mark_safe(cleaner.clean(post_html))
@@ -52,7 +177,9 @@ def strip_html(post_html: str, *, linkify: bool = True) -> str:
     cleaner = bleach.Cleaner(
         tags=[],
         strip=True,
-        filters=[partial(LinkifyFilter, url_re=url_regex)] if linkify else [],
+        filters=[partial(LinkifyFilter, url_re=url_regex, callbacks=linkify_callbacks)]
+        if linkify
+        else [UnlinkifyFilter],
     )
     return mark_safe(cleaner.clean(post_html))
 
@@ -65,7 +192,7 @@ def html_to_plaintext(post_html: str) -> str:
     # Remove all newlines, then replace br with a newline and /p with two (one comes from bleach)
     post_html = post_html.replace("\n", "").replace("<br>", "\n").replace("</p>", "\n")
     # Remove all other HTML and return
-    cleaner = bleach.Cleaner(tags=[], strip=True, filters=[])
+    cleaner = bleach.Cleaner(tags=["a"], strip=True, filters=[UnlinkifyFilter])
     return cleaner.clean(post_html).strip()
 
 
@@ -214,16 +341,15 @@ class ContentRenderer:
             shortcode = match.group(1).lower()
             if shortcode in cached_emojis:
                 return cached_emojis[shortcode].as_html()
-            try:
-                emoji = Emoji.get_by_domain(shortcode, identity.domain)
-                if emoji.is_usable:
+
+            emoji = Emoji.get_by_domain(shortcode, identity.domain)
+            if emoji and emoji.is_usable:
+                return emoji.as_html()
+            elif not emoji and include_local:
+                emoji = Emoji.get_by_domain(shortcode, None)
+                if emoji:
                     return emoji.as_html()
-            except Emoji.DoesNotExist:
-                if include_local:
-                    try:
-                        return Emoji.get_by_domain(shortcode, identity.domain).as_html()
-                    except Emoji.DoesNotExist:
-                        pass
+
             return match.group()
 
         return Emoji.emoji_regex.sub(replacer, html)

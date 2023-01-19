@@ -1,6 +1,6 @@
 from django.http import HttpRequest, HttpResponse
 
-from activities.models import PostInteraction, TimelineEvent
+from activities.models import TimelineEvent
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
@@ -25,6 +25,7 @@ def notifications(
         "reblog": TimelineEvent.Types.boosted,
         "mention": TimelineEvent.Types.mentioned,
         "follow": TimelineEvent.Types.followed,
+        "admin.sign_up": TimelineEvent.Types.identity_created,
     }
     requested_types = set(request.GET.getlist("types[]"))
     excluded_types = set(request.GET.getlist("exclude_types[]"))
@@ -33,9 +34,9 @@ def notifications(
     requested_types.difference_update(excluded_types)
     # Use that to pull relevant events
     queryset = TimelineService(request.identity).notifications(
-        [base_types[r] for r in requested_types]
+        [base_types[r] for r in requested_types if r in base_types]
     )
-    paginator = MastodonPaginator(TimelineEvent)
+    paginator = MastodonPaginator()
     pager = paginator.paginate(
         queryset,
         min_id=min_id,
@@ -43,14 +44,9 @@ def notifications(
         since_id=since_id,
         limit=limit,
     )
+    pager.jsonify_notification_events(identity=request.identity)
 
     if pager.results:
         response.headers["Link"] = pager.link_header(request, ["limit", "account_id"])
 
-    interactions = PostInteraction.get_event_interactions(
-        pager.results, request.identity
-    )
-    return [
-        event.to_mastodon_notification_json(interactions=interactions)
-        for event in pager.results
-    ]
+    return pager.json_results

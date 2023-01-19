@@ -34,6 +34,14 @@ class PasswordResetStates(StateGraph):
                         "settings": settings,
                     },
                 ),
+                html_message=render_to_string(
+                    "emails/account_new.html",
+                    {
+                        "reset": reset,
+                        "config": Config.system,
+                        "settings": settings,
+                    },
+                ),
                 from_email=settings.SERVER_EMAIL,
                 recipient_list=[reset.user.email],
             )
@@ -42,6 +50,14 @@ class PasswordResetStates(StateGraph):
                 subject=f"{Config.system.site_name}: Reset password",
                 message=render_to_string(
                     "emails/password_reset.txt",
+                    {
+                        "reset": reset,
+                        "config": Config.system,
+                        "settings": settings,
+                    },
+                ),
+                html_message=render_to_string(
+                    "emails/password_reset.html",
                     {
                         "reset": reset,
                         "config": Config.system,

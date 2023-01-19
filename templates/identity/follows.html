@@ -12,7 +12,7 @@
         </span>
     {% endfor %}
 
-    <div class="load-more">
+    <div class="pagination">
         {% if page_obj.has_previous %}
             <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
         {% endif %}
