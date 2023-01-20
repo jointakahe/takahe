@@ -255,7 +255,7 @@ header menu a i {
     vertical-align: middle;
 }
 
-body.light-theme header menu a i {
+body.light-theme.has-banner header menu a i {
     color: var(--color-bg-main);
 }
 
