@@ -156,32 +156,24 @@ def favourites(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    paginator = MastodonPaginator()
     queryset = TimelineService(request.identity).favourites()
-    queryset = queryset.select_related(
-        "subject_post_interaction__post",
-        "subject_post_interaction__post__author",
-        "subject_post_interaction__post__author__domain",
-    )
-    queryset = queryset.prefetch_related(
-        "subject_post__mentions__domain",
-        "subject_post_interaction__post__attachments",
-        "subject_post_interaction__post__mentions",
-        "subject_post_interaction__post__emojis",
-        "subject_post_interaction__post__mentions__domain",
-        "subject_post_interaction__post__author__posts",
-    )
-    pager = paginator.paginate_home(
+
+    paginator = MastodonPaginator()
+    pager = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-
     # Convert those to the JSON form
-    pager.jsonify_status_events(identity=request.identity)
+    pager.jsonify_posts(identity=request.identity)
+
     # Add the link header if needed
     if pager.results:
-        response.headers["Link"] = pager.link_header(request, ["limit"])
+        response.headers["Link"] = pager.link_header(
+            request,
+            ["limit", "local", "remote", "only_media"],
+        )
+
     return pager.json_results

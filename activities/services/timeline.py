@@ -1,6 +1,6 @@
 from django.db import models
 
-from activities.models import Hashtag, Post, TimelineEvent
+from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
 from activities.services import PostService
 from users.models import Identity
 
@@ -83,15 +83,15 @@ class TimelineService:
             .order_by("-id")
         )
 
-    def favourites(self) -> models.QuerySet[TimelineEvent]:
+    def favourites(self) -> models.QuerySet[Post]:
         """
         Return all favourited post for an identity
         """
         return (
-            self.event_queryset()
+            PostService.queryset()
             .filter(
-                identity=self.identity,
-                type=TimelineEvent.Types.liked,
+                interactions__identity=self.identity,
+                interactions__type=PostInteraction.Types.like,
             )
-            .order_by("-created")
+            .order_by("-id")
         )
