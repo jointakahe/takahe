@@ -1516,6 +1516,7 @@ form .post {
 
 .post .attachments video {
     max-width: 100%;
+    aspect-ratio: 16/9;
 }
 
 .post .attachments .other {
