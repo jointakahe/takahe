@@ -255,6 +255,10 @@ header menu a i {
     vertical-align: middle;
 }
 
+body.light-theme.has-banner header menu a i {
+    color: var(--color-bg-main);
+}
+
 header menu a.htmx-request i {
     -webkit-animation-delay: var(--fa-animation-delay, 0s);
     animation-delay: var(--fa-animation-delay, 0s);
