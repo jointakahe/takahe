@@ -82,3 +82,16 @@ class TimelineService:
             .unlisted(include_replies=True)
             .order_by("-id")
         )
+
+    def favourites(self) -> models.QuerySet[TimelineEvent]:
+        """
+        Return all favourited post for an identity
+        """
+        return (
+            self.event_queryset()
+            .filter(
+                identity=self.identity,
+                type=TimelineEvent.Types.liked,
+            )
+            .order_by("-created")
+        )
