@@ -77,12 +77,16 @@ class IdentityService:
         Follows a user (or does nothing if already followed).
         Returns the follow.
         """
+        if from_identity == self.identity:
+            raise ValueError("You cannot follow yourself")
         return Follow.create_local(from_identity, self.identity, boosts=boosts)
 
     def unfollow_from(self, from_identity: Identity):
         """
         Unfollows a user (or does nothing if not followed).
         """
+        if from_identity == self.identity:
+            raise ValueError("You cannot unfollow yourself")
         existing_follow = Follow.maybe_get(from_identity, self.identity)
         if existing_follow:
             existing_follow.transition_perform(FollowStates.undone)
@@ -98,6 +102,8 @@ class IdentityService:
         """
         Blocks a user.
         """
+        if from_identity == self.identity:
+            raise ValueError("You cannot block yourself")
         self.unfollow_from(from_identity)
         block = Block.create_local_block(from_identity, self.identity)
         InboxMessage.create_internal(
@@ -114,6 +120,8 @@ class IdentityService:
         """
         Unlocks a user
         """
+        if from_identity == self.identity:
+            raise ValueError("You cannot unblock yourself")
         existing_block = Block.maybe_get(from_identity, self.identity, mute=False)
         if existing_block and existing_block.active:
             existing_block.transition_perform(BlockStates.undone)
@@ -127,6 +135,8 @@ class IdentityService:
         """
         Mutes a user.
         """
+        if from_identity == self.identity:
+            raise ValueError("You cannot mute yourself")
         return Block.create_local_mute(
             from_identity,
             self.identity,
@@ -138,6 +148,8 @@ class IdentityService:
         """
         Unmutes a user
         """
+        if from_identity == self.identity:
+            raise ValueError("You cannot unmute yourself")
         existing_block = Block.maybe_get(from_identity, self.identity, mute=True)
         if existing_block and existing_block.active:
             existing_block.transition_perform(BlockStates.undone)

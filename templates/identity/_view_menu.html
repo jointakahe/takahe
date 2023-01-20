@@ -45,7 +45,7 @@
                     {% endif %}
                 </form>
             {% endif %}
-            {% if not outbound_block %}
+            {% if request.identity != identity and not outbound_block %}
                 <form action="{{ identity.urls.action }}" method="POST" class="inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="block">
