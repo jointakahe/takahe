@@ -25,6 +25,10 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_http_version 1.1;
 
+    # The user header is available for logging, but not returned to the client
+    proxy_hide_header X-Takahe-User;
+    proxy_hide_header X-Takahe-Identity;
+
     # Serve robots.txt from the non-collected dir as a special case.
     location /robots.txt {
         alias /takahe/static/robots.txt;

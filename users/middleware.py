@@ -30,4 +30,10 @@ class IdentityMiddleware:
                     request.identity = None
 
         response = self.get_response(request)
+
+        if request.user:
+            response.headers["X-Takahe-User"] = str(request.user)
+        if request.identity:
+            response.headers["X-Takahe-Identity"] = str(request.identity)
+
         return response
