@@ -144,3 +144,33 @@ def conversations(
 ):
     # We don't implement this yet
     return []
+
+
+@api_router.get("/v1/favourites", response=list[schemas.Status])
+@identity_required
+def favourites(
+    request: HttpRequest,
+    response: HttpResponse,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 20,
+):
+    queryset = TimelineService(request.identity).likes()
+
+    paginator = MastodonPaginator()
+    pager = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+    # Convert those to the JSON form
+    pager.jsonify_posts(identity=request.identity)
+
+    # Add the link header if needed
+    if pager.results:
+        response.headers["Link"] = pager.link_header(request, ["limit"])
+
+    return pager.json_results
