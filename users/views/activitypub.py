@@ -135,9 +135,6 @@ class Inbox(View):
             and identity._state.adding
         ):
             # We don't have an Identity record for the user. No-op
-            exceptions.capture_message(
-                f"Inbox: Discarded delete message for unknown actor {document['actor']}"
-            )
             return HttpResponse(status=202)
 
         if not identity.public_key:
