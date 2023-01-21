@@ -83,9 +83,9 @@ class TimelineService:
             .order_by("-id")
         )
 
-    def favourites(self) -> models.QuerySet[Post]:
+    def likes(self) -> models.QuerySet[Post]:
         """
-        Return all favourited post for an identity
+        Return all liked posts for an identity
         """
         return (
             PostService.queryset()

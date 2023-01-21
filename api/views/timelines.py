@@ -156,7 +156,7 @@ def favourites(
     min_id: str | None = None,
     limit: int = 20,
 ):
-    queryset = TimelineService(request.identity).favourites()
+    queryset = TimelineService(request.identity).likes()
 
     paginator = MastodonPaginator()
     pager = paginator.paginate(
@@ -171,9 +171,6 @@ def favourites(
 
     # Add the link header if needed
     if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            ["limit", "local", "remote", "only_media"],
-        )
+        response.headers["Link"] = pager.link_header(request, ["limit"])
 
     return pager.json_results
