@@ -59,12 +59,12 @@ class DomainCreate(FormView):
             validators=[DomainValidator()],
         )
         public = forms.BooleanField(
-            help_text="If any user on this server can create identities here",
+            help_text="If any user on this server can create identities under this domain",
             widget=forms.Select(choices=[(True, "Public"), (False, "Private")]),
             required=False,
         )
         default = forms.BooleanField(
-            help_text="If this is the default option for new identities",
+            help_text="If this domain is the default option for new identities",
             widget=forms.Select(choices=[(False, "No"), (True, "Yes")]),
             required=False,
         )
