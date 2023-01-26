@@ -163,7 +163,8 @@ class PostAttachmentInline(admin.StackedInline):
 class PostAdmin(admin.ModelAdmin):
     list_display = ["id", "type", "author", "state", "created"]
     list_filter = ("type", "local", "visibility", "state", "created")
-    raw_id_fields = ["to", "mentions", "author", "emojis"]
+    raw_id_fields = ["emojis"]
+    autocomplete_fields = ["to", "mentions", "author"]
     actions = ["reparse_hashtags"]
     search_fields = ["content", "search_handle", "search_service_handle"]
     inlines = [PostAttachmentInline]
@@ -205,8 +206,8 @@ class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ["id", "identity", "published", "type"]
     list_filter = (IdentityLocalFilter, "type")
     readonly_fields = ["created"]
+    autocomplete_fields = ["identity"]
     raw_id_fields = [
-        "identity",
         "subject_post",
         "subject_identity",
         "subject_post_interaction",
@@ -220,7 +221,8 @@ class TimelineEventAdmin(admin.ModelAdmin):
 class FanOutAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "created", "state_attempted", "type", "identity"]
     list_filter = (IdentityLocalFilter, "type", "state", "state_attempted")
-    raw_id_fields = ["identity", "subject_post", "subject_post_interaction"]
+    raw_id_fields = ["subject_post", "subject_post_interaction"]
+    autocomplete_fields = ["identity"]
     readonly_fields = ["created", "updated", "state_changed"]
     actions = ["force_execution"]
     search_fields = ["identity__username"]
@@ -238,7 +240,8 @@ class FanOutAdmin(admin.ModelAdmin):
 class PostInteractionAdmin(admin.ModelAdmin):
     list_display = ["id", "state", "state_attempted", "type", "identity", "post"]
     list_filter = (IdentityLocalFilter, "type", "state")
-    raw_id_fields = ["identity", "post"]
+    raw_id_fields = ["post"]
+    autocomplete_fields = ["identity"]
 
     def has_add_permission(self, request, obj=None):
         return False

@@ -33,7 +33,7 @@ class DomainAdmin(admin.ModelAdmin):
     ]
     list_filter = ("local", "blocked")
     search_fields = ("domain", "service_domain")
-    raw_id_fields = ("users",)
+    autocomplete_fields = ("users",)
     actions = [
         "force_outdated",
         "force_updated",
@@ -109,7 +109,7 @@ class UserEventAdmin(admin.ModelAdmin):
 class IdentityAdmin(admin.ModelAdmin):
     list_display = ["id", "handle", "actor_uri", "state", "local"]
     list_filter = ("local", "state", "discoverable")
-    raw_id_fields = ["users"]
+    autocomplete_fields = ["users"]
     actions = ["force_update"]
     readonly_fields = ["handle", "actor_json"]
     search_fields = ["search_handle", "search_service_handle", "name", "id"]
@@ -159,7 +159,7 @@ class LocalTargetFilter(IdentityLocalFilter):
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "state"]
     list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
-    raw_id_fields = ["source", "target"]
+    autocomplete_fields = ["source", "target"]
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -169,7 +169,7 @@ class FollowAdmin(admin.ModelAdmin):
 class BlockAdmin(admin.ModelAdmin):
     list_display = ["id", "source", "target", "mute", "state"]
     list_filter = [LocalSourceFilter, LocalTargetFilter, "state"]
-    raw_id_fields = ["source", "target"]
+    autocomplete_fields = ["source", "target"]
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -178,7 +178,7 @@ class BlockAdmin(admin.ModelAdmin):
 @admin.register(PasswordReset)
 class PasswordResetAdmin(admin.ModelAdmin):
     list_display = ["id", "user", "created"]
-    raw_id_fields = ["user"]
+    autocomplete_fields = ["user"]
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -220,4 +220,4 @@ class ReportAdmin(admin.ModelAdmin):
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ["id", "published", "start", "end", "text"]
-    raw_id_fields = ["seen"]
+    autocomplete_fields = ["seen"]
