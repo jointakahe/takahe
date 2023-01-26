@@ -724,7 +724,10 @@ class Post(StatorModel):
             .select_related("target")
         )
         async for block in blocks:
-            targets.remove(block.target)
+            try:
+                targets.remove(block.target)
+            except KeyError:
+                pass
         # Now dedupe the targets based on shared inboxes (we only keep one per
         # shared inbox)
         deduped_targets = set()
