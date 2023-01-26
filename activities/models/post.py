@@ -755,11 +755,20 @@ class Post(StatorModel):
         or it's from a blocked domain.
         """
         try:
+            # Ensure data has the primary fields of all Posts
+            if (
+                not isinstance(data["id"], str)
+                or not isinstance(data["attributedTo"], str)
+                or not isinstance(data["type"], str)
+            ):
+                raise TypeError()
             # Ensure the domain of the object's actor and ID match to prevent injection
             if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
                 raise ValueError("Object's ID domain is different to its author")
-        except (TypeError, KeyError):
-            raise ValueError("Object data is not a recognizable ActivityPub object")
+        except (TypeError, KeyError) as ex:
+            raise cls.DoesNotExist(
+                "Object data is not a recognizable ActivityPub object"
+            ) from ex
 
         # Do we have one with the right ID?
         created = False
