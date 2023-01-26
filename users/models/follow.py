@@ -3,6 +3,7 @@ from typing import Optional
 import httpx
 from django.db import models, transaction
 
+from core.exceptions import capture_message
 from core.ld import canonicalise, get_str_or_id
 from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -303,7 +304,14 @@ class Follow(StatorModel):
         from activities.models import TimelineEvent
 
         with transaction.atomic():
-            follow = cls.by_ap(data, create=True)
+            try:
+                follow = cls.by_ap(data, create=True)
+            except Identity.DoesNotExist:
+                capture_message(
+                    "Identity not found for incoming Follow", extras={"data": data}
+                )
+                return
+
             # Force it into remote_requested so we send an accept
             follow.transition_perform(FollowStates.remote_requested)
             # Add a timeline event
@@ -317,8 +325,13 @@ class Follow(StatorModel):
         # Resolve source and target and see if a Follow exists (it really should)
         try:
             follow = cls.by_ap(data["object"])
-        except cls.DoesNotExist:
-            raise ValueError("No Follow locally for incoming Accept", data)
+        except (cls.DoesNotExist, Identity.DoesNotExist):
+            capture_message(
+                "Follow or Identity not found for incoming Accept",
+                extras={"data": data},
+            )
+            return
+
         # Ensure the Accept actor is the Follow's target
         if data["actor"] != follow.target.actor_uri:
             raise ValueError("Accept actor does not match its Follow object", data)
@@ -337,8 +350,13 @@ class Follow(StatorModel):
         # Resolve source and target and see if a Follow exists (it really should)
         try:
             follow = cls.by_ap(data["object"])
-        except cls.DoesNotExist:
-            raise ValueError("No Follow locally for incoming Reject", data)
+        except (cls.DoesNotExist, Identity.DoesNotExist):
+            capture_message(
+                "Follow or Identity not found for incoming Reject",
+                extras={"data": data},
+            )
+            return
+
         # Ensure the Accept actor is the Follow's target
         if data["actor"] != follow.target.actor_uri:
             raise ValueError("Reject actor does not match its Follow object", data)
@@ -353,8 +371,12 @@ class Follow(StatorModel):
         # Resolve source and target and see if a Follow exists (it hopefully does)
         try:
             follow = cls.by_ap(data["object"])
-        except cls.DoesNotExist:
-            raise ValueError("No Follow locally for incoming Undo", data)
+        except (cls.DoesNotExist, Identity.DoesNotExist):
+            capture_message(
+                "Follow or Identity not found for incoming Undo", extras={"data": data}
+            )
+            return
+
         # Ensure the Undo actor is the Follow's source
         if data["actor"] != follow.source.actor_uri:
             raise ValueError("Accept actor does not match its Follow object", data)
