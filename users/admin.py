@@ -33,6 +33,7 @@ class DomainAdmin(admin.ModelAdmin):
     ]
     list_filter = ("local", "blocked")
     search_fields = ("domain", "service_domain")
+    raw_id_fields = ("users",)
     actions = [
         "force_outdated",
         "force_updated",
