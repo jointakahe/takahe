@@ -59,7 +59,7 @@ class Compose(FormView):
             self.request = request
             self.fields["text"].widget.attrs[
                 "_"
-            ] = f"""
+            ] = rf"""
                 init
                     -- Move cursor to the end of existing text
                     set my.selectionStart to my.value.length
@@ -67,7 +67,8 @@ class Compose(FormView):
 
                 on load or input
                 -- Unicode-aware counting to match Python
-                set characters to Array.from(my.value.trim()).length
+                -- <LF> will be normalized as <CR><LF> in Django
+                set characters to Array.from(my.value.replaceAll('\n','\r\n').trim()).length
                 put {Config.system.post_length} - characters into #character-counter
 
                 if characters > {Config.system.post_length} then
