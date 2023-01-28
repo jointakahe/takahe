@@ -91,6 +91,24 @@ class MediaAttachment(Schema):
         return cls(**attachment.to_mastodon_json())
 
 
+class PollOptions(Schema):
+    title: str
+    votes_count: int | None
+
+
+class Poll(Schema):
+    id: str
+    expires_at: str | None
+    expired: bool
+    multiple: bool
+    votes_count: int
+    voters_count: int | None
+    voted: bool
+    own_votes: list[int]
+    options: list[PollOptions]
+    emojis: list[CustomEmoji]
+
+
 class StatusMention(Schema):
     id: str
     username: str
@@ -123,7 +141,7 @@ class Status(Schema):
     in_reply_to_id: str | None = Field(...)
     in_reply_to_account_id: str | None = Field(...)
     reblog: Optional["Status"] = Field(...)
-    poll: None = Field(...)
+    poll: Poll | None = Field(...)
     card: None = Field(...)
     language: None = Field(...)
     text: str | None = Field(...)
