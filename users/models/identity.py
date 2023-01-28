@@ -489,6 +489,8 @@ class Identity(StatorModel):
         }
 
     def to_ap(self):
+        from activities.models import Emoji
+
         response = {
             "id": self.actor_uri,
             "type": self.actor_type.title(),
@@ -533,6 +535,14 @@ class Identity(StatorModel):
                 }
                 for item in self.metadata
             ]
+        # Emoji
+        emojis = Emoji.emojis_from_content(
+            (self.name or "") + " " + (self.summary or ""), None
+        )
+        if emojis:
+            response["tag"] = []
+            for emoji in emojis:
+                response["tag"].append(emoji.to_ap_tag())
         return response
 
     def to_ap_tag(self):
