@@ -17,4 +17,6 @@ class FormOrJsonParser(Parser):
         value = {}
         for key, item in request.POST.items():
             value[key] = item
+        for key, item in request.GET.items():
+            value[key] = item
         return value
