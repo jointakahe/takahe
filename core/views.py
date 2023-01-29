@@ -2,6 +2,7 @@ import json
 from typing import ClassVar
 
 import markdown_it
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.templatetags.static import static
@@ -67,6 +68,23 @@ class StaticContentView(View):
         Override to generate the view's static content.
         """
         raise NotImplementedError()
+
+
+@method_decorator(cache_page(60 * 60), name="dispatch")
+class RobotsTxt(TemplateView):
+    """
+    Serves the robots.txt for Takahē
+
+    To specify additional user-agents to disallow, use TAKAHE_ROBOTS_TXT_DISALLOWED_USER_AGENTS
+    """
+
+    template_name = "robots.txt"
+    content_type = "text/plain"
+
+    def get_context_data(self):
+        return {
+            "user_agents": getattr(settings, "ROBOTS_TXT_DISALLOWED_USER_AGENTS", []),
+        }
 
 
 @method_decorator(cache_control(max_age=60 * 15), name="dispatch")
