@@ -29,11 +29,6 @@ server {
     proxy_hide_header X-Takahe-User;
     proxy_hide_header X-Takahe-Identity;
 
-    # Serve robots.txt from the non-collected dir as a special case.
-    location /robots.txt {
-        alias /takahe/static/robots.txt;
-    }
-
     # Serves static files from the collected dir
     location /static/ {
         # Files in static have cache-busting hashes in the name, thus can be cached forever

@@ -105,6 +105,10 @@ class Settings(BaseSettings):
     AUTO_ADMIN_EMAIL: EmailStr | None = None
     ERROR_EMAILS: list[EmailStr] | None = None
 
+    #: If set, a list of user agents to completely disallow in robots.txt
+    #: List formatting must be a valid JSON list, such as `["Agent1", "Agent2"]`
+    ROBOTS_TXT_DISALLOWED_USER_AGENTS: list[str] = Field(default_factory=list)
+
     MEDIA_URL: str = "/media/"
     MEDIA_ROOT: str = str(BASE_DIR / "media")
     MEDIA_BACKEND: MediaBackendUrl | None = None
@@ -312,6 +316,8 @@ AUTO_ADMIN_EMAIL = SETUP.AUTO_ADMIN_EMAIL
 STATOR_TOKEN = SETUP.STATOR_TOKEN
 STATOR_CONCURRENCY = SETUP.STATOR_CONCURRENCY
 STATOR_CONCURRENCY_PER_MODEL = SETUP.STATOR_CONCURRENCY_PER_MODEL
+
+ROBOTS_TXT_DISALLOWED_USER_AGENTS = SETUP.ROBOTS_TXT_DISALLOWED_USER_AGENTS
 
 CORS_ORIGIN_ALLOW_ALL = True  # Temporary
 CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
