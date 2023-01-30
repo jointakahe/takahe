@@ -507,7 +507,7 @@ class Post(StatorModel):
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
-            parser = FediverseHtmlParser(linebreaks_filter(content))
+            parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
             self.content = parser.html
             self.hashtags = sorted(parser.hashtags) or None
             self.summary = summary or None
