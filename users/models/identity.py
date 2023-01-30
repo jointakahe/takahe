@@ -13,7 +13,7 @@ from django.utils.functional import lazy
 from lxml import etree
 
 from core.exceptions import ActorMismatchError, capture_message
-from core.html import ContentRenderer, html_to_plaintext, strip_html
+from core.html import ContentRenderer, FediverseHtmlParser
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -530,8 +530,8 @@ class Identity(StatorModel):
             response["attachment"] = [
                 {
                     "type": "http://schema.org#PropertyValue",
-                    "name": strip_html(item["name"], linkify=False),
-                    "value": strip_html(item["value"]),
+                    "name": FediverseHtmlParser(item["name"]).plain_text,
+                    "value": FediverseHtmlParser(item["value"]).html,
                 }
                 for item in self.metadata
             ]
@@ -781,7 +781,9 @@ class Identity(StatorModel):
                 self.metadata.append(
                     {
                         "name": attachment.get("name"),
-                        "value": strip_html(attachment.get("http://schema.org#value")),
+                        "value": FediverseHtmlParser(
+                            attachment.get("http://schema.org#value")
+                        ).html,
                     }
                 )
         # Now go do webfinger with that info to see if we can get a canonical domain
@@ -903,12 +905,14 @@ class Identity(StatorModel):
                 Post.Visibilities.mentioned: "direct",
             }
             result["source"] = {
-                "note": html_to_plaintext(self.summary) if self.summary else "",
+                "note": FediverseHtmlParser(self.summary).plain_text
+                if self.summary
+                else "",
                 "fields": (
                     [
                         {
                             "name": m["name"],
-                            "value": strip_html(m["value"], linkify=False),
+                            "value": FediverseHtmlParser(m["value"]).plain_text,
                             "verified_at": None,
                         }
                         for m in self.metadata

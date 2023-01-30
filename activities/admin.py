@@ -1,4 +1,3 @@
-from asgiref.sync import async_to_sync
 from django.contrib import admin
 from django.db import models
 from django.utils.safestring import mark_safe
@@ -165,7 +164,6 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ("type", "local", "visibility", "state", "created")
     raw_id_fields = ["emojis"]
     autocomplete_fields = ["to", "mentions", "author"]
-    actions = ["reparse_hashtags"]
     search_fields = ["content", "search_handle", "search_service_handle"]
     inlines = [PostAttachmentInline]
     readonly_fields = ["created", "updated", "state_changed", "object_json"]
@@ -182,13 +180,6 @@ class PostAdmin(admin.ModelAdmin):
             ),
         )
         return super().get_search_results(request, queryset, search_term)
-
-    @admin.action(description="Reprocess content for hashtags")
-    def reparse_hashtags(self, request, queryset):
-        for instance in queryset:
-            instance.hashtags = Hashtag.hashtags_from_content(instance.content) or None
-            instance.save()
-            async_to_sync(instance.ensure_hashtags)()
 
     @admin.display(description="ActivityPub JSON")
     def object_json(self, instance):

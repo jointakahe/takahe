@@ -48,13 +48,7 @@ repos:
       - id: mypy
         exclude: "^tests/"
         additional_dependencies:
-          [
-            types-pyopenssl,
-            types-bleach,
-            types-mock,
-            types-cachetools,
-            types-python-dateutil,
-          ]
+          [types-pyopenssl, types-mock, types-cachetools, types-python-dateutil]
 
   - repo: https://github.com/rtts/djhtml
     rev: v1.5.2

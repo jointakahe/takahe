@@ -1,5 +1,4 @@
 import mimetypes
-import re
 from functools import partial
 from typing import ClassVar
 
@@ -14,7 +13,7 @@ from django.db import models
 from django.utils.safestring import mark_safe
 
 from core.files import get_remote_file
-from core.html import strip_html
+from core.html import FediverseHtmlParser
 from core.ld import format_ld_date
 from core.models import Config
 from core.uploads import upload_emoji_namer
@@ -134,8 +133,6 @@ class Emoji(StatorModel):
         admin_disable = "{admin}{self.pk}/disable/"
         admin_copy = "{admin}{self.pk}/copy/"
 
-    emoji_regex = re.compile(r"\B:([a-zA-Z0-9(_)-]+):\B")
-
     def delete(self, using=None, keep_parents=False):
         if self.file:
             self.file.delete()
@@ -242,7 +239,9 @@ class Emoji(StatorModel):
         Return a parsed and sanitized of emoji found in content without
         the surrounding ':'.
         """
-        emoji_hits = cls.emoji_regex.findall(strip_html(content))
+        emoji_hits = FediverseHtmlParser(
+            content, find_emojis=True, emoji_domain=domain
+        ).emojis
         emojis = sorted({emoji.lower() for emoji in emoji_hits})
         return list(
             cls.objects.filter(local=(domain is None) or domain.local)

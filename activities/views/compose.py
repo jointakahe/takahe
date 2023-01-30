@@ -14,7 +14,7 @@ from activities.models import (
     TimelineEvent,
 )
 from core.files import blurhash_image, resize_image
-from core.html import html_to_plaintext
+from core.html import FediverseHtmlParser
 from core.models import Config
 from users.decorators import identity_required
 
@@ -112,7 +112,7 @@ class Compose(FormView):
                 {
                     "reply_to": self.reply_to.pk if self.reply_to else "",
                     "visibility": self.post_obj.visibility,
-                    "text": html_to_plaintext(self.post_obj.content),
+                    "text": FediverseHtmlParser(self.post_obj.content).plain_text,
                     "content_warning": self.post_obj.summary,
                 }
             )
