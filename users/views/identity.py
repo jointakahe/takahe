@@ -69,7 +69,6 @@ class ViewIdentity(ListView):
 
     def get_context_data(self):
         context = super().get_context_data()
-        context["headless"] = self.request.GET.get("headless")
         context["identity"] = self.identity
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"],

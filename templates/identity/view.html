@@ -15,7 +15,7 @@
 {% block body_class %}has-banner{% endblock %}
 
 {% block content %}
-    {% if not headless %}
+    {% if not request.htmx %}
         <h1 class="identity">
             {% if identity.local_image_url %}
                 <img src="{{ identity.local_image_url.relative }}" class="banner">
@@ -48,7 +48,7 @@
         </p>
     {% else %}
 
-        {% if not headless %}
+        {% if not request.htmx %}
             {% if identity.summary %}
                 <div class="bio">
                     {{ identity.safe_summary }}
@@ -113,7 +113,7 @@
                 {% endif %}
 
                 {% if page_obj.has_next %}
-                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}&headless=true" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
+                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
                 {% endif %}
             </div>
 
