@@ -14,6 +14,11 @@ class QuestionOption(BaseModel):
     type: Literal["Note"] = "Note"
     votes: int = 0
 
+    def __init__(self, **data) -> None:
+        data["votes"] = data.get("votes", data.get("replies", {}).get("totalItems", 0))
+
+        super().__init__(**data)
+
 
 class QuestionData(BasePostDataType):
     type: Literal["Question"]
@@ -27,6 +32,10 @@ class QuestionData(BasePostDataType):
         allow_population_by_field_name = True
 
     def __init__(self, **data) -> None:
+        data["voter_count"] = data.get(
+            "voter_count", data.get("votersCount", data.get("toot:votersCount", 0))
+        )
+
         if "mode" not in data:
             data["mode"] = "anyOf" if "anyOf" in data else "oneOf"
         if "options" not in data:
