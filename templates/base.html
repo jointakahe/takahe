@@ -25,7 +25,7 @@
             {% endif %}
         </style>
         {% if config_identity.custom_css %}
-            <style>{{ config_identity.custom_css }}</style>
+            <style>{{ config_identity.custom_css|safe }}</style>
         {% endif %}
         {% block opengraph %}
             {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
