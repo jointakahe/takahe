@@ -6,7 +6,7 @@ import time
 import traceback
 import uuid
 
-from asgiref.sync import ThreadSensitiveContext, async_to_sync, sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.utils import timezone
 
@@ -210,26 +210,25 @@ class StatorRunner:
         Wrapper for atransition_attempt with fallback error handling
         """
         task_name = f"stator.run_transition:{instance._meta.label_lower}#{{id}} from {instance.state}"
-        async with ThreadSensitiveContext():
-            with sentry.start_transaction(op="task", name=task_name):
-                sentry.set_context(
-                    "instance",
-                    {
-                        "model": instance._meta.label_lower,
-                        "pk": instance.pk,
-                        "state": instance.state,
-                        "state_age": instance.state_age,
-                    },
-                )
+        with sentry.start_transaction(op="task", name=task_name):
+            sentry.set_context(
+                "instance",
+                {
+                    "model": instance._meta.label_lower,
+                    "pk": instance.pk,
+                    "state": instance.state,
+                    "state_age": instance.state_age,
+                },
+            )
 
-                try:
-                    print(
-                        f"Attempting transition on {instance._meta.label_lower}#{instance.pk} from state {instance.state}"
-                    )
-                    await instance.atransition_attempt()
-                except BaseException as e:
-                    await exceptions.acapture_exception(e)
-                    traceback.print_exc()
+            try:
+                print(
+                    f"Attempting transition on {instance._meta.label_lower}#{instance.pk} from state {instance.state}"
+                )
+                await instance.atransition_attempt()
+            except BaseException as e:
+                await exceptions.acapture_exception(e)
+                traceback.print_exc()
 
     def remove_completed_tasks(self):
         """
