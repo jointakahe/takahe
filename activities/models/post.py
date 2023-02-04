@@ -377,12 +377,8 @@ class Post(StatorModel):
     def _safe_content_note(self, *, local: bool = True):
         return ContentRenderer(local=local).render_post(self.content, self)
 
-    # def _safe_content_question(self, *, local: bool = True):
-    #     context = {
-    #         "post": self,
-    #         "typed_data": PostTypeData(self.type_data),
-    #     }
-    #     return loader.render_to_string("activities/_type_question.html", context)
+    def _safe_content_question(self, *, local: bool = True):
+        return ContentRenderer(local=local).render_post(self.content, self)
 
     def _safe_content_typed(self, *, local: bool = True):
         context = {
@@ -1043,6 +1039,35 @@ class Post(StatorModel):
             self.Visibilities.mentioned: "direct",
             self.Visibilities.local_only: "public",
         }
+
+        poll = None
+        if self.type == Post.Types.question and self.type_data:
+            poll = {
+                "id": self.id,
+                "expires_at": None,
+                "expired": False,
+                "multiple": self.type_data.mode == "anyOf",
+                "votes_count": 0,
+                "voters_count": self.type_data.voter_count,
+                "voted": False,
+                "own_votes": [],
+                "options": [],
+                "emojis": [],
+            }
+
+            if self.type_data.end_time:
+                poll["expires_at"] = format_ld_date(self.type_data.end_time)
+                poll["is_expired"] = timezone.now() >= self.type_data.end_time
+
+            for option in self.type_data.options:
+                poll["options"].append(
+                    {
+                        "title": option.name,
+                        "votes_count": option.votes,
+                    }
+                )
+                poll["votes_count"] += option.votes
+
         value = {
             "id": self.pk,
             "uri": self.object_uri,
@@ -1085,7 +1110,7 @@ class Post(StatorModel):
                 reply_parent.author_id if reply_parent else None
             ),
             "reblog": None,
-            "poll": None,
+            "poll": poll,
             "card": None,
             "language": None,
             "text": self.safe_content_remote(),
