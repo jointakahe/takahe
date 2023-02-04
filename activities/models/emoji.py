@@ -123,6 +123,7 @@ class Emoji(StatorModel):
 
     class Meta:
         unique_together = ("domain", "shortcode")
+        index_together = StatorModel.Meta.index_together
 
     class urls(urlman.Urls):
         admin = "/admin/emoji/"

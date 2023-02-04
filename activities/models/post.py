@@ -319,6 +319,7 @@ class Post(StatorModel):
                 name="ix_post_local_public_created",
             ),
         ]
+        index_together = StatorModel.Meta.index_together
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"

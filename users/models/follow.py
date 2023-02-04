@@ -146,6 +146,7 @@ class Follow(StatorModel):
 
     class Meta:
         unique_together = [("source", "target")]
+        index_together = StatorModel.Meta.index_together
 
     def __str__(self):
         return f"#{self.id}: {self.source} → {self.target}"

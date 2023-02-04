@@ -227,6 +227,7 @@ class Identity(StatorModel):
     class Meta:
         verbose_name_plural = "identities"
         unique_together = [("username", "domain")]
+        index_together = StatorModel.Meta.index_together
 
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"

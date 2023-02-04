@@ -136,6 +136,7 @@ class Block(StatorModel):
 
     class Meta:
         unique_together = [("source", "target", "mute")]
+        index_together = StatorModel.Meta.index_together
 
     def __str__(self):
         return f"#{self.id}: {self.source} blocks {self.target}"
