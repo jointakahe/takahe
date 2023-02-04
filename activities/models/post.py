@@ -2,7 +2,6 @@ import datetime
 import hashlib
 import json
 import mimetypes
-import re
 import ssl
 from collections.abc import Iterable
 from typing import Optional
@@ -26,7 +25,7 @@ from activities.models.post_types import (
     PostTypeDataEncoder,
 )
 from core.exceptions import capture_message
-from core.html import ContentRenderer, strip_html
+from core.html import ContentRenderer, FediverseHtmlParser
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -320,6 +319,7 @@ class Post(StatorModel):
                 name="ix_post_local_public_created",
             ),
         ]
+        index_together = StatorModel.Meta.index_together
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"
@@ -373,10 +373,6 @@ class Post(StatorModel):
     ### Content cleanup and extraction ###
     def clean_type_data(self, value):
         PostTypeData.parse_obj(value)
-
-    mention_regex = re.compile(
-        r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_\.]+[\w\d\-_]+)?)"
-    )
 
     def _safe_content_note(self, *, local: bool = True):
         return ContentRenderer(local=local).render_post(self.content, self)
@@ -474,12 +470,12 @@ class Post(StatorModel):
                 # Maintain local-only for replies
                 if reply_to.visibility == reply_to.Visibilities.local_only:
                     visibility = reply_to.Visibilities.local_only
-            # Find hashtags in this post
-            hashtags = Hashtag.hashtags_from_content(content) or None
             # Find emoji in this post
             emojis = Emoji.emojis_from_content(content, None)
-            # Strip all HTML and apply linebreaks filter
-            content = linebreaks_filter(strip_html(content))
+            # Strip all unwanted HTML and apply linebreaks filter, grabbing hashtags on the way
+            parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
+            content = parser.html
+            hashtags = sorted(parser.hashtags) or None
             # Make the Post object
             post = cls.objects.create(
                 author=author,
@@ -512,12 +508,13 @@ class Post(StatorModel):
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
-            self.content = linebreaks_filter(strip_html(content))
+            parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
+            self.content = parser.html
+            self.hashtags = sorted(parser.hashtags) or None
             self.summary = summary or None
             self.sensitive = bool(summary)
             self.visibility = visibility
             self.edited = timezone.now()
-            self.hashtags = Hashtag.hashtags_from_content(content) or None
             self.mentions.set(self.mentions_from_content(content, self.author))
             self.emojis.set(Emoji.emojis_from_content(content, None))
             self.attachments.set(attachments or [])
@@ -525,9 +522,9 @@ class Post(StatorModel):
 
     @classmethod
     def mentions_from_content(cls, content, author) -> set[Identity]:
-        mention_hits = cls.mention_regex.findall(content)
+        mention_hits = FediverseHtmlParser(content, find_mentions=True).mentions
         mentions = set()
-        for precursor, handle in mention_hits:
+        for handle in mention_hits:
             handle = handle.lower()
             if "@" in handle:
                 username, domain = handle.split("@", 1)
@@ -724,7 +721,10 @@ class Post(StatorModel):
             .select_related("target")
         )
         async for block in blocks:
-            targets.remove(block.target)
+            try:
+                targets.remove(block.target)
+            except KeyError:
+                pass
         # Now dedupe the targets based on shared inboxes (we only keep one per
         # shared inbox)
         deduped_targets = set()
@@ -752,11 +752,20 @@ class Post(StatorModel):
         or it's from a blocked domain.
         """
         try:
+            # Ensure data has the primary fields of all Posts
+            if (
+                not isinstance(data["id"], str)
+                or not isinstance(data["attributedTo"], str)
+                or not isinstance(data["type"], str)
+            ):
+                raise TypeError()
             # Ensure the domain of the object's actor and ID match to prevent injection
             if urlparse(data["id"]).hostname != urlparse(data["attributedTo"]).hostname:
                 raise ValueError("Object's ID domain is different to its author")
-        except (TypeError, KeyError):
-            raise ValueError("Object data is not a recognizable ActivityPub object")
+        except (TypeError, KeyError) as ex:
+            raise cls.DoesNotExist(
+                "Object data is not a recognizable ActivityPub object"
+            ) from ex
 
         # Do we have one with the right ID?
         created = False

@@ -1,155 +1,117 @@
-from unittest.mock import Mock
-
 import pytest
 
-from core.html import ContentRenderer, html_to_plaintext, sanitize_html
-
-
-def test_html_to_plaintext():
-
-    assert html_to_plaintext("<p>Hi!</p>") == "Hi!"
-    assert html_to_plaintext("<p>Hi!<br>There</p>") == "Hi!\nThere"
-    assert (
-        html_to_plaintext("<p>Hi!</p>\n\n<p>How are you?</p>") == "Hi!\n\nHow are you?"
-    )
-
-    assert (
-        html_to_plaintext("<p>Hi!</p>\n\n<p>How are<br> you?</p><p>today</p>")
-        == "Hi!\n\nHow are\n you?\n\ntoday"
-    )
-
-    assert (
-        html_to_plaintext(
-            '<p><a href="https://fedi.takahe.social/with/a/long/path">'
-            '<b>The</b> <img src="takahe.png"> Link</a> '
-            '<a href="">Empty href</a> '
-            "<a>Empty A</a></p>"
-        )
-        == "https://fedi.takahe.social/with/a/long/path Empty href Empty A"
-    )
-
-
-def test_sanitize_post():
-
-    assert sanitize_html("<p>Hello!</p>") == "<p>Hello!</p>"
-    assert sanitize_html("<p>It&#39;s great</p>") == "<p>It&#39;s great</p>"
-
-    # Note that we only want to linkify things with protocol prefixes to prevent
-    # too many false positives.
-    assert sanitize_html("<p>test.com</p>") == "<p>test.com</p>"
-    assert (
-        sanitize_html("<p>https://test.com</p>")
-        == '<p><a href="https://test.com" rel="nofollow">https://test.com</a></p>'
-    )
-    assert (
-        sanitize_html("<p>@someone@subdomain.some-domain.com</p>")
-        == "<p>@someone@subdomain.some-domain.com</p>"
-    )
-
-
-def test_shorten_url():
-    full_url = (
-        "https://social.example.com/a-long/path/2023/01/16/that-should-be-shortened"
-    )
-    assert (
-        sanitize_html(f"<p>{full_url}</p>")
-        == f'<p><a href="{full_url}" rel="nofollow" class="ellipsis" title="{full_url}">social.example.com/a-long/path</a></p>'
-    )
-
-    assert (
-        sanitize_html(
-            f'<p><a href="{full_url}">This is a long link text, but cannot be shortened as a URL</a></p>'
-        )
-        == f'<p><a href="{full_url}" rel="nofollow">This is a long link text, but cannot be shortened as a URL</a></p>'
-    )
+from core.html import FediverseHtmlParser
 
 
 @pytest.mark.django_db
-def test_link_preservation():
+def test_parser(identity):
     """
-    We want to:
-     - Preserve incoming links from other servers
-     - Linkify mentions and hashtags
-     - Not have these all step on each other!
+    Validates the HtmlParser in its various output modes
     """
-    renderer = ContentRenderer(local=True)
-    fake_mention = Mock()
-    fake_mention.username = "andrew"
-    fake_mention.domain_id = "aeracode.org"
-    fake_mention.urls.view = "/@andrew@aeracode.org/"
-    fake_post = Mock()
-    fake_post.mentions.all.return_value = [fake_mention]
-    fake_post.author.domain.uri_domain = "example.com"
-    fake_post.emojis.all.return_value = []
 
+    # Basic tag allowance
+    parser = FediverseHtmlParser("<p>Hello!</p><script></script>")
+    assert parser.html == "<p>Hello!</p>"
+    assert parser.plain_text == "Hello!"
+
+    # Newline erasure
+    parser = FediverseHtmlParser("<p>Hi!</p>\n\n<p>How are you?</p>")
+    assert parser.html == "<p>Hi!</p><p>How are you?</p>"
+    assert parser.plain_text == "Hi!\n\nHow are you?"
+
+    # Trying to be evil
+    parser = FediverseHtmlParser("<scri<span></span>pt>")
+    assert "<scr" not in parser.html
+    parser = FediverseHtmlParser("<scri #hashtag pt>")
+    assert "<scr" not in parser.html
+
+    # Entities are escaped
+    parser = FediverseHtmlParser("<p>It&#39;s great</p>", find_hashtags=True)
+    assert parser.html == "<p>It&#x27;s great</p>"
+    assert parser.plain_text == "It's great"
+    assert parser.hashtags == set()
+
+    # Linkify works, but only with protocol prefixes
+    parser = FediverseHtmlParser("<p>test.com</p>")
+    assert parser.html == "<p>test.com</p>"
+    assert parser.plain_text == "test.com"
+    parser = FediverseHtmlParser("<p>https://test.com</p>")
     assert (
-        renderer.render_post(
-            'Hello @andrew, I want to link to this <span>#</span>hashtag: <a href="http://example.com/@andrew/#notahashtag">here</a> and rewrite <a href="https://example.com/tags/thishashtag/">#thishashtag</a>',
-            fake_post,
-        )
-        == 'Hello <a href="/@andrew@aeracode.org/">@andrew</a>, I want to link to this <a href="/tags/hashtag/" class="hashtag">#hashtag</a>: <a href="http://example.com/@andrew/#notahashtag" rel="nofollow">here</a> and rewrite <a href="/tags/thishashtag/" class="hashtag">#thishashtag</a>'
+        parser.html == '<p><a href="https://test.com" rel="nofollow">test.com</a></p>'
     )
+    assert parser.plain_text == "https://test.com"
 
-
-@pytest.mark.django_db
-def test_list_rendering():
-    """
-    We want to:
-     - Preserve incoming links from other servers
-     - Linkify mentions and hashtags
-     - Not have these all step on each other!
-    """
-    renderer = ContentRenderer(local=True)
-    fake_mention = Mock()
-    fake_mention.username = "andrew"
-    fake_mention.domain_id = "aeracode.org"
-    fake_mention.urls.view = "/@andrew@aeracode.org/"
-    fake_post = Mock()
-    fake_post.mentions.all.return_value = [fake_mention]
-    fake_post.author.domain.uri_domain = "example.com"
-    fake_post.emojis.all.return_value = []
-
+    # Links are preserved
+    parser = FediverseHtmlParser("<a href='https://takahe.social'>takahe social</a>")
     assert (
-        renderer.render_post(
-            "<p>Ok. The roster so far is:</p><ul><li>Infosec.exchange (mastodon)</li><li>pixel.Infosec.exchange (pixelfed)</li><li>video.Infosec.exchange (peertube)</li><li>relay.Infosec.exchange (activitypub relay)</li><li>risky.af (alt mastodon)</li></ul><p>What’s next?  I think I promised some people here bookwyrm</p>",
-            fake_post,
-        )
-        == "<p>Ok. The roster so far is:</p><p>Infosec.exchange (mastodon)<br>pixel.Infosec.exchange (pixelfed)<br>video.Infosec.exchange (peertube)<br>relay.Infosec.exchange (activitypub relay)<br>risky.af (alt mastodon)</p><p>What’s next?  I think I promised some people here bookwyrm</p>"
+        parser.html
+        == '<a href="https://takahe.social" rel="nofollow">takahe social</a>'
+    )
+    assert parser.plain_text == "https://takahe.social"
+
+    # Very long links are shortened
+    full_url = "https://social.example.com/a-long/path/that-should-be-shortened"
+    parser = FediverseHtmlParser(f"<p>{full_url}</p>")
+    assert (
+        parser.html
+        == f'<p><a href="{full_url}" rel="nofollow" class="ellipsis" title="{full_url.removeprefix("https://")}">social.example.com/a-long/path</a></p>'
+    )
+    assert (
+        parser.plain_text
+        == "https://social.example.com/a-long/path/that-should-be-shortened"
     )
 
-
-@pytest.mark.django_db
-def test_link_mixcase_mentions():
-    renderer = ContentRenderer(local=True)
-    fake_mention = Mock()
-    fake_mention.username = "Manfre"
-    fake_mention.domain_id = "manfre.net"
-    fake_mention.urls.view = "/@Manfre@manfre.net/"
-    fake_mention2 = Mock()
-    fake_mention2.username = "manfre"
-    fake_mention2.domain_id = "takahe.social"
-    fake_mention2.urls.view = "https://takahe.social/@manfre@takahe.social/"
-
-    unfetched_mention = Mock()
-    unfetched_mention.username = None
-    unfetched_mention.domain_id = None
-    unfetched_mention.urls.view = "/None@None/"
-
-    fake_post = Mock()
-    fake_post.mentions.all.return_value = [
-        fake_mention,
-        fake_mention2,
-        unfetched_mention,
-    ]
-    fake_post.author.domain.uri_domain = "example.com"
-    fake_post.emojis.all.return_value = []
-
-    assert renderer.render_post(
-        "@Manfre@manfre.net @mAnFrE@takahe.social @manfre@manfre.net @unfetched@manfre.net",
-        fake_post,
-    ) == (
-        '<a href="/@Manfre@manfre.net/">@Manfre</a> '
-        '<a href="https://takahe.social/@manfre@takahe.social/">@mAnFrE@takahe.social</a> '
-        '<a href="/@Manfre@manfre.net/">@manfre</a> '
-        "@unfetched@manfre.net"
+    # Make sure things that look like mentions are left alone with no mentions supplied.
+    parser = FediverseHtmlParser(
+        "<p>@test@example.com</p>",
+        find_mentions=True,
+        find_hashtags=True,
+        find_emojis=True,
     )
+    assert parser.html == "<p>@test@example.com</p>"
+    assert parser.plain_text == "@test@example.com"
+    assert parser.mentions == {"test@example.com"}
+
+    # Make sure mentions work when there is a mention supplied
+    parser = FediverseHtmlParser(
+        "<p>@test@example.com</p>",
+        mentions=[identity],
+        find_hashtags=True,
+        find_emojis=True,
+    )
+    assert parser.html == '<p><a href="/@test@example.com/">@test</a></p>'
+    assert parser.plain_text == "@test@example.com"
+    assert parser.mentions == {"test@example.com"}
+
+    # Ensure mentions are case insensitive
+    parser = FediverseHtmlParser(
+        "<p>@TeSt@ExamPle.com</p>",
+        mentions=[identity],
+        find_hashtags=True,
+        find_emojis=True,
+    )
+    assert parser.html == '<p><a href="/@test@example.com/">@TeSt</a></p>'
+    assert parser.plain_text == "@TeSt@ExamPle.com"
+    assert parser.mentions == {"test@example.com"}
+
+    # Ensure hashtags are linked, even through spans, but not within hrefs
+    parser = FediverseHtmlParser(
+        '<a href="http://example.com#notahashtag">something</a> <span>#</span>hashtag <a href="https://example.com/tags/hashtagtwo/">#hashtagtwo</a>',
+        find_hashtags=True,
+        find_emojis=True,
+    )
+    assert (
+        parser.html
+        == '<a href="http://example.com#notahashtag" rel="nofollow">something</a> <a href="/tags/hashtag/">#hashtag</a> <a href="/tags/hashtagtwo/">#hashtagtwo</a>'
+    )
+    assert parser.plain_text == "http://example.com#notahashtag #hashtag #hashtagtwo"
+    assert parser.hashtags == {"hashtag", "hashtagtwo"}
+
+    # Ensure lists are rendered reasonably
+    parser = FediverseHtmlParser(
+        "<p>List:</p><ul><li>One</li><li>Two</li><li>Three</li></ul><p>End!</p>",
+        find_hashtags=True,
+        find_emojis=True,
+    )
+    assert parser.html == "<p>List:</p><p>One<br>Two<br>Three</p><p>End!</p>"
+    assert parser.plain_text == "List:\n\nOne\nTwo\nThree\n\nEnd!"

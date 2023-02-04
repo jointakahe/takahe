@@ -14,8 +14,9 @@ in alpha. For more information about Takahē, see
    :maxdepth: 2
    :caption: Contents:
 
-   installation
    features
+   installation
+   upgrading
    contributing
    domains
    moderation

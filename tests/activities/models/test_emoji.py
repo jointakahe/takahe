@@ -42,3 +42,20 @@ def test_emoji_ingestion(identity):
         create=True,
     )
     assert emoji2.shortcode == "emoji2"
+
+    cased_emoji = Emoji.by_ap_tag(
+        identity.domain,
+        {
+            "icon": {
+                "type": "Image",
+                "url": "https://example.com/emoji/custom/CasedEmoji.png",
+                "mediaType": "image/png",
+            },
+            "id": "https://example.com/emoji/custom/CasedEmoji.png",
+            "nameMap": {"und": ":CasedEmoji:"},
+            "type": "Emoji",
+            "updated": "1970-01-01T00:00:00Z",
+        },
+        create=True,
+    )
+    assert cased_emoji.shortcode == "CasedEmoji"

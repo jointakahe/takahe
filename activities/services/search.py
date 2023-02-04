@@ -59,7 +59,7 @@ class SearchService:
         else:
             for identity in Identity.objects.filter(username=handle)[:20]:
                 results.add(identity)
-            for identity in Identity.objects.filter(username__startswith=handle)[:20]:
+            for identity in Identity.objects.filter(username__istartswith=handle)[:20]:
                 results.add(identity)
         return results
 
@@ -94,7 +94,7 @@ class SearchService:
             return identity
 
         # Is it a post?
-        elif type == "note":
+        elif type in [value.lower() for value in Post.Types.values]:
             # Try and retrieve the post by URI
             # (we do not trust the JSON we just got - fetch from source!)
             try:

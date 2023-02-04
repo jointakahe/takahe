@@ -3,7 +3,7 @@ from django.template.defaultfilters import linebreaks_filter
 
 from activities.models import FanOut
 from core.files import resize_image
-from core.html import strip_html
+from core.html import FediverseHtmlParser
 from users.models import (
     Block,
     BlockStates,
@@ -211,7 +211,7 @@ class IdentityService:
         Safely sets a summary and turns linebreaks into HTML
         """
         if summary:
-            self.identity.summary = linebreaks_filter(strip_html(summary))
+            self.identity.summary = FediverseHtmlParser(linebreaks_filter(summary)).html
         else:
             self.identity.summary = None
         self.identity.save()

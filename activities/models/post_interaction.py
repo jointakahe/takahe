@@ -162,7 +162,9 @@ class PostInteraction(StatorModel):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        index_together = [["type", "identity", "post"]]
+        index_together = [
+            ["type", "identity", "post"]
+        ] + StatorModel.Meta.index_together
 
     ### Display helpers ###
 

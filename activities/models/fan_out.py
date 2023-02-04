@@ -215,7 +215,9 @@ class FanOutStates(StateGraph):
                             fan_out.identity.shared_inbox_uri
                             or fan_out.identity.inbox_uri
                         ),
-                        body=canonicalise(fan_out.subject_identity.to_update_ap()),
+                        body=canonicalise(
+                            await sync_to_async(fan_out.subject_identity.to_update_ap)()
+                        ),
                     )
                 except httpx.RequestError:
                     return

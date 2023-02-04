@@ -4,7 +4,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
-from core.html import html_to_plaintext
+from core.html import FediverseHtmlParser
 from core.models.config import Config
 from users.decorators import identity_required
 from users.models import IdentityStates
@@ -65,7 +65,11 @@ class ProfilePage(FormView):
         identity = self.request.identity
         return {
             "name": identity.name,
-            "summary": html_to_plaintext(identity.summary) if identity.summary else "",
+            "summary": (
+                FediverseHtmlParser(identity.summary).plain_text
+                if identity.summary
+                else ""
+            ),
             "icon": identity.icon and identity.icon.url,
             "image": identity.image and identity.image.url,
             "discoverable": identity.discoverable,

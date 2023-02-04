@@ -102,6 +102,7 @@ class StatorModel(models.Model):
 
     class Meta:
         abstract = True
+        index_together = [("state_ready", "state_locked_until", "state")]
         # Need this empty indexes to ensure child Models have a Meta.indexes
         # that will look to add indexes (that we inject with class_prepared)
         indexes: list = []

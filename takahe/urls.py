@@ -19,6 +19,7 @@ from users.views import (
 
 urlpatterns = [
     path("", core.homepage),
+    path("robots.txt", core.RobotsTxt.as_view()),
     path("manifest.json", core.AppManifest.as_view()),
     # Activity views
     path("notifications/", timelines.Notifications.as_view(), name="notifications"),

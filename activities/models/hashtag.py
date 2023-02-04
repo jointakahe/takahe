@@ -6,7 +6,6 @@ from asgiref.sync import sync_to_async
 from django.db import models
 from django.utils import timezone
 
-from core.html import strip_html
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 
@@ -166,16 +165,6 @@ class Hashtag(StatorModel):
                 day = int(parts[2])
                 results[date(year, month, day)] = val
         return dict(sorted(results.items(), reverse=True)[:num])
-
-    @classmethod
-    def hashtags_from_content(cls, content) -> list[str]:
-        """
-        Return a parsed and sanitized of hashtags found in content without
-        leading '#'.
-        """
-        hashtag_hits = cls.hashtag_regex.findall(strip_html(content))
-        hashtags = sorted({tag.lower() for tag in hashtag_hits})
-        return list(hashtags)
 
     def to_mastodon_json(self):
         return {

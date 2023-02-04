@@ -43,6 +43,20 @@ def test_fetch_post(httpx_mock: HTTPXMock, config_system):
 
 
 @pytest.mark.django_db
+def test_post_create_edit(identity: Identity, config_system):
+    """
+    Tests that creating/editing a post works, and extracts mentions and hashtags.
+    """
+    post = Post.create_local(author=identity, content="Hello #world I am @test")
+    assert post.hashtags == ["world"]
+    assert list(post.mentions.all()) == [identity]
+
+    post.edit_local(content="Now I like #hashtags")
+    assert post.hashtags == ["hashtags"]
+    assert list(post.mentions.all()) == []
+
+
+@pytest.mark.django_db
 def test_linkify_mentions_remote(
     identity, identity2, remote_identity, remote_identity2
 ):

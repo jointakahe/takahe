@@ -24,12 +24,12 @@ def test_question_post(config_system, identity, remote_identity, httpx_mock):
                 {
                     "name": "Option 1",
                     "type": "Note",
-                    "replies": {"type": "Collection", "totalItems": 0},
+                    "replies": {"type": "Collection", "totalItems": 2},
                 },
                 {
                     "name": "Option 2",
                     "type": "Note",
-                    "replies": {"type": "Collection", "totalItems": 0},
+                    "replies": {"type": "Collection", "totalItems": 1},
                 },
             ],
             "content": '<p>This is a poll :python: </p><p><span class="h-card"><a href="https://ehakat.manfre.net/@mike/" class="u-url mention">@<span>mike</span></a></span></p>',
@@ -51,7 +51,7 @@ def test_question_post(config_system, identity, remote_identity, httpx_mock):
             },
             "as:sensitive": False,
             "attributedTo": "https://remote.test/test-actor/",
-            "toot:votersCount": 0,
+            "toot:votersCount": 3,
         },
         "published": "2022-12-15T22:03:59Z",
     }
@@ -60,4 +60,10 @@ def test_question_post(config_system, identity, remote_identity, httpx_mock):
         data=canonicalise(data["object"], include_security=True), create=True
     )
     assert post.type == Post.Types.question
-    QuestionData.parse_obj(post.type_data)
+
+    question_data = QuestionData.parse_obj(post.type_data)
+    assert question_data.voter_count == 3
+    assert isinstance(question_data.options, list)
+    assert len(question_data.options) == 2
+    assert question_data.options[0].votes == 2
+    assert question_data.options[1].votes == 1

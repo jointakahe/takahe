@@ -14,7 +14,7 @@ from activities.models import (
     TimelineEvent,
 )
 from core.files import blurhash_image, resize_image
-from core.html import html_to_plaintext
+from core.html import FediverseHtmlParser
 from core.models import Config
 from users.decorators import identity_required
 
@@ -59,7 +59,7 @@ class Compose(FormView):
             self.request = request
             self.fields["text"].widget.attrs[
                 "_"
-            ] = f"""
+            ] = rf"""
                 init
                     -- Move cursor to the end of existing text
                     set my.selectionStart to my.value.length
@@ -67,7 +67,8 @@ class Compose(FormView):
 
                 on load or input
                 -- Unicode-aware counting to match Python
-                set characters to Array.from(my.value.trim()).length
+                -- <LF> will be normalized as <CR><LF> in Django
+                set characters to Array.from(my.value.replaceAll('\n','\r\n').trim()).length
                 put {Config.system.post_length} - characters into #character-counter
 
                 if characters > {Config.system.post_length} then
@@ -111,7 +112,7 @@ class Compose(FormView):
                 {
                     "reply_to": self.reply_to.pk if self.reply_to else "",
                     "visibility": self.post_obj.visibility,
-                    "text": html_to_plaintext(self.post_obj.content),
+                    "text": FediverseHtmlParser(self.post_obj.content).plain_text,
                     "content_warning": self.post_obj.summary,
                 }
             )
