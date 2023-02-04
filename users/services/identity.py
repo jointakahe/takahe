@@ -58,7 +58,8 @@ class IdentityService:
 
     def following(self) -> models.QuerySet[Identity]:
         return (
-            Identity.objects.filter(inbound_follows__source=self.identity)
+            Identity.objects.active()
+            .filter(inbound_follows__source=self.identity)
             .not_deleted()
             .order_by("username")
             .select_related("domain")
