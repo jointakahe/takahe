@@ -16,6 +16,7 @@ from activities.services import PostService
 from api import schemas
 from api.views.base import api_router
 from core.models import Config
+from hatchway import api_view
 
 from ..decorators import identity_required
 from ..pagination import MastodonPaginator
@@ -32,9 +33,9 @@ class PostStatusSchema(Schema):
     media_ids: list[str] = []
 
 
-@api_router.post("/v1/statuses", response=schemas.Status)
 @identity_required
-def post_status(request, details: PostStatusSchema):
+@api_view
+def post_status(request, details: PostStatusSchema) -> schemas.Status:
     # Check text length
     if len(details.status) > Config.system.post_length:
         raise ValidationError("Status is too long")
@@ -69,17 +70,17 @@ def post_status(request, details: PostStatusSchema):
     return post.to_mastodon_json()
 
 
-@api_router.get("/v1/statuses/{id}", response=schemas.Status)
 @identity_required
-def status(request, id: str):
+@api_view
+def status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return post.to_mastodon_json(interactions=interactions)
 
 
-@api_router.delete("/v1/statuses/{id}", response=schemas.Status)
 @identity_required
-def delete_status(request, id: str):
+@api_view
+def delete_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     PostService(post).delete()
     return post.to_mastodon_json()

@@ -296,6 +296,7 @@ urlpatterns = [
     path("actor/outbox/", activitypub.EmptyOutbox.as_view()),
     path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
     # API/Oauth
+    path("api/", include("api.urls")),
     path("api/", api_router.urls),
     path("oauth/authorize", oauth.AuthorizationView.as_view()),
     path("oauth/token", oauth.TokenView.as_view()),
