@@ -143,8 +143,8 @@ class Settings(BaseSettings):
     CACHES_DEFAULT: CacheBackendUrl | None = None
 
     # Stator tuning
-    STATOR_CONCURRENCY: int = 100
-    STATOR_CONCURRENCY_PER_MODEL: int = 40
+    STATOR_CONCURRENCY: int = 50
+    STATOR_CONCURRENCY_PER_MODEL: int = 15
 
     PGHOST: str | None = None
     PGPORT: int | None = 5432

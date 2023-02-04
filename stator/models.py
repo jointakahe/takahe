@@ -84,7 +84,7 @@ class StatorModel(models.Model):
     state: StateField
 
     # If this row is up for transition attempts (which it always is on creation!)
-    state_ready = models.BooleanField(default=True)
+    state_ready = models.BooleanField(default=True, db_index=True)
 
     # When the state last actually changed, or the date of instance creation
     state_changed = models.DateTimeField(auto_now_add=True)
@@ -102,6 +102,7 @@ class StatorModel(models.Model):
 
     class Meta:
         abstract = True
+        index_together = ["state_ready", "state_locked_until", "state"]
         # Need this empty indexes to ensure child Models have a Meta.indexes
         # that will look to add indexes (that we inject with class_prepared)
         indexes: list = []
