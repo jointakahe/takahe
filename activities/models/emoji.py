@@ -242,7 +242,7 @@ class Emoji(StatorModel):
         emoji_hits = FediverseHtmlParser(
             content, find_emojis=True, emoji_domain=domain
         ).emojis
-        emojis = sorted({emoji.lower() for emoji in emoji_hits})
+        emojis = sorted({emoji for emoji in emoji_hits})
         return list(
             cls.objects.filter(local=(domain is None) or domain.local)
             .usable(domain)
@@ -291,7 +291,7 @@ class Emoji(StatorModel):
                 raise ValueError("No mimetype on emoji JSON")
 
         # create
-        shortcode = name.lower().strip(":")
+        shortcode = name.strip(":")
         category = (icon.get("category") or "")[:100]
 
         if not domain.local:
