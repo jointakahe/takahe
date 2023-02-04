@@ -66,13 +66,13 @@
                 </div>
             {% endif %}
 
-            {% if identity.local and identity.config_identity.visible_follows %}
-                <div class="view-options follows">
-                    <a href="{{ identity.urls.view }}" {% if not follows_page %}class="selected"{% endif %}><strong>{{ post_count }}</strong> posts</a>
-                    <a href="{{ identity.urls.following }}" {% if not inbound and follows_page %}class="selected"{% endif %}><strong>{{ following_count }}</strong> following</a>
-                    <a href="{{ identity.urls.followers }}" {% if inbound and follows_page %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</a>
-                </div>
-            {% endif %}
+            <div class="view-options follows">
+                <a href="{{ identity.urls.view }}" {% if not follows_page %}class="selected"{% endif %}><strong>{{ post_count }}</strong> posts</a>
+        {% if identity.local and identity.config_identity.visible_follows %}
+                <a href="{{ identity.urls.following }}" {% if not inbound and follows_page %}class="selected"{% endif %}><strong>{{ following_count }}</strong> following</a>
+                <a href="{{ identity.urls.followers }}" {% if inbound and follows_page %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</a>
+        {% endif %}                
+            </div>
 
             {% if not identity.local %}
                 {% if identity.outdated and not identity.name %}
