@@ -2,6 +2,7 @@ from types import NoneType, UnionType
 from typing import (  # type: ignore[attr-defined]
     Annotated,
     Any,
+    Literal,
     Optional,
     TypeVar,
     Union,
@@ -10,6 +11,9 @@ from typing import (  # type: ignore[attr-defined]
     get_args,
     get_origin,
 )
+
+from django.core import files
+from pydantic import BaseModel
 
 from .http import ApiResponse
 
@@ -119,3 +123,23 @@ def extract_output_type(annotation):
         if get_origin(annotation) == ApiResponse:
             return get_args(annotation)[0]
     return annotation
+
+
+def acceptable_input(annotation) -> bool:
+    """
+    Returns if this annotation is something we think we can accept as input
+    """
+    _, inner_type = extract_signifier(annotation)
+    try:
+        if issubclass(inner_type, BaseModel):
+            return True
+    except TypeError:
+        pass
+    if inner_type in [str, int, list, tuple, bool, Any, files.File, type(None)]:
+        return True
+    origin = get_origin(inner_type)
+    if origin == Literal:
+        return True
+    if origin in [Union, UnionType, dict, list, tuple]:
+        return all(acceptable_input(a) for a in get_args(inner_type))
+    return False

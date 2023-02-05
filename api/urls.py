@@ -40,6 +40,7 @@ urlpatterns = [
     path("v1/apps", apps.add_app),
     # Filters
     path("v2/filters", filters.list_filters),
+    path("v1/filters", filters.list_filters),
     # Instance
     path("v1/instance", instance.instance_info_v1),
     path("v2/instance", instance.instance_info_v2),

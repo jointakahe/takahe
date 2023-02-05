@@ -18,7 +18,7 @@ from users.shortcuts import by_handle_or_404
 
 @identity_required
 @api_view.get
-def verify_credentials(request):
+def verify_credentials(request) -> schemas.Account:
     return schemas.Account.from_identity(request.identity, source=True)
 
 
@@ -26,13 +26,13 @@ def verify_credentials(request):
 @api_view.patch
 def update_credentials(
     request,
-    display_name: QueryOrBody[str | None],
-    note: QueryOrBody[str | None],
-    discoverable: QueryOrBody[bool | None],
-    source: QueryOrBody[dict[str, Any] | None],
-    fields_attributes: QueryOrBody[dict[str, dict[str, str]] | None],
-    avatar: File | None,
-    header: File | None,
+    display_name: QueryOrBody[str | None] = None,
+    note: QueryOrBody[str | None] = None,
+    discoverable: QueryOrBody[bool | None] = None,
+    source: QueryOrBody[dict[str, Any] | None] = None,
+    fields_attributes: QueryOrBody[dict[str, dict[str, str]] | None] = None,
+    avatar: File | None = None,
+    header: File | None = None,
 ) -> schemas.Account:
     identity = request.identity
     service = IdentityService(identity)

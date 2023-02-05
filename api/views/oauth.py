@@ -1,4 +1,5 @@
 import base64
+import json
 import secrets
 from urllib.parse import urlparse, urlunparse
 
@@ -16,7 +17,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from api.models import Application, Authorization, Token
-from api.parser import FormOrJsonParser
 
 
 class OauthRedirect(HttpResponseRedirect):
@@ -38,6 +38,19 @@ class OauthRedirect(HttpResponseRedirect):
 
         url_parts[4] = query_string
         super().__init__(urlunparse(url_parts))
+
+
+def get_json_and_formdata(request):
+    # Did they submit JSON?
+    if request.content_type == "application/json" and request.body.strip():
+        return json.loads(request.body)
+    # Fall back to form data
+    value = {}
+    for key, item in request.POST.items():
+        value[key] = item
+    for key, item in request.GET.items():
+        value[key] = item
+    return value
 
 
 class AuthorizationView(LoginRequiredMixin, View):
@@ -87,7 +100,7 @@ class AuthorizationView(LoginRequiredMixin, View):
         return render(request, "api/oauth_authorize.html", context)
 
     def post(self, request):
-        post_data = FormOrJsonParser().parse_body(request)
+        post_data = get_json_and_formdata(request)
         # Grab the application and other details again
         redirect_uri = post_data["redirect_uri"]
         scope = post_data["scope"]
@@ -141,7 +154,7 @@ class TokenView(View):
         )
 
     def post(self, request):
-        post_data = FormOrJsonParser().parse_body(request)
+        post_data = get_json_and_formdata(request)
         auth_client_id, auth_client_secret = extract_client_info_from_basic_auth(
             request
         )
@@ -221,7 +234,7 @@ class TokenView(View):
 @method_decorator(csrf_exempt, name="dispatch")
 class RevokeTokenView(View):
     def post(self, request):
-        post_data = FormOrJsonParser().parse_body(request)
+        post_data = get_json_and_formdata(request)
         auth_client_id, auth_client_secret = extract_client_info_from_basic_auth(
             request
         )

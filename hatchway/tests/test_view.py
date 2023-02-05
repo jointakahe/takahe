@@ -208,6 +208,19 @@ def test_api_error():
     assert response.status_code == 401
 
 
+def test_unusable_type():
+    """
+    Tests that you get a nice error when you use a type on an input that
+    Pydantic doesn't understand.
+    """
+
+    with pytest.raises(ValueError):
+
+        @api_view.get
+        def test_view(request, a: RequestFactory):
+            pass
+
+
 def test_get_values():
     """
     Tests that ApiView.get_values correctly handles lists

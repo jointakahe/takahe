@@ -16,4 +16,7 @@ def identity_required(function):
             return JsonResponse({"error": "identity_token_required"}, status=400)
         return function(request, *args, **kwargs)
 
+    # This is for the API only
+    inner.csrf_exempt = True
+
     return inner

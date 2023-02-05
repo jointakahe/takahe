@@ -16,8 +16,10 @@ from .types import (
     PathType,
     QueryOrBodyType,
     QueryType,
+    acceptable_input,
     extract_output_type,
     extract_signifier,
+    is_optional,
 )
 
 
@@ -100,7 +102,11 @@ class ApiView:
             return ([InputSource.body_direct], input_type)
         elif signifier is PathType:
             return ([InputSource.path], input_type)
-        elif signifier is FileType or input_type is files.File:
+        elif (
+            signifier is FileType
+            or input_type is files.File
+            or is_optional(input_type)[1] is files.File
+        ):
             return ([InputSource.file], input_type)
         elif signifier is QueryOrBodyType:
             return ([InputSource.query, InputSource.body], input_type)
@@ -156,8 +162,15 @@ class ApiView:
         last_body_type = None
         # For each input item, work out where to pull it from
         for name, input_type in self.input_types.items():
+            # Do some basic typechecking to stop things that aren't allowed
             if isinstance(input_type, type) and issubclass(input_type, HttpRequest):
                 continue
+            if not acceptable_input(input_type):
+                # Strip away any singifiers for the error
+                _, inner_type = extract_signifier(input_type)
+                raise ValueError(
+                    f"Input argument {name} has an unsupported type {inner_type}"
+                )
             sources, pydantic_type = self.sources_for_input(input_type)
             self.sources[name] = sources
             # Keep count of how many are pulling from the body
@@ -182,9 +195,14 @@ class ApiView:
                         x for x in sources if x != InputSource.body
                     ] + [InputSource.body_direct]
         # Turn all the main arguments into Pydantic parsing models
-        self.input_model = create_model(
-            f"{self.view_name}_input", **pydantic_model_dict
-        )
+        try:
+            self.input_model = create_model(
+                f"{self.view_name}_input", **pydantic_model_dict
+            )
+        except RuntimeError:
+            raise ValueError(
+                f"One or more inputs on view {self.view_name} have a bad configuration"
+            )
         if self.output_type is not None:
             self.output_model = create_model(
                 f"{self.view_name}_output", value=(self.output_type, ...)
@@ -270,6 +288,8 @@ class ApiView:
         # Get pydantic to coerce the output response
         if self.output_type is not None:
             response.data = self.output_model(value=response.data).dict()["value"]
+        elif isinstance(response.data, BaseModel):
+            response.data = response.data.dict()
         response.finalize()
         return response
 
