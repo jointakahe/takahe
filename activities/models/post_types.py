@@ -49,13 +49,14 @@ class QuestionData(BasePostDataType):
         super().__init__(**data)
 
     def to_mastodon_json(self, id):
+        multiple = self.mode == "anyOf"
         value = {
             "id": id,
             "expires_at": None,
             "expired": False,
-            "multiple": self.mode == "anyOf",
+            "multiple": multiple,
             "votes_count": 0,
-            "voters_count": self.voter_count,
+            "voters_count": self.voter_count if multiple else None,
             "voted": False,
             "own_votes": [],
             "options": [],
