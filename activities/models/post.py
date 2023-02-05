@@ -23,6 +23,7 @@ from activities.models.post_types import (
     PostTypeData,
     PostTypeDataDecoder,
     PostTypeDataEncoder,
+    QuestionData,
 )
 from core.exceptions import capture_message
 from core.html import ContentRenderer, FediverseHtmlParser
@@ -1039,35 +1040,6 @@ class Post(StatorModel):
             self.Visibilities.mentioned: "direct",
             self.Visibilities.local_only: "public",
         }
-
-        poll = None
-        if self.type == Post.Types.question and self.type_data:
-            poll = {
-                "id": self.id,
-                "expires_at": None,
-                "expired": False,
-                "multiple": self.type_data.mode == "anyOf",
-                "votes_count": 0,
-                "voters_count": self.type_data.voter_count,
-                "voted": False,
-                "own_votes": [],
-                "options": [],
-                "emojis": [],
-            }
-
-            if self.type_data.end_time:
-                poll["expires_at"] = format_ld_date(self.type_data.end_time)
-                poll["is_expired"] = timezone.now() >= self.type_data.end_time
-
-            for option in self.type_data.options:
-                poll["options"].append(
-                    {
-                        "title": option.name,
-                        "votes_count": option.votes,
-                    }
-                )
-                poll["votes_count"] += option.votes
-
         value = {
             "id": self.pk,
             "uri": self.object_uri,
@@ -1110,7 +1082,9 @@ class Post(StatorModel):
                 reply_parent.author_id if reply_parent else None
             ),
             "reblog": None,
-            "poll": poll,
+            "poll": self.type_data.to_mastodon_json(self.id)
+            if isinstance(self.type_data, QuestionData)
+            else None,
             "card": None,
             "language": None,
             "text": self.safe_content_remote(),

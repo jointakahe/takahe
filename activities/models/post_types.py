@@ -2,7 +2,10 @@ import json
 from datetime import datetime
 from typing import Literal
 
+from django.utils import timezone
 from pydantic import BaseModel, Field
+
+from core.ld import format_ld_date
 
 
 class BasePostDataType(BaseModel):
@@ -44,6 +47,35 @@ class QuestionData(BasePostDataType):
                 options = data.pop("oneOf", None)
             data["options"] = options
         super().__init__(**data)
+
+    def to_mastodon_json(self, id):
+        value = {
+            "id": id,
+            "expires_at": None,
+            "expired": False,
+            "multiple": self.mode == "anyOf",
+            "votes_count": 0,
+            "voters_count": self.voter_count,
+            "voted": False,
+            "own_votes": [],
+            "options": [],
+            "emojis": [],
+        }
+
+        if self.end_time:
+            value["expires_at"] = format_ld_date(self.end_time)
+            value["is_expired"] = timezone.now() >= self.end_time
+
+        for option in self.options or []:
+            value["options"].append(
+                {
+                    "title": option.name,
+                    "votes_count": option.votes,
+                }
+            )
+            value["votes_count"] += option.votes
+
+        return value
 
 
 class ArticleData(BasePostDataType):
