@@ -118,7 +118,7 @@ def familiar_followers(request):
 
 @api_router.get("/v1/accounts/search", response=list[schemas.Account])
 @identity_required
-def search(
+def accounts_search(
     request,
     q: str,
     fetch_identities: bool = Field(False, alias="resolve"),

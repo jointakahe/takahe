@@ -1,16 +1,14 @@
 from typing import Literal
 
-from ninja import Field
-
 from activities.models import PostInteraction
 from activities.services.search import SearchService
 from api import schemas
 from api.decorators import identity_required
-from api.views.base import api_router
+from hatchway import Field, api_view
 
 
-@api_router.get("/v2/search", response=schemas.Search)
 @identity_required
+@api_view.get
 def search(
     request,
     q: str,
@@ -24,7 +22,7 @@ def search(
     min_id: str | None = None,
     limit: int = 20,
     offset: int = 0,
-):
+) -> schemas.Search:
     if limit > 40:
         limit = 40
     result: dict[str, list] = {"accounts": [], "statuses": [], "hashtags": []}

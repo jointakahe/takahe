@@ -18,7 +18,7 @@ def test_basic_view():
     def test_view(
         request,
         a: int,
-        b: QueryOrBody[int] | None = None,
+        b: QueryOrBody[int | None] = None,
         c: str = "x",
     ) -> str:
         if b is None:
@@ -82,6 +82,55 @@ def test_body_direct():
         )
     )
     assert json.loads(response.content) == 123
+
+
+def test_list_response():
+    """
+    Tests that a view with a list response type works correctly
+    """
+
+    class TestModel(BaseModel):
+        number: int
+        name: str
+
+    @api_view
+    def test_view(request) -> list[TestModel]:
+        return [{"name": "Andrew", "number": 1}, {"name": "Alice", "number": 0}]
+
+    response = test_view(RequestFactory().get("/test/"))
+    assert json.loads(response.content) == [
+        {"name": "Andrew", "number": 1},
+        {"name": "Alice", "number": 0},
+    ]
+
+
+def test_no_response():
+    """
+    Tests that a view with no response type returns the contents verbatim
+    """
+
+    @api_view
+    def test_view(request):
+        return [1, "woooooo"]
+
+    response = test_view(RequestFactory().get("/test/"))
+    assert json.loads(response.content) == [1, "woooooo"]
+
+
+def test_wrong_method():
+    """
+    Tests that a view with a method limiter works
+    """
+
+    @api_view.get
+    def test_view(request):
+        return "yay"
+
+    response = test_view(RequestFactory().get("/test/"))
+    assert json.loads(response.content) == "yay"
+
+    response = test_view(RequestFactory().post("/test/"))
+    assert response.status_code == 405
 
 
 def test_get_values():

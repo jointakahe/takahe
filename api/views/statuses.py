@@ -1,9 +1,8 @@
 from typing import Literal
 
 from django.forms import ValidationError
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from ninja import Schema
 
 from activities.models import (
     Post,
@@ -14,9 +13,8 @@ from activities.models import (
 )
 from activities.services import PostService
 from api import schemas
-from api.views.base import api_router
 from core.models import Config
-from hatchway import api_view
+from hatchway import ApiResponse, Schema, api_view
 
 from ..decorators import identity_required
 from ..pagination import MastodonPaginator
@@ -34,7 +32,7 @@ class PostStatusSchema(Schema):
 
 
 @identity_required
-@api_view
+@api_view.post
 def post_status(request, details: PostStatusSchema) -> schemas.Status:
     # Check text length
     if len(details.status) > Config.system.post_length:
@@ -71,7 +69,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
 
 
 @identity_required
-@api_view
+@api_view.get
 def status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -79,16 +77,16 @@ def status(request, id: str) -> schemas.Status:
 
 
 @identity_required
-@api_view
+@api_view.delete
 def delete_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     PostService(post).delete()
     return post.to_mastodon_json()
 
 
-@api_router.get("/v1/statuses/{id}/context", response=schemas.Context)
 @identity_required
-def status_context(request, id: str):
+@api_view.get
+def status_context(request, id: str) -> schemas.Context:
     post = get_object_or_404(Post, pk=id)
     service = PostService(post)
     ancestors, descendants = service.context(request.identity)
@@ -105,9 +103,9 @@ def status_context(request, id: str):
     }
 
 
-@api_router.post("/v1/statuses/{id}/favourite", response=schemas.Status)
 @identity_required
-def favourite_status(request, id: str):
+@api_view.post
+def favourite_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     service = PostService(post)
     service.like_as(request.identity)
@@ -115,9 +113,9 @@ def favourite_status(request, id: str):
     return post.to_mastodon_json(interactions=interactions)
 
 
-@api_router.post("/v1/statuses/{id}/unfavourite", response=schemas.Status)
 @identity_required
-def unfavourite_status(request, id: str):
+@api_view.post
+def unfavourite_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     service = PostService(post)
     service.unlike_as(request.identity)
@@ -125,16 +123,15 @@ def unfavourite_status(request, id: str):
     return post.to_mastodon_json(interactions=interactions)
 
 
-@api_router.get("/v1/statuses/{id}/favourited_by", response=list[schemas.Account])
+@api_view.get
 def favourited_by(
     request: HttpRequest,
-    response: HttpResponse,
     id: str,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> list[schemas.Account]:
     """
     View who favourited a given status.
     """
@@ -155,18 +152,15 @@ def favourited_by(
     )
     pager.jsonify_results(lambda r: r.identity.to_mastodon_json(include_counts=False))
 
+    headers = {}
     if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            ["limit"],
-        )
-
-    return pager.json_results
+        headers = {"link": pager.link_header(request, ["limit"])}
+    return ApiResponse(pager.json_results, headers=headers)
 
 
-@api_router.post("/v1/statuses/{id}/reblog", response=schemas.Status)
 @identity_required
-def reblog_status(request, id: str):
+@api_view.post
+def reblog_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     service = PostService(post)
     service.boost_as(request.identity)
@@ -174,9 +168,9 @@ def reblog_status(request, id: str):
     return post.to_mastodon_json(interactions=interactions)
 
 
-@api_router.post("/v1/statuses/{id}/unreblog", response=schemas.Status)
 @identity_required
-def unreblog_status(request, id: str):
+@api_view.post
+def unreblog_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     service = PostService(post)
     service.unboost_as(request.identity)

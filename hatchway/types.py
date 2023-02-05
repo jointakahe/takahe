@@ -1,45 +1,54 @@
 from types import NoneType, UnionType
 from typing import (  # type: ignore[attr-defined]
+    Annotated,
     Any,
-    Generic,
     Optional,
     TypeVar,
     Union,
+    _AnnotatedAlias,
     _GenericAlias,
+    get_args,
 )
 
 T = TypeVar("T")
 
 
-class Path(Generic[T]):
+class PathType:
     """
     An input pulled from the path (url resolver kwargs)
     """
 
 
-class Query(Generic[T]):
+class QueryType:
     """
     An input pulled from the query parameters (request.GET)
     """
 
 
-class Body(Generic[T]):
+class BodyType:
     """
     An input pulled from the POST body (request.POST or a JSON body)
     """
 
 
-class BodyDirect(Generic[T]):
+class BodyDirectType:
     """
     A Pydantic model whose keys are all looked for in the top-level
     POST data, rather than in a dict under a key named after the input.
     """
 
 
-class QueryOrBody(Generic[T]):
+class QueryOrBodyType:
     """
     An input pulled from either query parameters or post data.
     """
+
+
+Path = Annotated[T, PathType]
+Query = Annotated[T, QueryType]
+Body = Annotated[T, BodyType]
+BodyDirect = Annotated[T, BodyDirectType]
+QueryOrBody = Annotated[T, QueryOrBodyType]
 
 
 def is_optional(annotation) -> tuple[bool, Any]:
@@ -50,7 +59,7 @@ def is_optional(annotation) -> tuple[bool, Any]:
     if (isinstance(annotation, _GenericAlias) and annotation.__origin__ is Union) or (
         isinstance(annotation, UnionType)
     ):
-        args = annotation.__args__
+        args = get_args(annotation)
         if len(args) > 2:
             return False, annotation
         if args[0] is NoneType:
@@ -61,34 +70,24 @@ def is_optional(annotation) -> tuple[bool, Any]:
     return False, annotation
 
 
-def get_params(annotation) -> tuple:
-    """
-    Returns the parameters from within an annotation
-    """
-    if isinstance(annotation, _GenericAlias):
-        return annotation.__args__
-    raise ValueError(f"{annotation} is not a parameterised type")
-
-
 def extract_signifier(annotation) -> tuple[Any, Any]:
     """
-    Given a type annotation, looks a couple of levels deep to see if it
-    can find a Path, Query, Body, etc. type annotation.
+    Given a type annotation, looks to see if it can find a input source
+    signifier (Path, Query, etc.)
 
     If it can, returns (signifier, annotation_without_signifier)
     If not, returns (None, annotation)
     """
-    our_generics = {Path, Query, Body, BodyDirect, QueryOrBody}
-    # Unwrap any Optional wrapper for now
+    our_generics = {PathType, QueryType, BodyType, BodyDirectType, QueryOrBodyType}
+    # Remove any optional-style wrapper
     optional, internal_annotation = is_optional(annotation)
-    # Is the annotation one of ours?
-    if isinstance(internal_annotation, _GenericAlias):
-        if internal_annotation.__origin__ in our_generics:
-            if optional:
-                return (
-                    internal_annotation.__origin__,
-                    Optional[internal_annotation.__args__[0]],
-                )
-            else:
-                return internal_annotation.__origin__, internal_annotation.__args__[0]
+    # Is it an annotation?
+    if isinstance(internal_annotation, _AnnotatedAlias):
+        args = get_args(internal_annotation)
+        for arg in args[1:]:
+            if arg in our_generics:
+                if optional:
+                    return (arg, Optional[args[0]])
+                else:
+                    return (arg, args[0])
     return None, annotation

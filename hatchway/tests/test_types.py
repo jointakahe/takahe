@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from hatchway.types import Query, extract_signifier, is_optional
+from hatchway.types import Query, QueryType, extract_signifier, is_optional
 
 
 def test_is_optional():
@@ -17,6 +17,7 @@ def test_is_optional():
 def test_extract_signifier():
 
     assert extract_signifier(int) == (None, int)
-    assert extract_signifier(Query[int]) == (Query, int)
-    assert extract_signifier(Optional[Query[int]]) == (Query, Optional[int])
-    assert extract_signifier(Query[int] | None) == (Query, Optional[int])
+    assert extract_signifier(Query[int]) == (QueryType, int)
+    assert extract_signifier(Query[Optional[int]]) == (QueryType, Optional[int])
+    assert extract_signifier(Query[int | None]) == (QueryType, Optional[int])
+    assert extract_signifier(Optional[Query[int]]) == (QueryType, Optional[int])

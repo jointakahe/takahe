@@ -1,6 +1,6 @@
 from typing import Literal, Optional, Union
 
-from ninja import Field, Schema
+from hatchway import Field, Schema
 
 
 class Application(Schema):
