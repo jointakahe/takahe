@@ -23,7 +23,7 @@ def test_visible_follows_disabled(client, identity):
     """
     Config.set_identity(identity, "visible_follows", True)
     response = client.get(identity.urls.view)
-    assertContains(response, 'follower', status_code=200)
+    assertContains(response, "follower", status_code=200)
     Config.set_identity(identity, "visible_follows", False)
     response = client.get(identity.urls.view)
-    assertNotContains(response, 'follower', status_code=200)
+    assertNotContains(response, "follower", status_code=200)
