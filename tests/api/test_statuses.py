@@ -75,3 +75,50 @@ def test_mention_format(api_client, identity, remote_identity):
     assert (
         response["text"] == '<p>Hey <a href="https://example.com/@test/">@test</a></p>'
     )
+
+
+@pytest.mark.django_db
+def test_question_format(api_token, identity, remote_identity, client):
+    """
+    Ensures questions are property parsed.
+    """
+    # Make a remote question post and check it
+    post = Post.objects.create(
+        local=False,
+        author=remote_identity,
+        content="<p>Test Question</p>",
+        object_uri="https://remote.test/status/123456",
+        type=Post.Types.question,
+        type_data={
+            "type": "Question",
+            "mode": "oneOf",
+            "options": [
+                {"name": "Option 1", "type": "Note", "votes": 10},
+                {"name": "Option 2", "type": "Note", "votes": 20},
+            ],
+            "voter_count": 30,
+            "end_time": "2022-01-01T23:04:45+00:00",
+        },
+    )
+    response = client.get(
+        f"/api/v1/statuses/{post.id}",
+        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
+        HTTP_ACCEPT="application/json",
+        content_type="application/json",
+    ).json()
+    assert response["text"] == "<p>Test Question</p>"
+    assert response["poll"] == {
+        "id": str(post.id),
+        "expires_at": "2022-01-01T23:04:45.000Z",
+        "expired": True,
+        "multiple": False,
+        "votes_count": 30,
+        "voters_count": 30,
+        "voted": False,
+        "own_votes": [],
+        "options": [
+            {"title": "Option 1", "votes_count": 10},
+            {"title": "Option 2", "votes_count": 20},
+        ],
+        "emojis": [],
+    }

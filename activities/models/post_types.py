@@ -64,7 +64,7 @@ class QuestionData(BasePostDataType):
 
         if self.end_time:
             value["expires_at"] = format_ld_date(self.end_time)
-            value["is_expired"] = timezone.now() >= self.end_time
+            value["expired"] = timezone.now() >= self.end_time
 
         for option in self.options or []:
             value["options"].append(
