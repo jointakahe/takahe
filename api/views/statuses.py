@@ -1,7 +1,9 @@
+from datetime import timedelta
 from typing import Literal
 
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from hatchway import ApiError, ApiResponse, Schema, api_view
 
 from activities.models import (
@@ -18,6 +20,24 @@ from api.pagination import MastodonPaginator, PaginationResult
 from core.models import Config
 
 
+class PostPollSchema(Schema):
+    options: list[str]
+    expires_in: int
+    multiple: bool = False
+    hide_totals: bool = False
+
+    def dict(self):
+        return {
+            "type": "Question",
+            "mode": "anyOf" if self.multiple else "oneOf",
+            "options": [
+                {"name": name, "type": "Note", "votes": 0} for name in self.options
+            ],
+            "voter_count": 0,
+            "end_time": timezone.now() + timedelta(seconds=self.expires_in),
+        }
+
+
 class PostStatusSchema(Schema):
     status: str
     in_reply_to_id: str | None = None
@@ -27,6 +47,7 @@ class PostStatusSchema(Schema):
     language: str | None = None
     scheduled_at: str | None = None
     media_ids: list[str] = []
+    poll: PostPollSchema | None = None
 
 
 class EditStatusSchema(Schema):
@@ -82,6 +103,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
         visibility=visibility_map[details.visibility],
         reply_to=reply_post,
         attachments=attachments,
+        question=details.poll.dict() if details.poll else None,
     )
     # Add their own timeline event for immediate visibility
     TimelineEvent.add_post(request.identity, post)

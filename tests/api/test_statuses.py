@@ -78,9 +78,34 @@ def test_mention_format(api_client, identity, remote_identity):
 
 
 @pytest.mark.django_db
+def test_post_question_status(api_token, identity, client):
+    response = client.post(
+        "/api/v1/statuses",
+        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
+        HTTP_ACCEPT="application/json",
+        content_type="application/json",
+        data={
+            "status": "Hello, world!",
+            "poll": {
+                "options": ["Option 1", "Option 2"],
+                "expires_in": 300,
+            },
+        },
+    ).json()
+
+    assert response["poll"]["id"] == response["id"]
+    assert response["poll"]["options"] == [
+        {"title": "Option 1", "votes_count": 0},
+        {"title": "Option 2", "votes_count": 0},
+    ]
+    assert not response["poll"]["expired"]
+    assert not response["poll"]["multiple"]
+
+
+@pytest.mark.django_db
 def test_question_format(api_token, identity, remote_identity, client):
     """
-    Ensures questions are property parsed.
+    Ensures incoming questions are property parsed.
     """
     # Make a remote question post and check it
     post = Post.objects.create(

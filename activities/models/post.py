@@ -458,6 +458,7 @@ class Post(StatorModel):
         visibility: int = Visibilities.public,
         reply_to: Optional["Post"] = None,
         attachments: list | None = None,
+        question: dict | None = None,
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
@@ -490,6 +491,9 @@ class Post(StatorModel):
             post.emojis.set(emojis)
             if attachments:
                 post.attachments.set(attachments)
+            if question:
+                post.type = question["type"]
+                post.type_data = PostTypeData(__root__=question).__root__
             post.save()
             # Recalculate parent stats for replies
             if reply_to:
