@@ -5,4 +5,6 @@ from hatchway import api_view
 
 @api_view.get
 def emojis(request) -> list[CustomEmoji]:
-    return [e.to_mastodon_json() for e in Emoji.objects.usable().filter(local=True)]
+    return [
+        CustomEmoji.from_emoji(e) for e in Emoji.objects.usable().filter(local=True)
+    ]

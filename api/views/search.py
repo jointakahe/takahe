@@ -33,15 +33,20 @@ def search(
     searcher = SearchService(q, request.identity)
     search_result = searcher.search_all()
     if type is None or type == "accounts":
-        result["accounts"] = [i.to_mastodon_json() for i in search_result["identities"]]
+        result["accounts"] = [
+            schemas.Account.from_identity(i, include_counts=False)
+            for i in search_result["identities"]
+        ]
     if type is None or type == "hashtag":
-        result["hashtag"] = [h.to_mastodon_json() for h in search_result["hashtags"]]
+        result["hashtag"] = [
+            schemas.Tag.from_hashtag(h) for h in search_result["hashtags"]
+        ]
     if type is None or type == "statuses":
         interactions = PostInteraction.get_post_interactions(
             search_result["posts"], request.identity
         )
         result["statuses"] = [
-            p.to_mastodon_json(interactions=interactions)
+            schemas.Status.from_post(p, interactions=interactions)
             for p in search_result["posts"]
         ]
     return schemas.Search(**result)

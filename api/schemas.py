@@ -1,9 +1,8 @@
 from typing import Literal, Optional, Union
 
-from activities.models import Post, PostAttachment, PostInteraction, TimelineEvent
+from activities import models as activities_models
 from hatchway import Field, Schema
-from users.models import Announcement as AnnouncementModel
-from users.models import Identity, User
+from users import models as users_models
 from users.services import IdentityService
 
 
@@ -22,6 +21,10 @@ class CustomEmoji(Schema):
     static_url: str
     visible_in_picker: bool
     category: str
+
+    @classmethod
+    def from_emoji(cls, emoji: activities_models.Emoji) -> "CustomEmoji":
+        return cls(**emoji.to_mastodon_json())
 
 
 class AccountField(Schema):
@@ -60,7 +63,7 @@ class Account(Schema):
     @classmethod
     def from_identity(
         cls,
-        identity: Identity,
+        identity: users_models.Identity,
         include_counts: bool = True,
         source=False,
     ) -> "Account":
@@ -80,7 +83,9 @@ class MediaAttachment(Schema):
     blurhash: str | None
 
     @classmethod
-    def from_post_attachment(cls, attachment: PostAttachment) -> "MediaAttachment":
+    def from_post_attachment(
+        cls, attachment: activities_models.PostAttachment
+    ) -> "MediaAttachment":
         return cls(**attachment.to_mastodon_json())
 
 
@@ -130,7 +135,7 @@ class Status(Schema):
     @classmethod
     def from_post(
         cls,
-        post: Post,
+        post: activities_models.Post,
         interactions: dict[str, set[str]] | None = None,
     ) -> "Status":
         return cls(**post.to_mastodon_json(interactions=interactions))
@@ -138,16 +143,18 @@ class Status(Schema):
     @classmethod
     def map_from_post(
         cls,
-        posts: list[Post],
-        identity: Identity,
+        posts: list[activities_models.Post],
+        identity: users_models.Identity,
     ) -> list["Status"]:
-        interactions = PostInteraction.get_post_interactions(posts, identity)
+        interactions = activities_models.PostInteraction.get_post_interactions(
+            posts, identity
+        )
         return [cls.from_post(post, interactions=interactions) for post in posts]
 
     @classmethod
     def from_timeline_event(
         cls,
-        timeline_event: TimelineEvent,
+        timeline_event: activities_models.TimelineEvent,
         interactions: dict[str, set[str]] | None = None,
     ) -> "Status":
         return cls(**timeline_event.to_mastodon_status_json(interactions=interactions))
@@ -155,10 +162,12 @@ class Status(Schema):
     @classmethod
     def map_from_timeline_event(
         cls,
-        events: list[TimelineEvent],
-        identity: Identity,
+        events: list[activities_models.TimelineEvent],
+        identity: users_models.Identity,
     ) -> list["Status"]:
-        interactions = PostInteraction.get_event_interactions(events, identity)
+        interactions = activities_models.PostInteraction.get_event_interactions(
+            events, identity
+        )
         return [
             cls.from_timeline_event(event, interactions=interactions)
             for event in events
@@ -193,7 +202,7 @@ class Notification(Schema):
     @classmethod
     def from_timeline_event(
         cls,
-        event: TimelineEvent,
+        event: activities_models.TimelineEvent,
     ) -> "Notification":
         return cls(**event.to_mastodon_notification_json())
 
@@ -202,6 +211,13 @@ class Tag(Schema):
     name: str
     url: str
     history: dict
+
+    @classmethod
+    def from_hashtag(
+        cls,
+        hashtag: activities_models.Hashtag,
+    ) -> "Tag":
+        return cls(**hashtag.to_mastodon_json())
 
 
 class Search(Schema):
@@ -228,8 +244,8 @@ class Relationship(Schema):
     @classmethod
     def from_identity_pair(
         cls,
-        identity: Identity,
-        from_identity: Identity,
+        identity: users_models.Identity,
+        from_identity: users_models.Identity,
     ) -> "Relationship":
         return cls(
             **IdentityService(identity).mastodon_json_relationship(from_identity)
@@ -263,6 +279,8 @@ class Announcement(Schema):
 
     @classmethod
     def from_announcement(
-        cls, announcement: AnnouncementModel, user: User
+        cls,
+        announcement: users_models.Announcement,
+        user: users_models.User,
     ) -> "Announcement":
         return cls(**announcement.to_mastodon_json(user=user))
