@@ -3,7 +3,8 @@ from typing import Any
 from django.db.models import Manager, QuerySet
 from django.db.models.fields.files import FieldFile
 from django.template import Variable, VariableDoesNotExist
-from pydantic import BaseModel, Field  # noqa
+from pydantic.fields import Field  # noqa
+from pydantic.main import BaseModel
 from pydantic.utils import GetterDict
 
 

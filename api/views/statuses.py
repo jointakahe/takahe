@@ -13,11 +13,10 @@ from activities.models import (
 )
 from activities.services import PostService
 from api import schemas
+from api.decorators import identity_required
+from api.pagination import MastodonPaginator, PaginationResult
 from core.models import Config
 from hatchway import ApiResponse, Schema, api_view
-
-from ..decorators import identity_required
-from ..pagination import MastodonPaginator
 
 
 class PostStatusSchema(Schema):
@@ -65,7 +64,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
     )
     # Add their own timeline event for immediate visibility
     TimelineEvent.add_post(request.identity, post)
-    return post.to_mastodon_json()
+    return schemas.Status.from_post(post)
 
 
 @identity_required
@@ -73,7 +72,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
 def status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return post.to_mastodon_json(interactions=interactions)
+    return schemas.Status.from_post(post, interactions=interactions)
 
 
 @identity_required
@@ -81,7 +80,7 @@ def status(request, id: str) -> schemas.Status:
 def delete_status(request, id: str) -> schemas.Status:
     post = get_object_or_404(Post, pk=id)
     PostService(post).delete()
-    return post.to_mastodon_json()
+    return schemas.Status.from_post(post)
 
 
 @identity_required
@@ -93,14 +92,15 @@ def status_context(request, id: str) -> schemas.Context:
     interactions = PostInteraction.get_post_interactions(
         ancestors + descendants, request.identity
     )
-    return {
-        "ancestors": [
-            p.to_mastodon_json(interactions=interactions) for p in reversed(ancestors)
+    return schemas.Context(
+        ancestors=[
+            schemas.Status.from_post(p, interactions=interactions)
+            for p in reversed(ancestors)
         ],
-        "descendants": [
-            p.to_mastodon_json(interactions=interactions) for p in descendants
+        descendants=[
+            schemas.Status.from_post(p, interactions=interactions) for p in descendants
         ],
-    }
+    )
 
 
 @identity_required
@@ -110,7 +110,7 @@ def favourite_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.like_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return post.to_mastodon_json(interactions=interactions)
+    return schemas.Status.from_post(post, interactions=interactions)
 
 
 @identity_required
@@ -120,7 +120,7 @@ def unfavourite_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.unlike_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return post.to_mastodon_json(interactions=interactions)
+    return schemas.Status.from_post(post, interactions=interactions)
 
 
 @api_view.get
@@ -131,7 +131,7 @@ def favourited_by(
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-) -> list[schemas.Account]:
+) -> ApiResponse[list[schemas.Account]]:
     """
     View who favourited a given status.
     """
@@ -140,7 +140,7 @@ def favourited_by(
     post = get_object_or_404(Post, pk=id)
 
     paginator = MastodonPaginator()
-    pager = paginator.paginate(
+    pager: PaginationResult[PostInteraction] = paginator.paginate(
         post.interactions.filter(
             type=PostInteraction.Types.like,
             state__in=PostInteractionStates.group_active(),
@@ -150,12 +150,20 @@ def favourited_by(
         since_id=since_id,
         limit=limit,
     )
-    pager.jsonify_results(lambda r: r.identity.to_mastodon_json(include_counts=False))
 
     headers = {}
     if pager.results:
         headers = {"link": pager.link_header(request, ["limit"])}
-    return ApiResponse(pager.json_results, headers=headers)
+    return ApiResponse(
+        [
+            schemas.Account.from_identity(
+                interaction.identity,
+                include_counts=False,
+            )
+            for interaction in pager.results
+        ],
+        headers=headers,
+    )
 
 
 @identity_required
@@ -165,7 +173,7 @@ def reblog_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.boost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return post.to_mastodon_json(interactions=interactions)
+    return schemas.Status.from_post(post, interactions=interactions)
 
 
 @identity_required
@@ -175,4 +183,4 @@ def unreblog_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.unboost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return post.to_mastodon_json(interactions=interactions)
+    return schemas.Status.from_post(post, interactions=interactions)

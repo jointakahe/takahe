@@ -3,7 +3,7 @@ from django.contrib import admin as djadmin
 from django.urls import include, path, re_path
 
 from activities.views import compose, debug, explore, follows, posts, search, timelines
-from api.views import api_router, oauth
+from api.views import oauth
 from core import views as core
 from mediaproxy import views as mediaproxy
 from stator import views as stator
@@ -297,7 +297,6 @@ urlpatterns = [
     path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
     # API/Oauth
     path("api/", include("api.urls")),
-    path("api/", api_router.urls),
     path("oauth/authorize", oauth.AuthorizationView.as_view()),
     path("oauth/token", oauth.TokenView.as_view()),
     path("oauth/revoke", oauth.RevokeTokenView.as_view()),

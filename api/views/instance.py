@@ -2,14 +2,13 @@ from django.conf import settings
 
 from activities.models import Post
 from core.models import Config
+from hatchway import api_view
 from takahe import __version__
 from users.models import Domain, Identity
 
-from .base import api_router
 
-
-@api_router.get("/v1/instance")
-def instance_info(request):
+@api_view.get
+def instance_info_v1(request):
     return {
         "uri": request.headers.get("host", settings.SETUP.MAIN_DOMAIN),
         "title": Config.system.site_name,
@@ -53,7 +52,7 @@ def instance_info(request):
     }
 
 
-@api_router.get("/v2/instance")
+@api_view.get
 def instance_info_v2(request):
     current_domain = Domain.get_domain(
         request.headers.get("host", settings.SETUP.MAIN_DOMAIN)

@@ -8,7 +8,10 @@ from typing import (  # type: ignore[attr-defined]
     _AnnotatedAlias,
     _GenericAlias,
     get_args,
+    get_origin,
 )
+
+from .http import ApiResponse
 
 T = TypeVar("T")
 
@@ -31,6 +34,12 @@ class BodyType:
     """
 
 
+class FileType:
+    """
+    An input pulled from the POST body (request.POST or a JSON body)
+    """
+
+
 class BodyDirectType:
     """
     A Pydantic model whose keys are all looked for in the top-level
@@ -47,6 +56,7 @@ class QueryOrBodyType:
 Path = Annotated[T, PathType]
 Query = Annotated[T, QueryType]
 Body = Annotated[T, BodyType]
+File = Annotated[T, FileType]
 BodyDirect = Annotated[T, BodyDirectType]
 QueryOrBody = Annotated[T, QueryOrBodyType]
 
@@ -78,7 +88,14 @@ def extract_signifier(annotation) -> tuple[Any, Any]:
     If it can, returns (signifier, annotation_without_signifier)
     If not, returns (None, annotation)
     """
-    our_generics = {PathType, QueryType, BodyType, BodyDirectType, QueryOrBodyType}
+    our_generics = {
+        PathType,
+        QueryType,
+        BodyType,
+        FileType,
+        BodyDirectType,
+        QueryOrBodyType,
+    }
     # Remove any optional-style wrapper
     optional, internal_annotation = is_optional(annotation)
     # Is it an annotation?
@@ -91,3 +108,14 @@ def extract_signifier(annotation) -> tuple[Any, Any]:
                 else:
                     return (arg, args[0])
     return None, annotation
+
+
+def extract_output_type(annotation):
+    """
+    Returns the right response type for a function
+    """
+    # If the type is ApiResponse, we want to pull out its inside
+    if isinstance(annotation, _GenericAlias):
+        if get_origin(annotation) == ApiResponse:
+            return get_args(annotation)[0]
+    return annotation

@@ -1,6 +1,10 @@
 from typing import Literal, Optional, Union
 
+from activities.models import Post, PostAttachment, PostInteraction, TimelineEvent
 from hatchway import Field, Schema
+from users.models import Announcement as AnnouncementModel
+from users.models import Identity, User
+from users.services import IdentityService
 
 
 class Application(Schema):
@@ -53,6 +57,17 @@ class Account(Schema):
     following_count: int
     source: dict | None
 
+    @classmethod
+    def from_identity(
+        cls,
+        identity: Identity,
+        include_counts: bool = True,
+        source=False,
+    ) -> "Account":
+        return cls(
+            **identity.to_mastodon_json(include_counts=include_counts, source=source)
+        )
+
 
 class MediaAttachment(Schema):
     id: str
@@ -63,6 +78,10 @@ class MediaAttachment(Schema):
     meta: dict
     description: str | None
     blurhash: str | None
+
+    @classmethod
+    def from_post_attachment(cls, attachment: PostAttachment) -> "MediaAttachment":
+        return cls(**attachment.to_mastodon_json())
 
 
 class StatusMention(Schema):
@@ -108,6 +127,43 @@ class Status(Schema):
     bookmarked: bool | None
     pinned: bool | None
 
+    @classmethod
+    def from_post(
+        cls,
+        post: Post,
+        interactions: dict[str, set[str]] | None = None,
+    ) -> "Status":
+        return cls(**post.to_mastodon_json(interactions=interactions))
+
+    @classmethod
+    def map_from_post(
+        cls,
+        posts: list[Post],
+        identity: Identity,
+    ) -> list["Status"]:
+        interactions = PostInteraction.get_post_interactions(posts, identity)
+        return [cls.from_post(post, interactions=interactions) for post in posts]
+
+    @classmethod
+    def from_timeline_event(
+        cls,
+        timeline_event: TimelineEvent,
+        interactions: dict[str, set[str]] | None = None,
+    ) -> "Status":
+        return cls(**timeline_event.to_mastodon_status_json(interactions=interactions))
+
+    @classmethod
+    def map_from_timeline_event(
+        cls,
+        events: list[TimelineEvent],
+        identity: Identity,
+    ) -> list["Status"]:
+        interactions = PostInteraction.get_event_interactions(events, identity)
+        return [
+            cls.from_timeline_event(event, interactions=interactions)
+            for event in events
+        ]
+
 
 class Conversation(Schema):
     id: str
@@ -133,6 +189,13 @@ class Notification(Schema):
     created_at: str
     account: Account
     status: Status | None
+
+    @classmethod
+    def from_timeline_event(
+        cls,
+        event: TimelineEvent,
+    ) -> "Notification":
+        return cls(**event.to_mastodon_notification_json())
 
 
 class Tag(Schema):
@@ -162,6 +225,16 @@ class Relationship(Schema):
     endorsed: bool
     note: str
 
+    @classmethod
+    def from_identity_pair(
+        cls,
+        identity: Identity,
+        from_identity: Identity,
+    ) -> "Relationship":
+        return cls(
+            **IdentityService(identity).mastodon_json_relationship(from_identity)
+        )
+
 
 class Context(Schema):
     ancestors: list[Status]
@@ -187,3 +260,9 @@ class Announcement(Schema):
     tags: list[Tag]
     emojis: list[CustomEmoji]
     reactions: list
+
+    @classmethod
+    def from_announcement(
+        cls, announcement: AnnouncementModel, user: User
+    ) -> "Announcement":
+        return cls(**announcement.to_mastodon_json(user=user))

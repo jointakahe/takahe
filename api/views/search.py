@@ -28,7 +28,7 @@ def search(
     result: dict[str, list] = {"accounts": [], "statuses": [], "hashtags": []}
     # We don't support pagination for searches yet
     if max_id or since_id or min_id or offset:
-        return result
+        return schemas.Search(**result)
     # Run search
     searcher = SearchService(q, request.identity)
     search_result = searcher.search_all()
@@ -44,4 +44,4 @@ def search(
             p.to_mastodon_json(interactions=interactions)
             for p in search_result["posts"]
         ]
-    return result
+    return schemas.Search(**result)

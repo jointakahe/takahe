@@ -1,22 +1,98 @@
 import dataclasses
 import urllib.parse
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Generic, Protocol, TypeVar
 
 from django.db import models
 from django.http import HttpRequest
 
 from activities.models import PostInteraction
+from hatchway.http import ApiResponse
+
+T = TypeVar("T")
+
+
+class SchemaWithId(Protocol):
+    """
+    Little protocol type to represent schemas that have an ID attribute
+    """
+
+    id: str
+
+
+TI = TypeVar("TI", bound=SchemaWithId)
+TM = TypeVar("TM", bound=models.Model)
+
+
+class PaginatingApiResponse(ApiResponse[list[TI]]):
+    """
+    An ApiResponse subclass that also handles pagination link headers
+    """
+
+    def __init__(
+        self,
+        data: list[TI],
+        request: HttpRequest,
+        include_params: list[str],
+        **kwargs,
+    ):
+        # Call superclass
+        super().__init__(data, **kwargs)
+        # Figure out if we need link headers
+        self._request = request
+        self.extra_params = self.filter_params(self._request, include_params)
+        link_header = self.build_link_header()
+        if link_header:
+            self.headers["link"] = link_header
+
+    @staticmethod
+    def filter_params(request: HttpRequest, allowed_params: list[str]):
+        params = {}
+        for key in allowed_params:
+            value = request.GET.get(key, None)
+            if value:
+                params[key] = value
+        return params
+
+    def get_part(self, data_index: int, param_name: str, rel: str) -> str | None:
+        """
+        Used to get next/prev URLs
+        """
+        if not self.data:
+            return None
+        # Use the ID of the last object for the next page start
+        params = dict(self.extra_params)
+        params[param_name] = self.data[data_index].id
+        return (
+            "<"
+            + self._request.build_absolute_uri(self._request.path)
+            + "?"
+            + urllib.parse.urlencode(params)
+            + f'>; rel="{rel}"'
+        )
+
+    def build_link_header(self):
+        parts = [
+            entry
+            for entry in [
+                self.get_part(0, "min_id", "prev"),
+                self.get_part(-1, "max_id", "next"),
+            ]
+            if entry
+        ]
+        if not parts:
+            return None
+        return ", ".join(parts)
 
 
 @dataclasses.dataclass
-class PaginationResult:
+class PaginationResult(Generic[T]):
     """
     Represents a pagination result for Mastodon (it does Link header stuff)
     """
 
     #: A list of objects that matched the pagination query.
-    results: list[models.Model]
+    results: list[T]
 
     #: The actual applied limit, which may be different from what was requested.
     limit: int
@@ -130,12 +206,12 @@ class MastodonPaginator:
 
     def paginate(
         self,
-        queryset,
+        queryset: models.QuerySet[TM],
         min_id: str | None,
         max_id: str | None,
         since_id: str | None,
         limit: int | None,
-    ) -> PaginationResult:
+    ) -> PaginationResult[TM]:
         # These "does not start with interaction" checks can be removed after a
         # couple months, when clients have flushed them out.
         if max_id and not max_id.startswith("interaction"):

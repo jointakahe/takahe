@@ -1,8 +1,8 @@
 from api.decorators import identity_required
-from api.views.base import api_router
+from hatchway import api_view
 
 
-@api_router.get("/v1/filters")
 @identity_required
-def status(request):
+@api_view.get
+def list_filters(request):
     return []

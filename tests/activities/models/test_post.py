@@ -281,7 +281,9 @@ def test_inbound_posts(
     InboxMessage.objects.create(message=message)
 
     # Run stator and ensure that made the post
+    print("prestat")
     stator.run_single_cycle_sync()
+    print("poststat")
     post = Post.objects.get(object_uri="https://remote.test/test-post")
     assert post.content == "post version one"
     assert post.published.day == 13
