@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from activities.models.fan_out import FanOut
 from activities.models.post import Post
+from activities.models.post_types import QuestionData
 from core.ld import format_ld_date, get_str_or_id, parse_ld_date
 from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -125,6 +126,7 @@ class PostInteraction(StatorModel):
     class Types(models.TextChoices):
         like = "like"
         boost = "boost"
+        vote = "vote"
 
     id = models.BigIntegerField(
         primary_key=True,
@@ -267,12 +269,25 @@ class PostInteraction(StatorModel):
                 # Resolve the author
                 identity = Identity.by_actor_uri(data["actor"], create=True)
                 # Resolve the post
-                post = Post.by_object_uri(get_str_or_id(data["object"]), fetch=True)
+                object = data["object"]
+                target = get_str_or_id(object, "inReplyTo") or get_str_or_id(object)
+                post = Post.by_object_uri(target, fetch=True)
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
                 elif data["type"].lower() == "announce":
                     type = cls.Types.boost
+                elif (
+                    data["type"].lower() == "create"
+                    and object["type"].lower() == "note"
+                    and isinstance(post.type_data, QuestionData)
+                ):
+                    type = cls.Types.vote
+                    question = post.type_data
+                    if question.end_time and timezone.now() > question.end_time:
+                        raise ValueError(
+                            f"Cannot create a vote to the expired question {post.id}"
+                        )
                 else:
                     raise ValueError(f"Cannot handle AP type {data['type']}")
                 # Make the actual interaction

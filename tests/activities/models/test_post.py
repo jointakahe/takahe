@@ -2,6 +2,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from activities.models import Post, PostStates
+from activities.models.post_types import QuestionData
 from users.models import Identity, InboxMessage
 
 
@@ -252,6 +253,46 @@ def test_content_map(remote_identity):
         create=True,
     )
     assert post3.content == "Hello World"
+
+
+@pytest.mark.django_db
+def test_content_map_question(remote_identity: Identity):
+    """
+    Tests post contentmap for questions
+    """
+    post = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/1/",
+            "type": "Question",
+            "votersCount": 10,
+            "closed": "2023-01-01T26:04:45Z",
+            "content": "Test Question",
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+            "endTime": "2023-01-01T20:04:45Z",
+            "oneOf": [
+                {
+                    "type": "Note",
+                    "name": "Option 1",
+                    "replies": {
+                        "type": "Collection",
+                        "totalItems": 6,
+                    },
+                },
+                {
+                    "type": "Note",
+                    "name": "Option 2",
+                    "replies": {
+                        "type": "Collection",
+                        "totalItems": 4,
+                    },
+                },
+            ],
+        },
+        create=True,
+    )
+    assert post.content == "Test Question"
+    assert isinstance(post.type_data, QuestionData)
 
 
 @pytest.mark.django_db

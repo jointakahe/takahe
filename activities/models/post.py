@@ -803,8 +803,7 @@ class Post(StatorModel):
         if update or created:
             post.type = data["type"]
             if post.type in (cls.Types.article, cls.Types.question):
-                type_data = PostTypeData(__root__=data).__root__
-                post.type_data = type_data.dict()
+                post.type_data = PostTypeData(__root__=data).__root__
             post.content = get_value_or_map(data, "content", "contentMap")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
