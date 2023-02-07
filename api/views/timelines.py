@@ -1,23 +1,23 @@
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest
 
+from activities.models import Post
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import identity_required
-from api.pagination import MastodonPaginator
-from api.views.base import api_router
+from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
+from hatchway import ApiError, ApiResponse, api_view
 
 
-@api_router.get("/v1/timelines/home", response=list[schemas.Status])
 @identity_required
+@api_view.get
 def home(
     request: HttpRequest,
-    response: HttpResponse,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> ApiResponse[list[schemas.Status]]:
     # Grab a paginated result set of instances
     paginator = MastodonPaginator()
     queryset = TimelineService(request.identity).home()
@@ -41,18 +41,16 @@ def home(
         since_id=since_id,
         limit=limit,
     )
-    # Convert those to the JSON form
-    pager.jsonify_status_events(identity=request.identity)
-    # Add the link header if needed
-    if pager.results:
-        response.headers["Link"] = pager.link_header(request, ["limit"])
-    return pager.json_results
+    return PaginatingApiResponse(
+        schemas.Status.map_from_timeline_event(pager.results, request.identity),
+        request=request,
+        include_params=["limit"],
+    )
 
 
-@api_router.get("/v1/timelines/public", response=list[schemas.Status])
+@api_view.get
 def public(
     request: HttpRequest,
-    response: HttpResponse,
     local: bool = False,
     remote: bool = False,
     only_media: bool = False,
@@ -60,9 +58,9 @@ def public(
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> ApiResponse[list[schemas.Status]]:
     if not request.identity and not Config.system.public_timeline:
-        return JsonResponse({"error": "public timeline is disabled"}, status=422)
+        raise ApiError(error="public timeline is disabled", status=422)
 
     if local:
         queryset = TimelineService(request.identity).local()
@@ -74,29 +72,24 @@ def public(
         queryset = queryset.filter(attachments__id__isnull=True)
     # Grab a paginated result set of instances
     paginator = MastodonPaginator()
-    pager = paginator.paginate(
+    pager: PaginationResult[Post] = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    # Convert those to the JSON form
-    pager.jsonify_posts(identity=request.identity)
-    # Add the link header if needed
-    if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            ["limit", "local", "remote", "only_media"],
-        )
-    return pager.json_results
+    return PaginatingApiResponse(
+        schemas.Status.map_from_post(pager.results, request.identity),
+        request=request,
+        include_params=["limit", "local", "remote", "only_media"],
+    )
 
 
-@api_router.get("/v1/timelines/tag/{hashtag}", response=list[schemas.Status])
 @identity_required
+@api_view.get
 def hashtag(
     request: HttpRequest,
-    response: HttpResponse,
     hashtag: str,
     local: bool = False,
     only_media: bool = False,
@@ -104,7 +97,7 @@ def hashtag(
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> ApiResponse[list[schemas.Status]]:
     if limit > 40:
         limit = 40
     queryset = TimelineService(request.identity).hashtag(hashtag)
@@ -114,63 +107,54 @@ def hashtag(
         queryset = queryset.filter(attachments__id__isnull=True)
     # Grab a paginated result set of instances
     paginator = MastodonPaginator()
-    pager = paginator.paginate(
+    pager: PaginationResult[Post] = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    # Convert those to the JSON form
-    pager.jsonify_posts(identity=request.identity)
-    # Add a link header if we need to
-    if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            ["limit", "local", "remote", "only_media"],
-        )
-    return pager.json_results
+    return PaginatingApiResponse(
+        schemas.Status.map_from_post(pager.results, request.identity),
+        request=request,
+        include_params=["limit", "local", "remote", "only_media"],
+    )
 
 
-@api_router.get("/v1/conversations", response=list[schemas.Status])
 @identity_required
+@api_view.get
 def conversations(
     request: HttpRequest,
-    response: HttpResponse,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> list[schemas.Status]:
     # We don't implement this yet
     return []
 
 
-@api_router.get("/v1/favourites", response=list[schemas.Status])
 @identity_required
+@api_view.get
 def favourites(
     request: HttpRequest,
-    response: HttpResponse,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> ApiResponse[list[schemas.Status]]:
     queryset = TimelineService(request.identity).likes()
 
     paginator = MastodonPaginator()
-    pager = paginator.paginate(
+    pager: PaginationResult[Post] = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    # Convert those to the JSON form
-    pager.jsonify_posts(identity=request.identity)
-
-    # Add the link header if needed
-    if pager.results:
-        response.headers["Link"] = pager.link_header(request, ["limit"])
-
-    return pager.json_results
+    return PaginatingApiResponse(
+        schemas.Status.map_from_post(pager.results, request.identity),
+        request=request,
+        include_params=["limit"],
+    )

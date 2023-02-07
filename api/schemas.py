@@ -1,6 +1,9 @@
 from typing import Literal, Optional, Union
 
-from ninja import Field, Schema
+from activities import models as activities_models
+from hatchway import Field, Schema
+from users import models as users_models
+from users.services import IdentityService
 
 
 class Application(Schema):
@@ -18,6 +21,10 @@ class CustomEmoji(Schema):
     static_url: str
     visible_in_picker: bool
     category: str
+
+    @classmethod
+    def from_emoji(cls, emoji: activities_models.Emoji) -> "CustomEmoji":
+        return cls(**emoji.to_mastodon_json())
 
 
 class AccountField(Schema):
@@ -53,6 +60,17 @@ class Account(Schema):
     following_count: int
     source: dict | None
 
+    @classmethod
+    def from_identity(
+        cls,
+        identity: users_models.Identity,
+        include_counts: bool = True,
+        source=False,
+    ) -> "Account":
+        return cls(
+            **identity.to_mastodon_json(include_counts=include_counts, source=source)
+        )
+
 
 class MediaAttachment(Schema):
     id: str
@@ -63,6 +81,12 @@ class MediaAttachment(Schema):
     meta: dict
     description: str | None
     blurhash: str | None
+
+    @classmethod
+    def from_post_attachment(
+        cls, attachment: activities_models.PostAttachment
+    ) -> "MediaAttachment":
+        return cls(**attachment.to_mastodon_json())
 
 
 class StatusMention(Schema):
@@ -108,6 +132,47 @@ class Status(Schema):
     bookmarked: bool | None
     pinned: bool | None
 
+    @classmethod
+    def from_post(
+        cls,
+        post: activities_models.Post,
+        interactions: dict[str, set[str]] | None = None,
+    ) -> "Status":
+        return cls(**post.to_mastodon_json(interactions=interactions))
+
+    @classmethod
+    def map_from_post(
+        cls,
+        posts: list[activities_models.Post],
+        identity: users_models.Identity,
+    ) -> list["Status"]:
+        interactions = activities_models.PostInteraction.get_post_interactions(
+            posts, identity
+        )
+        return [cls.from_post(post, interactions=interactions) for post in posts]
+
+    @classmethod
+    def from_timeline_event(
+        cls,
+        timeline_event: activities_models.TimelineEvent,
+        interactions: dict[str, set[str]] | None = None,
+    ) -> "Status":
+        return cls(**timeline_event.to_mastodon_status_json(interactions=interactions))
+
+    @classmethod
+    def map_from_timeline_event(
+        cls,
+        events: list[activities_models.TimelineEvent],
+        identity: users_models.Identity,
+    ) -> list["Status"]:
+        interactions = activities_models.PostInteraction.get_event_interactions(
+            events, identity
+        )
+        return [
+            cls.from_timeline_event(event, interactions=interactions)
+            for event in events
+        ]
+
 
 class Conversation(Schema):
     id: str
@@ -134,11 +199,25 @@ class Notification(Schema):
     account: Account
     status: Status | None
 
+    @classmethod
+    def from_timeline_event(
+        cls,
+        event: activities_models.TimelineEvent,
+    ) -> "Notification":
+        return cls(**event.to_mastodon_notification_json())
+
 
 class Tag(Schema):
     name: str
     url: str
     history: dict
+
+    @classmethod
+    def from_hashtag(
+        cls,
+        hashtag: activities_models.Hashtag,
+    ) -> "Tag":
+        return cls(**hashtag.to_mastodon_json())
 
 
 class Search(Schema):
@@ -161,6 +240,16 @@ class Relationship(Schema):
     domain_blocking: bool
     endorsed: bool
     note: str
+
+    @classmethod
+    def from_identity_pair(
+        cls,
+        identity: users_models.Identity,
+        from_identity: users_models.Identity,
+    ) -> "Relationship":
+        return cls(
+            **IdentityService(identity).mastodon_json_relationship(from_identity)
+        )
 
 
 class Context(Schema):
@@ -187,3 +276,11 @@ class Announcement(Schema):
     tags: list[Tag]
     emojis: list[CustomEmoji]
     reactions: list
+
+    @classmethod
+    def from_announcement(
+        cls,
+        announcement: users_models.Announcement,
+        user: users_models.User,
+    ) -> "Announcement":
+        return cls(**announcement.to_mastodon_json(user=user))

@@ -1,15 +1,15 @@
 from django.conf import settings
 
 from activities.models import Post
+from api import schemas
 from core.models import Config
+from hatchway import api_view
 from takahe import __version__
 from users.models import Domain, Identity
 
-from .base import api_router
 
-
-@api_router.get("/v1/instance")
-def instance_info(request):
+@api_view.get
+def instance_info_v1(request):
     return {
         "uri": request.headers.get("host", settings.SETUP.MAIN_DOMAIN),
         "title": Config.system.site_name,
@@ -53,11 +53,17 @@ def instance_info(request):
     }
 
 
-@api_router.get("/v2/instance")
-def instance_info_v2(request):
+@api_view.get
+def instance_info_v2(request) -> dict:
     current_domain = Domain.get_domain(
         request.headers.get("host", settings.SETUP.MAIN_DOMAIN)
     )
+    if current_domain is None or not current_domain.local:
+        current_domain = Domain.get_domain(
+            request.headers.get(settings.SETUP.MAIN_DOMAIN)
+        )
+    if current_domain is None:
+        raise ValueError("No domain set up for MAIN_DOMAIN")
     admin_identity = (
         Identity.objects.filter(users__admin=True).order_by("created").first()
     )
@@ -116,7 +122,7 @@ def instance_info_v2(request):
         },
         "contact": {
             "email": "",
-            "account": admin_identity.to_mastodon_json(),
+            "account": schemas.Account.from_identity(admin_identity),
         },
         "rules": [],
     }

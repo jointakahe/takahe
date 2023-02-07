@@ -1,131 +1,129 @@
-from django.http import HttpRequest, HttpResponse, QueryDict
-from django.http.multipartparser import MultiPartParser
+from typing import Any
+
+from django.core.files import File
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from ninja import Field, Schema
 
 from activities.models import Post
 from activities.services import SearchService
 from api import schemas
 from api.decorators import identity_required
-from api.pagination import MastodonPaginator
-from api.views.base import api_router
+from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
+from hatchway import ApiResponse, QueryOrBody, api_view
 from users.models import Identity
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
 
-@api_router.get("/v1/accounts/verify_credentials", response=schemas.Account)
 @identity_required
-def verify_credentials(request):
-    return request.identity.to_mastodon_json(source=True)
+@api_view.get
+def verify_credentials(request) -> schemas.Account:
+    return schemas.Account.from_identity(request.identity, source=True)
 
 
-@api_router.patch("/v1/accounts/update_credentials", response=schemas.Account)
 @identity_required
+@api_view.patch
 def update_credentials(
     request,
-):
-    # Django won't load POST and FILES for patch methods, so we do it.
-    if request.content_type == "multipart/form-data":
-        POST, FILES = MultiPartParser(
-            request.META, request, request.upload_handlers, request.encoding
-        ).parse()
-    elif request.content_type == "application/x-www-form-urlencoded":
-        POST = QueryDict(request.body, encoding=request._encoding)
-        FILES = {}
-    else:
-        return HttpResponse(status=400)
+    display_name: QueryOrBody[str | None] = None,
+    note: QueryOrBody[str | None] = None,
+    discoverable: QueryOrBody[bool | None] = None,
+    source: QueryOrBody[dict[str, Any] | None] = None,
+    fields_attributes: QueryOrBody[dict[str, dict[str, str]] | None] = None,
+    avatar: File | None = None,
+    header: File | None = None,
+) -> schemas.Account:
     identity = request.identity
     service = IdentityService(identity)
-    if "display_name" in POST:
-        identity.name = POST["display_name"]
-    if "note" in POST:
-        service.set_summary(POST["note"])
-    if "discoverable" in POST:
-        identity.discoverable = POST["discoverable"] == "checked"
-    if "source[privacy]" in POST:
-        privacy_map = {
-            "public": Post.Visibilities.public,
-            "unlisted": Post.Visibilities.unlisted,
-            "private": Post.Visibilities.followers,
-            "direct": Post.Visibilities.mentioned,
-        }
-        Config.set_identity(
-            identity,
-            "default_post_visibility",
-            privacy_map[POST["source[privacy]"]],
-        )
-    if "fields_attributes[0][name]" in POST:
+    if display_name is not None:
+        identity.name = display_name
+    if note is not None:
+        service.set_summary(note)
+    if discoverable is not None:
+        identity.discoverable = discoverable
+    if source:
+        if "privacy" in source:
+            privacy_map = {
+                "public": Post.Visibilities.public,
+                "unlisted": Post.Visibilities.unlisted,
+                "private": Post.Visibilities.followers,
+                "direct": Post.Visibilities.mentioned,
+            }
+            Config.set_identity(
+                identity,
+                "default_post_visibility",
+                privacy_map[source["privacy"]],
+            )
+    if fields_attributes:
         identity.metadata = []
-        for i in range(4):
-            name_name = f"fields_attributes[{i}][name]"
-            value_name = f"fields_attributes[{i}][value]"
-            if name_name and value_name in POST:
+        for attribute in fields_attributes.values():
+            attr_name = attribute.get("name", None)
+            attr_value = attribute.get("value", None)
+            if attr_name:
                 # Empty value means delete this item
-                if not POST[value_name]:
+                if not attr_value:
                     break
-                identity.metadata.append(
-                    {"name": POST[name_name], "value": POST[value_name]}
-                )
-    if "avatar" in FILES:
-        service.set_icon(FILES["avatar"])
-    if "header" in FILES:
-        service.set_image(FILES["header"])
+                identity.metadata.append({"name": attr_name, "value": attr_value})
+    if avatar:
+        service.set_icon(avatar)
+    if header:
+        service.set_image(header)
     identity.save()
-    return identity.to_mastodon_json(source=True)
+    return schemas.Account.from_identity(identity, source=True)
 
 
-@api_router.get("/v1/accounts/relationships", response=list[schemas.Relationship])
 @identity_required
-def account_relationships(request):
-    ids = request.GET.getlist("id[]")
+@api_view.get
+def account_relationships(request, id: list[str] | None) -> list[schemas.Relationship]:
     result = []
-    for id in ids:
-        identity = get_object_or_404(Identity, pk=id)
+    # ID is actually a list. Thanks Mastodon!
+    ids = id or []
+    for actual_id in ids:
+        identity = get_object_or_404(Identity, pk=actual_id)
         result.append(
             IdentityService(identity).mastodon_json_relationship(request.identity)
         )
     return result
 
 
-@api_router.get(
-    "/v1/accounts/familiar_followers", response=list[schemas.FamiliarFollowers]
-)
 @identity_required
-def familiar_followers(request):
+@api_view.get
+def familiar_followers(
+    request, id: list[str] | None
+) -> list[schemas.FamiliarFollowers]:
     """
     Returns people you follow that also follow given account IDs
     """
-    ids = request.GET.getlist("id[]")
+    ids = id or []
     result = []
-    for id in ids:
-        target_identity = get_object_or_404(Identity, pk=id)
+    for actual_id in ids:
+        target_identity = get_object_or_404(Identity, pk=actual_id)
         result.append(
-            {
-                "id": id,
-                "accounts": [
-                    identity.to_mastodon_json()
+            schemas.FamiliarFollowers(
+                id=actual_id,
+                accounts=[
+                    schemas.Account.from_identity(identity)
                     for identity in Identity.objects.filter(
                         inbound_follows__source=request.identity,
                         outbound_follows__target=target_identity,
                     )[:20]
                 ],
-            }
+            )
         )
     return result
 
 
-@api_router.get("/v1/accounts/search", response=list[schemas.Account])
 @identity_required
-def search(
+@api_view.get
+def accounts_search(
     request,
     q: str,
-    fetch_identities: bool = Field(False, alias="resolve"),
+    resolve: bool = False,
     following: bool = False,
     limit: int = 20,
     offset: int = 0,
-):
+) -> list[schemas.Account]:
     """
     Handles searching for accounts by username or handle
     """
@@ -135,33 +133,33 @@ def search(
         return []
     searcher = SearchService(q, request.identity)
     search_result = searcher.search_identities_handle()
-    return [i.to_mastodon_json() for i in search_result]
+    return [schemas.Account.from_identity(i) for i in search_result]
 
 
-@api_router.get("/v1/accounts/lookup", response=schemas.Account)
-def lookup(request: HttpRequest, acct: str):
+@api_view.get
+def lookup(request: HttpRequest, acct: str) -> schemas.Account:
     """
     Quickly lookup a username to see if it is available, skipping WebFinger
     resolution.
     """
     identity = by_handle_or_404(request, handle=acct, local=False)
-    return identity.to_mastodon_json()
+    return schemas.Account.from_identity(identity)
 
 
-@api_router.get("/v1/accounts/{id}", response=schemas.Account)
+@api_view.get
 @identity_required
-def account(request, id: str):
+def account(request, id: str) -> schemas.Account:
     identity = get_object_or_404(
-        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked),
+        pk=id,
     )
-    return identity.to_mastodon_json()
+    return schemas.Account.from_identity(identity)
 
 
-@api_router.get("/v1/accounts/{id}/statuses", response=list[schemas.Status])
+@api_view.get
 @identity_required
 def account_statuses(
     request: HttpRequest,
-    response: HttpResponse,
     id: str,
     exclude_reblogs: bool = False,
     exclude_replies: bool = False,
@@ -172,7 +170,7 @@ def account_statuses(
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 20,
-):
+) -> ApiResponse[list[schemas.Status]]:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
@@ -191,177 +189,163 @@ def account_statuses(
         .order_by("-created")
     )
     if pinned:
-        return []
+        return ApiResponse([])
     if only_media:
         queryset = queryset.filter(attachments__pk__isnull=False)
     if tagged:
         queryset = queryset.tagged_with(tagged)
     # Get user posts with pagination
     paginator = MastodonPaginator()
-    pager = paginator.paginate(
+    pager: PaginationResult[Post] = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    # Convert those to the JSON form
-    pager.jsonify_posts(identity=request.identity)
-    # Add a link header if we need to
-    if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            [
-                "limit",
-                "id",
-                "exclude_reblogs",
-                "exclude_replies",
-                "only_media",
-                "pinned",
-                "tagged",
-            ],
-        )
-    return pager.json_results
+    return PaginatingApiResponse(
+        schemas.Status.map_from_post(pager.results, request.identity),
+        request=request,
+        include_params=[
+            "limit",
+            "id",
+            "exclude_reblogs",
+            "exclude_replies",
+            "only_media",
+            "pinned",
+            "tagged",
+        ],
+    )
 
 
-@api_router.post("/v1/accounts/{id}/follow", response=schemas.Relationship)
+@api_view.post
 @identity_required
-def account_follow(request, id: str, reblogs: bool = True):
+def account_follow(request, id: str, reblogs: bool = True) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
     service = IdentityService(identity)
     service.follow_from(request.identity, boosts=reblogs)
-    return service.mastodon_json_relationship(request.identity)
+    return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@api_router.post("/v1/accounts/{id}/unfollow", response=schemas.Relationship)
+@api_view.post
 @identity_required
-def account_unfollow(request, id: str):
+def account_unfollow(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
     service = IdentityService(identity)
     service.unfollow_from(request.identity)
-    return service.mastodon_json_relationship(request.identity)
+    return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@api_router.post("/v1/accounts/{id}/block", response=schemas.Relationship)
+@api_view.post
 @identity_required
-def account_block(request, id: str):
+def account_block(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(identity)
     service.block_from(request.identity)
-    return service.mastodon_json_relationship(request.identity)
+    return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@api_router.post("/v1/accounts/{id}/unblock", response=schemas.Relationship)
+@api_view.post
 @identity_required
-def account_unblock(request, id: str):
+def account_unblock(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(identity)
     service.unblock_from(request.identity)
-    return service.mastodon_json_relationship(request.identity)
+    return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-class MuteDetailsSchema(Schema):
-    notifications: bool = True
-    duration: int = 0
-
-
-@api_router.post("/v1/accounts/{id}/mute", response=schemas.Relationship)
 @identity_required
-def account_mute(request, id: str, details: MuteDetailsSchema):
+@api_view.post
+def account_mute(
+    request,
+    id: str,
+    notifications: QueryOrBody[bool] = True,
+    duration: QueryOrBody[int] = 0,
+) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(identity)
     service.mute_from(
         request.identity,
-        duration=details.duration,
-        include_notifications=details.notifications,
+        duration=duration,
+        include_notifications=notifications,
     )
-    return service.mastodon_json_relationship(request.identity)
+    return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@api_router.post("/v1/accounts/{id}/unmute", response=schemas.Relationship)
 @identity_required
-def account_unmute(request, id: str):
+@api_view.post
+def account_unmute(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(identity)
     service.unmute_from(request.identity)
-    return service.mastodon_json_relationship(request.identity)
+    return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@api_router.get("/v1/accounts/{id}/following", response=list[schemas.Account])
+@api_view.get
 def account_following(
     request: HttpRequest,
-    response: HttpResponse,
     id: str,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 40,
-):
+) -> ApiResponse[list[schemas.Account]]:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
 
     if not identity.config_identity.visible_follows and request.identity != identity:
-        return []
+        return ApiResponse([])
 
     service = IdentityService(identity)
 
     paginator = MastodonPaginator(max_limit=80)
-    pager = paginator.paginate(
+    pager: PaginationResult[Identity] = paginator.paginate(
         service.following(),
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    pager.jsonify_identities()
-
-    if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            ["limit"],
-        )
-
-    return pager.json_results
+    return PaginatingApiResponse(
+        [schemas.Account.from_identity(i) for i in pager.results],
+        request=request,
+        include_params=["limit"],
+    )
 
 
-@api_router.get("/v1/accounts/{id}/followers", response=list[schemas.Account])
+@api_view.get
 def account_followers(
     request: HttpRequest,
-    response: HttpResponse,
     id: str,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
     limit: int = 40,
-):
+) -> ApiResponse[list[schemas.Account]]:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
 
     if not identity.config_identity.visible_follows and request.identity != identity:
-        return []
+        return ApiResponse([])
 
     service = IdentityService(identity)
 
     paginator = MastodonPaginator(max_limit=80)
-    pager = paginator.paginate(
+    pager: PaginationResult[Identity] = paginator.paginate(
         service.followers(),
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
     )
-    pager.jsonify_identities()
-
-    if pager.results:
-        response.headers["Link"] = pager.link_header(
-            request,
-            ["limit"],
-        )
-
-    return pager.json_results
+    return PaginatingApiResponse(
+        [schemas.Account.from_identity(i) for i in pager.results],
+        request=request,
+        include_params=["limit"],
+    )

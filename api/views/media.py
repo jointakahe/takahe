@@ -1,28 +1,22 @@
+from django.core.files import File
 from django.shortcuts import get_object_or_404
-from ninja import File, Schema
-from ninja.files import UploadedFile
 
 from activities.models import PostAttachment, PostAttachmentStates
 from api import schemas
-from api.views.base import api_router
 from core.files import blurhash_image, resize_image
+from hatchway import QueryOrBody, api_view
 
 from ..decorators import identity_required
 
 
-class UploadMediaSchema(Schema):
-    description: str = ""
-    focus: str = "0,0"
-
-
-@api_router.post("/v1/media", response=schemas.MediaAttachment)
-@api_router.post("/v2/media", response=schemas.MediaAttachment)
 @identity_required
+@api_view.post
 def upload_media(
     request,
-    file: UploadedFile = File(...),
-    details: UploadMediaSchema | None = None,
-):
+    file: File,
+    description: QueryOrBody[str] = "",
+    focus: QueryOrBody[str] = "0,0",
+) -> schemas.MediaAttachment:
     main_file = resize_image(
         file,
         size=(2000, 2000),
@@ -38,7 +32,7 @@ def upload_media(
         mimetype="image/webp",
         width=main_file.image.width,
         height=main_file.image.height,
-        name=details.description if details else None,
+        name=description or None,
         state=PostAttachmentStates.fetched,
     )
     attachment.file.save(
@@ -50,27 +44,28 @@ def upload_media(
         thumbnail_file,
     )
     attachment.save()
-    return attachment.to_mastodon_json()
+    return schemas.MediaAttachment.from_post_attachment(attachment)
 
 
-@api_router.get("/v1/media/{id}", response=schemas.MediaAttachment)
 @identity_required
+@api_view.get
 def get_media(
     request,
     id: str,
-):
+) -> schemas.MediaAttachment:
     attachment = get_object_or_404(PostAttachment, pk=id)
-    return attachment.to_mastodon_json()
+    return schemas.MediaAttachment.from_post_attachment(attachment)
 
 
-@api_router.put("/v1/media/{id}", response=schemas.MediaAttachment)
 @identity_required
+@api_view.put
 def update_media(
     request,
     id: str,
-    details: UploadMediaSchema | None = None,
-):
+    description: QueryOrBody[str] = "",
+    focus: QueryOrBody[str] = "0,0",
+) -> schemas.MediaAttachment:
     attachment = get_object_or_404(PostAttachment, pk=id)
-    attachment.name = details.description if details else None
+    attachment.name = description or None
     attachment.save()
-    return attachment.to_mastodon_json()
+    return schemas.MediaAttachment.from_post_attachment(attachment)

@@ -188,7 +188,7 @@ class PostInteraction(StatorModel):
         return result
 
     @classmethod
-    def get_event_interactions(cls, events, identity):
+    def get_event_interactions(cls, events, identity) -> dict[str, set[str]]:
         """
         Returns a dict of {interaction_type: set(post_ids)} for all the posts
         within the events and the given identity, for use in templates.
