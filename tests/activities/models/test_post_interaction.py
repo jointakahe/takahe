@@ -23,7 +23,7 @@ def test_vote_in_expired_question(
         },
     )
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(PostInteraction.DoesNotExist) as ex:
         PostInteraction.by_ap(
             data={
                 "id": "https://remote.test/test-actor#votes/389574/activity",

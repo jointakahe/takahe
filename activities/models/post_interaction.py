@@ -285,7 +285,8 @@ class PostInteraction(StatorModel):
                     type = cls.Types.vote
                     question = post.type_data
                     if question.end_time and timezone.now() > question.end_time:
-                        raise ValueError(
+                        # TODO: Maybe create an expecific expired exception?
+                        raise cls.DoesNotExist(
                             f"Cannot create a vote to the expired question {post.id}"
                         )
                 else:
