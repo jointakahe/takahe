@@ -12,6 +12,7 @@ from api.views import (
     search,
     statuses,
     timelines,
+    trends,
 )
 from hatchway import methods
 
@@ -38,19 +39,15 @@ urlpatterns = [
     path("v1/announcements/<pk>/dismiss", announcements.announcement_dismiss),
     # Apps
     path("v1/apps", apps.add_app),
+    # Emoji
+    path("v1/custom_emojis", emoji.emojis),
     # Filters
     path("v2/filters", filters.list_filters),
     path("v1/filters", filters.list_filters),
     # Instance
     path("v1/instance", instance.instance_info_v1),
     path("v2/instance", instance.instance_info_v2),
-    path("v1/timelines/home", timelines.home),
-    path("v1/timelines/public", timelines.public),
-    path("v1/timelines/tag/<hashtag>", timelines.hashtag),
-    path("v1/timelines/conversations", timelines.conversations),
-    path("v1/favourites", timelines.favourites),
-    path("v1/notifications", notifications.notifications),
-    path("v1/statuses", statuses.post_status),
+    # Media
     path("v1/media", media.upload_media),
     path("v2/media", media.upload_media),
     path("v1/media/<id>", methods(get=media.get_media, put=media.update_media)),
@@ -61,12 +58,26 @@ urlpatterns = [
             delete=statuses.delete_status,
         ),
     ),
+    # Notifications
+    path("v1/notifications", notifications.notifications),
+    # Search
+    path("v2/search", search.search),
+    # Statuses
+    path("v1/statuses", statuses.post_status),
     path("v1/statuses/<id>/context", statuses.status_context),
     path("v1/statuses/<id>/favourite", statuses.favourite_status),
     path("v1/statuses/<id>/unfavourite", statuses.unfavourite_status),
     path("v1/statuses/<id>/favourited_by", statuses.favourited_by),
     path("v1/statuses/<id>/reblog", statuses.reblog_status),
     path("v1/statuses/<id>/unreblog", statuses.unreblog_status),
-    path("v1/custom_emojis", emoji.emojis),
-    path("v2/search", search.search),
+    # Timelines
+    path("v1/timelines/home", timelines.home),
+    path("v1/timelines/public", timelines.public),
+    path("v1/timelines/tag/<hashtag>", timelines.hashtag),
+    path("v1/conversations", timelines.conversations),
+    path("v1/favourites", timelines.favourites),
+    # Trends
+    path("v1/trends/tags", trends.trends_tags),
+    path("v1/trends/statuses", trends.trends_statuses),
+    path("v1/trends/links", trends.trends_links),
 ]
