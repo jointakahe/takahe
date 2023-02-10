@@ -147,7 +147,7 @@ To use S3, provide a URL in one of these forms:
 * ``s3://access-key:secret-key@endpoint-url/bucket-name``
 
 If you omit the keys or the endpoint URL, then Takahē will try to use implicit
-authentication for them. The keys, if included, should be urlencoded, as AWS 
+authentication for them. The keys, if included, should be urlencoded, as AWS
 secret keys commonly contain eg + characters.
 
 Your S3 bucket *must* be set to allow publically-readable files, as Takahē will
