@@ -335,6 +335,10 @@ class PostInteraction(StatorModel):
                 # That post is gone, boss
                 # TODO: Limited retry state?
                 return
+
+        # Need to be in a separate transaction
+        # to consider the created interaction
+        with transaction.atomic():
             interaction.post.calculate_stats()
             interaction.post.calculate_type_data()
 
@@ -357,7 +361,10 @@ class PostInteraction(StatorModel):
             interaction.timeline_events.all().delete()
             # Force it into undone_fanned_out as it's not ours
             interaction.transition_perform(PostInteractionStates.undone_fanned_out)
-            # Recalculate post stats
+
+        # Need to be in a separate transaction
+        # to consider the removed interaction
+        with transaction.atomic():
             interaction.post.calculate_stats()
             interaction.post.calculate_type_data()
 
