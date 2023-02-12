@@ -172,15 +172,23 @@ class Status(Schema):
         interactions = activities_models.PostInteraction.get_post_interactions(
             posts, identity
         )
-        return [cls.from_post(post, interactions=interactions) for post in posts]
+        return [
+            cls.from_post(post, interactions=interactions, identity=identity)
+            for post in posts
+        ]
 
     @classmethod
     def from_timeline_event(
         cls,
         timeline_event: activities_models.TimelineEvent,
         interactions: dict[str, set[str]] | None = None,
+        identity: users_models.Identity | None = None,
     ) -> "Status":
-        return cls(**timeline_event.to_mastodon_status_json(interactions=interactions))
+        return cls(
+            **timeline_event.to_mastodon_status_json(
+                interactions=interactions, identity=identity
+            )
+        )
 
     @classmethod
     def map_from_timeline_event(
@@ -192,7 +200,7 @@ class Status(Schema):
             events, identity
         )
         return [
-            cls.from_timeline_event(event, interactions=interactions)
+            cls.from_timeline_event(event, interactions=interactions, identity=identity)
             for event in events
         ]
 

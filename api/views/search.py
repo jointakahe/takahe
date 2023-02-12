@@ -47,7 +47,9 @@ def search(
             search_result["posts"], request.identity
         )
         result["statuses"] = [
-            schemas.Status.from_post(p, interactions=interactions)
+            schemas.Status.from_post(
+                p, interactions=interactions, identity=request.identity
+            )
             for p in search_result["posts"]
         ]
     return schemas.Search(**result)
