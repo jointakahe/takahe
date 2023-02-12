@@ -595,6 +595,8 @@ class Post(StatorModel):
                     type=PostInteraction.Types.vote,
                     answer=option.name,
                 ).count()
+        if save:
+            self.save()
 
     ### ActivityPub (outbound) ###
 

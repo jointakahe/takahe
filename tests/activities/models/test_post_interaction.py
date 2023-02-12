@@ -26,14 +26,14 @@ def test_vote_in_question(identity: Identity, remote_identity: Identity, config_
         },
     )
 
-    PostInteraction.by_ap(
+    PostInteraction.handle_ap(
         data={
-            "id": "https://remote.test/test-actor#votes/389574/activity",
+            "id": "https://remote.test/test-actor#votes/11/activity",
             "to": "https://example.com/@test@example.com/",
             "type": "Create",
             "actor": "https://remote.test/test-actor/",
             "object": {
-                "id": "https://remote.test/users/test-actor#votes/1",
+                "id": "https://remote.test/users/test-actor#votes/11",
                 "to": "https://example.com/@test@example.com/",
                 "name": "Option 1",
                 "type": "Note",
@@ -52,10 +52,9 @@ def test_vote_in_question(identity: Identity, remote_identity: Identity, config_
                 "https://w3id.org/security/v1",
             ],
         },
-        create=True,
     )
 
-    post.calculate_type_data()
+    post.refresh_from_db()
 
     assert isinstance(post.type_data, QuestionData)
     assert post.type_data.voter_count == 1
@@ -85,14 +84,14 @@ def test_vote_in_multiple_choice_question(
         },
     )
 
-    PostInteraction.by_ap(
+    PostInteraction.handle_ap(
         data={
-            "id": "https://remote.test/test-actor#votes/389574/activity",
+            "id": "https://remote.test/test-actor#votes/12/activity",
             "to": "https://example.com/@test@example.com/",
             "type": "Create",
             "actor": "https://remote.test/test-actor/",
             "object": {
-                "id": "https://remote.test/users/test-actor#votes/1",
+                "id": "https://remote.test/users/test-actor#votes/12",
                 "to": "https://example.com/@test@example.com/",
                 "name": "Option 1",
                 "type": "Note",
@@ -111,17 +110,16 @@ def test_vote_in_multiple_choice_question(
                 "https://w3id.org/security/v1",
             ],
         },
-        create=True,
     )
 
-    PostInteraction.by_ap(
+    PostInteraction.handle_ap(
         data={
-            "id": "https://remote.test/test-actor#votes/389575/activity",
+            "id": "https://remote.test/test-actor#votes/13/activity",
             "to": "https://example.com/@test@example.com/",
             "type": "Create",
             "actor": "https://remote.test/test-actor/",
             "object": {
-                "id": "https://remote.test/users/test-actor#votes/2",
+                "id": "https://remote.test/users/test-actor#votes/13",
                 "to": "https://example.com/@test@example.com/",
                 "name": "Option 2",
                 "type": "Note",
@@ -140,10 +138,9 @@ def test_vote_in_multiple_choice_question(
                 "https://w3id.org/security/v1",
             ],
         },
-        create=True,
     )
 
-    post.calculate_type_data()
+    post.refresh_from_db()
 
     assert isinstance(post.type_data, QuestionData)
     assert post.type_data.voter_count == 1
@@ -175,12 +172,12 @@ def test_multiple_votes_to_single_vote_question(
 
     PostInteraction.by_ap(
         data={
-            "id": "https://remote.test/test-actor#votes/389574/activity",
+            "id": "https://remote.test/test-actor#votes/14/activity",
             "to": "https://example.com/@test@example.com/",
             "type": "Create",
             "actor": "https://remote.test/test-actor/",
             "object": {
-                "id": "https://remote.test/users/test-actor#votes/1",
+                "id": "https://remote.test/users/test-actor#votes/14",
                 "to": "https://example.com/@test@example.com/",
                 "name": "Option 1",
                 "type": "Note",
@@ -205,12 +202,12 @@ def test_multiple_votes_to_single_vote_question(
     with pytest.raises(PostInteraction.DoesNotExist) as ex:
         PostInteraction.by_ap(
             data={
-                "id": "https://remote.test/test-actor#votes/389575/activity",
+                "id": "https://remote.test/test-actor#votes/15/activity",
                 "to": "https://example.com/@test@example.com/",
                 "type": "Create",
                 "actor": "https://remote.test/test-actor/",
                 "object": {
-                    "id": "https://remote.test/users/test-actor#votes/2",
+                    "id": "https://remote.test/users/test-actor#votes/15",
                     "to": "https://example.com/@test@example.com/",
                     "name": "Option 2",
                     "type": "Note",
@@ -256,12 +253,12 @@ def test_vote_in_expired_question(
     with pytest.raises(PostInteraction.DoesNotExist) as ex:
         PostInteraction.by_ap(
             data={
-                "id": "https://remote.test/test-actor#votes/389574/activity",
+                "id": "https://remote.test/test-actor#votes/16/activity",
                 "to": "https://example.com/@test@example.com/",
                 "type": "Create",
                 "actor": "https://remote.test/test-actor/",
                 "object": {
-                    "id": "https://remote.test/users/test-actor#votes/1",
+                    "id": "https://remote.test/users/test-actor#votes/16",
                     "to": "https://example.com/@test@example.com/",
                     "name": "Option 1",
                     "type": "Note",
