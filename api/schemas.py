@@ -108,6 +108,14 @@ class Poll(Schema):
     options: list[PollOptions]
     emojis: list[CustomEmoji]
 
+    @classmethod
+    def from_post(
+        cls,
+        post: activities_models.Post,
+        identity: users_models.Identity | None = None,
+    ) -> "Poll":
+        return cls(**post.type_data.to_mastodon_json(post, identity=identity))
+
 
 class StatusMention(Schema):
     id: str
