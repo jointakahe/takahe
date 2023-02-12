@@ -61,6 +61,17 @@ class PostInteractionStates(StateGraph):
                     subject_post=interaction.post,
                     subject_post_interaction=interaction,
                 )
+        # Vote: send a copy of the vote to the original
+        # post author only if it's a local interaction
+        # to a non local post
+        elif interaction.type == interaction.Types.vote:
+            if interaction.identity.local and not interaction.post.local:
+                await FanOut.objects.acreate(
+                    type=FanOut.Types.interaction,
+                    identity_id=interaction.post.author_id,
+                    subject_post=interaction.post,
+                    subject_post_interaction=interaction,
+                )
         else:
             raise ValueError("Cannot fan out unknown type")
         # And one for themselves if they're local and it's a boost
@@ -238,9 +249,32 @@ class PostInteraction(StatorModel):
                 "actor": self.identity.actor_uri,
                 "object": self.post.object_uri,
             }
+        elif self.type == self.Types.vote:
+            value = {
+                "type": "Note",
+                "id": self.object_uri,
+                "to": self.post.author.actor_uri,
+                "name": self.answer,
+                "inReplyTo": self.post.object_uri,
+                "attributedTo": self.identity.actor_uri,
+            }
         else:
             raise ValueError("Cannot turn into AP")
         return value
+
+    def to_create_ap(self):
+        """
+        Returns the AP JSON to create this object
+        """
+        object = self.to_ap()
+        return {
+            "to": object.get("to", []),
+            "cc": object.get("cc", []),
+            "type": "Create",
+            "id": self.object_uri + "#create",
+            "actor": self.identity.actor_uri,
+            "object": object,
+        }
 
     def to_undo_ap(self) -> dict:
         """

@@ -280,3 +280,35 @@ def test_vote_in_expired_question(
             create=True,
         )
         assert "Cannot create a vote to the expired question" in str(ex)
+
+
+@pytest.mark.django_db
+def test_vote_to_ap(identity: Identity, remote_identity: Identity, config_system):
+    post = Post.objects.create(
+        author=remote_identity,
+        local=False,
+        content="<p>Test Question</p>",
+        type_data={
+            "type": "Question",
+            "mode": "oneOf",
+            "options": [
+                {"name": "Option 1", "type": "Note", "votes": 6},
+                {"name": "Option 2", "type": "Note", "votes": 4},
+            ],
+            "voter_count": 10,
+            "end_time": format_ld_date(timezone.now() + timedelta(1)),
+        },
+    )
+
+    interaction = PostInteraction.objects.create(
+        identity=identity,
+        post=post,
+        type=PostInteraction.Types.vote,
+        answer="Option 1",
+    )
+
+    data = interaction.to_create_ap()
+    assert data["object"]["to"] == remote_identity.actor_uri
+    assert data["object"]["attributedTo"] == identity.actor_uri
+    assert data["object"]["name"] == "Option 1"
+    assert data["object"]["inReplyTo"] == post.object_uri
