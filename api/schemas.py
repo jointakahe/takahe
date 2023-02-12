@@ -157,8 +157,11 @@ class Status(Schema):
         cls,
         post: activities_models.Post,
         interactions: dict[str, set[str]] | None = None,
+        identity: users_models.Identity | None = None,
     ) -> "Status":
-        return cls(**post.to_mastodon_json(interactions=interactions))
+        return cls(
+            **post.to_mastodon_json(interactions=interactions, identity=identity)
+        )
 
     @classmethod
     def map_from_post(

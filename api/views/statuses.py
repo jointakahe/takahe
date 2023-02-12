@@ -107,7 +107,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
     )
     # Add their own timeline event for immediate visibility
     TimelineEvent.add_post(request.identity, post)
-    return schemas.Status.from_post(post)
+    return schemas.Status.from_post(post, identity=request.identity)
 
 
 @identity_required
@@ -115,7 +115,9 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
 def status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @identity_required
@@ -143,7 +145,7 @@ def delete_status(request, id: str) -> schemas.Status:
     if post.author != request.identity:
         raise ApiError(401, "Not the author of this status")
     PostService(post).delete()
-    return schemas.Status.from_post(post)
+    return schemas.Status.from_post(post, identity=request.identity)
 
 
 @identity_required
@@ -164,11 +166,16 @@ def status_context(request, id: str) -> schemas.Context:
     )
     return schemas.Context(
         ancestors=[
-            schemas.Status.from_post(p, interactions=interactions)
+            schemas.Status.from_post(
+                p, interactions=interactions, identity=request.identity
+            )
             for p in reversed(ancestors)
         ],
         descendants=[
-            schemas.Status.from_post(p, interactions=interactions) for p in descendants
+            schemas.Status.from_post(
+                p, interactions=interactions, identity=request.identity
+            )
+            for p in descendants
         ],
     )
 
@@ -180,7 +187,9 @@ def favourite_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.like_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @identity_required
@@ -190,7 +199,9 @@ def unfavourite_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.unlike_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @api_view.get
@@ -241,7 +252,9 @@ def reblog_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.boost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @identity_required
@@ -251,4 +264,6 @@ def unreblog_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.unboost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
