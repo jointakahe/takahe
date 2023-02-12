@@ -38,7 +38,7 @@ class InboxMessageStates(StateGraph):
                                 instance.message
                             )
                     case "question":
-                        pass  # Drop for now
+                        await sync_to_async(Post.handle_create_ap)(instance.message)
                     case unknown:
                         if unknown in Post.Types.names:
                             await sync_to_async(Post.handle_create_ap)(instance.message)
