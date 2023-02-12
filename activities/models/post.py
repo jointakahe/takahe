@@ -1048,7 +1048,7 @@ class Post(StatorModel):
 
     ### Mastodon API ###
 
-    def to_mastodon_json(self, interactions=None):
+    def to_mastodon_json(self, interactions=None, identity=None):
         reply_parent = None
         if self.in_reply_to:
             # Load the PK and author.id explicitly to prevent a SELECT on the entire author Identity
@@ -1106,7 +1106,7 @@ class Post(StatorModel):
                 reply_parent.author_id if reply_parent else None
             ),
             "reblog": None,
-            "poll": self.type_data.to_mastodon_json(self.id)
+            "poll": self.type_data.to_mastodon_json(self, identity)
             if isinstance(self.type_data, QuestionData)
             else None,
             "card": None,

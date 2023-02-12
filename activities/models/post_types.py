@@ -48,10 +48,12 @@ class QuestionData(BasePostDataType):
             data["options"] = options
         super().__init__(**data)
 
-    def to_mastodon_json(self, id):
+    def to_mastodon_json(self, post, identity=None):
+        from activities.models import PostInteraction
+
         multiple = self.mode == "anyOf"
         value = {
-            "id": id,
+            "id": post.id,
             "expires_at": None,
             "expired": False,
             "multiple": multiple,
@@ -67,7 +69,9 @@ class QuestionData(BasePostDataType):
             value["expires_at"] = format_ld_date(self.end_time)
             value["expired"] = timezone.now() >= self.end_time
 
-        for option in self.options or []:
+        options = self.options or []
+        option_map = {}
+        for index, option in enumerate(options):
             value["options"].append(
                 {
                     "title": option.name,
@@ -75,6 +79,17 @@ class QuestionData(BasePostDataType):
                 }
             )
             value["votes_count"] += option.votes
+            option_map[option.name] = index
+
+        if identity:
+            votes = post.interactions.filter(
+                identity=identity,
+                type=PostInteraction.Types.vote,
+            )
+            value["voted"] = post.author == identity or votes.exists()
+            value["own_votes"] = [
+                option_map[vote.name] for vote in votes if vote.answer in option_map
+            ]
 
         return value
 
