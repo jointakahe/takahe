@@ -156,6 +156,9 @@ class PostInteraction(StatorModel):
         related_name="interactions",
     )
 
+    # The the selected answer vote in the question/poll
+    answer = models.CharField(max_length=50, blank=True, null=True)
+
     # When the activity was originally created (as opposed to when we received it)
     # Mastodon only seems to send this for boosts, not likes
     published = models.DateTimeField(default=timezone.now)
@@ -272,6 +275,7 @@ class PostInteraction(StatorModel):
                 object = data["object"]
                 target = get_str_or_id(object, "inReplyTo") or get_str_or_id(object)
                 post = Post.by_object_uri(target, fetch=True)
+                answer = None
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
@@ -284,6 +288,7 @@ class PostInteraction(StatorModel):
                 ):
                     type = cls.Types.vote
                     question = post.type_data
+                    answer = object["name"]
                     if question.end_time and timezone.now() > question.end_time:
                         # TODO: Maybe create an expecific expired exception?
                         raise cls.DoesNotExist(
@@ -299,6 +304,7 @@ class PostInteraction(StatorModel):
                     published=parse_ld_date(data.get("published", None))
                     or timezone.now(),
                     type=type,
+                    answer=answer,
                 )
             else:
                 raise cls.DoesNotExist(f"No interaction with ID {data['id']}", data)
@@ -318,6 +324,7 @@ class PostInteraction(StatorModel):
                 # TODO: Limited retry state?
                 return
             interaction.post.calculate_stats()
+            interaction.post.calculate_type_data()
 
     @classmethod
     def handle_undo_ap(cls, data):
@@ -340,6 +347,7 @@ class PostInteraction(StatorModel):
             interaction.transition_perform(PostInteractionStates.undone_fanned_out)
             # Recalculate post stats
             interaction.post.calculate_stats()
+            interaction.post.calculate_type_data()
 
     ### Mastodon API ###
 

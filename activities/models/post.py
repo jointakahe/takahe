@@ -575,6 +575,27 @@ class Post(StatorModel):
         if save:
             self.save()
 
+    def calculate_type_data(self, save=True):
+        """
+        Recalculate type_data (used mostly for poll votes)
+        """
+        from activities.models import PostInteraction
+
+        if self.local and isinstance(self.type_data, QuestionData):
+            self.type_data.voter_count = (
+                self.interactions.filter(
+                    type=PostInteraction.Types.vote,
+                )
+                .distinct("identity")
+                .count()
+            )
+
+            for option in self.type_data.options:
+                option.votes = self.interactions.filter(
+                    type=PostInteraction.Types.vote,
+                    answer=option.name,
+                ).count()
+
     ### ActivityPub (outbound) ###
 
     def to_ap(self) -> dict:
