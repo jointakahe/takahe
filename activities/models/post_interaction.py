@@ -294,6 +294,18 @@ class PostInteraction(StatorModel):
                         raise cls.DoesNotExist(
                             f"Cannot create a vote to the expired question {post.id}"
                         )
+
+                    already_voted = (
+                        post.type_data.mode == "oneOf"
+                        and post.interactions.filter(
+                            type=cls.Types.vote, identity=identity
+                        ).exists()
+                    )
+                    if already_voted:
+                        raise cls.DoesNotExist(
+                            f"The identity {identity.handle} already voted in question {post.id}"
+                        )
+
                 else:
                     raise ValueError(f"Cannot handle AP type {data['type']}")
                 # Make the actual interaction
