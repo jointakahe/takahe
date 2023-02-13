@@ -299,13 +299,13 @@ def test_vote_to_ap(identity: Identity, remote_identity: Identity, config_system
             "end_time": format_ld_date(timezone.now() + timedelta(1)),
         },
     )
+    post.refresh_from_db()
 
-    interaction = PostInteraction.objects.create(
-        identity=identity,
+    interaction = PostInteraction.create_votes(
         post=post,
-        type=PostInteraction.Types.vote,
-        answer="Option 1",
-    )
+        identity=identity,
+        choices=[0],
+    )[0]
 
     data = interaction.to_create_ap()
     assert data["object"]["to"] == remote_identity.actor_uri

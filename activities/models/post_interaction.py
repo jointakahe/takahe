@@ -219,9 +219,39 @@ class PostInteraction(StatorModel):
         """
         Returns a version of the object with all relations pre-loaded
         """
-        return await PostInteraction.objects.select_related("identity", "post").aget(
-            pk=self.pk
-        )
+        return await PostInteraction.objects.select_related(
+            "identity", "post", "post__author"
+        ).aget(pk=self.pk)
+
+    ### Create helpers ###
+
+    @classmethod
+    def create_votes(cls, post, identity, choices) -> list["PostInteraction"]:
+        question = post.type_data
+
+        if question.end_time and timezone.now() > question.end_time:
+            raise ValueError("Validation failed: The poll has already ended")
+
+        if post.interactions.filter(identity=identity, type=cls.Types.vote).exists():
+            raise ValueError("Validation failed: You have already voted on this poll")
+
+        votes = []
+        with transaction.atomic():
+            for choice in set(choices):
+                vote = cls.objects.create(
+                    identity=identity,
+                    post=post,
+                    type=PostInteraction.Types.vote,
+                    answer=question.options[choice].name,
+                )
+                vote.object_uri = f"{identity.actor_uri}#votes/{vote.id}"
+                vote.save()
+
+                votes.append(vote)
+
+            post.calculate_type_data()
+
+        return votes
 
     ### ActivityPub (outbound) ###
 
@@ -271,7 +301,7 @@ class PostInteraction(StatorModel):
             "to": object.get("to", []),
             "cc": object.get("cc", []),
             "type": "Create",
-            "id": self.object_uri + "#create",
+            "id": self.object_uri,
             "actor": self.identity.actor_uri,
             "object": object,
         }
