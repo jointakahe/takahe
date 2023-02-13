@@ -246,8 +246,13 @@ class PostInteraction(StatorModel):
                 )
                 vote.object_uri = f"{identity.actor_uri}#votes/{vote.id}"
                 vote.save()
-
                 votes.append(vote)
+
+                if not post.local:
+                    question.options[choice].votes += 1
+
+            if not post.local:
+                question.voter_count += 1
 
             post.calculate_type_data()
 
