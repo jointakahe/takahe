@@ -379,7 +379,15 @@ class Post(StatorModel):
         return ContentRenderer(local=local).render_post(self.content, self)
 
     def _safe_content_question(self, *, local: bool = True):
-        return ContentRenderer(local=local).render_post(self.content, self)
+        if local:
+            context = {
+                "post": self,
+                "sanitized_content": self._safe_content_note(local=local),
+                "local_display": local,
+            }
+            return loader.render_to_string("activities/_type_question.html", context)
+        else:
+            return ContentRenderer(local=local).render_post(self.content, self)
 
     def _safe_content_typed(self, *, local: bool = True):
         context = {
