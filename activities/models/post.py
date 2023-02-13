@@ -594,7 +594,8 @@ class Post(StatorModel):
                 self.interactions.filter(
                     type=PostInteraction.Types.vote,
                 )
-                .distinct("identity")
+                .values("identity")
+                .distinct()
                 .count()
             )
 
