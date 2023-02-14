@@ -207,8 +207,8 @@ def test_clear_timeline(
     Ensures that timeline clearing works as expected.
     """
     # Follow the remote user
-    service = IdentityService(remote_identity)
-    service.follow_from(identity)
+    service = IdentityService(identity)
+    service.follow(remote_identity)
     # Create an inbound new post message mentioning us
     message = {
         "id": "test",
@@ -243,9 +243,9 @@ def test_clear_timeline(
 
     # Now, submit either a user block (for full clear) or unfollow (for post clear)
     if full:
-        service.block_from(identity)
+        service.block(remote_identity)
     else:
-        service.unfollow_from(identity)
+        service.unfollow(remote_identity)
 
     # Run stator once to process the timeline clear message
     stator.run_single_cycle_sync()

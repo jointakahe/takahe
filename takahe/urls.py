@@ -56,6 +56,21 @@ urlpatterns = [
         name="settings_interface",
     ),
     path(
+        "settings/import_export/",
+        settings.ImportExportPage.as_view(),
+        name="settings_import_export",
+    ),
+    path(
+        "settings/import_export/following.csv",
+        settings.CsvFollowing.as_view(),
+        name="settings_export_following_csv",
+    ),
+    path(
+        "settings/import_export/followers.csv",
+        settings.CsvFollowers.as_view(),
+        name="settings_export_followers_csv",
+    ),
+    path(
         "admin/",
         admin.AdminRoot.as_view(),
         name="admin",

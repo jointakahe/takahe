@@ -1,0 +1,68 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Import/Export{% endblock %}
+
+{% block content %}
+    <form action="." method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <fieldset>
+            <legend>Import</legend>
+            {% if bad_format %}
+                <div class="announcement">Error: The file you uploaded was not a valid {{ bad_format }} CSV.</div>
+            {% endif %}
+            {% if success %}
+                <div class="announcement">Your <i>{{ success }}</i> CSV import was received. It will be processed in the background.</div>
+            {% endif %}
+            {% include "forms/_field.html" with field=form.csv %}
+            {% include "forms/_field.html" with field=form.import_type %}
+            {% include "forms/_field.html" with field=form.replace %}
+        </fieldset>
+
+        <div class="buttons">
+            <button>Import</button>
+        </div>
+
+        <fieldset>
+            <legend>Export</legend>
+            <table class="items">
+                <tr>
+                    <td>
+                        Following list
+                        <small>{{ numbers.outbound_follows }} {{ numbers.outbound_follows|pluralize:"follow,follows" }}</small>
+                    </td>
+                    <td>
+                        <a href="{% url "settings_export_following_csv" %}">Download CSV</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Followers list
+                        <small>{{ numbers.inbound_follows }} {{ numbers.inbound_follows|pluralize:"follower,followers" }}</small>
+                    </td>
+                    <td>
+                        <a href="{% url "settings_export_followers_csv" %}">Download CSV</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Individual blocks
+                        <small>{{ numbers.blocks }} {{ numbers.blocks|pluralize:"people,people" }}</small>
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Individual mutes
+                        <small>{{ numbers.mutes }} {{ numbers.mutes|pluralize:"people,people" }}</small>
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+    </form>
+{% endblock %}

@@ -16,6 +16,7 @@ class InboxMessageStates(StateGraph):
     async def handle_received(cls, instance: "InboxMessage"):
         from activities.models import Post, PostInteraction, TimelineEvent
         from users.models import Block, Follow, Identity, Report
+        from users.services import IdentityService
 
         match instance.message_type:
             case "follow":
@@ -152,6 +153,10 @@ class InboxMessageStates(StateGraph):
                         )
                     case "cleartimeline":
                         await sync_to_async(TimelineEvent.handle_clear_timeline)(
+                            instance.message["object"]
+                        )
+                    case "addfollow":
+                        await sync_to_async(IdentityService.handle_internal_add_follow)(
                             instance.message["object"]
                         )
                     case unknown:

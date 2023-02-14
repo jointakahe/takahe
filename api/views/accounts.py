@@ -3,6 +3,7 @@ from typing import Any
 from django.core.files import File
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from hatchway import ApiResponse, QueryOrBody, api_view
 
 from activities.models import Post
 from activities.services import SearchService
@@ -10,7 +11,6 @@ from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
-from hatchway import ApiResponse, QueryOrBody, api_view
 from users.models import Identity
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
@@ -224,8 +224,8 @@ def account_follow(request, id: str, reblogs: bool = True) -> schemas.Relationsh
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
-    service = IdentityService(identity)
-    service.follow_from(request.identity, boosts=reblogs)
+    service = IdentityService(request.identity)
+    service.follow(identity, boosts=reblogs)
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
@@ -235,8 +235,8 @@ def account_unfollow(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
-    service = IdentityService(identity)
-    service.unfollow_from(request.identity)
+    service = IdentityService(request.identity)
+    service.unfollow(identity)
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
@@ -244,8 +244,8 @@ def account_unfollow(request, id: str) -> schemas.Relationship:
 @identity_required
 def account_block(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
-    service = IdentityService(identity)
-    service.block_from(request.identity)
+    service = IdentityService(request.identity)
+    service.block(identity)
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
@@ -253,8 +253,8 @@ def account_block(request, id: str) -> schemas.Relationship:
 @identity_required
 def account_unblock(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
-    service = IdentityService(identity)
-    service.unblock_from(request.identity)
+    service = IdentityService(request.identity)
+    service.unblock(identity)
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
@@ -267,9 +267,9 @@ def account_mute(
     duration: QueryOrBody[int] = 0,
 ) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
-    service = IdentityService(identity)
-    service.mute_from(
-        request.identity,
+    service = IdentityService(request.identity)
+    service.mute(
+        identity,
         duration=duration,
         include_notifications=notifications,
     )
@@ -280,8 +280,8 @@ def account_mute(
 @api_view.post
 def account_unmute(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
-    service = IdentityService(identity)
-    service.unmute_from(request.identity)
+    service = IdentityService(request.identity)
+    service.unmute(identity)
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 

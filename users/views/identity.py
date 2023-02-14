@@ -249,21 +249,21 @@ class ActionIdentity(View):
         # See what action we should perform
         action = self.request.POST["action"]
         if action == "follow":
-            IdentityService(identity).follow_from(self.request.identity)
+            IdentityService(request.identity).follow(identity)
         elif action == "unfollow":
-            IdentityService(identity).unfollow_from(self.request.identity)
+            IdentityService(request.identity).unfollow(identity)
         elif action == "block":
-            IdentityService(identity).block_from(self.request.identity)
+            IdentityService(request.identity).block(identity)
         elif action == "unblock":
-            IdentityService(identity).unblock_from(self.request.identity)
+            IdentityService(request.identity).unblock(identity)
         elif action == "mute":
-            IdentityService(identity).mute_from(self.request.identity)
+            IdentityService(request.identity).mute(identity)
         elif action == "unmute":
-            IdentityService(identity).unmute_from(self.request.identity)
+            IdentityService(request.identity).unmute(identity)
         elif action == "hide_boosts":
-            IdentityService(identity).follow_from(self.request.identity, boosts=False)
+            IdentityService(request.identity).follow(identity, boosts=False)
         elif action == "show_boosts":
-            IdentityService(identity).follow_from(self.request.identity, boosts=True)
+            IdentityService(request.identity).follow(identity, boosts=True)
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)

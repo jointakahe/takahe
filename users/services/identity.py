@@ -58,8 +58,10 @@ class IdentityService:
 
     def following(self) -> models.QuerySet[Identity]:
         return (
-            Identity.objects.active()
-            .filter(inbound_follows__source=self.identity)
+            Identity.objects.filter(
+                inbound_follows__source=self.identity,
+                inbound_follows__state__in=FollowStates.group_active(),
+            )
             .not_deleted()
             .order_by("username")
             .select_related("domain")
@@ -67,91 +69,94 @@ class IdentityService:
 
     def followers(self) -> models.QuerySet[Identity]:
         return (
-            Identity.objects.filter(outbound_follows__target=self.identity)
+            Identity.objects.filter(
+                outbound_follows__target=self.identity,
+                inbound_follows__state__in=FollowStates.group_active(),
+            )
             .not_deleted()
             .order_by("username")
             .select_related("domain")
         )
 
-    def follow_from(self, from_identity: Identity, boosts=True) -> Follow:
+    def follow(self, target_identity: Identity, boosts=True) -> Follow:
         """
         Follows a user (or does nothing if already followed).
         Returns the follow.
         """
-        if from_identity == self.identity:
+        if target_identity == self.identity:
             raise ValueError("You cannot follow yourself")
-        return Follow.create_local(from_identity, self.identity, boosts=boosts)
+        return Follow.create_local(self.identity, target_identity, boosts=boosts)
 
-    def unfollow_from(self, from_identity: Identity):
+    def unfollow(self, target_identity: Identity):
         """
         Unfollows a user (or does nothing if not followed).
         """
-        if from_identity == self.identity:
+        if target_identity == self.identity:
             raise ValueError("You cannot unfollow yourself")
-        existing_follow = Follow.maybe_get(from_identity, self.identity)
+        existing_follow = Follow.maybe_get(self.identity, target_identity)
         if existing_follow:
             existing_follow.transition_perform(FollowStates.undone)
             InboxMessage.create_internal(
                 {
                     "type": "ClearTimeline",
-                    "actor": from_identity.pk,
-                    "object": self.identity.pk,
+                    "object": target_identity.pk,
+                    "actor": self.identity.pk,
                 }
             )
 
-    def block_from(self, from_identity: Identity) -> Block:
+    def block(self, target_identity: Identity) -> Block:
         """
         Blocks a user.
         """
-        if from_identity == self.identity:
+        if target_identity == self.identity:
             raise ValueError("You cannot block yourself")
-        self.unfollow_from(from_identity)
-        block = Block.create_local_block(from_identity, self.identity)
+        self.unfollow(target_identity)
+        block = Block.create_local_block(self.identity, target_identity)
         InboxMessage.create_internal(
             {
                 "type": "ClearTimeline",
-                "actor": from_identity.pk,
-                "object": self.identity.pk,
+                "actor": self.identity.pk,
+                "object": target_identity.pk,
                 "fullErase": True,
             }
         )
         return block
 
-    def unblock_from(self, from_identity: Identity):
+    def unblock(self, target_identity: Identity):
         """
         Unlocks a user
         """
-        if from_identity == self.identity:
+        if target_identity == self.identity:
             raise ValueError("You cannot unblock yourself")
-        existing_block = Block.maybe_get(from_identity, self.identity, mute=False)
+        existing_block = Block.maybe_get(self.identity, target_identity, mute=False)
         if existing_block and existing_block.active:
             existing_block.transition_perform(BlockStates.undone)
 
-    def mute_from(
+    def mute(
         self,
-        from_identity: Identity,
+        target_identity: Identity,
         duration: int = 0,
         include_notifications: bool = False,
     ) -> Block:
         """
         Mutes a user.
         """
-        if from_identity == self.identity:
+        if target_identity == self.identity:
             raise ValueError("You cannot mute yourself")
         return Block.create_local_mute(
-            from_identity,
             self.identity,
+            target_identity,
             duration=duration or None,
             include_notifications=include_notifications,
         )
 
-    def unmute_from(self, from_identity: Identity):
+    def unmute(self, target_identity: Identity):
         """
         Unmutes a user
         """
-        if from_identity == self.identity:
+        if target_identity == self.identity:
             raise ValueError("You cannot unmute yourself")
-        existing_block = Block.maybe_get(from_identity, self.identity, mute=True)
+        existing_block = Block.maybe_get(self.identity, target_identity, mute=True)
         if existing_block and existing_block.active:
             existing_block.transition_perform(BlockStates.undone)
 
@@ -234,3 +239,26 @@ class IdentityService:
             file.name,
             resize_image(file, size=(1500, 500)),
         )
+
+    @classmethod
+    def handle_internal_add_follow(cls, payload):
+        """
+        Handles an inbox message saying we need to follow a handle
+
+        Message format:
+        {
+            "type": "AddFollow",
+            "source": "90310938129083",
+            "target_handle": "andrew@aeracode.org",
+            "boosts": true,
+        }
+        """
+        # Retrieve ourselves
+        self = cls(Identity.objects.get(pk=payload["source"]))
+        # Get the remote end (may need a fetch)
+        username, domain = payload["target_handle"].split("@")
+        target_identity = Identity.by_username_and_domain(username, domain, fetch=True)
+        if target_identity is None:
+            raise ValueError(f"Cannot find identity to follow: {target_identity}")
+        # Follow!
+        self.follow(target_identity=target_identity, boosts=payload.get("boosts", True))

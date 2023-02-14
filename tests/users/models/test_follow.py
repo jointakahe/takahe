@@ -20,7 +20,7 @@ def test_follow(
     Ensures that follow sending and acceptance works
     """
     # Make the follow
-    follow = IdentityService(remote_identity).follow_from(identity)
+    follow = IdentityService(identity).follow(remote_identity)
     assert Follow.objects.get(pk=follow.pk).state == FollowStates.unrequested
     # Run stator to make it try and send out the remote request
     httpx_mock.add_response(
