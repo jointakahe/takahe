@@ -58,7 +58,9 @@ kwIDAQAB
 
 @pytest.fixture(autouse=True)
 def _test_settings(settings):
-    settings.STATICFILES_STORAGE = None
+    settings.STATICFILES_STORAGE = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
 
 
 @pytest.fixture
