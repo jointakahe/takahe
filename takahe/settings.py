@@ -196,6 +196,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "django_htmx",
+    "hatchway",
     "core",
     "activities",
     "api",
