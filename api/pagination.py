@@ -153,7 +153,9 @@ class PaginationResult(Generic[T]):
         """
         interactions = PostInteraction.get_post_interactions(self.results, identity)
         self.jsonify_results(
-            lambda post: post.to_mastodon_json(interactions=interactions)
+            lambda post: post.to_mastodon_json(
+                interactions=interactions, identity=identity
+            )
         )
 
     def jsonify_status_events(self, identity):
@@ -162,7 +164,9 @@ class PaginationResult(Generic[T]):
         """
         interactions = PostInteraction.get_event_interactions(self.results, identity)
         self.jsonify_results(
-            lambda event: event.to_mastodon_status_json(interactions=interactions)
+            lambda event: event.to_mastodon_status_json(
+                interactions=interactions, identity=identity
+            )
         )
 
     def jsonify_notification_events(self, identity):

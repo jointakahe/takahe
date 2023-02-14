@@ -228,7 +228,7 @@ class TimelineEvent(models.Model):
             )
         elif self.type == self.Types.boost:
             return self.subject_post_interaction.to_mastodon_status_json(
-                interactions=interactions
+                interactions=interactions, identity=identity
             )
         else:
             raise ValueError(f"Cannot make status JSON for type {self.type}")
