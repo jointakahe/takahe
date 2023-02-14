@@ -1,9 +1,9 @@
 from django.conf import settings
+from hatchway import api_view
 
 from activities.models import Post
 from api import schemas
 from core.models import Config
-from hatchway import api_view
 from takahe import __version__
 from users.models import Domain, Identity
 

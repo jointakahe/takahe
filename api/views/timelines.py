@@ -1,4 +1,5 @@
 from django.http import HttpRequest
+from hatchway import ApiError, ApiResponse, api_view
 
 from activities.models import Post
 from activities.services import TimelineService
@@ -6,7 +7,6 @@ from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
-from hatchway import ApiError, ApiResponse, api_view
 
 
 @identity_required

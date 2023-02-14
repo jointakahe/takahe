@@ -1,8 +1,8 @@
 from django.shortcuts import get_object_or_404
+from hatchway import api_view
 
 from api import schemas
 from api.decorators import identity_required
-from hatchway import api_view
 from users.models import Announcement
 from users.services import AnnouncementService
 

@@ -5,9 +5,9 @@ from typing import Any, Generic, Protocol, TypeVar
 
 from django.db import models
 from django.http import HttpRequest
+from hatchway.http import ApiResponse
 
 from activities.models import PostInteraction
-from hatchway.http import ApiResponse
 
 T = TypeVar("T")
 

@@ -1,10 +1,11 @@
 from typing import Literal
 
+from hatchway import Field, api_view
+
 from activities.models import PostInteraction
 from activities.services.search import SearchService
 from api import schemas
 from api.decorators import identity_required
-from hatchway import Field, api_view
 
 
 @identity_required

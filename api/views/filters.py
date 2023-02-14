@@ -1,5 +1,6 @@
-from api.decorators import identity_required
 from hatchway import api_view
+
+from api.decorators import identity_required
 
 
 @identity_required

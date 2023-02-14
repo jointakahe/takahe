@@ -1,8 +1,8 @@
 from django.http import HttpRequest
+from hatchway import api_view
 
 from api import schemas
 from api.decorators import identity_required
-from hatchway import api_view
 
 
 @identity_required
