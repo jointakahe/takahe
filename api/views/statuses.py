@@ -1,8 +1,8 @@
 from typing import Literal
 
-from django.forms import ValidationError
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from hatchway import ApiError, ApiResponse, Schema, api_view
 
 from activities.models import (
     Post,
@@ -16,7 +16,6 @@ from api import schemas
 from api.decorators import identity_required
 from api.pagination import MastodonPaginator, PaginationResult
 from core.models import Config
-from hatchway import ApiResponse, Schema, api_view
 
 
 class PostStatusSchema(Schema):
@@ -30,14 +29,36 @@ class PostStatusSchema(Schema):
     media_ids: list[str] = []
 
 
+class EditStatusSchema(Schema):
+    status: str
+    sensitive: bool = False
+    spoiler_text: str | None = None
+    language: str | None = None
+    media_ids: list[str] = []
+
+
+def post_for_id(request: HttpRequest, id: str) -> Post:
+    """
+    Common logic to get a Post object for an ID, taking visibility into
+    account.
+    """
+    if request.identity:
+        queryset = Post.objects.not_hidden().visible_to(
+            request.identity, include_replies=True
+        )
+    else:
+        queryset = Post.objects.not_hidden().unlisted()
+    return get_object_or_404(queryset, pk=id)
+
+
 @identity_required
 @api_view.post
 def post_status(request, details: PostStatusSchema) -> schemas.Status:
     # Check text length
     if len(details.status) > Config.system.post_length:
-        raise ValidationError("Status is too long")
+        raise ApiError(400, "Status is too long")
     if len(details.status) == 0 and not details.media_ids:
-        raise ValidationError("Status is empty")
+        raise ApiError(400, "Status is empty")
     # Grab attachments
     attachments = [get_object_or_404(PostAttachment, pk=id) for id in details.media_ids]
     # Create the Post
@@ -70,23 +91,50 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
 @identity_required
 @api_view.get
 def status(request, id: str) -> schemas.Status:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return schemas.Status.from_post(post, interactions=interactions)
 
 
 @identity_required
+@api_view.put
+def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
+    post = post_for_id(request, id)
+    if post.author != request.identity:
+        raise ApiError(401, "Not the author of this status")
+    # Grab attachments
+    attachments = [get_object_or_404(PostAttachment, pk=id) for id in details.media_ids]
+    # Update all details, as the client must provide them all
+    post.edit_local(
+        content=details.status,
+        summary=details.spoiler_text,
+        sensitive=details.sensitive,
+        attachments=attachments,
+    )
+    return schemas.Status.from_post(post)
+
+
+@identity_required
 @api_view.delete
 def delete_status(request, id: str) -> schemas.Status:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
+    if post.author != request.identity:
+        raise ApiError(401, "Not the author of this status")
     PostService(post).delete()
     return schemas.Status.from_post(post)
 
 
 @identity_required
 @api_view.get
+def status_source(request, id: str) -> schemas.StatusSource:
+    post = post_for_id(request, id)
+    return schemas.StatusSource.from_post(post)
+
+
+@identity_required
+@api_view.get
 def status_context(request, id: str) -> schemas.Context:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
     service = PostService(post)
     ancestors, descendants = service.context(request.identity)
     interactions = PostInteraction.get_post_interactions(
@@ -106,7 +154,7 @@ def status_context(request, id: str) -> schemas.Context:
 @identity_required
 @api_view.post
 def favourite_status(request, id: str) -> schemas.Status:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
     service = PostService(post)
     service.like_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -116,7 +164,7 @@ def favourite_status(request, id: str) -> schemas.Status:
 @identity_required
 @api_view.post
 def unfavourite_status(request, id: str) -> schemas.Status:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
     service = PostService(post)
     service.unlike_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -135,9 +183,7 @@ def favourited_by(
     """
     View who favourited a given status.
     """
-    # This method should filter out private statuses, but we don't really have
-    # a concept of "private status" yet.
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
 
     paginator = MastodonPaginator()
     pager: PaginationResult[PostInteraction] = paginator.paginate(
@@ -169,7 +215,7 @@ def favourited_by(
 @identity_required
 @api_view.post
 def reblog_status(request, id: str) -> schemas.Status:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
     service = PostService(post)
     service.boost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -179,7 +225,7 @@ def reblog_status(request, id: str) -> schemas.Status:
 @identity_required
 @api_view.post
 def unreblog_status(request, id: str) -> schemas.Status:
-    post = get_object_or_404(Post, pk=id)
+    post = post_for_id(request, id)
     service = PostService(post)
     service.unboost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)

@@ -1,4 +1,5 @@
 from django.urls import path
+from hatchway import methods
 
 from api.views import (
     accounts,
@@ -14,7 +15,6 @@ from api.views import (
     timelines,
     trends,
 )
-from hatchway import methods
 
 urlpatterns = [
     # Accounts
@@ -55,9 +55,11 @@ urlpatterns = [
         "v1/statuses/<id>",
         methods(
             get=statuses.status,
+            put=statuses.edit_status,
             delete=statuses.delete_status,
         ),
     ),
+    path("v1/statuses/<id>/source", statuses.status_source),
     # Notifications
     path("v1/notifications", notifications.notifications),
     # Search

@@ -1,10 +1,10 @@
 from django.core.files import File
 from django.shortcuts import get_object_or_404
+from hatchway import ApiError, QueryOrBody, api_view
 
 from activities.models import PostAttachment, PostAttachmentStates
 from api import schemas
 from core.files import blurhash_image, resize_image
-from hatchway import QueryOrBody, api_view
 
 from ..decorators import identity_required
 
@@ -54,6 +54,8 @@ def get_media(
     id: str,
 ) -> schemas.MediaAttachment:
     attachment = get_object_or_404(PostAttachment, pk=id)
+    if attachment.post.author != request.identity:
+        raise ApiError(401, "Not the author of this attachment")
     return schemas.MediaAttachment.from_post_attachment(attachment)
 
 
@@ -66,6 +68,8 @@ def update_media(
     focus: QueryOrBody[str] = "0,0",
 ) -> schemas.MediaAttachment:
     attachment = get_object_or_404(PostAttachment, pk=id)
+    if attachment.post.author != request.identity:
+        raise ApiError(401, "Not the author of this attachment")
     attachment.name = description or None
     attachment.save()
     return schemas.MediaAttachment.from_post_attachment(attachment)

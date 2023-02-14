@@ -1,7 +1,9 @@
 from typing import Literal, Optional, Union
 
-from activities import models as activities_models
 from hatchway import Field, Schema
+
+from activities import models as activities_models
+from core.html import FediverseHtmlParser
 from users import models as users_models
 from users.services import IdentityService
 
@@ -172,6 +174,20 @@ class Status(Schema):
             cls.from_timeline_event(event, interactions=interactions)
             for event in events
         ]
+
+
+class StatusSource(Schema):
+    id: str
+    text: str
+    spoiler_text: str
+
+    @classmethod
+    def from_post(cls, post: activities_models.Post):
+        return cls(
+            id=post.id,
+            text=FediverseHtmlParser(post.content).plain_text,
+            spoiler_text=post.summary or "",
+        )
 
 
 class Conversation(Schema):

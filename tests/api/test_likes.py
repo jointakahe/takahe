@@ -2,12 +2,10 @@ import pytest
 
 
 @pytest.mark.django_db
-def test_likes_flow(api_token, client):
+def test_likes_flow(api_client):
     # Add a post
-    response = client.post(
+    response = api_client.post(
         "/api/v1/statuses",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
         content_type="application/json",
         data={
             "status": "Like test.",
@@ -19,17 +17,9 @@ def test_likes_flow(api_token, client):
     status_id = response["id"]
 
     # Like it
-    response = client.post(
-        f"/api/v1/statuses/{status_id}/favourite",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
-    ).json()
+    response = api_client.post(f"/api/v1/statuses/{status_id}/favourite").json()
     assert response["favourited"] is True
 
     # Check if it's displaying at likes endpoint
-    response = client.get(
-        "/api/v1/favourites",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
-    ).json()
+    response = api_client.get("/api/v1/favourites").json()
     assert response[0]["id"] == status_id

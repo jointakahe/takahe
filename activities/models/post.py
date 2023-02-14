@@ -503,6 +503,7 @@ class Post(StatorModel):
         self,
         content: str,
         summary: str | None = None,
+        sensitive: bool | None = None,
         visibility: int = Visibilities.public,
         attachments: list | None = None,
     ):
@@ -512,7 +513,7 @@ class Post(StatorModel):
             self.content = parser.html
             self.hashtags = sorted(parser.hashtags) or None
             self.summary = summary or None
-            self.sensitive = bool(summary)
+            self.sensitive = bool(summary) if sensitive is None else sensitive
             self.visibility = visibility
             self.edited = timezone.now()
             self.mentions.set(self.mentions_from_content(content, self.author))

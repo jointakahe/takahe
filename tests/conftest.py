@@ -2,6 +2,7 @@ import time
 
 import pytest
 from django.conf import settings
+from django.test import Client
 
 from api.models import Application, Token
 from core.models import Config
@@ -215,6 +216,14 @@ def api_token(identity) -> Token:
         identity=identity,
         token="mytestapitoken",
         scopes=["read", "write", "follow", "push"],
+    )
+
+
+@pytest.fixture
+def api_client(api_token):
+    return Client(
+        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
+        HTTP_ACCEPT="application/json",
     )
 
 
