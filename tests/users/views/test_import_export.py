@@ -64,3 +64,23 @@ def test_export_following(
         response.content.strip()
         == b"Account address,Show boosts,Notify on new posts,Languages\r\ntest@remote.test,true,false,"
     )
+
+
+@pytest.mark.django_db
+def test_export_followers(
+    client_with_identity: Client,
+    identity: Identity,
+    identity2: Identity,
+    stator: StatorRunner,
+    httpx_mock: HTTPXMock,
+):
+    """
+    Validates the "export a CSV of your follows" functionality works
+    """
+    # Follow remote_identity
+    IdentityService(identity2).follow(identity)
+
+    # Download the CSV
+    response = client_with_identity.get("/settings/import_export/followers.csv")
+    assert response.status_code == 200
+    assert response.content.strip() == b"Account address\r\ntest@example2.com"
