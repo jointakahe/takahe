@@ -151,4 +151,4 @@ class CsvFollowers(CsvView):
         return self.request.identity.inbound_follows.active()
 
     def get_handle(self, follow: Follow):
-        return follow.target.handle
+        return follow.source.handle
