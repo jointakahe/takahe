@@ -88,7 +88,7 @@ class QuestionData(BasePostDataType):
             )
             value["voted"] = post.author == identity or votes.exists()
             value["own_votes"] = [
-                option_map[vote.answer] for vote in votes if vote.answer in option_map
+                option_map[vote.value] for vote in votes if vote.value in option_map
             ]
 
         return value

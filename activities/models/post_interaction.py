@@ -167,8 +167,9 @@ class PostInteraction(StatorModel):
         related_name="interactions",
     )
 
-    # The the selected answer vote in the question/poll
-    answer = models.CharField(max_length=50, blank=True, null=True)
+    # Used to store any interaction extra text value like the vote
+    # in the question/poll case
+    value = models.CharField(max_length=50, blank=True, null=True)
 
     # When the activity was originally created (as opposed to when we received it)
     # Mastodon only seems to send this for boosts, not likes
@@ -242,7 +243,7 @@ class PostInteraction(StatorModel):
                     identity=identity,
                     post=post,
                     type=PostInteraction.Types.vote,
-                    answer=question.options[choice].name,
+                    value=question.options[choice].name,
                 )
                 vote.object_uri = f"{identity.actor_uri}#votes/{vote.id}"
                 vote.save()
@@ -289,7 +290,7 @@ class PostInteraction(StatorModel):
                 "type": "Note",
                 "id": self.object_uri,
                 "to": self.post.author.actor_uri,
-                "name": self.answer,
+                "name": self.value,
                 "inReplyTo": self.post.object_uri,
                 "attributedTo": self.identity.actor_uri,
             }
@@ -344,7 +345,7 @@ class PostInteraction(StatorModel):
                 object = data["object"]
                 target = get_str_or_id(object, "inReplyTo") or get_str_or_id(object)
                 post = Post.by_object_uri(target, fetch=True)
-                answer = None
+                value = None
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
@@ -357,7 +358,7 @@ class PostInteraction(StatorModel):
                 ):
                     type = cls.Types.vote
                     question = post.type_data
-                    answer = object["name"]
+                    value = object["name"]
                     if question.end_time and timezone.now() > question.end_time:
                         # TODO: Maybe create an expecific expired exception?
                         raise cls.DoesNotExist(
@@ -385,7 +386,7 @@ class PostInteraction(StatorModel):
                     published=parse_ld_date(data.get("published", None))
                     or timezone.now(),
                     type=type,
-                    answer=answer,
+                    value=value,
                 )
             else:
                 raise cls.DoesNotExist(f"No interaction with ID {data['id']}", data)

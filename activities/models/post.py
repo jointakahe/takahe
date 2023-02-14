@@ -602,7 +602,7 @@ class Post(StatorModel):
             for option in self.type_data.options:
                 option.votes = self.interactions.filter(
                     type=PostInteraction.Types.vote,
-                    answer=option.name,
+                    value=option.name,
                 ).count()
         if save:
             self.save()
