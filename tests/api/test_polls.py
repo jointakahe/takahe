@@ -8,11 +8,9 @@ from core.ld import format_ld_date
 
 
 @pytest.mark.django_db
-def test_get_poll(api_token, client):
-    response = client.post(
+def test_get_poll(api_client):
+    response = api_client.post(
         "/api/v1/statuses",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
         content_type="application/json",
         data={
             "status": "Hello, world!",
@@ -25,11 +23,8 @@ def test_get_poll(api_token, client):
 
     id = response["id"]
 
-    response = client.get(
+    response = api_client.get(
         f"/api/v1/polls/{id}",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
-        content_type="application/json",
     ).json()
 
     assert response["id"] == id
@@ -37,7 +32,7 @@ def test_get_poll(api_token, client):
 
 
 @pytest.mark.django_db
-def test_vote_poll(api_token, identity2, client):
+def test_vote_poll(api_client, identity2):
     post = Post.create_local(
         author=identity2,
         content="<p>Test Question</p>",
@@ -53,10 +48,8 @@ def test_vote_poll(api_token, identity2, client):
         },
     )
 
-    response = client.post(
+    response = api_client.post(
         f"/api/v1/polls/{post.id}/votes",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
         content_type="application/json",
         data={
             "choices": [0],

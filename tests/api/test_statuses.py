@@ -78,11 +78,9 @@ def test_mention_format(api_client, identity, remote_identity):
 
 
 @pytest.mark.django_db
-def test_post_question_status(api_token, identity, client):
-    response = client.post(
+def test_post_question_status(api_client):
+    response = api_client.post(
         "/api/v1/statuses",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
         content_type="application/json",
         data={
             "status": "Hello, world!",
@@ -103,7 +101,7 @@ def test_post_question_status(api_token, identity, client):
 
 
 @pytest.mark.django_db
-def test_question_format(api_token, identity, remote_identity, client):
+def test_question_format(api_client, remote_identity):
     """
     Ensures incoming questions are property parsed.
     """
@@ -125,12 +123,7 @@ def test_question_format(api_token, identity, remote_identity, client):
             "end_time": "2022-01-01T23:04:45+00:00",
         },
     )
-    response = client.get(
-        f"/api/v1/statuses/{post.id}",
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
-        content_type="application/json",
-    ).json()
+    response = api_client.get(f"/api/v1/statuses/{post.id}").json()
     assert response["text"] == "<p>Test Question</p>"
     assert response["poll"] == {
         "id": str(post.id),
