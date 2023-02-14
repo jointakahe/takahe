@@ -1,9 +1,9 @@
 from django.shortcuts import get_object_or_404
+from hatchway import Schema, api_view
 
 from activities.models import Post, PostInteraction
 from api import schemas
 from api.decorators import identity_required
-from hatchway import Schema, api_view
 
 
 class PostVoteSchema(Schema):
