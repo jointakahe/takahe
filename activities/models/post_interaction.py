@@ -434,7 +434,7 @@ class PostInteraction(StatorModel):
 
     ### Mastodon API ###
 
-    def to_mastodon_status_json(self, interactions=None):
+    def to_mastodon_status_json(self, interactions=None, identity=None):
         """
         This wraps Posts in a fake Status for boost interactions.
         """
@@ -443,7 +443,7 @@ class PostInteraction(StatorModel):
                 f"Cannot make status JSON for interaction of type {self.type}"
             )
         # Make a fake post for this boost (because mastodon treats boosts as posts)
-        post_json = self.post.to_mastodon_json(interactions=interactions)
+        post_json = self.post.to_mastodon_json(interactions=interactions, identity=None)
         return {
             "id": f"{self.pk}",
             "uri": post_json["uri"],
@@ -463,7 +463,7 @@ class PostInteraction(StatorModel):
             "url": post_json["url"],
             "in_reply_to_id": None,
             "in_reply_to_account_id": None,
-            "poll": None,
+            "poll": post_json["poll"],
             "card": None,
             "language": None,
             "text": "",
