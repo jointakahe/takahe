@@ -443,7 +443,9 @@ class PostInteraction(StatorModel):
                 f"Cannot make status JSON for interaction of type {self.type}"
             )
         # Make a fake post for this boost (because mastodon treats boosts as posts)
-        post_json = self.post.to_mastodon_json(interactions=interactions, identity=None)
+        post_json = self.post.to_mastodon_json(
+            interactions=interactions, identity=identity
+        )
         return {
             "id": f"{self.pk}",
             "uri": post_json["uri"],
