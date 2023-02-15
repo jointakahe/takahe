@@ -154,11 +154,11 @@ class Status(Schema):
     language: None = Field(...)
     text: str | None = Field(...)
     edited_at: str | None
-    favourited: bool | None
-    reblogged: bool | None
-    muted: bool | None
-    bookmarked: bool | None
-    pinned: bool | None
+    favourited: bool = False
+    reblogged: bool = False
+    muted: bool = False
+    bookmarked: bool = False
+    pinned: bool = False
 
     @classmethod
     def from_post(

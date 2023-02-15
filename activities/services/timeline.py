@@ -1,6 +1,12 @@
 from django.db import models
 
-from activities.models import Hashtag, Post, PostInteraction, TimelineEvent
+from activities.models import (
+    Hashtag,
+    Post,
+    PostInteraction,
+    PostInteractionStates,
+    TimelineEvent,
+)
 from activities.services import PostService
 from users.models import Identity
 
@@ -92,6 +98,7 @@ class TimelineService:
             .filter(
                 interactions__identity=self.identity,
                 interactions__type=PostInteraction.Types.like,
+                interactions__state__in=PostInteractionStates.group_active(),
             )
             .order_by("-id")
         )
