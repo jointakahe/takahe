@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -31,23 +33,12 @@ class PostInteractionStates(StateGraph):
         """
         interaction = await instance.afetch_full()
         # Boost: send a copy to all people who follow this user (limiting
-        # to just local follows if it's a remote post)
+        # to just local follows if it's a remote boost)
         if interaction.type == interaction.Types.boost:
-            async for follow in interaction.identity.inbound_follows.filter(
-                boosts=True
-            ).select_related("source", "target"):
-                if interaction.post.local or follow.source.local:
-                    await FanOut.objects.acreate(
-                        type=FanOut.Types.interaction,
-                        identity_id=follow.source_id,
-                        subject_post=interaction.post,
-                        subject_post_interaction=interaction,
-                    )
-            # And one to the post's author, if the booster is local or they are
-            if interaction.identity.local or interaction.post.local:
+            for target in await interaction.aget_boost_targets():
                 await FanOut.objects.acreate(
                     type=FanOut.Types.interaction,
-                    identity_id=interaction.post.author_id,
+                    identity=target,
                     subject_post=interaction.post,
                     subject_post_interaction=interaction,
                 )
@@ -220,13 +211,52 @@ class PostInteraction(StatorModel):
         """
         Returns a version of the object with all relations pre-loaded
         """
-        return (
-            await PostInteraction.objects.select_related(
-                "identity", "post", "post__author"
-            )
-            .prefetch_related("identity__inbound_follows")
-            .aget(pk=self.pk)
-        )
+        return await PostInteraction.objects.select_related(
+            "identity", "post", "post__author"
+        ).aget(pk=self.pk)
+
+    async def aget_boost_targets(self) -> Iterable[Identity]:
+        """
+        Returns an iterable with Identities of followers that have unique
+        shared_inbox among each other to be used as target to the boost
+        """
+        # Start including the post author
+        targets = {self.post.author}
+
+        # Include all followers that are following the boosts
+        async for follow in self.identity.inbound_follows.active().filter(
+            boosts=True
+        ).select_related("source"):
+            targets.add(follow.source)
+
+        # Fetch the full blocks and remove them as targets
+        async for block in self.identity.outbound_blocks.active().filter(
+            mute=False
+        ).select_related("target"):
+            try:
+                targets.remove(block.target)
+            except KeyError:
+                pass
+
+        if self.identity.local:
+            # If the boost creator is local then return all targets
+            return targets
+        else:
+            # Otherwise dedupe the targets based on shared inboxes
+            # (we only keep one per shared inbox)
+            deduped_targets = set()
+            shared_inboxes = set()
+            for target in targets:
+                if target.local or not target.shared_inbox_uri:
+                    deduped_targets.add(target)
+                elif target.shared_inbox_uri not in shared_inboxes:
+                    shared_inboxes.add(target.shared_inbox_uri)
+                    deduped_targets.add(target)
+                else:
+                    # Their shared inbox is already being sent to
+                    pass
+
+            return deduped_targets
 
     ### Create helpers ###
 
