@@ -63,6 +63,7 @@ class IdentityService:
                 inbound_follows__state__in=FollowStates.group_active(),
             )
             .not_deleted()
+            .distinct()
             .order_by("username")
             .select_related("domain")
         )
@@ -74,6 +75,7 @@ class IdentityService:
                 inbound_follows__state__in=FollowStates.group_active(),
             )
             .not_deleted()
+            .distinct()
             .order_by("username")
             .select_related("domain")
         )
