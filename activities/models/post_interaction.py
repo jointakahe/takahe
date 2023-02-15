@@ -238,25 +238,23 @@ class PostInteraction(StatorModel):
             except KeyError:
                 pass
 
-        if self.identity.local:
-            # If the boost creator is local then return all targets
-            return targets
-        else:
-            # Otherwise dedupe the targets based on shared inboxes
-            # (we only keep one per shared inbox)
-            deduped_targets = set()
-            shared_inboxes = set()
-            for target in targets:
-                if target.local or not target.shared_inbox_uri:
+        deduped_targets = set()
+        shared_inboxes = set()
+        for target in targets:
+            if target.local:
+                # Local targets always gets the boosts
+                # despite its creator locality
+                deduped_targets.add(target)
+            elif self.identity.local:
+                # Dedupe the targets based on shared inboxes
+                # (we only keep one per shared inbox)
+                if not target.shared_inbox_uri:
                     deduped_targets.add(target)
                 elif target.shared_inbox_uri not in shared_inboxes:
                     shared_inboxes.add(target.shared_inbox_uri)
                     deduped_targets.add(target)
-                else:
-                    # Their shared inbox is already being sent to
-                    pass
 
-            return deduped_targets
+        return deduped_targets
 
     ### Create helpers ###
 
