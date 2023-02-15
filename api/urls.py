@@ -10,6 +10,7 @@ from api.views import (
     instance,
     media,
     notifications,
+    polls,
     search,
     statuses,
     timelines,
@@ -62,6 +63,9 @@ urlpatterns = [
     path("v1/statuses/<id>/source", statuses.status_source),
     # Notifications
     path("v1/notifications", notifications.notifications),
+    # Polls
+    path("v1/polls/<id>", polls.get_poll),
+    path("v1/polls/<id>/votes", polls.vote_poll),
     # Search
     path("v2/search", search.search),
     # Statuses

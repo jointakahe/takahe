@@ -23,6 +23,7 @@ from activities.models.post_types import (
     PostTypeData,
     PostTypeDataDecoder,
     PostTypeDataEncoder,
+    QuestionData,
 )
 from core.exceptions import capture_message
 from core.html import ContentRenderer, FediverseHtmlParser
@@ -377,12 +378,16 @@ class Post(StatorModel):
     def _safe_content_note(self, *, local: bool = True):
         return ContentRenderer(local=local).render_post(self.content, self)
 
-    # def _safe_content_question(self, *, local: bool = True):
-    #     context = {
-    #         "post": self,
-    #         "typed_data": PostTypeData(self.type_data),
-    #     }
-    #     return loader.render_to_string("activities/_type_question.html", context)
+    def _safe_content_question(self, *, local: bool = True):
+        if local:
+            context = {
+                "post": self,
+                "sanitized_content": self._safe_content_note(local=local),
+                "local_display": local,
+            }
+            return loader.render_to_string("activities/_type_question.html", context)
+        else:
+            return ContentRenderer(local=local).render_post(self.content, self)
 
     def _safe_content_typed(self, *, local: bool = True):
         context = {
@@ -461,6 +466,7 @@ class Post(StatorModel):
         visibility: int = Visibilities.public,
         reply_to: Optional["Post"] = None,
         attachments: list | None = None,
+        question: dict | None = None,
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
@@ -493,6 +499,9 @@ class Post(StatorModel):
             post.emojis.set(emojis)
             if attachments:
                 post.attachments.set(attachments)
+            if question:
+                post.type = question["type"]
+                post.type_data = PostTypeData(__root__=question).__root__
             post.save()
             # Recalculate parent stats for replies
             if reply_to:
@@ -571,6 +580,30 @@ class Post(StatorModel):
             ).count(),
             "replies": Post.objects.filter(in_reply_to=self.object_uri).count(),
         }
+        if save:
+            self.save()
+
+    def calculate_type_data(self, save=True):
+        """
+        Recalculate type_data (used mostly for poll votes)
+        """
+        from activities.models import PostInteraction
+
+        if self.local and isinstance(self.type_data, QuestionData):
+            self.type_data.voter_count = (
+                self.interactions.filter(
+                    type=PostInteraction.Types.vote,
+                )
+                .values("identity")
+                .distinct()
+                .count()
+            )
+
+            for option in self.type_data.options:
+                option.votes = self.interactions.filter(
+                    type=PostInteraction.Types.vote,
+                    value=option.name,
+                ).count()
         if save:
             self.save()
 
@@ -802,8 +835,7 @@ class Post(StatorModel):
         if update or created:
             post.type = data["type"]
             if post.type in (cls.Types.article, cls.Types.question):
-                type_data = PostTypeData(__root__=data).__root__
-                post.type_data = type_data.dict()
+                post.type_data = PostTypeData(__root__=data).__root__
             post.content = get_value_or_map(data, "content", "contentMap")
             post.summary = data.get("summary")
             post.sensitive = data.get("sensitive", False)
@@ -1027,7 +1059,7 @@ class Post(StatorModel):
 
     ### Mastodon API ###
 
-    def to_mastodon_json(self, interactions=None):
+    def to_mastodon_json(self, interactions=None, identity=None):
         reply_parent = None
         if self.in_reply_to:
             # Load the PK and author.id explicitly to prevent a SELECT on the entire author Identity
@@ -1085,7 +1117,9 @@ class Post(StatorModel):
                 reply_parent.author_id if reply_parent else None
             ),
             "reblog": None,
-            "poll": None,
+            "poll": self.type_data.to_mastodon_json(self, identity)
+            if isinstance(self.type_data, QuestionData)
+            else None,
             "card": None,
             "language": None,
             "text": self.safe_content_remote(),

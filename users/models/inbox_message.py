@@ -30,9 +30,15 @@ class InboxMessageStates(StateGraph):
             case "create":
                 match instance.message_object_type:
                     case "note":
-                        await sync_to_async(Post.handle_create_ap)(instance.message)
+                        if instance.message_object_has_content:
+                            await sync_to_async(Post.handle_create_ap)(instance.message)
+                        else:
+                            # Notes without content are Interaction candidates
+                            await sync_to_async(PostInteraction.handle_ap)(
+                                instance.message
+                            )
                     case "question":
-                        pass  # Drop for now
+                        await sync_to_async(Post.handle_create_ap)(instance.message)
                     case unknown:
                         if unknown in Post.Types.names:
                             await sync_to_async(Post.handle_create_ap)(instance.message)
@@ -213,3 +219,7 @@ class InboxMessage(StatorModel):
     @property
     def message_actor(self):
         return self.message.get("actor")
+
+    @property
+    def message_object_has_content(self):
+        return "content" in self.message.get("object", {})

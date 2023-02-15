@@ -163,7 +163,7 @@ class FanOutStates(StateGraph):
                     interaction=interaction,
                 )
 
-            # Handle sending remote boosts/likes
+            # Handle sending remote boosts/likes/votes
             case (FanOut.Types.interaction, False):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send it to the remote inbox
@@ -174,7 +174,11 @@ class FanOutStates(StateGraph):
                             fan_out.identity.shared_inbox_uri
                             or fan_out.identity.inbox_uri
                         ),
-                        body=canonicalise(interaction.to_ap()),
+                        body=canonicalise(
+                            interaction.to_create_ap()
+                            if interaction.type == interaction.Types.vote
+                            else interaction.to_ap()
+                        ),
                     )
                 except httpx.RequestError:
                     return

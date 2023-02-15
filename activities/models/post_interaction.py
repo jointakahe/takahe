@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from activities.models.fan_out import FanOut
 from activities.models.post import Post
+from activities.models.post_types import QuestionData
 from core.ld import format_ld_date, get_str_or_id, parse_ld_date
 from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -54,6 +55,17 @@ class PostInteractionStates(StateGraph):
         # if the liker is local or they are
         elif interaction.type == interaction.Types.like:
             if interaction.identity.local or interaction.post.local:
+                await FanOut.objects.acreate(
+                    type=FanOut.Types.interaction,
+                    identity_id=interaction.post.author_id,
+                    subject_post=interaction.post,
+                    subject_post_interaction=interaction,
+                )
+        # Vote: send a copy of the vote to the original
+        # post author only if it's a local interaction
+        # to a non local post
+        elif interaction.type == interaction.Types.vote:
+            if interaction.identity.local and not interaction.post.local:
                 await FanOut.objects.acreate(
                     type=FanOut.Types.interaction,
                     identity_id=interaction.post.author_id,
@@ -125,6 +137,7 @@ class PostInteraction(StatorModel):
     class Types(models.TextChoices):
         like = "like"
         boost = "boost"
+        vote = "vote"
 
     id = models.BigIntegerField(
         primary_key=True,
@@ -153,6 +166,10 @@ class PostInteraction(StatorModel):
         on_delete=models.CASCADE,
         related_name="interactions",
     )
+
+    # Used to store any interaction extra text value like the vote
+    # in the question/poll case
+    value = models.CharField(max_length=50, blank=True, null=True)
 
     # When the activity was originally created (as opposed to when we received it)
     # Mastodon only seems to send this for boosts, not likes
@@ -203,9 +220,44 @@ class PostInteraction(StatorModel):
         """
         Returns a version of the object with all relations pre-loaded
         """
-        return await PostInteraction.objects.select_related("identity", "post").aget(
-            pk=self.pk
-        )
+        return await PostInteraction.objects.select_related(
+            "identity", "post", "post__author"
+        ).aget(pk=self.pk)
+
+    ### Create helpers ###
+
+    @classmethod
+    def create_votes(cls, post, identity, choices) -> list["PostInteraction"]:
+        question = post.type_data
+
+        if question.end_time and timezone.now() > question.end_time:
+            raise ValueError("Validation failed: The poll has already ended")
+
+        if post.interactions.filter(identity=identity, type=cls.Types.vote).exists():
+            raise ValueError("Validation failed: You have already voted on this poll")
+
+        votes = []
+        with transaction.atomic():
+            for choice in set(choices):
+                vote = cls.objects.create(
+                    identity=identity,
+                    post=post,
+                    type=PostInteraction.Types.vote,
+                    value=question.options[choice].name,
+                )
+                vote.object_uri = f"{identity.actor_uri}#votes/{vote.id}"
+                vote.save()
+                votes.append(vote)
+
+                if not post.local:
+                    question.options[choice].votes += 1
+
+            if not post.local:
+                question.voter_count += 1
+
+            post.calculate_type_data()
+
+        return votes
 
     ### ActivityPub (outbound) ###
 
@@ -233,9 +285,32 @@ class PostInteraction(StatorModel):
                 "actor": self.identity.actor_uri,
                 "object": self.post.object_uri,
             }
+        elif self.type == self.Types.vote:
+            value = {
+                "type": "Note",
+                "id": self.object_uri,
+                "to": self.post.author.actor_uri,
+                "name": self.value,
+                "inReplyTo": self.post.object_uri,
+                "attributedTo": self.identity.actor_uri,
+            }
         else:
             raise ValueError("Cannot turn into AP")
         return value
+
+    def to_create_ap(self):
+        """
+        Returns the AP JSON to create this object
+        """
+        object = self.to_ap()
+        return {
+            "to": object.get("to", []),
+            "cc": object.get("cc", []),
+            "type": "Create",
+            "id": self.object_uri,
+            "actor": self.identity.actor_uri,
+            "object": object,
+        }
 
     def to_undo_ap(self) -> dict:
         """
@@ -267,12 +342,40 @@ class PostInteraction(StatorModel):
                 # Resolve the author
                 identity = Identity.by_actor_uri(data["actor"], create=True)
                 # Resolve the post
-                post = Post.by_object_uri(get_str_or_id(data["object"]), fetch=True)
+                object = data["object"]
+                target = get_str_or_id(object, "inReplyTo") or get_str_or_id(object)
+                post = Post.by_object_uri(target, fetch=True)
+                value = None
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
                 elif data["type"].lower() == "announce":
                     type = cls.Types.boost
+                elif (
+                    data["type"].lower() == "create"
+                    and object["type"].lower() == "note"
+                    and isinstance(post.type_data, QuestionData)
+                ):
+                    type = cls.Types.vote
+                    question = post.type_data
+                    value = object["name"]
+                    if question.end_time and timezone.now() > question.end_time:
+                        # TODO: Maybe create an expecific expired exception?
+                        raise cls.DoesNotExist(
+                            f"Cannot create a vote to the expired question {post.id}"
+                        )
+
+                    already_voted = (
+                        post.type_data.mode == "oneOf"
+                        and post.interactions.filter(
+                            type=cls.Types.vote, identity=identity
+                        ).exists()
+                    )
+                    if already_voted:
+                        raise cls.DoesNotExist(
+                            f"The identity {identity.handle} already voted in question {post.id}"
+                        )
+
                 else:
                     raise ValueError(f"Cannot handle AP type {data['type']}")
                 # Make the actual interaction
@@ -283,6 +386,7 @@ class PostInteraction(StatorModel):
                     published=parse_ld_date(data.get("published", None))
                     or timezone.now(),
                     type=type,
+                    value=value,
                 )
             else:
                 raise cls.DoesNotExist(f"No interaction with ID {data['id']}", data)
@@ -301,7 +405,9 @@ class PostInteraction(StatorModel):
                 # That post is gone, boss
                 # TODO: Limited retry state?
                 return
+
             interaction.post.calculate_stats()
+            interaction.post.calculate_type_data()
 
     @classmethod
     def handle_undo_ap(cls, data):
@@ -324,10 +430,11 @@ class PostInteraction(StatorModel):
             interaction.transition_perform(PostInteractionStates.undone_fanned_out)
             # Recalculate post stats
             interaction.post.calculate_stats()
+            interaction.post.calculate_type_data()
 
     ### Mastodon API ###
 
-    def to_mastodon_status_json(self, interactions=None):
+    def to_mastodon_status_json(self, interactions=None, identity=None):
         """
         This wraps Posts in a fake Status for boost interactions.
         """
@@ -336,7 +443,9 @@ class PostInteraction(StatorModel):
                 f"Cannot make status JSON for interaction of type {self.type}"
             )
         # Make a fake post for this boost (because mastodon treats boosts as posts)
-        post_json = self.post.to_mastodon_json(interactions=interactions)
+        post_json = self.post.to_mastodon_json(
+            interactions=interactions, identity=identity
+        )
         return {
             "id": f"{self.pk}",
             "uri": post_json["uri"],
@@ -356,7 +465,7 @@ class PostInteraction(StatorModel):
             "url": post_json["url"],
             "in_reply_to_id": None,
             "in_reply_to_account_id": None,
-            "poll": None,
+            "poll": post_json["poll"],
             "card": None,
             "language": None,
             "text": "",

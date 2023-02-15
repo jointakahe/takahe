@@ -626,14 +626,14 @@ def get_list(container, key) -> list:
     return value
 
 
-def get_str_or_id(value: str | dict | None) -> str | None:
+def get_str_or_id(value: str | dict | None, key: str = "id") -> str | None:
     """
     Given a value that could be a str or {"id": str}, return the str
     """
     if isinstance(value, str):
         return value
     elif isinstance(value, dict):
-        return value.get("id")
+        return value.get(key)
     return None
 
 

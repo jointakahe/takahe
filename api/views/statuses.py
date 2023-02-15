@@ -1,7 +1,9 @@
+from datetime import timedelta
 from typing import Literal
 
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from hatchway import ApiError, ApiResponse, Schema, api_view
 
 from activities.models import (
@@ -18,6 +20,24 @@ from api.pagination import MastodonPaginator, PaginationResult
 from core.models import Config
 
 
+class PostPollSchema(Schema):
+    options: list[str]
+    expires_in: int
+    multiple: bool = False
+    hide_totals: bool = False
+
+    def dict(self):
+        return {
+            "type": "Question",
+            "mode": "anyOf" if self.multiple else "oneOf",
+            "options": [
+                {"name": name, "type": "Note", "votes": 0} for name in self.options
+            ],
+            "voter_count": 0,
+            "end_time": timezone.now() + timedelta(seconds=self.expires_in),
+        }
+
+
 class PostStatusSchema(Schema):
     status: str
     in_reply_to_id: str | None = None
@@ -27,6 +47,7 @@ class PostStatusSchema(Schema):
     language: str | None = None
     scheduled_at: str | None = None
     media_ids: list[str] = []
+    poll: PostPollSchema | None = None
 
 
 class EditStatusSchema(Schema):
@@ -82,10 +103,11 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
         visibility=visibility_map[details.visibility],
         reply_to=reply_post,
         attachments=attachments,
+        question=details.poll.dict() if details.poll else None,
     )
     # Add their own timeline event for immediate visibility
     TimelineEvent.add_post(request.identity, post)
-    return schemas.Status.from_post(post)
+    return schemas.Status.from_post(post, identity=request.identity)
 
 
 @identity_required
@@ -93,7 +115,9 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
 def status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @identity_required
@@ -121,7 +145,7 @@ def delete_status(request, id: str) -> schemas.Status:
     if post.author != request.identity:
         raise ApiError(401, "Not the author of this status")
     PostService(post).delete()
-    return schemas.Status.from_post(post)
+    return schemas.Status.from_post(post, identity=request.identity)
 
 
 @identity_required
@@ -142,11 +166,16 @@ def status_context(request, id: str) -> schemas.Context:
     )
     return schemas.Context(
         ancestors=[
-            schemas.Status.from_post(p, interactions=interactions)
+            schemas.Status.from_post(
+                p, interactions=interactions, identity=request.identity
+            )
             for p in reversed(ancestors)
         ],
         descendants=[
-            schemas.Status.from_post(p, interactions=interactions) for p in descendants
+            schemas.Status.from_post(
+                p, interactions=interactions, identity=request.identity
+            )
+            for p in descendants
         ],
     )
 
@@ -158,7 +187,9 @@ def favourite_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.like_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @identity_required
@@ -168,7 +199,9 @@ def unfavourite_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.unlike_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @api_view.get
@@ -219,7 +252,9 @@ def reblog_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.boost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
 
 
 @identity_required
@@ -229,4 +264,6 @@ def unreblog_status(request, id: str) -> schemas.Status:
     service = PostService(post)
     service.unboost_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
-    return schemas.Status.from_post(post, interactions=interactions)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )
