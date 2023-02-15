@@ -220,9 +220,13 @@ class PostInteraction(StatorModel):
         """
         Returns a version of the object with all relations pre-loaded
         """
-        return await PostInteraction.objects.select_related(
-            "identity", "post", "post__author"
-        ).aget(pk=self.pk)
+        return (
+            await PostInteraction.objects.select_related(
+                "identity", "post", "post__author"
+            )
+            .prefetch_related("identity__inbound_follows")
+            .aget(pk=self.pk)
+        )
 
     ### Create helpers ###
 
