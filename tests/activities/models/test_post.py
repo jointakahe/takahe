@@ -293,6 +293,46 @@ def test_content_map_question(remote_identity: Identity):
     )
     assert post.content == "Test Question"
     assert isinstance(post.type_data, QuestionData)
+    assert post.type_data.voter_count == 10
+
+    # test the update case
+    question_id = post.id
+
+    post = Post.by_ap(
+        data={
+            "id": "https://remote.test/posts/1/",
+            "type": "Question",
+            "votersCount": 100,
+            "closed": "2023-01-01T26:04:45Z",
+            "content": "Test Question",
+            "attributedTo": "https://remote.test/test-actor/",
+            "published": "2022-12-23T10:50:54Z",
+            "endTime": "2023-01-01T20:04:45Z",
+            "oneOf": [
+                {
+                    "type": "Note",
+                    "name": "Option 1",
+                    "replies": {
+                        "type": "Collection",
+                        "totalItems": 60,
+                    },
+                },
+                {
+                    "type": "Note",
+                    "name": "Option 2",
+                    "replies": {
+                        "type": "Collection",
+                        "totalItems": 40,
+                    },
+                },
+            ],
+        },
+        create=False,
+        update=True,
+    )
+    assert isinstance(post.type_data, QuestionData)
+    assert post.type_data.voter_count == 100
+    assert post.id == question_id
 
 
 @pytest.mark.django_db
