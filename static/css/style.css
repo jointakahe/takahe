@@ -1650,6 +1650,12 @@ form .post {
     font-size: 12px;
 }
 
+.poll-footer span.todo {
+    padding-left: 6px;
+    font-size: 90%;
+    color: var(--color-text-dull);
+}
+
 .post .poll ul li .votes {
     margin-left: 10px;
     font-size: small;

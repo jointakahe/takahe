@@ -35,6 +35,19 @@ def timedeltashort(value: datetime.datetime):
     return sign + text
 
 
+@register.filter
+def timedeltashortenddate(value: datetime.datetime):
+    """
+    Formatter for end dates - timedeltashort but it adds "ended ... ago" or
+    "left" depending on the direction.
+    """
+    output = timedeltashort(value)
+    if output.startswith("-"):
+        return f"{output[1:]} left"
+    else:
+        return f"Ended {output} ago"
+
+
 @register.simple_tag(takes_context=True)
 def urlparams(context, **kwargs):
     """

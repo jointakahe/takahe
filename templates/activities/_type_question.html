@@ -16,9 +16,9 @@
         {% if forloop.last %}</ul>{% endif %}
     {% endfor %}
     <div class="poll-footer">
-        <span class="vote-total">{{ post.type_data.voter_count }} people</span>
+        <span class="vote-total">{{ post.type_data.voter_count }} {{ post.type_data.voter_count|pluralize:"vote,votes" }}</span>
         &mdash;
-        {% if post.type_data.end_time %}<span class="vote-end">{{ post.type_data.end_time|timedeltashort }}</span>{% endif %}
-        <span>Polls are currently display only</span>
+        {% if post.type_data.end_time %}<span class="vote-end">{{ post.type_data.end_time|timedeltashortenddate }}</span>{% endif %}
+        <span class="todo">Polls are currently display only</span>
     </div>
 </div>
