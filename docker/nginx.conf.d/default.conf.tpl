@@ -74,7 +74,7 @@ server {
         internal;
 
         # Reconstruct the remote URL
-        resolver 9.9.9.9 149.112.112.112 ipv6=off;
+        resolver __NAMESERVER__ valid=10s;
 
         # Unset Authorization and Cookie for security reasons.
         proxy_set_header Authorization '';
