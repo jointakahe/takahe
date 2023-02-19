@@ -4,11 +4,11 @@ from hatchway import ApiResponse, api_view
 from activities.models import TimelineEvent
 from activities.services import TimelineService
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 
 
-@identity_required
+@scope_required("read:notifications")
 @api_view.get
 def notifications(
     request: HttpRequest,

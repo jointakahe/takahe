@@ -8,7 +8,7 @@ from hatchway import ApiResponse, QueryOrBody, api_view
 from activities.models import Post
 from activities.services import SearchService
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
 from users.models import Identity
@@ -16,13 +16,13 @@ from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def verify_credentials(request) -> schemas.Account:
     return schemas.Account.from_identity(request.identity, source=True)
 
 
-@identity_required
+@scope_required("write")
 @api_view.patch
 def update_credentials(
     request,
@@ -73,7 +73,7 @@ def update_credentials(
     return schemas.Account.from_identity(identity, source=True)
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def account_relationships(request, id: list[str] | None) -> list[schemas.Relationship]:
     result = []
@@ -87,7 +87,7 @@ def account_relationships(request, id: list[str] | None) -> list[schemas.Relatio
     return result
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def familiar_followers(
     request, id: list[str] | None
@@ -114,7 +114,7 @@ def familiar_followers(
     return result
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def accounts_search(
     request,
@@ -146,8 +146,8 @@ def lookup(request: HttpRequest, acct: str) -> schemas.Account:
     return schemas.Account.from_identity(identity)
 
 
+@scope_required("read:accounts")
 @api_view.get
-@identity_required
 def account(request, id: str) -> schemas.Account:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked),
@@ -156,8 +156,8 @@ def account(request, id: str) -> schemas.Account:
     return schemas.Account.from_identity(identity)
 
 
+@scope_required("read:statuses")
 @api_view.get
-@identity_required
 def account_statuses(
     request: HttpRequest,
     id: str,
@@ -218,8 +218,8 @@ def account_statuses(
     )
 
 
+@scope_required("write:follows")
 @api_view.post
-@identity_required
 def account_follow(request, id: str, reblogs: bool = True) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
@@ -229,8 +229,8 @@ def account_follow(request, id: str, reblogs: bool = True) -> schemas.Relationsh
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
+@scope_required("write:follows")
 @api_view.post
-@identity_required
 def account_unfollow(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
@@ -240,8 +240,8 @@ def account_unfollow(request, id: str) -> schemas.Relationship:
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
+@scope_required("write:blocks")
 @api_view.post
-@identity_required
 def account_block(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(request.identity)
@@ -249,8 +249,8 @@ def account_block(request, id: str) -> schemas.Relationship:
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
+@scope_required("write:blocks")
 @api_view.post
-@identity_required
 def account_unblock(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(request.identity)
@@ -258,7 +258,7 @@ def account_unblock(request, id: str) -> schemas.Relationship:
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@identity_required
+@scope_required("write:blocks")
 @api_view.post
 def account_mute(
     request,
@@ -276,7 +276,7 @@ def account_mute(
     return schemas.Relationship.from_identity_pair(identity, request.identity)
 
 
-@identity_required
+@scope_required("write:blocks")
 @api_view.post
 def account_unmute(request, id: str) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)

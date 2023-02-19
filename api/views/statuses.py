@@ -15,7 +15,7 @@ from activities.models import (
 )
 from activities.services import PostService
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginationResult
 from core.models import Config
 
@@ -72,7 +72,7 @@ def post_for_id(request: HttpRequest, id: str) -> Post:
     return get_object_or_404(queryset, pk=id)
 
 
-@identity_required
+@scope_required("write:statuses")
 @api_view.post
 def post_status(request, details: PostStatusSchema) -> schemas.Status:
     # Check text length
@@ -110,7 +110,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
     return schemas.Status.from_post(post, identity=request.identity)
 
 
-@identity_required
+@scope_required("read:statuses")
 @api_view.get
 def status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
@@ -120,7 +120,7 @@ def status(request, id: str) -> schemas.Status:
     )
 
 
-@identity_required
+@scope_required("write:statuses")
 @api_view.put
 def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
     post = post_for_id(request, id)
@@ -138,7 +138,7 @@ def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
     return schemas.Status.from_post(post)
 
 
-@identity_required
+@scope_required("write:statuses")
 @api_view.delete
 def delete_status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
@@ -148,14 +148,14 @@ def delete_status(request, id: str) -> schemas.Status:
     return schemas.Status.from_post(post, identity=request.identity)
 
 
-@identity_required
+@scope_required("read:statuses")
 @api_view.get
 def status_source(request, id: str) -> schemas.StatusSource:
     post = post_for_id(request, id)
     return schemas.StatusSource.from_post(post)
 
 
-@identity_required
+@scope_required("read:statuses")
 @api_view.get
 def status_context(request, id: str) -> schemas.Context:
     post = post_for_id(request, id)
@@ -180,7 +180,7 @@ def status_context(request, id: str) -> schemas.Context:
     )
 
 
-@identity_required
+@scope_required("write:favourites")
 @api_view.post
 def favourite_status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
@@ -192,7 +192,7 @@ def favourite_status(request, id: str) -> schemas.Status:
     )
 
 
-@identity_required
+@scope_required("write:favourites")
 @api_view.post
 def unfavourite_status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
@@ -245,7 +245,7 @@ def favourited_by(
     )
 
 
-@identity_required
+@scope_required("write:favourites")
 @api_view.post
 def reblog_status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)
@@ -257,7 +257,7 @@ def reblog_status(request, id: str) -> schemas.Status:
     )
 
 
-@identity_required
+@scope_required("write:favourites")
 @api_view.post
 def unreblog_status(request, id: str) -> schemas.Status:
     post = post_for_id(request, id)

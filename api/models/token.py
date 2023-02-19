@@ -36,3 +36,12 @@ class Token(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     revoked = models.DateTimeField(blank=True, null=True)
+
+    def has_scope(self, scope: str):
+        """
+        Returns if this token has the given scope.
+        It's a function so we can do mapping/reduction if needed
+        """
+        # TODO: Support granular scopes the other way?
+        scope_prefix = scope.split(":")[0]
+        return (scope in self.scopes) or (scope_prefix in self.scopes)

@@ -4,12 +4,12 @@ from hatchway import ApiError, ApiResponse, api_view
 from activities.models import Post
 from activities.services import TimelineService
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
 
 
-@identity_required
+@scope_required("read:statuses")
 @api_view.get
 def home(
     request: HttpRequest,
@@ -86,7 +86,7 @@ def public(
     )
 
 
-@identity_required
+@scope_required("read:statuses")
 @api_view.get
 def hashtag(
     request: HttpRequest,
@@ -121,7 +121,7 @@ def hashtag(
     )
 
 
-@identity_required
+@scope_required("read:conversations")
 @api_view.get
 def conversations(
     request: HttpRequest,
@@ -134,7 +134,7 @@ def conversations(
     return []
 
 
-@identity_required
+@scope_required("read:favourites")
 @api_view.get
 def favourites(
     request: HttpRequest,

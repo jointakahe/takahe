@@ -14,6 +14,7 @@ class ApiTokenMiddleware:
 
     def __call__(self, request):
         auth_header = request.headers.get("authorization", None)
+        request.token = None
         if auth_header and auth_header.startswith("Bearer "):
             token_value = auth_header[7:]
             try:
@@ -22,6 +23,7 @@ class ApiTokenMiddleware:
                 return HttpResponse("Invalid Bearer token", status=400)
             request.user = token.user
             request.identity = token.identity
+            request.token = token
             request.session = None
         response = self.get_response(request)
         return response

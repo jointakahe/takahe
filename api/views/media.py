@@ -6,10 +6,10 @@ from activities.models import PostAttachment, PostAttachmentStates
 from api import schemas
 from core.files import blurhash_image, resize_image
 
-from ..decorators import identity_required
+from ..decorators import scope_required
 
 
-@identity_required
+@scope_required("write:media")
 @api_view.post
 def upload_media(
     request,
@@ -47,7 +47,7 @@ def upload_media(
     return schemas.MediaAttachment.from_post_attachment(attachment)
 
 
-@identity_required
+@scope_required("read:media")
 @api_view.get
 def get_media(
     request,
@@ -59,7 +59,7 @@ def get_media(
     return schemas.MediaAttachment.from_post_attachment(attachment)
 
 
-@identity_required
+@scope_required("write:media")
 @api_view.put
 def update_media(
     request,

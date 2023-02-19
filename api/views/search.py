@@ -5,10 +5,10 @@ from hatchway import Field, api_view
 from activities.models import PostInteraction
 from activities.services.search import SearchService
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def search(
     request,

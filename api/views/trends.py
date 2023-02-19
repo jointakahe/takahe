@@ -2,10 +2,10 @@ from django.http import HttpRequest
 from hatchway import api_view
 
 from api import schemas
-from api.decorators import identity_required
+from api.decorators import scope_required
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def trends_tags(
     request: HttpRequest,
@@ -16,7 +16,7 @@ def trends_tags(
     return []
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def trends_statuses(
     request: HttpRequest,
@@ -27,7 +27,7 @@ def trends_statuses(
     return []
 
 
-@identity_required
+@scope_required("read")
 @api_view.get
 def trends_links(
     request: HttpRequest,
