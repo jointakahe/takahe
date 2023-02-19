@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 
 from users.decorators import admin_required
-from users.models import Domain
+from users.models import Domain, User
 
 
 class DomainValidator(RegexValidator):
@@ -68,6 +68,12 @@ class DomainCreate(FormView):
             widget=forms.Select(choices=[(False, "No"), (True, "Yes")]),
             required=False,
         )
+        users = forms.CharField(
+            label="Permitted Users",
+            help_text="If this domain is not public, the email addresses of the users allowed to use it.\nOne email address per line.",
+            widget=forms.Textarea,
+            required=False,
+        )
 
         def clean_domain(self):
             if Domain.objects.filter(
@@ -97,6 +103,30 @@ class DomainCreate(FormView):
                 raise forms.ValidationError("A non-public domain cannot be the default")
             return value
 
+        def clean_users(self):
+            if not self.cleaned_data["users"].strip():
+                return []
+            if self.cleaned_data.get("public"):
+                raise forms.ValidationError(
+                    "You cannot limit by user when the domain is public"
+                )
+            # Turn contents into an email set
+            user_emails = set()
+            for line in self.cleaned_data["users"].splitlines():
+                line = line.strip()
+                if line:
+                    user_emails.add(line)
+            # Fetch those users
+            users = list(User.objects.filter(email__in=user_emails))
+            # See if there's a set difference
+            missing_emails = user_emails.difference({user.email for user in users})
+            if missing_emails:
+                raise forms.ValidationError(
+                    "These emails do not have user accounts: "
+                    + (", ".join(missing_emails))
+                )
+            return users
+
     def form_valid(self, form):
         domain = Domain.objects.create(
             domain=form.cleaned_data["domain"],
@@ -105,6 +135,7 @@ class DomainCreate(FormView):
             default=form.cleaned_data["default"],
             local=True,
         )
+        domain.users.set(form.cleaned_data["users"])
         if domain.default:
             Domain.objects.exclude(pk=domain.pk).update(default=False)
         return redirect(Domain.urls.root)
@@ -143,6 +174,7 @@ class DomainEdit(FormView):
         self.domain.public = form.cleaned_data["public"]
         self.domain.default = form.cleaned_data["default"]
         self.domain.save()
+        self.domain.users.set(form.cleaned_data["users"])
         if self.domain.default:
             Domain.objects.exclude(pk=self.domain.pk).update(default=False)
         return redirect(Domain.urls.root)
@@ -153,6 +185,7 @@ class DomainEdit(FormView):
             "service_domain": self.domain.service_domain,
             "public": self.domain.public,
             "default": self.domain.default,
+            "users": "\n".join(sorted(user.email for user in self.domain.users.all())),
         }
 
 

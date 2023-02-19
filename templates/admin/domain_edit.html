@@ -14,6 +14,7 @@
             <legend>Access Control</legend>
             {% include "forms/_field.html" with field=form.public %}
             {% include "forms/_field.html" with field=form.default %}
+            {% include "forms/_field.html" with field=form.users %}
         </fieldset>
         <div class="buttons">
             <a href="{{ domain.urls.root }}" class="button secondary left">Back</a>
