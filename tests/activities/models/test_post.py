@@ -448,3 +448,4 @@ def test_post_hashtag_to_ap(identity: Identity, config_system):
         }
     ]
     assert "#world" in ap["object"]["content"]
+    assert 'rel="tag"' in ap["object"]["content"]

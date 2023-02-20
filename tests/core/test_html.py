@@ -102,7 +102,7 @@ def test_parser(identity):
     )
     assert (
         parser.html
-        == '<a href="http://example.com#notahashtag" rel="nofollow">something</a> <a href="/tags/hashtag/">#hashtag</a> <a href="/tags/hashtagtwo/">#hashtagtwo</a>'
+        == '<a href="http://example.com#notahashtag" rel="nofollow">something</a> <a href="/tags/hashtag/" rel="tag">#hashtag</a> <a href="/tags/hashtagtwo/" rel="tag">#hashtagtwo</a>'
     )
     assert parser.plain_text == "http://example.com#notahashtag #hashtag #hashtagtwo"
     assert parser.hashtags == {"hashtag", "hashtagtwo"}
