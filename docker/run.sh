@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Set up cache size and nameserver subs
+# Nameservers are taken from /etc/resolv.conf - if the IP contains ":", it's IPv6 and must be enclosed in [] for nginx
 CACHE_SIZE="${TAKAHE_NGINX_CACHE_SIZE:-1g}"
-NAMESERVER=`cat /etc/resolv.conf | grep "nameserver" | awk '{print $2}' | tr '\n' ' '`
+NAMESERVER=`cat /etc/resolv.conf | grep "nameserver" | awk '{print ($2 ~ ":") ? "["$2"]" : $2}' | tr '\n' ' '`
 if [ -z "$NAMESERVER" ]; then
     NAMESERVER="9.9.9.9 149.112.112.112"
 fi
