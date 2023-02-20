@@ -429,3 +429,23 @@ def test_inbound_posts(
     # Run stator and ensure that deleted the post
     stator.run_single_cycle_sync()
     assert not Post.objects.filter(object_uri="https://remote.test/test-post").exists()
+
+
+@pytest.mark.django_db
+def test_post_hashtag_to_ap(identity: Identity, config_system):
+    """
+    Tests post hashtags conversion to AP format.
+    """
+    post = Post.create_local(author=identity, content="Hello #world")
+    assert post.hashtags == ["world"]
+
+    ap = post.to_create_ap()
+    assert ap["object"]["tag"] == [
+        {
+            "href": "https://example.com/tags/world/",
+            "name": "#world",
+            "type": "Hashtag",
+        }
+    ]
+    assert "#world" in ap["object"]["content"]
+    assert 'rel="tag"' in ap["object"]["content"]
