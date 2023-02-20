@@ -200,9 +200,9 @@ class FediverseHtmlParser(HTMLParser):
         hashtag = hashtag.lstrip("#")
         self.hashtags.add(hashtag.lower())
         if self.uri_domain:
-            return f'<a href="https://{self.uri_domain}/tags/{hashtag.lower()}/">#<span>{hashtag}</span></a>'
+            return f'<a class="mention hashtag status-link" href="https://{self.uri_domain}/tags/{hashtag.lower()}/">#{hashtag}</a>'
         else:
-            return f'<a href="/tags/{hashtag.lower()}/">#<span>{hashtag}</span></a>'
+            return f'<a class="mention hashtag status-link" href="/tags/{hashtag.lower()}/">#{hashtag}</a>'
 
     def create_emoji(self, shortcode) -> str:
         """

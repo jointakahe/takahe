@@ -447,4 +447,4 @@ def test_post_hashtag_to_ap(identity: Identity, config_system):
             "type": "Hashtag",
         }
     ]
-    assert "#<span>world</span>" in ap["object"]["content"]
+    assert "#world" in ap["object"]["content"]
