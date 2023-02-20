@@ -20,7 +20,7 @@ Features:
 
 * Following CSV import and export (Mastodon-compatible format)
 
-    * You can also export your followers as a CSV, but this cannot be imported
+  * You can also export your followers as a CSV, but this cannot be imported
 
 * User assignment in domain create/edit screen
 
@@ -52,6 +52,8 @@ There are new database migrations; they are backwards-compatible, so please
 apply them before restarting your webservers and stator processes.
 
 Two of the migrations involve adding large indexes and may take some time to
-process (on the order of minutes). You may wish to bring your site down into
+process (on the order of minutes) if you have a large database.
+
+You may wish to bring your site down into
 a maintenance mode before applying these to reduce the chance of lock conflicts
 slowing things down, or causing request timeouts.
