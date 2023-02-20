@@ -1,0 +1,57 @@
+0.8
+===
+
+*Released: 2023/02/19*
+
+This release is mostly a collection of small feature improvements and bugfixes,
+with one important **security fix** over 0.7 as well. This security fix has led us
+to release 0.8 ahead of some planned big features landing; those will land in
+future releases.
+
+While we will disclose the nature of the security issue at a future date, all
+installations are recommended to upgrade to 0.8 as soon as possible.
+
+Features:
+
+* Poll support
+
+  * Full support is only available via client apps for now; the web interface
+    only shows polls in a read-only mode.
+
+* Following CSV import and export (Mastodon-compatible format)
+
+    * You can also export your followers as a CSV, but this cannot be imported
+
+* User assignment in domain create/edit screen
+
+Other fixes and improvements include:
+
+* Posts can now be edited from client apps
+* Hashtag link handling fixes when viewed on Mastodon
+* Significant speed improvements to background jobs (Stator)
+* Boost federation fixes
+* Emoji federation improvements
+* Intitial Ivory API compatability fixes; we're working on a few more.
+* New API system (``django-hatchway``) allows more API compatability with media/post creation
+* The system DNS resolver is now used for proxying files
+
+If you'd like to help with code, design, policy or other areas, see
+:doc:`/contributing` to see how to get in touch.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.8``.
+
+
+Upgrade Notes
+-------------
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations; they are backwards-compatible, so please
+apply them before restarting your webservers and stator processes.
+
+Two of the migrations involve adding large indexes and may take some time to
+process (on the order of minutes). You may wish to bring your site down into
+a maintenance mode before applying these to reduce the chance of lock conflicts
+slowing things down, or causing request timeouts.

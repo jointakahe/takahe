@@ -3,7 +3,7 @@
 A *beta* Fediverse server for microblogging/"toots". Not fully polished yet -
 we're still working towards a 1.0!
 
-**Current version: [0.7](https://docs.jointakahe.org/en/latest/releases/0.7/)**
+**Current version: [0.8](https://docs.jointakahe.org/en/latest/releases/0.8/)**
 
 Key features:
 
