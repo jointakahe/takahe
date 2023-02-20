@@ -123,6 +123,7 @@ class FediverseHtmlParser(HTMLParser):
             if self._pending_a:
                 href = self._pending_a["attrs"].get("href")
                 content = self._pending_a["content"].strip()
+                has_ellipsis = "ellipsis" in self._pending_a["attrs"].get("class", "")
                 # Is it a mention?
                 if content.lower().lstrip("@") in self.mention_matches:
                     self.html_output += self.create_mention(content)
@@ -133,7 +134,11 @@ class FediverseHtmlParser(HTMLParser):
                     self.text_output += content
                 elif content:
                     # Shorten the link if we need to
-                    self.html_output += self.create_link(href, content)
+                    self.html_output += self.create_link(
+                        href,
+                        content,
+                        has_ellipsis=has_ellipsis,
+                    )
                     self.text_output += href
                 self._pending_a = None
 
@@ -153,7 +158,7 @@ class FediverseHtmlParser(HTMLParser):
         self.html_output += self.linkify(self._data_buffer)
         self._data_buffer = ""
 
-    def create_link(self, href, content):
+    def create_link(self, href, content, has_ellipsis=False):
         """
         Generates a link, doing optional shortening.
 
@@ -162,7 +167,7 @@ class FediverseHtmlParser(HTMLParser):
         looks_like_link = bool(self.URL_REGEX.match(content))
         if looks_like_link:
             content = content.split("://", 1)[1]
-        if looks_like_link and len(content) > 30:
+        if (looks_like_link and len(content) > 30) or has_ellipsis:
             return f'<a href="{html.escape(href)}" rel="nofollow" class="ellipsis" title="{html.escape(content)}">{html.escape(content[:30])}</a>'
         else:
             return f'<a href="{html.escape(href)}" rel="nofollow">{html.escape(content)}</a>'
