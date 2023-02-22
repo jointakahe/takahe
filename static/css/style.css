@@ -1187,6 +1187,7 @@ h1.identity .icon {
     height: 80px;
     float: left;
     margin: 0 20px 0 0;
+    cursor: pointer;
 }
 
 h1.identity .emoji {
