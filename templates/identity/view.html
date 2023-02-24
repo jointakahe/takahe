@@ -21,7 +21,14 @@
                 <img src="{{ identity.local_image_url.relative }}" class="banner">
             {% endif %}
 
-            <img src="{{ identity.local_icon_url.relative }}" class="icon">
+            <span
+                _="on click halt the event then call imageviewer.show(me)"
+            >
+                <img src="{{ identity.local_icon_url.relative }}" class="icon"
+                    data-original-url="{{ identity.local_icon_url.relative }}"
+                    alt="Profile image for {{ identity.name }}"
+                >
+            </span>
 
             {% if request.identity %}{% include "identity/_view_menu.html" %}{% endif %}
 
