@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.safestring import mark_safe
+from PIL import Image
 
 from core.files import get_remote_file
 from core.html import FediverseHtmlParser
@@ -47,7 +48,11 @@ class EmojiStates(StateGraph):
                 )
             except httpx.RequestError:
                 return
+
             if file:
+                if mimetype == "application/octet-stream":
+                    mimetype = Image.open(file).get_format_mimetype()
+
                 instance.file = file
                 instance.mimetype = mimetype
                 await sync_to_async(instance.save)()
@@ -288,8 +293,6 @@ class Emoji(StatorModel):
         mimetype = icon.get("mediaType")
         if not mimetype:
             mimetype, _ = mimetypes.guess_type(icon["url"])
-            if mimetype is None:
-                raise ValueError("No mimetype on emoji JSON")
 
         # create
         shortcode = name.strip(":")
@@ -301,6 +304,11 @@ class Emoji(StatorModel):
             except cls.DoesNotExist:
                 pass
             else:
+                # default to previously discovered mimetype if not provided
+                # by the instance to avoid infinite outdated state
+                if mimetype is None:
+                    mimetype = emoji.mimetype
+
                 # Domain previously provided this shortcode. Trample in the new emoji
                 if emoji.remote_url != icon["url"] or emoji.mimetype != mimetype:
                     emoji.object_uri = data["id"]
@@ -319,7 +327,7 @@ class Emoji(StatorModel):
             domain=None if domain.local else domain,
             local=domain.local,
             object_uri=data["id"],
-            mimetype=mimetype,
+            mimetype=mimetype or "application/octet-stream",
             category=category,
             remote_url=icon["url"],
         )
