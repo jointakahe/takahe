@@ -71,7 +71,9 @@ async def get_remote_file(
     }
 
     async with httpx.AsyncClient(headers=headers) as client:
-        async with client.stream("GET", url, timeout=timeout) as stream:
+        async with client.stream(
+            "GET", url, timeout=timeout, follow_redirects=True
+        ) as stream:
             allow_download = max_size is None
             if max_size:
                 try:
