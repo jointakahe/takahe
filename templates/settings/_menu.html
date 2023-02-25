@@ -1,64 +1,85 @@
 <nav>
     <h3>Identity</h3>
     <a href="{% url "settings_profile" %}" {% if section == "profile" %}class="selected"{% endif %} title="Profile">
-        <i class="fa-solid fa-user"></i> Profile
+        <i class="fa-solid fa-user"></i>
+        <span>Profile</span>
     </a>
     <a href="{% url "settings_interface" %}" {% if section == "interface" %}class="selected"{% endif %} title="Interface">
-        <i class="fa-solid fa-display"></i> Interface
+        <i class="fa-solid fa-display"></i>
+        <span>Interface</span>
     </a>
     <a href="{% url "settings_import_export" %}" {% if section == "importexport" %}class="selected"{% endif %} title="Interface">
-        <i class="fa-solid fa-cloud-arrow-up"></i> Import/Export
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>Import/Export</span>
     </a>
+    <hr>
     <h3>Account</h3>
     <a href="{% url "settings_security" %}" {% if section == "security" %}class="selected"{% endif %} title="Login &amp; Security">
-        <i class="fa-solid fa-key"></i> Login &amp; Security
+        <i class="fa-solid fa-key"></i>
+        <span>Login &amp; Security</span>
     </a>
     <a href="{% url "logout" %}">
-        <i class="fa-solid fa-right-from-bracket" title="Logout"></i> Logout
+        <i class="fa-solid fa-right-from-bracket" title="Logout"></i>
+        <span>Logout</span>
     </a>
     {% if request.user.moderator or request.user.admin %}
+        <hr>
         <h3>Moderation</h3>
         <a href="{% url "admin_identities" %}" {% if section == "identities" %}class="selected"{% endif %} title="Identities">
-            <i class="fa-solid fa-id-card"></i> Identities
+            <i class="fa-solid fa-id-card"></i>
+            <span>Identities</span>
         </a>
         <a href="{% url "admin_invites" %}" {% if section == "invites" %}class="selected"{% endif %} title="Invites">
-            <i class="fa-solid fa-envelope"></i> Invites
+            <i class="fa-solid fa-envelope"></i>
+            <span>Invites</span>
         </a>
         <a href="{% url "admin_hashtags" %}" {% if section == "hashtags" %}class="selected"{% endif %} title="Hashtags">
-            <i class="fa-solid fa-hashtag"></i> Hashtags
+            <i class="fa-solid fa-hashtag"></i>
+            <span>Hashtags</span>
         </a>
         <a href="{% url "admin_emoji" %}" {% if section == "emoji" %}class="selected"{% endif %} title="Emoji">
-            <i class="fa-solid fa-icons"></i> Emoji
+            <i class="fa-solid fa-icons"></i>
+            <span>Emoji</span>
         </a>
         <a href="{% url "admin_reports" %}" {% if section == "reports" %}class="selected"{% endif %} title="Reports">
-            <i class="fa-solid fa-flag"></i> Reports
+            <i class="fa-solid fa-flag"></i>
+            <span>Reports</span>
         </a>
     {% endif %}
     {% if request.user.admin %}
+        <hr>
         <h3>Administration</h3>
         <a href="{% url "admin_basic" %}" {% if section == "basic" %}class="selected"{% endif %} title="Basic">
-            <i class="fa-solid fa-book"></i> Basic
+            <i class="fa-solid fa-book"></i>
+            <span>Basic</span>
         </a>
         <a href="{% url "admin_policies" %}" {% if section == "policies" %}class="selected"{% endif %} title="Policies">
-            <i class="fa-solid fa-file-lines"></i> Policies
+            <i class="fa-solid fa-file-lines"></i>
+            <span>Policies</span>
         </a>
         <a href="{% url "admin_announcements" %}" {% if section == "announcements" %}class="selected"{% endif %} title="Announcements">
-            <i class="fa-solid fa-bullhorn"></i> Announcements
+            <i class="fa-solid fa-bullhorn"></i>
+            <span>Announcements</span>
         </a>
         <a href="{% url "admin_domains" %}" {% if section == "domains" %}class="selected"{% endif %} title="Domains">
-            <i class="fa-solid fa-globe"></i> Domains
+            <i class="fa-solid fa-globe"></i>
+            <span>Domains</span>
         </a>
         <a href="{% url "admin_federation" %}" {% if section == "federation" %}class="selected"{% endif %} title="Federation">
-            <i class="fa-solid fa-diagram-project"></i> Federation
+            <i class="fa-solid fa-diagram-project"></i>
+            <span>Federation</span>
         </a>
         <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %} title="Users">
-            <i class="fa-solid fa-users"></i> Users
+            <i class="fa-solid fa-users"></i>
+            <span>Users</span>
         </a>
         <a href="{% url "admin_stator" %}" {% if section == "stator" %}class="selected"{% endif %} title="Stator">
-            <i class="fa-solid fa-clock-rotate-left"></i> Stator
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Stator</span>
         </a>
         <a href="/djadmin" title="Django Admin" class="danger">
-            <i class="fa-solid fa-gear"></i> Django Admin
+            <i class="fa-solid fa-gear"></i>
+            <span>Django Admin</span>
         </a>
     {% endif %}
 </nav>
