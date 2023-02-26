@@ -316,6 +316,10 @@ nav {
     padding: 10px 10px 20px 0;
 }
 
+nav hr {
+    display: none;
+}
+
 nav h3 {
     text-transform: uppercase;
     font-weight: bold;
@@ -419,8 +423,6 @@ nav a i {
     font-size: 90%;
     text-align: left;
 }
-
-.right-column footer a {}
 
 img.emoji {
     height: var(--emoji-height);
@@ -1745,6 +1747,7 @@ form .post {
         right: 0;
         top: var(--md-header-height);
         overflow-y: auto;
+        padding-bottom: 60px;
     }
 
     .right-column nav {
@@ -1811,8 +1814,13 @@ form .post {
         padding-right: 0;
     }
 
+    .right-column nav hr {
+        display: block;
+        color: var(--color-text-dull);
+        margin: 20px 10px;
+    }
+
     .right-column nav a {
-        font-size: 0;
         padding: 10px 0 10px 10px;
     }
 
@@ -1825,8 +1833,12 @@ form .post {
         justify-content: center;
     }
 
+    .right-column nav a span {
+        display: none;
+    }
+
     .right-column h3 {
-        visibility: hidden;
+        display: none;
     }
 
     .right-column h2,
