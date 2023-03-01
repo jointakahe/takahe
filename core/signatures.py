@@ -160,6 +160,8 @@ class HttpSignature:
             raise VerificationFormatError("No signature header present")
         signature_details = cls.parse_signature(request.headers["signature"])
         # Reject unknown algorithms
+        # hs2019 is used by some libraries to obfuscate the real algorithm per the spec
+        # https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12
         if signature_details["algorithm"] != "rsa-sha256" and signature_details["algorithm"] != "hs2019":
             raise VerificationFormatError("Unknown signature algorithm")
         # Create the signature payload
