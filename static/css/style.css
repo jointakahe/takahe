@@ -1509,6 +1509,7 @@ form .post {
 }
 
 .post .attachments a {
+    position: relative;
     display: block;
     width: 100%;
 }
@@ -1519,6 +1520,18 @@ form .post {
     object-fit: cover;
     object-position: center;
     max-height: 400px;
+}
+
+.post .attachments .badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    padding: 0 4px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--color-text-in-highlight);
+    background: rgb(0 0 0 / 60%);
 }
 
 .post .attachments video {
