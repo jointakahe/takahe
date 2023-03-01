@@ -160,7 +160,7 @@ class HttpSignature:
             raise VerificationFormatError("No signature header present")
         signature_details = cls.parse_signature(request.headers["signature"])
         # Reject unknown algorithms
-        if signature_details["algorithm"] != "rsa-sha256":
+        if signature_details["algorithm"] != "rsa-sha256" and signature_details["algorithm"] != "hs2019":
             raise VerificationFormatError("Unknown signature algorithm")
         # Create the signature payload
         headers_string = cls.headers_from_request(request, signature_details["headers"])
