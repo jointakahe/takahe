@@ -105,6 +105,7 @@ class PostService:
         # Retrieve descendants via breadth-first-search
         descendants: list[Post] = []
         queue = [self.post]
+        seen: set[str] = set()
         while queue and len(descendants) < num_descendants:
             node = queue.pop()
             child_queryset = (
@@ -119,8 +120,10 @@ class PostService:
             else:
                 child_queryset = child_queryset.unlisted(include_replies=True)
             for child in child_queryset:
-                descendants.append(child)
-                queue.append(child)
+                if child.pk not in seen:
+                    descendants.append(child)
+                    queue.append(child)
+                    seen.add(child.pk)
         return ancestors, descendants
 
     def delete(self):
