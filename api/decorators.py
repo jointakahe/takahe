@@ -32,12 +32,18 @@ def scope_required(scope: str, requires_identity=True):
         @wraps(function)
         def inner(request, *args, **kwargs):
             if not request.token:
-                return JsonResponse({"error": "identity_token_required"}, status=401)
+                if request.identity:
+                    # They're just logged in via cookie - give full access
+                    pass
+                else:
+                    return JsonResponse(
+                        {"error": "identity_token_required"}, status=401
+                    )
+            elif not request.token.has_scope(scope):
+                return JsonResponse({"error": "out_of_scope_for_token"}, status=403)
             # They need an identity
             if not request.identity and requires_identity:
                 return JsonResponse({"error": "identity_token_required"}, status=401)
-            if not request.token.has_scope(scope):
-                return JsonResponse({"error": "out_of_scope_for_token"}, status=403)
             return function(request, *args, **kwargs)
 
         inner.csrf_exempt = True  # type:ignore
