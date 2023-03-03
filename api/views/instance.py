@@ -59,9 +59,7 @@ def instance_info_v2(request) -> dict:
         request.headers.get("host", settings.SETUP.MAIN_DOMAIN)
     )
     if current_domain is None or not current_domain.local:
-        current_domain = Domain.get_domain(
-            request.headers.get(settings.SETUP.MAIN_DOMAIN)
-        )
+        current_domain = Domain.get_domain(settings.SETUP.MAIN_DOMAIN)
     if current_domain is None:
         raise ValueError("No domain set up for MAIN_DOMAIN")
     admin_identity = (
