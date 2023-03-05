@@ -269,7 +269,7 @@ class Post(StatorModel):
 
     # The Post it is replying to as an AP ID URI
     # (as otherwise we'd have to pull entire threads to use IDs)
-    in_reply_to = models.CharField(max_length=500, blank=True, null=True)
+    in_reply_to = models.CharField(max_length=500, blank=True, null=True, db_index=True)
 
     # The identities the post is directly to (who can see it if not public)
     to = models.ManyToManyField(
