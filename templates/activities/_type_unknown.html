@@ -1,5 +1,5 @@
 {{ sanitized_content }}
 
 <small class="notice" x-post-type-data="{{ post.type_data|escape }}">
-    Takahe has limited support for this type: <a href="{{ post.url }}">See Original {{ post.type }}</a>
+    Takahe has limited support for this type: <a href="{{ post.url|default:post.object_uri }}">See Original {{ post.type }}</a>
 </small>
