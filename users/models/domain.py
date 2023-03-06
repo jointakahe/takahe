@@ -92,6 +92,9 @@ class Domain(StatorModel):
     # This should be display domains ONLY
     users = models.ManyToManyField("users.User", related_name="domains", blank=True)
 
+    # Free-form notes field for admins
+    notes = models.TextField(blank=True, null=True)
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

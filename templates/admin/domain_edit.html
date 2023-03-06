@@ -16,6 +16,10 @@
             {% include "forms/_field.html" with field=form.default %}
             {% include "forms/_field.html" with field=form.users %}
         </fieldset>
+        <fieldset>
+            <legend>Admin Notes</legend>
+            {% include "forms/_field.html" with field=form.notes %}
+        </fieldset>
         <div class="buttons">
             <a href="{{ domain.urls.root }}" class="button secondary left">Back</a>
             <a href="{{ domain.urls.delete }}" class="button delete">Delete</a>
