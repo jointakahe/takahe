@@ -74,6 +74,15 @@ class DomainCreate(FormView):
             widget=forms.Textarea,
             required=False,
         )
+        notes = forms.CharField(
+            label="Notes",
+            widget=forms.Textarea(
+                attrs={
+                    "rows": 3,
+                },
+            ),
+            required=False,
+        )
 
         def clean_domain(self):
             if Domain.objects.filter(
@@ -131,6 +140,7 @@ class DomainCreate(FormView):
         domain = Domain.objects.create(
             domain=form.cleaned_data["domain"],
             service_domain=form.cleaned_data["service_domain"] or None,
+            notes=form.cleaned_data["notes"] or None,
             public=form.cleaned_data["public"],
             default=form.cleaned_data["default"],
             local=True,
@@ -173,6 +183,7 @@ class DomainEdit(FormView):
     def form_valid(self, form):
         self.domain.public = form.cleaned_data["public"]
         self.domain.default = form.cleaned_data["default"]
+        self.domain.notes = form.cleaned_data["notes"] or None
         self.domain.save()
         self.domain.users.set(form.cleaned_data["users"])
         if self.domain.default:
@@ -183,6 +194,7 @@ class DomainEdit(FormView):
         return {
             "domain": self.domain.domain,
             "service_domain": self.domain.service_domain,
+            "notes": self.domain.notes,
             "public": self.domain.public,
             "default": self.domain.default,
             "users": "\n".join(sorted(user.email for user in self.domain.users.all())),

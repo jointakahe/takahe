@@ -30,6 +30,10 @@
             {% include "forms/_field.html" with field=form.default %}
             {% include "forms/_field.html" with field=form.users %}
         </fieldset>
+        <fieldset>
+            <legend>Admin Notes</legend>
+            {% include "forms/_field.html" with field=form.notes %}
+        </fieldset>
         <div class="buttons">
             <a href="{% url "admin_domains" %}" class="button secondary left">Back</a>
             <button>Create</button>

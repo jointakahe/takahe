@@ -45,6 +45,15 @@ class FederationEdit(FormView):
             widget=forms.Select(choices=[(True, "Blocked"), (False, "Not Blocked")]),
             required=False,
         )
+        notes = forms.CharField(
+            label="Notes",
+            widget=forms.Textarea(
+                attrs={
+                    "rows": 3,
+                },
+            ),
+            required=False,
+        )
 
     def dispatch(self, request, domain):
         self.domain = get_object_or_404(
@@ -59,10 +68,12 @@ class FederationEdit(FormView):
 
     def form_valid(self, form):
         self.domain.blocked = form.cleaned_data["blocked"]
+        self.domain.notes = form.cleaned_data["notes"] or None
         self.domain.save()
         return redirect(Domain.urls.root_federation)
 
     def get_initial(self):
         return {
             "blocked": self.domain.blocked,
+            "notes": self.domain.notes,
         }
