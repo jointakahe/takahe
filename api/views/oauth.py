@@ -1,6 +1,7 @@
 import base64
 import json
 import secrets
+import time
 from urllib.parse import urlparse, urlunparse
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -169,13 +170,16 @@ class TokenView(View):
             return JsonResponse({"error": "invalid_grant_type"}, status=400)
 
         if grant_type == "client_credentials":
-            # TODO: Implement client credentials flow
+            # We don't support individual client credential tokens, but instead
+            # just have a fixed one (since anyone can register an app at any
+            # time anyway)
             return JsonResponse(
                 {
-                    "error": "invalid_grant_type",
-                    "error_description": "client credential flow not implemented",
-                },
-                status=400,
+                    "access_token": "__app__",
+                    "token_type": "Bearer",
+                    "scope": "read",
+                    "created_at": int(time.time()),
+                }
             )
         elif grant_type == "authorization_code":
             code = post_data.get("code")

@@ -17,13 +17,17 @@ class ApiTokenMiddleware:
         request.token = None
         if auth_header and auth_header.startswith("Bearer "):
             token_value = auth_header[7:]
-            try:
-                token = Token.objects.get(token=token_value, revoked=None)
-            except Token.DoesNotExist:
-                return HttpResponse("Invalid Bearer token", status=400)
-            request.user = token.user
-            request.identity = token.identity
-            request.token = token
+            if token_value == "__app__":
+                # Special client app token value
+                pass
+            else:
+                try:
+                    token = Token.objects.get(token=token_value, revoked=None)
+                except Token.DoesNotExist:
+                    return HttpResponse("Invalid Bearer token", status=400)
+                request.user = token.user
+                request.identity = token.identity
+                request.token = token
             request.session = None
         response = self.get_response(request)
         return response
