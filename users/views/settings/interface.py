@@ -16,6 +16,11 @@ class InterfacePage(SettingsPage):
             "help_text": "Visibility to use as default for new posts.",
             "choices": Post.Visibilities.choices,
         },
+        "default_reply_visibility": {
+            "title": "Default Reply Visibility",
+            "help_text": "Visibility to use as default for replies.",
+            "choices": Post.Visibilities.choices,
+        },
         "visible_reaction_counts": {
             "title": "Show Boost and Like Counts",
             "help_text": "Disable to hide the number of Likes and Boosts on a 'Post'",
@@ -40,7 +45,7 @@ class InterfacePage(SettingsPage):
     }
 
     layout = {
-        "Posting": ["toot_mode", "default_post_visibility"],
+        "Posting": ["toot_mode", "default_post_visibility", "default_reply_visibility"],
         "Wellness": ["infinite_scroll", "visible_reaction_counts", "expand_linked_cws"],
         "Appearance": ["light_theme", "custom_css"],
     }
