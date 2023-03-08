@@ -246,6 +246,7 @@ class Config(models.Model):
 
         toot_mode: bool = False
         default_post_visibility: int = 0  # Post.Visibilities.public
+        default_reply_visibility: int = 1  # Post.Visibilities.unlisted
         visible_follows: bool = True
         light_theme: bool = False
 

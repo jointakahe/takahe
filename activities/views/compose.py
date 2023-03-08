@@ -123,7 +123,9 @@ class Compose(FormView):
             if self.reply_to:
                 initial["reply_to"] = self.reply_to.pk
                 if self.reply_to.visibility == Post.Visibilities.public:
-                    initial["visibility"] = Post.Visibilities.unlisted
+                    initial[
+                        "visibility"
+                    ] = self.request.identity.config_identity.default_reply_visibility
                 else:
                     initial["visibility"] = self.reply_to.visibility
                 initial["content_warning"] = self.reply_to.summary
