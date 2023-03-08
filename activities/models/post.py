@@ -647,9 +647,9 @@ class Post(StatorModel):
         # Targeting
         # TODO: Add followers object
         if self.visibility == self.Visibilities.public:
-            value["to"].append("Public")
+            value["to"].append("as:Public")
         elif self.visibility == self.Visibilities.unlisted:
-            value["cc"].append("Public")
+            value["cc"].append("as:Public")
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(mention.to_ap_tag())
