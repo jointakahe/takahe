@@ -46,15 +46,21 @@ urlpatterns = [
     path("v1/announcements/<pk>/dismiss", announcements.announcement_dismiss),
     # Apps
     path("v1/apps", apps.add_app),
+    # Bookmarks
+    path("v1/bookmarks", bookmarks.bookmarks),
     # Emoji
     path("v1/custom_emojis", emoji.emojis),
     # Filters
     path("v2/filters", filters.list_filters),
     path("v1/filters", filters.list_filters),
+    # Follow requests
+    path("v1/follow_requests", follow_requests.follow_requests),
     # Instance
     path("v1/instance", instance.instance_info_v1),
     path("v1/instance/peers", instance.peers),
     path("v2/instance", instance.instance_info_v2),
+    # Lists
+    path("v1/lists", lists.get_lists),
     # Media
     path("v1/media", media.upload_media),
     path("v2/media", media.upload_media),
@@ -73,6 +79,8 @@ urlpatterns = [
     # Polls
     path("v1/polls/<id>", polls.get_poll),
     path("v1/polls/<id>/votes", polls.vote_poll),
+    # Preferences
+    path("v1/preferences", preferences.preferences),
     # Search
     path("v2/search", search.search),
     # Statuses
@@ -83,6 +91,8 @@ urlpatterns = [
     path("v1/statuses/<id>/favourited_by", statuses.favourited_by),
     path("v1/statuses/<id>/reblog", statuses.reblog_status),
     path("v1/statuses/<id>/unreblog", statuses.unreblog_status),
+    # Tags
+    path("v1/followed_tags", tags.followed_tags),
     # Timelines
     path("v1/timelines/home", timelines.home),
     path("v1/timelines/public", timelines.public),
@@ -93,14 +103,4 @@ urlpatterns = [
     path("v1/trends/tags", trends.trends_tags),
     path("v1/trends/statuses", trends.trends_statuses),
     path("v1/trends/links", trends.trends_links),
-    # Follow requests
-    path("v1/follow_requests", follow_requests.follow_requests),
-    # Tags
-    path("v1/followed_tags", tags.followed_tags),
-    # Lists
-    path("v1/lists", lists.get_lists),
-    # Preferences
-    path("v1/preferences", preferences.preferences),
-    # Bookmarks
-    path("v1/bookmarks", bookmarks.bookmarks),
 ]
