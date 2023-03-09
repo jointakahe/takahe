@@ -47,6 +47,12 @@ def instance_info_v1(request):
                 "image_size_limit": (1024**2) * 10,
                 "image_matrix_limit": 2000 * 2000,
             },
+            "polls": {
+                "max_options": 4,
+                "max_characters_per_option": 50,
+                "min_expiration": 300,
+                "max_expiration": 2629746,
+            },
         },
         "contact_account": None,
         "rules": [],
