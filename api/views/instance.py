@@ -130,3 +130,12 @@ def instance_info_v2(request) -> dict:
         },
         "rules": [],
     }
+
+
+@api_view.get
+def peers(request) -> list[str]:
+    return list(
+        Domain.objects.filter(local=False, blocked=False).values_list(
+            "domain", flat=True
+        )
+    )

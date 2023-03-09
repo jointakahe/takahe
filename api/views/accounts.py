@@ -349,3 +349,9 @@ def account_followers(
         request=request,
         include_params=["limit"],
     )
+
+
+@api_view.get
+def account_featured_tags(request: HttpRequest, id: str) -> list[schemas.FeaturedTag]:
+    # Not implemented yet
+    return []

@@ -5,14 +5,19 @@ from api.views import (
     accounts,
     announcements,
     apps,
+    bookmarks,
     emoji,
     filters,
+    follow_requests,
     instance,
+    lists,
     media,
     notifications,
     polls,
+    preferences,
     search,
     statuses,
+    tags,
     timelines,
     trends,
 )
@@ -35,6 +40,7 @@ urlpatterns = [
     path("v1/accounts/<id>/unmute", accounts.account_unmute),
     path("v1/accounts/<id>/following", accounts.account_following),
     path("v1/accounts/<id>/followers", accounts.account_followers),
+    path("v1/accounts/<id>/featured_tags", accounts.account_featured_tags),
     # Announcements
     path("v1/announcements", announcements.announcement_list),
     path("v1/announcements/<pk>/dismiss", announcements.announcement_dismiss),
@@ -47,6 +53,7 @@ urlpatterns = [
     path("v1/filters", filters.list_filters),
     # Instance
     path("v1/instance", instance.instance_info_v1),
+    path("v1/instance/peers", instance.peers),
     path("v2/instance", instance.instance_info_v2),
     # Media
     path("v1/media", media.upload_media),
@@ -86,4 +93,14 @@ urlpatterns = [
     path("v1/trends/tags", trends.trends_tags),
     path("v1/trends/statuses", trends.trends_statuses),
     path("v1/trends/links", trends.trends_links),
+    # Follow requests
+    path("v1/follow_requests", follow_requests.follow_requests),
+    # Tags
+    path("v1/followed_tags", tags.followed_tags),
+    # Lists
+    path("v1/lists", lists.get_lists),
+    # Preferences
+    path("v1/preferences", preferences.preferences),
+    # Bookmarks
+    path("v1/bookmarks", bookmarks.bookmarks),
 ]

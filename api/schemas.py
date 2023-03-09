@@ -273,6 +273,14 @@ class Tag(Schema):
         return cls(**hashtag.to_mastodon_json())
 
 
+class FeaturedTag(Schema):
+    id: str
+    name: str
+    url: str
+    statuses_count: int
+    last_status_at: str
+
+
 class Search(Schema):
     accounts: list[Account]
     statuses: list[Status]
@@ -337,3 +345,54 @@ class Announcement(Schema):
         user: users_models.User,
     ) -> "Announcement":
         return cls(**announcement.to_mastodon_json(user=user))
+
+
+class List(Schema):
+    id: str
+    title: str
+    replies_policy: Literal[
+        "followed",
+        "list",
+        "none",
+    ]
+
+
+class Preferences(Schema):
+    posting_default_visibility: Literal[
+        "public",
+        "unlisted",
+        "private",
+        "direct",
+    ] = Field(alias="posting:default:visibility")
+    posting_default_sensitive: bool = Field(alias="posting:default:sensitive")
+    posting_default_language: str | None = Field(alias="posting:default:language")
+    reading_expand_media: Literal[
+        "default",
+        "show_all",
+        "hide_all",
+    ] = Field(alias="reading:expand:media")
+    reading_expand_spoilers: bool = Field(alias="reading:expand:spoilers")
+
+    @classmethod
+    def from_identity(
+        cls,
+        identity: users_models.Identity,
+    ) -> "Preferences":
+        visibility_mapping = {
+            activities_models.Post.Visibilities.public: "public",
+            activities_models.Post.Visibilities.unlisted: "unlisted",
+            activities_models.Post.Visibilities.followers: "private",
+            activities_models.Post.Visibilities.mentioned: "direct",
+            activities_models.Post.Visibilities.local_only: "public",
+        }
+        return cls.parse_obj(
+            {
+                "posting:default:visibility": visibility_mapping[
+                    identity.config_identity.default_post_visibility
+                ],
+                "posting:default:sensitive": False,
+                "posting:default:language": None,
+                "reading:expand:media": "default",
+                "reading:expand:spoilers": identity.config_identity.expand_linked_cws,
+            }
+        )
