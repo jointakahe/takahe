@@ -6,6 +6,9 @@
 .pre-commit-config.yaml
 .venv
 /fly.*
+/static-collected
+/takahe/local_settings.py
+__pycache__/
 media
 notes.md
 venv
