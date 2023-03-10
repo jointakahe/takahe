@@ -4,10 +4,11 @@ from collections.abc import Callable
 from typing import Any, Generic, Protocol, TypeVar
 
 from django.db import models
+from django.db.models.expressions import Case, F, When
 from django.http import HttpRequest
 from hatchway.http import ApiResponse
 
-from activities.models import PostInteraction
+from activities.models import PostInteraction, TimelineEvent
 
 T = TypeVar("T")
 
@@ -247,27 +248,22 @@ class MastodonPaginator:
         The home timeline requires special handling where we mix Posts and
         PostInteractions together.
         """
+        queryset = queryset.annotate(
+            event_id=Case(
+                When(type=TimelineEvent.Types.post, then=F("subject_post_id")),
+                default=F("subject_post_interaction"),
+            )
+        )
         if max_id and not max_id.startswith("interaction"):
-            queryset = queryset.filter(
-                models.Q(subject_post_id__lt=max_id)
-                | models.Q(subject_post_interaction_id__lt=max_id)
-            )
-
+            queryset = queryset.filter(event_id__lt=max_id)
         if since_id and not since_id.startswith("interaction"):
-            queryset = queryset.filter(
-                models.Q(subject_post_id__gt=since_id)
-                | models.Q(subject_post_interaction_id__gt=since_id)
-            )
-
+            queryset = queryset.filter(event_id__gt=since_id)
         if min_id and not min_id.startswith("interaction"):
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
-            queryset = queryset.filter(
-                models.Q(subject_post_id__gt=min_id)
-                | models.Q(subject_post_interaction_id__gt=min_id)
-            ).order_by("id")
+            queryset = queryset.filter(event_id__gt=min_id).order_by("event_id")
         else:
-            queryset = queryset.order_by("-id")
+            queryset = queryset.order_by("-event_id")
 
         limit = min(limit or self.default_limit, self.max_limit)
         return PaginationResult(
