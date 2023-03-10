@@ -1,7 +1,7 @@
 from django.http import HttpRequest
 from hatchway import ApiError, ApiResponse, api_view
 
-from activities.models import Post
+from activities.models import Post, TimelineEvent
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import scope_required
@@ -34,12 +34,13 @@ def home(
         "subject_post_interaction__post__mentions__domain",
         "subject_post_interaction__post__author__posts",
     )
-    pager = paginator.paginate_home(
+    pager: PaginationResult[TimelineEvent] = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
         since_id=since_id,
         limit=limit,
+        home=True,
     )
     return PaginatingApiResponse(
         schemas.Status.map_from_timeline_event(pager.results, request.identity),

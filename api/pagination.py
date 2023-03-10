@@ -216,72 +216,44 @@ class MastodonPaginator:
         max_id: str | None,
         since_id: str | None,
         limit: int | None,
+        home: bool = False,
     ) -> PaginationResult[TM]:
+        limit = min(limit or self.default_limit, self.max_limit)
+        filters = {}
+        id_field = "id"
         reverse = False
+        if home:
+            # The home timeline interleaves Post IDs and PostInteraction IDs in an
+            # annotated field called "subject_id".
+            id_field = "subject_id"
+            queryset = queryset.annotate(
+                subject_id=Case(
+                    When(type=TimelineEvent.Types.post, then=F("subject_post_id")),
+                    default=F("subject_post_interaction"),
+                )
+            )
+
         # These "does not start with interaction" checks can be removed after a
         # couple months, when clients have flushed them out.
         if max_id and not max_id.startswith("interaction"):
-            queryset = queryset.filter(id__lt=max_id)
+            filters[f"{id_field}__lt"] = max_id
         if since_id and not since_id.startswith("interaction"):
-            queryset = queryset.filter(id__gt=since_id)
+            filters[f"{id_field}__gt"] = since_id
         if min_id and not min_id.startswith("interaction"):
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
-            queryset = queryset.filter(id__gt=min_id).order_by("id")
-            # Even though we're taking the items immediately newer than min_id, we still
-            # want to order them the same way as the others, so we'll reverse after
-            # limiting.
+            filters[f"{id_field}__gt"] = min_id
             reverse = True
-        else:
-            queryset = queryset.order_by("-id")
 
-        limit = min(limit or self.default_limit, self.max_limit)
-        results = list(queryset[:limit])
+        # Default is to order by ID descending (newest first), except for min_id
+        # queries, which should order by ID for limiting, then reverse the results to be
+        # consistent. The clearest explanation of this I've found so far is this:
+        # https://mastodon.social/@Gargron/100846335353411164
+        ordering = id_field if reverse else f"-{id_field}"
+        results = list(queryset.filter(**filters).order_by(ordering)[:limit])
         if reverse:
             results.reverse()
-        return PaginationResult(
-            results=results,
-            limit=limit,
-        )
 
-    def paginate_home(
-        self,
-        queryset,
-        min_id: str | None,
-        max_id: str | None,
-        since_id: str | None,
-        limit: int | None,
-    ) -> PaginationResult:
-        """
-        The home timeline requires special handling where we mix Posts and
-        PostInteractions together.
-        """
-        reverse = False
-        queryset = queryset.annotate(
-            subject_id=Case(
-                When(type=TimelineEvent.Types.post, then=F("subject_post_id")),
-                default=F("subject_post_interaction"),
-            )
-        )
-        if max_id and not max_id.startswith("interaction"):
-            queryset = queryset.filter(subject_id__lt=max_id)
-        if since_id and not since_id.startswith("interaction"):
-            queryset = queryset.filter(subject_id__gt=since_id)
-        if min_id and not min_id.startswith("interaction"):
-            # Min ID requires items _immediately_ newer than specified, so we
-            # invert the ordering to accommodate
-            queryset = queryset.filter(subject_id__gt=min_id).order_by("subject_id")
-            # Even though we're taking the items immediately newer than min_id, we still
-            # want to order them the same way as the others, so we'll reverse after
-            # limiting.
-            reverse = True
-        else:
-            queryset = queryset.order_by("-subject_id")
-
-        limit = min(limit or self.default_limit, self.max_limit)
-        results = list(queryset[:limit])
-        if reverse:
-            results.reverse()
         return PaginationResult(
             results=results,
             limit=limit,
