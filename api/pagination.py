@@ -217,6 +217,7 @@ class MastodonPaginator:
         since_id: str | None,
         limit: int | None,
     ) -> PaginationResult[TM]:
+        reverse = False
         # These "does not start with interaction" checks can be removed after a
         # couple months, when clients have flushed them out.
         if max_id and not max_id.startswith("interaction"):
@@ -227,12 +228,19 @@ class MastodonPaginator:
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
             queryset = queryset.filter(id__gt=min_id).order_by("id")
+            # Even though we're taking the items immediately newer than min_id, we still
+            # want to order them the same way as the others, so we'll reverse after
+            # limiting.
+            reverse = True
         else:
             queryset = queryset.order_by("-id")
 
         limit = min(limit or self.default_limit, self.max_limit)
+        results = list(queryset[:limit])
+        if reverse:
+            results.reverse()
         return PaginationResult(
-            results=list(queryset[:limit]),
+            results=results,
             limit=limit,
         )
 
@@ -248,25 +256,33 @@ class MastodonPaginator:
         The home timeline requires special handling where we mix Posts and
         PostInteractions together.
         """
+        reverse = False
         queryset = queryset.annotate(
-            event_id=Case(
+            subject_id=Case(
                 When(type=TimelineEvent.Types.post, then=F("subject_post_id")),
                 default=F("subject_post_interaction"),
             )
         )
         if max_id and not max_id.startswith("interaction"):
-            queryset = queryset.filter(event_id__lt=max_id)
+            queryset = queryset.filter(subject_id__lt=max_id)
         if since_id and not since_id.startswith("interaction"):
-            queryset = queryset.filter(event_id__gt=since_id)
+            queryset = queryset.filter(subject_id__gt=since_id)
         if min_id and not min_id.startswith("interaction"):
             # Min ID requires items _immediately_ newer than specified, so we
             # invert the ordering to accommodate
-            queryset = queryset.filter(event_id__gt=min_id).order_by("event_id")
+            queryset = queryset.filter(subject_id__gt=min_id).order_by("subject_id")
+            # Even though we're taking the items immediately newer than min_id, we still
+            # want to order them the same way as the others, so we'll reverse after
+            # limiting.
+            reverse = True
         else:
-            queryset = queryset.order_by("-event_id")
+            queryset = queryset.order_by("-subject_id")
 
         limit = min(limit or self.default_limit, self.max_limit)
+        results = list(queryset[:limit])
+        if reverse:
+            results.reverse()
         return PaginationResult(
-            results=list(queryset[:limit]),
+            results=results,
             limit=limit,
         )
