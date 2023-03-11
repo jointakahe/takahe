@@ -267,3 +267,25 @@ def unreblog_status(request, id: str) -> schemas.Status:
     return schemas.Status.from_post(
         post, interactions=interactions, identity=request.identity
     )
+
+
+@scope_required("write:bookmarks")
+@api_view.post
+def bookmark_status(request, id: str) -> schemas.Status:
+    post = post_for_id(request, id)
+    request.identity.bookmarks.get_or_create(post=post)
+    interactions = PostInteraction.get_post_interactions([post], request.identity)
+    return schemas.Status.from_post(
+        post, interactions=interactions, bookmarks={post.pk}, identity=request.identity
+    )
+
+
+@scope_required("write:bookmarks")
+@api_view.post
+def unbookmark_status(request, id: str) -> schemas.Status:
+    post = post_for_id(request, id)
+    request.identity.bookmarks.filter(post=post).delete()
+    interactions = PostInteraction.get_post_interactions([post], request.identity)
+    return schemas.Status.from_post(
+        post, interactions=interactions, identity=request.identity
+    )

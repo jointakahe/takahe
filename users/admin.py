@@ -8,6 +8,7 @@ from activities.admin import IdentityLocalFilter
 from users.models import (
     Announcement,
     Block,
+    Bookmark,
     Domain,
     Follow,
     Identity,
@@ -221,3 +222,9 @@ class ReportAdmin(admin.ModelAdmin):
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ["id", "published", "start", "end", "text"]
     autocomplete_fields = ["seen"]
+
+
+@admin.register(Bookmark)
+class BookmarkAdmin(admin.ModelAdmin):
+    list_display = ["id", "identity", "post", "created"]
+    raw_id_fields = ["identity", "post"]
