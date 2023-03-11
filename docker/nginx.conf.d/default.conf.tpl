@@ -79,6 +79,12 @@ server {
         # Unset Authorization and Cookie for security reasons.
         proxy_set_header Authorization '';
         proxy_set_header Cookie '';
+        proxy_set_header User-Agent 'takahe/nginx';
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Forwarded-For '';
+        proxy_set_header X-Forwarded-Host '';
+        proxy_set_header X-Forwarded-Server '';
+        proxy_set_header X-Real-Ip '';
 
         # Stops the local disk from being written to (just forwards data through)
         proxy_max_temp_file_size 0;
