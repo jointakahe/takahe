@@ -721,6 +721,10 @@ div.follow {
     text-align: center;
 }
 
+div.follow-hashtag {
+    margin: 0;
+}
+
 .follow.has-reverse {
     margin-top: 0;
 }
@@ -1305,6 +1309,11 @@ table.metadata td .emoji {
     margin: 0 0 10px 0;
     color: var(--color-text-main);
     font-size: 130%;
+    display: flow-root;
+}
+
+.left-column .timeline-name .hashtag {
+    margin-top: 5px;
 }
 
 .left-column .timeline-name i {

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.db import models
 
 
@@ -20,3 +22,15 @@ class HashtagFollow(models.Model):
 
     def __str__(self):
         return f"#{self.id}: {self.identity} → {self.hashtag_id}"
+
+    ### Alternate fetchers/constructors ###
+
+    @classmethod
+    def maybe_get(cls, identity, hashtag) -> Optional["HashtagFollow"]:
+        """
+        Returns a hashtag follow if it exists between identity and hashtag
+        """
+        try:
+            return HashtagFollow.objects.get(identity=identity, hashtag=hashtag)
+        except HashtagFollow.DoesNotExist:
+            return None

@@ -7,7 +7,7 @@ from activities.models import Hashtag, PostInteraction, TimelineEvent
 from activities.services import TimelineService
 from core.decorators import cache_page
 from users.decorators import identity_required
-from users.models import Bookmark
+from users.models import Bookmark, HashtagFollow
 
 from .compose import Compose
 
@@ -74,6 +74,10 @@ class Tag(ListView):
         )
         context["bookmarks"] = Bookmark.for_identity(
             self.request.identity, context["page_obj"]
+        )
+        context["follow"] = HashtagFollow.maybe_get(
+            self.request.identity,
+            self.hashtag,
         )
         return context
 

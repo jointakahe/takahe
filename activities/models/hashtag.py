@@ -114,6 +114,8 @@ class Hashtag(StatorModel):
 
     class urls(urlman.Urls):
         view = "/tags/{self.hashtag}/"
+        follow = "/tags/{self.hashtag}/follow/"
+        unfollow = "/tags/{self.hashtag}/unfollow/"
         admin = "/admin/hashtags/"
         admin_edit = "{admin}{self.hashtag}/"
         admin_enable = "{admin_edit}enable/"

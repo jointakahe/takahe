@@ -3,7 +3,14 @@
 {% block title %}#{{ hashtag.display_name }} Timeline{% endblock %}
 
 {% block content %}
-    <div class="timeline-name"><i class="fa-solid fa-hashtag"></i>{{ hashtag.display_name }}</div>
+    <div class="timeline-name">
+        <div class="inline follow follow-hashtag">
+            {% include "activities/_hashtag_follow.html" %}
+        </div>
+        <div class="hashtag">
+            <i class="fa-solid fa-hashtag"></i>{{ hashtag.display_name }}
+        </div>
+    </div>
     {% for post in page_obj %}
         {% include "activities/_post.html" %}
     {% empty %}
