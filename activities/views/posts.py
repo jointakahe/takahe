@@ -147,6 +147,39 @@ class Boost(View):
 
 
 @method_decorator(identity_required, name="dispatch")
+class Bookmark(View):
+    """
+    Adds/removes a bookmark from the current identity to the post
+    """
+
+    undo = False
+
+    def post(self, request, handle, post_id):
+        identity = by_handle_or_404(self.request, handle, local=False)
+        post = get_object_or_404(
+            PostService.queryset()
+            .filter(author=identity)
+            .visible_to(request.identity, include_replies=True),
+            pk=post_id,
+        )
+        if self.undo:
+            request.identity.bookmarks.filter(post=post).delete()
+        else:
+            request.identity.bookmarks.get_or_create(post=post)
+        # Return either a redirect or a HTMX snippet
+        if request.htmx:
+            return render(
+                request,
+                "activities/_bookmark.html",
+                {
+                    "post": post,
+                    "bookmarks": set() if self.undo else {post.pk},
+                },
+            )
+        return redirect(post.urls.view)
+
+
+@method_decorator(identity_required, name="dispatch")
 class Delete(TemplateView):
     """
     Deletes a post

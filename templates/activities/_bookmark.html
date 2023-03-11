@@ -1,0 +1,9 @@
+{% if post.pk in bookmarks %}
+    <a title="Unbookmark" class="active" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ post.urls.action_unbookmark }}" hx-swap="outerHTML" tabindex="0">
+        <i class="fa-solid fa-bookmark"></i>
+    </a>
+{% else %}
+    <a title="Bookmark" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ post.urls.action_bookmark }}" hx-swap="outerHTML" tabindex="0">
+        <i class="fa-regular fa-bookmark"></i>
+    </a>
+{% endif %}

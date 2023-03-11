@@ -329,6 +329,8 @@ class Post(StatorModel):
         action_unlike = "{view}unlike/"
         action_boost = "{view}boost/"
         action_unboost = "{view}unboost/"
+        action_bookmark = "{view}bookmark/"
+        action_unbookmark = "{view}unbookmark/"
         action_delete = "{view}delete/"
         action_edit = "{view}edit/"
         action_report = "{view}report/"
@@ -1059,7 +1061,7 @@ class Post(StatorModel):
 
     ### Mastodon API ###
 
-    def to_mastodon_json(self, interactions=None, identity=None):
+    def to_mastodon_json(self, interactions=None, bookmarks=None, identity=None):
         reply_parent = None
         if self.in_reply_to:
             # Load the PK and author.id explicitly to prevent a SELECT on the entire author Identity
@@ -1128,4 +1130,6 @@ class Post(StatorModel):
         if interactions:
             value["favourited"] = self.pk in interactions.get("like", [])
             value["reblogged"] = self.pk in interactions.get("boost", [])
+        if bookmarks:
+            value["bookmarked"] = self.pk in bookmarks
         return value

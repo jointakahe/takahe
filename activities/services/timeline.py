@@ -102,3 +102,13 @@ class TimelineService:
             )
             .order_by("-id")
         )
+
+    def bookmarks(self) -> models.QuerySet[Post]:
+        """
+        Return all bookmarked posts for an identity
+        """
+        return (
+            PostService.queryset()
+            .filter(bookmarks__identity=self.identity)
+            .order_by("-id")
+        )

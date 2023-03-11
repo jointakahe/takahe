@@ -7,6 +7,7 @@ from activities.models import Hashtag, PostInteraction, TimelineEvent
 from activities.services import TimelineService
 from core.decorators import cache_page
 from users.decorators import identity_required
+from users.models import Bookmark
 
 from .compose import Compose
 
@@ -30,6 +31,9 @@ class Home(TemplateView):
             "interactions": PostInteraction.get_event_interactions(
                 event_page,
                 self.request.identity,
+            ),
+            "bookmarks": Bookmark.for_identity(
+                self.request.identity, event_page, "subject_post_id"
             ),
             "current_page": "home",
             "allows_refresh": True,
@@ -68,6 +72,9 @@ class Tag(ListView):
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"], self.request.identity
         )
+        context["bookmarks"] = Bookmark.for_identity(
+            self.request.identity, context["page_obj"]
+        )
         return context
 
 
@@ -91,6 +98,9 @@ class Local(ListView):
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"], self.request.identity
         )
+        context["bookmarks"] = Bookmark.for_identity(
+            self.request.identity, context["page_obj"]
+        )
         return context
 
 
@@ -111,6 +121,9 @@ class Federated(ListView):
         context = super().get_context_data()
         context["interactions"] = PostInteraction.get_post_interactions(
             context["page_obj"], self.request.identity
+        )
+        context["bookmarks"] = Bookmark.for_identity(
+            self.request.identity, context["page_obj"]
         )
         return context
 
@@ -172,5 +185,8 @@ class Notifications(ListView):
         context["interactions"] = PostInteraction.get_event_interactions(
             context["page_obj"],
             self.request.identity,
+        )
+        context["bookmarks"] = Bookmark.for_identity(
+            self.request.identity, context["page_obj"], "subject_post_id"
         )
         return context

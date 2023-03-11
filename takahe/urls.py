@@ -242,6 +242,10 @@ urlpatterns = [
     path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
     path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
     path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
+    path("@<handle>/posts/<int:post_id>/bookmark/", posts.Bookmark.as_view()),
+    path(
+        "@<handle>/posts/<int:post_id>/unbookmark/", posts.Bookmark.as_view(undo=True)
+    ),
     path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
     path("@<handle>/posts/<int:post_id>/report/", report.SubmitReport.as_view()),
     path("@<handle>/posts/<int:post_id>/edit/", compose.Compose.as_view()),

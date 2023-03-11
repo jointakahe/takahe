@@ -165,10 +165,13 @@ class Status(Schema):
         cls,
         post: activities_models.Post,
         interactions: dict[str, set[str]] | None = None,
+        bookmarks: set[str] | None = None,
         identity: users_models.Identity | None = None,
     ) -> "Status":
         return cls(
-            **post.to_mastodon_json(interactions=interactions, identity=identity)
+            **post.to_mastodon_json(
+                interactions=interactions, bookmarks=bookmarks, identity=identity
+            )
         )
 
     @classmethod
@@ -180,8 +183,11 @@ class Status(Schema):
         interactions = activities_models.PostInteraction.get_post_interactions(
             posts, identity
         )
+        bookmarks = users_models.Bookmark.for_identity(identity, posts)
         return [
-            cls.from_post(post, interactions=interactions, identity=identity)
+            cls.from_post(
+                post, interactions=interactions, bookmarks=bookmarks, identity=identity
+            )
             for post in posts
         ]
 
@@ -190,11 +196,12 @@ class Status(Schema):
         cls,
         timeline_event: activities_models.TimelineEvent,
         interactions: dict[str, set[str]] | None = None,
+        bookmarks: set[str] | None = None,
         identity: users_models.Identity | None = None,
     ) -> "Status":
         return cls(
             **timeline_event.to_mastodon_status_json(
-                interactions=interactions, identity=identity
+                interactions=interactions, bookmarks=bookmarks, identity=identity
             )
         )
 
@@ -207,8 +214,13 @@ class Status(Schema):
         interactions = activities_models.PostInteraction.get_event_interactions(
             events, identity
         )
+        bookmarks = users_models.Bookmark.for_identity(
+            identity, events, "subject_post_id"
+        )
         return [
-            cls.from_timeline_event(event, interactions=interactions, identity=identity)
+            cls.from_timeline_event(
+                event, interactions=interactions, bookmarks=bookmarks, identity=identity
+            )
             for event in events
         ]
 
