@@ -27,6 +27,7 @@ class HashtagFollow(models.Model):
         "activities.Hashtag",
         on_delete=models.CASCADE,
         related_name="followers",
+        db_index=True,
     )
 
     created = models.DateTimeField(auto_now_add=True)
