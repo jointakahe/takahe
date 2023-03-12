@@ -38,6 +38,7 @@ from core.snowflake import Snowflake
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.follow import FollowStates
+from users.models.hashtag_follow import HashtagFollow
 from users.models.identity import Identity, IdentityStates
 from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
@@ -726,12 +727,18 @@ class Post(StatorModel):
         targets = set()
         async for mention in self.mentions.all():
             targets.add(mention)
-        # Then, if it's not mentions only, also deliver to followers
+        # Then, if it's not mentions only, also deliver to followers and all hashtag followers
         if self.visibility != Post.Visibilities.mentioned:
             async for follower in self.author.inbound_follows.filter(
                 state__in=FollowStates.group_active()
             ).select_related("source"):
                 targets.add(follower.source)
+            if self.hashtags:
+                async for follow in HashtagFollow.objects.by_hashtags(
+                    self.hashtags
+                ).prefetch_related("identity"):
+                    targets.add(follow.identity)
+
         # If it's a reply, always include the original author if we know them
         reply_post = await self.ain_reply_to_post()
         if reply_post:

@@ -3,6 +3,20 @@ from typing import Optional
 from django.db import models
 
 
+class HashtagFollowQuerySet(models.QuerySet):
+    def by_hashtags(self, hashtags: list[str]):
+        query = self.filter(hashtag_id__in=hashtags)
+        return query
+
+
+class HashtagFollowManager(models.Manager):
+    def get_queryset(self):
+        return HashtagFollowQuerySet(self.model, using=self._db)
+
+    def by_hashtags(self, hashtags: list[str]):
+        return self.get_queryset().by_hashtags(hashtags)
+
+
 class HashtagFollow(models.Model):
     identity = models.ForeignKey(
         "users.Identity",
@@ -16,6 +30,8 @@ class HashtagFollow(models.Model):
     )
 
     created = models.DateTimeField(auto_now_add=True)
+
+    objects = HashtagFollowManager()
 
     class Meta:
         unique_together = [("identity", "hashtag")]

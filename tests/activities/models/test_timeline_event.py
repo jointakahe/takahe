@@ -1,7 +1,7 @@
 import pytest
 from django.utils import timezone
 
-from activities.models import Post, TimelineEvent
+from activities.models import Hashtag, Post, TimelineEvent
 from activities.services import PostService
 from core.ld import format_ld_date
 from users.models import Block, Follow, Identity, InboxMessage
@@ -257,3 +257,70 @@ def test_clear_timeline(
     assert TimelineEvent.objects.filter(
         type=TimelineEvent.Types.mentioned, identity=identity
     ).exists() == (not full)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("local", [True, False])
+@pytest.mark.parametrize("blocked", ["full", "mute", "no"])
+def test_hashtag_followed(
+    identity: Identity,
+    other_identity: Identity,
+    remote_identity: Identity,
+    stator,
+    local: bool,
+    blocked: bool,
+):
+    """
+    Ensure that a new or incoming post with a hashtag followed by a local entity
+    results in a timeline event, unless the author is blocked.
+    """
+    hashtag = Hashtag.objects.get_or_create(hashtag="takahe")[0]
+    identity.hashtag_follows.get_or_create(hashtag=hashtag)
+
+    if local:
+        Post.create_local(author=other_identity, content="Hello from #Takahe!")
+    else:
+        # Create an inbound new post message
+        message = {
+            "id": "test",
+            "type": "Create",
+            "actor": remote_identity.actor_uri,
+            "object": {
+                "id": "https://remote.test/test-post",
+                "type": "Note",
+                "published": format_ld_date(timezone.now()),
+                "attributedTo": remote_identity.actor_uri,
+                "to": "as:Public",
+                "content": '<p>Hello from <a href="https://remote.test/tags/takahe/" rel="tag">#Takahe</a>!',
+                "tag": {
+                    "type": "Hashtag",
+                    "href": "https://remote.test/tags/takahe/",
+                    "name": "#Takahe",
+                },
+            },
+        }
+        InboxMessage.objects.create(message=message)
+
+    # Implement any blocks
+    author = other_identity if local else remote_identity
+    if blocked == "full":
+        Block.create_local_block(identity, author)
+    elif blocked == "mute":
+        Block.create_local_mute(identity, author)
+
+    # Run stator twice - to make fanouts and then process them
+    stator.run_single_cycle_sync()
+    stator.run_single_cycle_sync()
+
+    if blocked in ["full", "mute"]:
+        # Verify post is not in timeline
+        assert not TimelineEvent.objects.filter(
+            type=TimelineEvent.Types.post, identity=identity
+        ).exists()
+    else:
+        # Verify post is in timeline
+        event = TimelineEvent.objects.filter(
+            type=TimelineEvent.Types.post, identity=identity
+        ).first()
+        assert event
+        assert "Hello from " in event.subject_post.content
