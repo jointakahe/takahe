@@ -31,6 +31,13 @@ class PostAttachment(StatorModel):
         blank=True,
         null=True,
     )
+    author = models.ForeignKey(
+        "users.Identity",
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        blank=True,
+        null=True,
+    )
 
     state = StateField(graph=PostAttachmentStates)
 

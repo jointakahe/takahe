@@ -267,6 +267,7 @@ class ImageUpload(FormView):
             height=main_file.image.height,
             name=form.cleaned_data.get("description"),
             state=PostAttachmentStates.fetched,
+            author=self.request.identity,
         )
 
         attachment.file.save(
