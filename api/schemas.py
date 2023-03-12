@@ -276,13 +276,15 @@ class Tag(Schema):
     name: str
     url: str
     history: dict
+    followed: bool | None
 
     @classmethod
     def from_hashtag(
         cls,
         hashtag: activities_models.Hashtag,
+        followed: bool | None = None,
     ) -> "Tag":
-        return cls(**hashtag.to_mastodon_json())
+        return cls(**hashtag.to_mastodon_json(followed=followed))
 
 
 class FeaturedTag(Schema):

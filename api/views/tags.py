@@ -1,4 +1,5 @@
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from hatchway import api_view
 
 from activities.models import Hashtag
@@ -31,4 +32,38 @@ def followed_tags(
         schemas.Tag.map_from_post(pager.results, request.identity),
         request=request,
         include_params=["limit"],
+    )
+
+
+@scope_required("write:follows")
+@api_view.post
+def follow(
+    request: HttpRequest,
+    id: str,
+) -> schemas.Tag:
+    hashtag = get_object_or_404(
+        Hashtag,
+        pk=id,
+    )
+    request.identity.hashtag_follows.get_or_create(hashtag=hashtag)
+    return schemas.Tag.from_hashtag(
+        hashtag,
+        followed=True,
+    )
+
+
+@scope_required("write:follows")
+@api_view.post
+def unfollow(
+    request: HttpRequest,
+    id: str,
+) -> schemas.Tag:
+    hashtag = get_object_or_404(
+        Hashtag,
+        pk=id,
+    )
+    request.identity.hashtag_follows.filter(hashtag=hashtag).delete()
+    return schemas.Tag.from_hashtag(
+        hashtag,
+        followed=False,
     )
