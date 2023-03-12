@@ -8,7 +8,6 @@ from django.utils import timezone
 
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
-from users.models import Identity
 
 
 class HashtagStates(StateGraph):
@@ -74,9 +73,6 @@ class HashtagQuerySet(models.QuerySet):
             models.Q(hashtag=hashtag) | models.Q(aliases__contains=hashtag)
         )
 
-    def followed_by(self, identity: Identity):
-        return self.filter(followers__identity=identity)
-
 
 class HashtagManager(models.Manager):
     def get_queryset(self):
@@ -87,9 +83,6 @@ class HashtagManager(models.Manager):
 
     def hashtag_or_alias(self, hashtag: str):
         return self.get_queryset().hashtag_or_alias(hashtag)
-
-    def followed_by(self, identity: Identity):
-        return self.get_queryset().followed_by(identity)
 
 
 class Hashtag(StatorModel):
