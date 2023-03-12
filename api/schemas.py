@@ -287,6 +287,24 @@ class Tag(Schema):
         return cls(**hashtag.to_mastodon_json(followed=followed))
 
 
+class FollowedTag(Tag):
+    id: str
+
+    @classmethod
+    def from_follow(
+        cls,
+        follow: users_models.HashtagFollow,
+    ) -> "FollowedTag":
+        return cls(id=follow.id, **follow.hashtag.to_mastodon_json(followed=True))
+
+    @classmethod
+    def map_from_follows(
+        cls,
+        hashtag_follows: list[users_models.HashtagFollow],
+    ) -> list["Tag"]:
+        return [cls.from_follow(follow) for follow in hashtag_follows]
+
+
 class FeaturedTag(Schema):
     id: str
     name: str

@@ -6,6 +6,7 @@ from activities.models import Hashtag
 from api import schemas
 from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
+from users.models import HashtagFollow
 
 
 @scope_required("read:follows")
@@ -17,10 +18,9 @@ def followed_tags(
     min_id: str | None = None,
     limit: int = 100,
 ) -> list[schemas.Tag]:
-    queryset = Hashtag.objects.followed_by(request.identity)
+    queryset = HashtagFollow.objects.by_identity(request.identity)
     paginator = MastodonPaginator()
-    # TODO: this fails due to the Hashtag model not having an `id` field
-    pager: PaginationResult[Hashtag] = paginator.paginate(
+    pager: PaginationResult[HashtagFollow] = paginator.paginate(
         queryset,
         min_id=min_id,
         max_id=max_id,
@@ -28,8 +28,7 @@ def followed_tags(
         limit=limit,
     )
     return PaginatingApiResponse(
-        # TODO: add something like map_from_post to schemas.Tag
-        schemas.Tag.map_from_post(pager.results, request.identity),
+        schemas.FollowedTag.map_from_follows(pager.results),
         request=request,
         include_params=["limit"],
     )
