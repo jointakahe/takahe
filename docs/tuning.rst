@@ -212,3 +212,19 @@ uses to show remote images without leaking user information.
 If you don't want to use a CDN but still want a performance improvement, a
 read-through cache that respects ``Cache-Control``, like Varnish, will
 also help if placed in front of Takahē.
+
+
+Sentry.io integration 
+---------------------
+
+Takahē can optionally integrate with https://sentry.io for collection of raised
+exceptions from the webserver or Stator.
+
+To enable this, set the ``TAKAHE_SENTRY_DSN`` environment variable to the value 
+found in your sentry project: 
+``https://<org>.sentry.io/settings/projects/<project>/keys/``
+
+Other Sentry configuration can be controlled through environment variables
+found in ``takahe/settings.py``. See the 
+`Sentry python documentation <https://docs.sentry.io/platforms/python/configuration/options/>`_
+for details.
