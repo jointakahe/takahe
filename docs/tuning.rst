@@ -225,5 +225,6 @@ found in your sentry project:
 ``https://<org>.sentry.io/settings/projects/<project>/keys/``
 
 Other Sentry configuration can be controlled through environment variables
-found in ``takahe/settings.py``. See the Sentry python documentation for 
-details: ``https://docs.sentry.io/platforms/python/configuration/options/``
+found in ``takahe/settings.py``. See the 
+`Sentry python documentation <https://docs.sentry.io/platforms/python/configuration/options/>`_
+for details.
