@@ -1,0 +1,9 @@
+{% if follow %}
+    <button title="Unfollow" class="active" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ hashtag.urls.unfollow }}" hx-swap="outerHTML" tabindex="0">
+        Unfollow
+    </button>
+{% else %}
+    <button title="Follow" hx-trigger="click, keyup[key=='Enter']" hx-post="{{ hashtag.urls.follow }}" hx-swap="outerHTML" tabindex="0">
+        Follow
+    </button>
+{% endif %}

@@ -1,4 +1,4 @@
-<div class="inline follow-profile {% if inbound_follow %}has-reverse{% endif %}">
+<div class="inline follow {% if inbound_follow %}has-reverse{% endif %}">
     <div class="actions" role="menubar">
         {% if request.identity == identity %}
             <a href="{% url "settings_profile" %}" class="button" title="Edit Profile">

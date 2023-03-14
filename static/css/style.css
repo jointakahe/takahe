@@ -714,28 +714,32 @@ form.inline {
     display: inline;
 }
 
-div.follow-profile {
+div.follow {
     float: right;
     margin: 20px 0 0 0;
     font-size: 16px;
     text-align: center;
 }
 
-.follow-profile.has-reverse {
+div.follow-hashtag {
+    margin: 0;
+}
+
+.follow.has-reverse {
     margin-top: 0;
 }
 
-.follow-profile .reverse-follow {
+.follow .reverse-follow {
     display: block;
     margin: 0 0 5px 0;
 }
 
-div.follow-profile button,
-div.follow-profile .button {
+div.follow button,
+div.follow .button {
     margin: 0;
 }
 
-div.follow-profile .actions {
+div.follow .actions {
     /* display: flex; */
     position: relative;
     justify-content: space-between;
@@ -744,14 +748,14 @@ div.follow-profile .actions {
     align-content: center;
 }
 
-div.follow-profile .actions a {
+div.follow .actions a {
     border-radius: 4px;
     min-width: 40px;
     text-align: center;
     cursor: pointer;
 }
 
-div.follow-profile .actions menu {
+div.follow .actions menu {
     display: none;
     background-color: var(--color-bg-menu);
     border-radius: 5px;
@@ -762,13 +766,13 @@ div.follow-profile .actions menu {
 }
 
 
-div.follow-profile .actions menu.enabled {
+div.follow .actions menu.enabled {
     display: block;
     min-width: 160px;
     z-index: 10;
 }
 
-div.follow-profile .actions menu a {
+div.follow .actions menu a {
     text-align: left;
     display: block;
     font-size: 15px;
@@ -776,7 +780,7 @@ div.follow-profile .actions menu a {
     color: var(--color-text-dull);
 }
 
-.follow-profile .actions menu button {
+.follow .actions menu button {
     background: none !important;
     border: none;
     cursor: pointer;
@@ -787,25 +791,25 @@ div.follow-profile .actions menu a {
     color: var(--color-text-dull);
 }
 
-.follow-profile .actions menu button i {
+.follow .actions menu button i {
     margin-right: 4px;
     width: 16px;
 }
 
-.follow-profile .actions button:hover {
+.follow .actions button:hover {
     color: var(--color-text-main);
 }
 
-.follow-profile .actions menu a i {
+.follow .actions menu a i {
     margin-right: 4px;
     width: 16px;
 }
 
-div.follow-profile .actions a:hover {
+div.follow .actions a:hover {
     color: var(--color-text-main);
 }
 
-div.follow-profile .actions a.active {
+div.follow .actions a.active {
     color: var(--color-text-link);
 }
 
@@ -1305,6 +1309,11 @@ table.metadata td .emoji {
     margin: 0 0 10px 0;
     color: var(--color-text-main);
     font-size: 130%;
+    display: flow-root;
+}
+
+.left-column .timeline-name .hashtag {
+    margin-top: 5px;
 }
 
 .left-column .timeline-name i {

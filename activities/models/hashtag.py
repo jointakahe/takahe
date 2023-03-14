@@ -114,6 +114,8 @@ class Hashtag(StatorModel):
 
     class urls(urlman.Urls):
         view = "/tags/{self.hashtag}/"
+        follow = "/tags/{self.hashtag}/follow/"
+        unfollow = "/tags/{self.hashtag}/unfollow/"
         admin = "/admin/hashtags/"
         admin_edit = "{admin}{self.hashtag}/"
         admin_enable = "{admin_edit}enable/"
@@ -166,9 +168,14 @@ class Hashtag(StatorModel):
                 results[date(year, month, day)] = val
         return dict(sorted(results.items(), reverse=True)[:num])
 
-    def to_mastodon_json(self):
-        return {
+    def to_mastodon_json(self, followed: bool | None = None):
+        value = {
             "name": self.hashtag,
-            "url": self.urls.view.full(),
+            "url": self.urls.view.full(),  # type: ignore
             "history": [],
         }
+
+        if followed is not None:
+            value["followed"] = followed
+
+        return value
