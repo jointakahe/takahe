@@ -205,7 +205,7 @@ class FediverseHtmlParser(HTMLParser):
         hashtag = hashtag.lstrip("#")
         self.hashtags.add(hashtag.lower())
         if self.uri_domain:
-            return f'<a href="https://{self.uri_domain}/tags/{hashtag.lower()}/" rel="tag">#{hashtag}</a>'
+            return f'<a href="https://{self.uri_domain}/tags/{hashtag.lower()}/" class="mention hashtag" rel="tag">#{hashtag}</a>'
         else:
             return f'<a href="/tags/{hashtag.lower()}/" rel="tag">#{hashtag}</a>'
 
