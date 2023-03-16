@@ -58,7 +58,7 @@ class QuestionData(BasePostDataType):
             "expired": False,
             "multiple": multiple,
             "votes_count": 0,
-            "voters_count": self.voter_count if multiple else None,
+            "voters_count": self.voter_count,
             "voted": False,
             "own_votes": [],
             "options": [],
