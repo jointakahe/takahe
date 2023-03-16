@@ -131,7 +131,7 @@ def test_question_format(api_client, remote_identity):
         "expired": True,
         "multiple": False,
         "votes_count": 30,
-        "voters_count": None,
+        "voters_count": 30,
         "voted": False,
         "own_votes": [],
         "options": [
