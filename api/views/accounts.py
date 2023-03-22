@@ -75,10 +75,16 @@ def update_credentials(
 
 @scope_required("read")
 @api_view.get
-def account_relationships(request, id: list[str] | None) -> list[schemas.Relationship]:
+def account_relationships(
+    request, id: list[str] | str | None
+) -> list[schemas.Relationship]:
     result = []
-    # ID is actually a list. Thanks Mastodon!
-    ids = id or []
+    if isinstance(id, str):
+        ids = [id]
+    elif id is None:
+        ids = []
+    else:
+        ids = id
     for actual_id in ids:
         identity = get_object_or_404(Identity, pk=actual_id)
         result.append(
@@ -90,12 +96,17 @@ def account_relationships(request, id: list[str] | None) -> list[schemas.Relatio
 @scope_required("read")
 @api_view.get
 def familiar_followers(
-    request, id: list[str] | None
+    request, id: list[str] | str | None
 ) -> list[schemas.FamiliarFollowers]:
     """
     Returns people you follow that also follow given account IDs
     """
-    ids = id or []
+    if isinstance(id, str):
+        ids = [id]
+    elif id is None:
+        ids = []
+    else:
+        ids = id
     result = []
     for actual_id in ids:
         target_identity = get_object_or_404(Identity, pk=actual_id)
