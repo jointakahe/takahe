@@ -115,3 +115,22 @@ def test_parser(identity):
     )
     assert parser.html == "<p>List:</p><p>One<br>Two<br>Three</p><p>End!</p>"
     assert parser.plain_text == "List:\n\nOne\nTwo\nThree\n\nEnd!"
+
+
+@pytest.mark.django_db
+def test_parser_same_name_mentions(remote_identity, remote_identity2):
+    """
+    Ensure mentions that differ only by link are parsed right
+    """
+
+    parser = FediverseHtmlParser(
+        '<span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>test</span></a></span> <span class="h-card"><a href="https://remote2.test/@test/" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>test</span></a></span>',
+        mentions=[remote_identity, remote_identity2],
+        find_hashtags=True,
+        find_emojis=True,
+    )
+    assert (
+        parser.html
+        == '<a href="/@test@remote.test/">@test</a> <a href="/@test@remote2.test/">@test</a>'
+    )
+    assert parser.plain_text == "@test @test"

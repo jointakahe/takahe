@@ -98,6 +98,7 @@ class FediverseHtmlParser(HTMLParser):
                 domain = mention.domain_id.lower()
                 self.mention_matches[f"{username}"] = url
                 self.mention_matches[f"{username}@{domain}"] = url
+                self.mention_matches[mention.absolute_profile_uri()] = url
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in self.REWRITE_TO_P:
@@ -126,7 +127,7 @@ class FediverseHtmlParser(HTMLParser):
                 has_ellipsis = "ellipsis" in self._pending_a["attrs"].get("class", "")
                 # Is it a mention?
                 if content.lower().lstrip("@") in self.mention_matches:
-                    self.html_output += self.create_mention(content)
+                    self.html_output += self.create_mention(content, href)
                     self.text_output += content
                 # Is it a hashtag?
                 elif self.HASHTAG_REGEX.match(content):
@@ -172,7 +173,7 @@ class FediverseHtmlParser(HTMLParser):
         else:
             return f'<a href="{html.escape(href)}" rel="nofollow">{html.escape(content)}</a>'
 
-    def create_mention(self, handle) -> str:
+    def create_mention(self, handle, href: str | None = None) -> str:
         """
         Generates a mention link. Handle should have a leading @.
 
@@ -187,6 +188,9 @@ class FediverseHtmlParser(HTMLParser):
         short_hash = short_handle.lower()
         self.mentions.add(handle_hash)
         url = self.mention_matches.get(handle_hash)
+        # If we have a captured link out, use that as the actual resolver
+        if href and href in self.mention_matches:
+            url = self.mention_matches[href]
         if url:
             if short_hash not in self.mention_aliases:
                 self.mention_aliases[short_hash] = handle_hash
