@@ -222,4 +222,5 @@ class InboxMessage(StatorModel):
 
     @property
     def message_object_has_content(self):
-        return "content" in self.message.get("object", {})
+        object = self.message.get("object", {})
+        return "content" in object or "contentMap" in object

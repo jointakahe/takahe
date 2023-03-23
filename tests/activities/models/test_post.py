@@ -362,9 +362,7 @@ def test_inbound_posts(
     InboxMessage.objects.create(message=message)
 
     # Run stator and ensure that made the post
-    print("prestat")
     stator.run_single_cycle_sync()
-    print("poststat")
     post = Post.objects.get(object_uri="https://remote.test/test-post")
     assert post.content == "post version one"
     assert post.published.day == 13
@@ -429,6 +427,28 @@ def test_inbound_posts(
     # Run stator and ensure that deleted the post
     stator.run_single_cycle_sync()
     assert not Post.objects.filter(object_uri="https://remote.test/test-post").exists()
+
+    # Create an inbound new post message with only contentMap
+    message = {
+        "id": "test",
+        "type": "Create",
+        "actor": remote_identity.actor_uri,
+        "object": {
+            "id": "https://remote.test/test-map-only",
+            "type": "Note",
+            "published": "2022-11-13T23:20:16Z",
+            "attributedTo": remote_identity.actor_uri,
+            "contentMap": {"und": "post with only content map"},
+        },
+    }
+    InboxMessage.objects.create(message=message)
+
+    # Run stator and ensure that made the post
+    stator.run_single_cycle_sync()
+    post = Post.objects.get(object_uri="https://remote.test/test-map-only")
+    assert post.content == "post with only content map"
+    assert post.published.day == 13
+    assert post.url == "https://remote.test/test-map-only"
 
 
 @pytest.mark.django_db
