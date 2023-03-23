@@ -16,7 +16,7 @@ from activities.models import (
 from activities.services import PostService
 from api import schemas
 from api.decorators import scope_required
-from api.pagination import MastodonPaginator, PaginationResult
+from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
 
 
@@ -230,10 +230,7 @@ def favourited_by(
         limit=limit,
     )
 
-    headers = {}
-    if pager.results:
-        headers = {"link": pager.link_header(request, ["limit"])}
-    return ApiResponse(
+    return PaginatingApiResponse(
         [
             schemas.Account.from_identity(
                 interaction.identity,
@@ -241,7 +238,11 @@ def favourited_by(
             )
             for interaction in pager.results
         ],
-        headers=headers,
+        request=request,
+        include_params=[
+            "limit",
+            "id",
+        ],
     )
 
 
