@@ -91,6 +91,7 @@ urlpatterns = [
     path("v1/statuses/<id>/favourited_by", statuses.favourited_by),
     path("v1/statuses/<id>/reblog", statuses.reblog_status),
     path("v1/statuses/<id>/unreblog", statuses.unreblog_status),
+    path("v1/statuses/<id>/reblogged_by", statuses.reblogged_by),
     path("v1/statuses/<id>/bookmark", statuses.bookmark_status),
     path("v1/statuses/<id>/unbookmark", statuses.unbookmark_status),
     # Tags
