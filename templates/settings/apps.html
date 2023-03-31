@@ -1,0 +1,33 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Apps{% endblock %}
+
+{% block content %}
+    <h2>Apps</h2>
+    <div>
+        {% for token in object_list %}
+            <p>
+                <h3>{{token.application.name}}</h3>
+                <table class="items">
+                    <tr>
+                        <td>Client ID</td>
+                        <td>{{token.application.client_id}}</td>
+                    </tr>
+                    <tr>
+                        <td>Client Secret</td>
+                        <td>{{token.application.client_secret}}</td>
+                    </tr>
+                    <tr>
+                        <td>Access Token</td>
+                        <td>{{token.token}}</td>
+                    </tr>
+                    <tr>
+                        <td>Scopes</td>
+                        <td>{{token.scopes}}</td>
+                    </tr>
+                </table>
+            </p>
+        {% endfor %}
+    </div>
+    <a href="/settings/apps/add">Add Application</a>
+{% endblock %}

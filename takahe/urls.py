@@ -61,6 +61,8 @@ urlpatterns = [
         settings.ProfilePage.as_view(),
         name="settings_profile",
     ),
+    path("settings/apps/add", settings.AddAppsPage.as_view(), name="settings_apps_add"),
+    path("settings/apps/", settings.AppsPage.as_view(), name="settings_app"),
     path(
         "settings/interface/",
         settings.InterfacePage.as_view(),

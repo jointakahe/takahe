@@ -1,0 +1,18 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Add an App{% endblock %}
+
+{% block content %}
+    <form action="/settings/apps/add" method="POST">
+        {% csrf_token %}
+
+        {% include "forms/_field.html" with field=form.name %}
+        {% include "forms/_field.html" with field=form.redirect_uri %}
+        {% include "forms/_field.html" with field=form.website %}
+        {% include "forms/_field.html" with field=form.scopes %}
+
+        <div class="buttons">
+            <button>Add Application</button>
+        </div>
+    </form>
+{% endblock %}
