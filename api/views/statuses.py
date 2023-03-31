@@ -246,6 +246,48 @@ def favourited_by(
     )
 
 
+@api_view.get
+def reblogged_by(
+    request: HttpRequest,
+    id: str,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 20,
+) -> ApiResponse[list[schemas.Account]]:
+    """
+    View who reblogged a given status.
+    """
+    post = post_for_id(request, id)
+
+    paginator = MastodonPaginator()
+    pager: PaginationResult[PostInteraction] = paginator.paginate(
+        post.interactions.filter(
+            type=PostInteraction.Types.boost,
+            state__in=PostInteractionStates.group_active(),
+        ).select_related("identity"),
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+
+    return PaginatingApiResponse(
+        [
+            schemas.Account.from_identity(
+                interaction.identity,
+                include_counts=False,
+            )
+            for interaction in pager.results
+        ],
+        request=request,
+        include_params=[
+            "limit",
+            "id",
+        ],
+    )
+
+
 @scope_required("write:favourites")
 @api_view.post
 def reblog_status(request, id: str) -> schemas.Status:
