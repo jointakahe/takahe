@@ -131,9 +131,14 @@ class PostAttachment(StatorModel):
     ### Mastodon Client API ###
 
     def to_mastodon_json(self):
+        type_ = "unknown"
+        if self.is_image():
+            type_ = "image"
+        elif self.is_video():
+            type_ = "video"
         value = {
             "id": self.pk,
-            "type": "image" if self.is_image() else "unknown",
+            "type": type_,
             "url": self.full_url().absolute,
             "preview_url": self.thumbnail_url().absolute,
             "remote_url": None,
