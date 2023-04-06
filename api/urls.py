@@ -96,6 +96,7 @@ urlpatterns = [
     path("v1/statuses/<id>/unbookmark", statuses.unbookmark_status),
     # Tags
     path("v1/followed_tags", tags.followed_tags),
+    path("v1/tags/<hashtag>", tags.hashtag),
     path("v1/tags/<id>/follow", tags.follow),
     path("v1/tags/<id>/unfollow", tags.unfollow),
     # Timelines
