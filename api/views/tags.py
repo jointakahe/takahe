@@ -58,7 +58,7 @@ def follow(
 ) -> schemas.Tag:
     hashtag = get_object_or_404(
         Hashtag,
-        pk=id,
+        pk=id.lower(),
     )
     request.identity.hashtag_follows.get_or_create(hashtag=hashtag)
     return schemas.Tag.from_hashtag(
@@ -75,7 +75,7 @@ def unfollow(
 ) -> schemas.Tag:
     hashtag = get_object_or_404(
         Hashtag,
-        pk=id,
+        pk=id.lower(),
     )
     request.identity.hashtag_follows.filter(hashtag=hashtag).delete()
     return schemas.Tag.from_hashtag(
