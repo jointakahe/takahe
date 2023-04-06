@@ -276,15 +276,15 @@ class Tag(Schema):
     name: str
     url: str
     history: dict
-    followed: bool | None
+    following: bool | None
 
     @classmethod
     def from_hashtag(
         cls,
         hashtag: activities_models.Hashtag,
-        followed: bool | None = None,
+        following: bool | None = None,
     ) -> "Tag":
-        return cls(**hashtag.to_mastodon_json(followed=followed))
+        return cls(**hashtag.to_mastodon_json(following=following))
 
 
 class FollowedTag(Tag):
@@ -295,7 +295,7 @@ class FollowedTag(Tag):
         cls,
         follow: users_models.HashtagFollow,
     ) -> "FollowedTag":
-        return cls(id=follow.id, **follow.hashtag.to_mastodon_json(followed=True))
+        return cls(id=follow.id, **follow.hashtag.to_mastodon_json(following=True))
 
     @classmethod
     def map_from_follows(

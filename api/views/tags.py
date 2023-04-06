@@ -9,6 +9,22 @@ from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationR
 from users.models import HashtagFollow
 
 
+@api_view.get
+def hashtag(request: HttpRequest, hashtag: str) -> schemas.Tag:
+    tag = get_object_or_404(
+        Hashtag,
+        pk=hashtag.lower(),
+    )
+    following = None
+    if request.identity:
+        following = tag.followers.filter(identity=request.identity).exists()
+
+    return schemas.Tag.from_hashtag(
+        tag,
+        following=following,
+    )
+
+
 @scope_required("read:follows")
 @api_view.get
 def followed_tags(
@@ -42,12 +58,12 @@ def follow(
 ) -> schemas.Tag:
     hashtag = get_object_or_404(
         Hashtag,
-        pk=id,
+        pk=id.lower(),
     )
     request.identity.hashtag_follows.get_or_create(hashtag=hashtag)
     return schemas.Tag.from_hashtag(
         hashtag,
-        followed=True,
+        following=True,
     )
 
 
@@ -59,10 +75,10 @@ def unfollow(
 ) -> schemas.Tag:
     hashtag = get_object_or_404(
         Hashtag,
-        pk=id,
+        pk=id.lower(),
     )
     request.identity.hashtag_follows.filter(hashtag=hashtag).delete()
     return schemas.Tag.from_hashtag(
         hashtag,
-        followed=False,
+        following=False,
     )

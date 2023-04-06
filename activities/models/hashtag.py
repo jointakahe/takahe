@@ -168,14 +168,14 @@ class Hashtag(StatorModel):
                 results[date(year, month, day)] = val
         return dict(sorted(results.items(), reverse=True)[:num])
 
-    def to_mastodon_json(self, followed: bool | None = None):
+    def to_mastodon_json(self, following: bool | None = None):
         value = {
             "name": self.hashtag,
             "url": self.urls.view.full(),  # type: ignore
             "history": [],
         }
 
-        if followed is not None:
-            value["followed"] = followed
+        if following is not None:
+            value["following"] = following
 
         return value
