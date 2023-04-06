@@ -15,13 +15,13 @@ def hashtag(request: HttpRequest, hashtag: str) -> schemas.Tag:
         Hashtag,
         pk=hashtag.lower(),
     )
-    followed = None
+    following = None
     if request.identity:
-        followed = tag.followers.filter(identity=request.identity).exists()
+        following = tag.followers.filter(identity=request.identity).exists()
 
     return schemas.Tag.from_hashtag(
         tag,
-        followed=followed,
+        following=following,
     )
 
 
@@ -63,7 +63,7 @@ def follow(
     request.identity.hashtag_follows.get_or_create(hashtag=hashtag)
     return schemas.Tag.from_hashtag(
         hashtag,
-        followed=True,
+        following=True,
     )
 
 
@@ -80,5 +80,5 @@ def unfollow(
     request.identity.hashtag_follows.filter(hashtag=hashtag).delete()
     return schemas.Tag.from_hashtag(
         hashtag,
-        followed=False,
+        following=False,
     )
