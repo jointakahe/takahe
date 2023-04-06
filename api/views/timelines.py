@@ -101,7 +101,7 @@ def hashtag(
 ) -> ApiResponse[list[schemas.Status]]:
     if limit > 40:
         limit = 40
-    queryset = TimelineService(request.identity).hashtag(hashtag)
+    queryset = TimelineService(request.identity).hashtag(hashtag.lower())
     if local:
         queryset = queryset.filter(local=True)
     if only_media:
