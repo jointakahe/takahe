@@ -518,6 +518,7 @@ class Post(StatorModel):
         sensitive: bool | None = None,
         visibility: int = Visibilities.public,
         attachments: list | None = None,
+        attachment_attributes: list | None = None,
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
@@ -532,6 +533,15 @@ class Post(StatorModel):
             self.emojis.set(Emoji.emojis_from_content(content, None))
             self.attachments.set(attachments or [])
             self.save()
+
+            for attrs in attachment_attributes or []:
+                attachment = next(
+                    (a for a in attachments or [] if str(a.id) == attrs.id), None
+                )
+                if attachment is None:
+                    continue
+                attachment.name = attrs.description
+                attachment.save()
 
     @classmethod
     def mentions_from_content(cls, content, author) -> set[Identity]:

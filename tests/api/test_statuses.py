@@ -1,13 +1,20 @@
 import pytest
 
-from activities.models import Post
+from activities.models import Post, PostAttachment, PostAttachmentStates
 
 
 @pytest.mark.django_db
-def test_post_status(api_client):
+def test_post_status(api_client, identity):
     """
     Tests posting, editing and deleting a status
     """
+    # Create media attachment
+    attachment = PostAttachment.objects.create(
+        mimetype="image/webp",
+        name=None,
+        state=PostAttachmentStates.fetched,
+        author=identity,
+    )
     # Post new one
     response = api_client.post(
         "/api/v1/statuses",
@@ -15,10 +22,12 @@ def test_post_status(api_client):
         data={
             "status": "Hello, world!",
             "visibility": "unlisted",
+            "media_ids": [attachment.id],
         },
     ).json()
     assert response["content"] == "<p>Hello, world!</p>"
     assert response["visibility"] == "unlisted"
+    assert response["media_attachments"][0]["description"] is None
     status_id = response["id"]
     # Retrieve "source" version an edit would use
     response = api_client.get(f"/api/v1/statuses/{status_id}/source").json()
@@ -29,11 +38,16 @@ def test_post_status(api_client):
         content_type="application/json",
         data={
             "status": "Hello, world! Again!",
+            "media_ids": [attachment.id],
+            "media_attributes": [
+                {"id": attachment.id, "description": "the alt text"},
+            ],
         },
     ).json()
     # Check it stuck
     response = api_client.get(f"/api/v1/statuses/{status_id}").json()
     assert response["content"] == "<p>Hello, world! Again!</p>"
+    assert response["media_attachments"][0]["description"] == "the alt text"
     # Delete it
     response = api_client.delete(f"/api/v1/statuses/{status_id}")
     assert response.status_code == 200
