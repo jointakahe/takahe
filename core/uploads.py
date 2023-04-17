@@ -3,7 +3,10 @@ import secrets
 from typing import TYPE_CHECKING
 
 from django.utils import timezone
-from storages.backends.gcloud import GoogleCloudStorage
+try:
+    from storages.backends.gcloud import GoogleCloudStorage
+except ImportError:
+    GoogleCloudStorage = None
 from storages.backends.s3boto3 import S3Boto3Storage
 
 if TYPE_CHECKING:
@@ -47,14 +50,15 @@ class TakaheS3Storage(S3Boto3Storage):
         return params
 
 
-class TakaheGoogleCloudStorage(GoogleCloudStorage):
-    """
-    Custom override backend that makes webp files store correctly
-    """
+if GoogleCloudStorage:
+    class TakaheGoogleCloudStorage(GoogleCloudStorage):
+        """
+        Custom override backend that makes webp files store correctly
+        """
 
-    def get_object_parameters(self, name: str):
-        params = self.object_parameters.copy()
-        if name.endswith(".webp"):
-            params["content_disposition"] = "inline"
-            params["content_type"] = "image/webp"
-        return params
+        def get_object_parameters(self, name: str):
+            params = self.object_parameters.copy()
+            if name.endswith(".webp"):
+                params["content_disposition"] = "inline"
+                params["content_type"] = "image/webp"
+            return params
