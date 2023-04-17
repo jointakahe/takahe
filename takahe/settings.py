@@ -8,9 +8,7 @@ from typing import Literal
 import dj_database_url
 import django_cache_url
 import httpx
-import sentry_sdk
 from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
-from sentry_sdk.integrations.django import DjangoIntegration
 
 from takahe import __version__
 
@@ -347,6 +345,8 @@ if SETUP.USE_PROXY_HEADERS:
 
 
 if SETUP.SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.httpx import HttpxIntegration
 
     sentry_experiments = {}
