@@ -7,7 +7,10 @@ try:
     from storages.backends.gcloud import GoogleCloudStorage
 except ImportError:
     GoogleCloudStorage = None
-from storages.backends.s3boto3 import S3Boto3Storage
+try:
+    from storages.backends.s3boto3 import S3Boto3Storage
+except ImportError:
+    S3Boto3Storage = None
 
 if TYPE_CHECKING:
     from activities.models import Emoji
@@ -37,17 +40,18 @@ def upload_emoji_namer(prefix, instance: "Emoji", filename):
     return f"{prefix}/{domain}/{instance.shortcode}{old_extension}"
 
 
-class TakaheS3Storage(S3Boto3Storage):
-    """
-    Custom override backend that makes webp files store correctly
-    """
+if S3Boto3Storage:
+    class TakaheS3Storage(S3Boto3Storage):
+        """
+        Custom override backend that makes webp files store correctly
+        """
 
-    def get_object_parameters(self, name: str):
-        params = self.object_parameters.copy()
-        if name.endswith(".webp"):
-            params["ContentDisposition"] = "inline"
-            params["ContentType"] = "image/webp"
-        return params
+        def get_object_parameters(self, name: str):
+            params = self.object_parameters.copy()
+            if name.endswith(".webp"):
+                params["ContentDisposition"] = "inline"
+                params["ContentType"] = "image/webp"
+            return params
 
 
 if GoogleCloudStorage:
