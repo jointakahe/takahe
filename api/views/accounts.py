@@ -200,7 +200,7 @@ def account_statuses(
         .order_by("-created")
     )
     if pinned:
-        return ApiResponse([])
+        queryset = queryset.filter(object_uri__in=identity.pinned)
     if only_media:
         queryset = queryset.filter(attachments__pk__isnull=False)
     if tagged:

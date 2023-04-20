@@ -1162,4 +1162,6 @@ class Post(StatorModel):
             value["reblogged"] = self.pk in interactions.get("boost", [])
         if bookmarks:
             value["bookmarked"] = self.pk in bookmarks
+        if identity and identity.pinned:
+            value["pinned"] = self.object_uri in identity.pinned
         return value
