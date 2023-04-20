@@ -18,6 +18,7 @@ from api import schemas
 from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
+from users.services import IdentityService
 
 
 class PostPollSchema(Schema):
@@ -339,3 +340,22 @@ def unbookmark_status(request, id: str) -> schemas.Status:
     return schemas.Status.from_post(
         post, interactions=interactions, identity=request.identity
     )
+
+
+@scope_required("write:accounts")
+@api_view.post
+def pin_status(request, id: str) -> schemas.Status:
+    post = post_for_id(request, id)
+    try:
+        IdentityService(request.identity).pin_post(post)
+        return schemas.Status.from_post(post, identity=request.identity)
+    except ValueError as e:
+        raise ApiError(422, str(e))
+
+
+@scope_required("write:accounts")
+@api_view.post
+def unpin_status(request, id: str) -> schemas.Status:
+    post = post_for_id(request, id)
+    IdentityService(request.identity).unpin_post(post)
+    return schemas.Status.from_post(post, identity=request.identity)
