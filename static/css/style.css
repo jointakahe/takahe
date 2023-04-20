@@ -1671,7 +1671,8 @@ form .post {
 .boost-banner,
 .mention-banner,
 .follow-banner,
-.like-banner {
+.like-banner,
+.pinned-post-banner {
     padding: 0 0 3px 5px;
 }
 
@@ -1716,6 +1717,12 @@ form .post {
 
 .like-banner::before {
     content: "\f005";
+    font: var(--fa-font-solid);
+    margin-right: 4px;
+}
+
+.pinned-post-banner::before {
+    content: "\f08d";
     font: var(--fa-font-solid);
     margin-right: 4px;
 }

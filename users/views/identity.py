@@ -71,6 +71,9 @@ class ViewIdentity(ListView):
         context["identity"] = self.identity
         context["public_styling"] = True
         context["post_count"] = self.identity.posts.count()
+        context["pinned_posts"] = TimelineService(self.request.identity).pinned(
+            self.identity
+        )
         if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
                 state__in=FollowStates.group_active()

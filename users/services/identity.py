@@ -1,7 +1,7 @@
 from django.db import models
 from django.template.defaultfilters import linebreaks_filter
 
-from activities.models import FanOut
+from activities.models import FanOut, Post
 from core.files import resize_image
 from core.html import FediverseHtmlParser
 from users.models import (
@@ -241,6 +241,37 @@ class IdentityService:
             file.name,
             resize_image(file, size=(1500, 500)),
         )
+
+    def pin_post(self, post: Post):
+        """
+        Pins a post to the identitiy's timeline
+        """
+        if self.identity != post.author:
+            raise ValueError("Not the author of this post")
+        if post.visibility == Post.Visibilities.mentioned:
+            raise ValueError("Cannot pin a mentioned-only post")
+        if not self.identity.pinned:
+            self.identity.pinned = []
+        if post.object_uri in self.identity.pinned:
+            return
+        if len(self.identity.pinned) >= 5:
+            raise ValueError("Maximum number of pins already reached")
+
+        self.identity.pinned.append(post.object_uri)
+        self.identity.save()
+
+    def unpin_post(self, post: Post):
+        """
+        Removes a post from the identity's pinned posts
+        """
+        if not self.identity.pinned:
+            return
+
+        if post.object_uri not in self.identity.pinned:
+            return
+
+        self.identity.pinned.remove(post.object_uri)
+        self.identity.save()
 
     @classmethod
     def handle_internal_add_follow(cls, payload):
