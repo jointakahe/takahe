@@ -188,6 +188,7 @@ class Identity(StatorModel):
     image_uri = models.CharField(max_length=500, blank=True, null=True)
     followers_uri = models.CharField(max_length=500, blank=True, null=True)
     following_uri = models.CharField(max_length=500, blank=True, null=True)
+    featured_collection_uri = models.CharField(max_length=500, blank=True, null=True)
     actor_type = models.CharField(max_length=100, default="person")
 
     icon = models.ImageField(
@@ -773,6 +774,7 @@ class Identity(StatorModel):
         self.outbox_uri = document.get("outbox")
         self.followers_uri = document.get("followers")
         self.following_uri = document.get("following")
+        self.featured_collection_uri = document.get("featured")
         self.actor_type = document["type"].lower()
         self.shared_inbox_uri = document.get("endpoints", {}).get("sharedInbox")
         self.summary = document.get("summary")

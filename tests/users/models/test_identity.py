@@ -135,6 +135,10 @@ def test_fetch_actor(httpx_mock, config_system):
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
                 "https://w3id.org/security/v1",
+                {
+                    "toot": "http://joinmastodon.org/ns#",
+                    "featured": {"@id": "toot:featured", "@type": "@id"},
+                },
             ],
             "id": "https://example.com/test-actor/",
             "type": "Person",
@@ -146,6 +150,7 @@ def test_fetch_actor(httpx_mock, config_system):
             },
             "followers": "https://example.com/test-actor/followers/",
             "following": "https://example.com/test-actor/following/",
+            "featured": "https://example.com/test-actor/collections/featured/",
             "icon": {
                 "type": "Image",
                 "mediaType": "image/jpeg",
@@ -173,6 +178,10 @@ def test_fetch_actor(httpx_mock, config_system):
     assert identity.domain_id == "example.com"
     assert identity.profile_uri == "https://example.com/test-actor/view/"
     assert identity.inbox_uri == "https://example.com/test-actor/inbox/"
+    assert (
+        identity.featured_collection_uri
+        == "https://example.com/test-actor/collections/featured/"
+    )
     assert identity.icon_uri == "https://example.com/icon.jpg"
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"
