@@ -603,6 +603,7 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
             "sensitive": "as:sensitive",
             "toot": "http://joinmastodon.org/ns#",
             "votersCount": "toot:votersCount",
+            "featured": {"@id": "toot:featured", "@type": "@id"},
         },
     ]
     if include_security:

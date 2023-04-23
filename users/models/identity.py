@@ -498,6 +498,7 @@ class Identity(StatorModel):
             "type": self.actor_type.title(),
             "inbox": self.actor_uri + "inbox/",
             "outbox": self.actor_uri + "outbox/",
+            "featured": self.actor_uri + "collections/featured/",
             "preferredUsername": self.username,
             "publicKey": {
                 "id": self.public_key_id,

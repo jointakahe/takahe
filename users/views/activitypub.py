@@ -222,6 +222,38 @@ class Outbox(View):
         )
 
 
+class FeaturedCollection(View):
+    """
+    An ordered collection of all pinned posts of an identity
+    """
+
+    def get(self, request, handle):
+        self.identity = by_handle_or_404(
+            request,
+            handle,
+            local=False,
+            fetch=True,
+        )
+        if not self.identity.local:
+            raise Http404("Not a local identity")
+        posts = list(
+            self.identity.posts.not_hidden()
+            .public(include_replies=True)
+            .filter(object_uri__in=self.identity.pinned)
+        )
+        return JsonResponse(
+            canonicalise(
+                {
+                    "type": "OrderedCollection",
+                    "id": self.identity.actor_uri + "collections/featured/",
+                    "totalItems": len(posts),
+                    "orderedItems": [post.to_ap() for post in posts],
+                }
+            ),
+            content_type="application/activity+json",
+        )
+
+
 @method_decorator(cache_control(max_age=60 * 15), name="dispatch")
 class EmptyOutbox(StaticContentView):
     """
