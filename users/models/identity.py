@@ -728,12 +728,58 @@ class Identity(StatorModel):
             pass
         return None, None
 
+    @classmethod
+    async def fetch_pinned_post_uris(cls, uri: str) -> list[str]:
+        """
+        Fetch an identity's featured collection.
+        """
+        async with httpx.AsyncClient(
+            timeout=settings.SETUP.REMOTE_TIMEOUT,
+            headers={"User-Agent": settings.TAKAHE_USER_AGENT},
+        ) as client:
+            try:
+                response = await client.get(
+                    uri,
+                    follow_redirects=True,
+                    headers={"Accept": "application/activity+json"},
+                )
+                response.raise_for_status()
+            except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
+                response = getattr(ex, "response", None)
+                if (
+                    response
+                    and response.status_code < 500
+                    and response.status_code not in [401, 403, 404, 406, 410]
+                ):
+                    raise ValueError(
+                        f"Client error fetching featured collection: {response.status_code}",
+                        response.content,
+                    )
+                return []
+
+        try:
+            data = canonicalise(response.json(), include_security=True)
+            if "orderedItems" in data:
+                return [item["id"] for item in reversed(data["orderedItems"])]
+            elif "items" in data:
+                return [item["id"] for item in data["items"]]
+            return []
+        except ValueError:
+            # Some servers return these with a 200 status code!
+            if b"not found" in response.content.lower():
+                return []
+            raise ValueError(
+                "JSON parse error fetching featured collection",
+                response.content,
+            )
+
     async def fetch_actor(self) -> bool:
         """
         Fetches the user's actor information, as well as their domain from
         webfinger if it's available.
         """
         from activities.models import Emoji
+        from users.services import IdentityService
 
         if self.local:
             raise ValueError("Cannot fetch local identities")
@@ -842,6 +888,13 @@ class Identity(StatorModel):
                     )
                 self.pk: int | None = other_row.pk
                 await sync_to_async(self.save)()
+
+        # Fetch pinned posts after identity has been fetched and saved
+        if self.featured_collection_uri:
+            featured = await self.fetch_pinned_post_uris(self.featured_collection_uri)
+            service = IdentityService(self)
+            await sync_to_async(service.sync_pins)(featured)
+
         return True
 
     ### OpenGraph API ###
