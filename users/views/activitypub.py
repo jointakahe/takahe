@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from activities.models import Post
+from activities.services import TimelineService
 from core import exceptions
 from core.decorators import cache_page
 from core.ld import canonicalise
@@ -236,11 +237,7 @@ class FeaturedCollection(View):
         )
         if not self.identity.local:
             raise Http404("Not a local identity")
-        posts = list(
-            self.identity.posts.not_hidden()
-            .public(include_replies=True)
-            .filter(object_uri__in=self.identity.pinned)
-        )
+        posts = list(TimelineService(self.identity).identity_pinned())
         return JsonResponse(
             canonicalise(
                 {
