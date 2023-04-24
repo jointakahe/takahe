@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from activities.models import Post, PostInteraction
+from activities.models import Post, PostInteraction, PostInteractionStates
 from activities.models.post_types import QuestionData
 from core.ld import format_ld_date
 from users.models import Identity
@@ -312,3 +312,130 @@ def test_vote_to_ap(identity: Identity, remote_identity: Identity, config_system
     assert data["object"]["attributedTo"] == identity.actor_uri
     assert data["object"]["name"] == "Option 1"
     assert data["object"]["inReplyTo"] == post.object_uri
+
+
+@pytest.mark.django_db
+def test_handle_add_ap(remote_identity: Identity, config_system):
+    post = Post.create_local(
+        author=remote_identity,
+        content="<p>Hello World</p>",
+    )
+    add_ap = {
+        "type": "Add",
+        "actor": "https://remote.test/test-actor/",
+        "object": post.object_uri,
+        "target": "https://remote.test/test-actor/collections/featured/",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            {
+                "toot": "http://joinmastodon.org/ns#",
+                "Emoji": "toot:Emoji",
+                "Hashtag": "as:Hashtag",
+                "blurhash": "toot:blurhash",
+                "featured": {"@id": "toot:featured", "@type": "@id"},
+                "sensitive": "as:sensitive",
+                "focalPoint": {"@id": "toot:focalPoint", "@container": "@list"},
+                "votersCount": "toot:votersCount",
+                "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+            },
+            "https://w3id.org/security/v1",
+        ],
+    }
+
+    # mismatched target with identity's featured_collection_uri is a no-op
+    PostInteraction.handle_add_ap(data=add_ap | {"target": "different-target"})
+    assert (
+        PostInteraction.objects.filter(
+            type=PostInteraction.Types.pin, post=post
+        ).count()
+        == 0
+    )
+
+    # successfully add a pin interaction
+    PostInteraction.handle_add_ap(
+        data=add_ap,
+    )
+    assert (
+        PostInteraction.objects.filter(
+            type=PostInteraction.Types.pin, post=post
+        ).count()
+        == 1
+    )
+
+    # second identical Add activity is a no-op
+    PostInteraction.handle_add_ap(
+        data=add_ap,
+    )
+    assert (
+        PostInteraction.objects.filter(
+            type=PostInteraction.Types.pin, post=post
+        ).count()
+        == 1
+    )
+
+    # new Add activity for inactive interaction creates a new one
+    old_interaction = PostInteraction.objects.get(
+        type=PostInteraction.Types.pin, post=post
+    )
+    old_interaction.transition_perform(PostInteractionStates.undone_fanned_out)
+    PostInteraction.handle_add_ap(
+        data=add_ap,
+    )
+    new_interaction = PostInteraction.objects.get(
+        type=PostInteraction.Types.pin,
+        post=post,
+        state__in=PostInteractionStates.group_active(),
+    )
+    assert new_interaction.pk != old_interaction.pk
+
+
+@pytest.mark.django_db
+def test_handle_remove_ap(remote_identity: Identity, config_system):
+    post = Post.create_local(
+        author=remote_identity,
+        content="<p>Hello World</p>",
+    )
+    interaction = PostInteraction.objects.create(
+        type=PostInteraction.Types.pin,
+        identity=remote_identity,
+        post=post,
+    )
+    remove_ap = {
+        "type": "Remove",
+        "actor": "https://remote.test/test-actor/",
+        "object": post.object_uri,
+        "target": "https://remote.test/test-actor/collections/featured/",
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            {
+                "toot": "http://joinmastodon.org/ns#",
+                "Emoji": "toot:Emoji",
+                "Hashtag": "as:Hashtag",
+                "blurhash": "toot:blurhash",
+                "featured": {"@id": "toot:featured", "@type": "@id"},
+                "sensitive": "as:sensitive",
+                "focalPoint": {"@id": "toot:focalPoint", "@container": "@list"},
+                "votersCount": "toot:votersCount",
+                "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+            },
+            "https://w3id.org/security/v1",
+        ],
+    }
+
+    interaction.refresh_from_db()
+
+    # mismatched target with identity's featured_collection_uri is a no-op
+    initial_state = interaction.state
+    PostInteraction.handle_remove_ap(data=remove_ap | {"target": "different-target"})
+    interaction.refresh_from_db()
+    assert initial_state == interaction.state
+
+    # successfully remove a pin interaction
+    PostInteraction.handle_remove_ap(
+        data=remove_ap,
+    )
+    interaction.refresh_from_db()
+    assert interaction.state == PostInteractionStates.undone_fanned_out
+
+    # Remove activity on unknown post is a no-op
+    PostInteraction.handle_remove_ap(data=remove_ap | {"object": "unknown-post"})

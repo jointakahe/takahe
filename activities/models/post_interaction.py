@@ -499,6 +499,76 @@ class PostInteraction(StatorModel):
             interaction.post.calculate_stats()
             interaction.post.calculate_type_data()
 
+    @classmethod
+    def handle_add_ap(cls, data):
+        """
+        Handles an incoming Add activity which is a pin
+        """
+        target = data.get("target", None)
+        if not target:
+            return
+
+        # we only care about pinned posts, not hashtags
+        object = data.get("object", {})
+        if isinstance(object, dict) and object.get("type") == "Hashtag":
+            return
+
+        with transaction.atomic():
+            identity = Identity.by_actor_uri(data["actor"], create=True)
+            # it's only a pin if the target is the identity's featured collection URI
+            if identity.featured_collection_uri != target:
+                return
+
+            object_uri = get_str_or_id(object)
+            if not object_uri:
+                return
+            post = Post.by_object_uri(object_uri, fetch=True)
+
+            return PostInteraction.objects.get_or_create(
+                type=cls.Types.pin,
+                identity=identity,
+                post=post,
+                state__in=PostInteractionStates.group_active(),
+            )[0]
+
+    @classmethod
+    def handle_remove_ap(cls, data):
+        """
+        Handles an incoming Remove activity which is an unpin
+        """
+        target = data.get("target", None)
+        if not target:
+            return
+
+        # we only care about pinned posts, not hashtags
+        object = data.get("object", {})
+        if isinstance(object, dict) and object.get("type") == "Hashtag":
+            return
+
+        with transaction.atomic():
+            identity = Identity.by_actor_uri(data["actor"], create=True)
+            # it's only an unpin if the target is the identity's featured collection URI
+            if identity.featured_collection_uri != target:
+                return
+
+            try:
+                object_uri = get_str_or_id(object)
+                if not object_uri:
+                    return
+                post = Post.by_object_uri(object_uri, fetch=False)
+                for interaction in cls.objects.filter(
+                    type=cls.Types.pin,
+                    identity=identity,
+                    post=post,
+                    state__in=PostInteractionStates.group_active(),
+                ):
+                    # Force it into undone_fanned_out as it's not ours
+                    interaction.transition_perform(
+                        PostInteractionStates.undone_fanned_out
+                    )
+            except (cls.DoesNotExist, Post.DoesNotExist):
+                return
+
     ### Mastodon API ###
 
     def to_mastodon_status_json(self, interactions=None, identity=None):
