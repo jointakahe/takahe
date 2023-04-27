@@ -8,10 +8,11 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
 from core.models.config import Config, UploadedImage
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
+from users.shortcuts import by_handle_or_404
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class SettingsPage(FormView):
     """
     Shows a settings page dynamically created from our settings layout
@@ -67,11 +68,16 @@ class SettingsPage(FormView):
         # Create a form class dynamically (yeah, right?) and return that
         return type("SettingsForm", (forms.Form,), fields)
 
+    def dispatch(self, request, *args, **kwargs):
+        if "handle" in kwargs:
+            self.identity = by_handle_or_404(request, kwargs["handle"])
+        return super().dispatch(request, *args, **kwargs)
+
     def load_config(self):
-        return Config.load_identity(self.request.identity)
+        return Config.load_identity(self.identity)
 
     def save_config(self, key, value):
-        Config.set_identity(self.request.identity, key, value)
+        Config.set_identity(self.identity, key, value)
 
     def get_initial(self):
         config = self.load_config()
@@ -87,6 +93,8 @@ class SettingsPage(FormView):
         context["fieldsets"] = {}
         for title, fields in self.layout.items():
             context["fieldsets"][title] = [context["form"][field] for field in fields]
+        if hasattr(self, "identity"):
+            context["identity"] = self.identity
         return context
 
     def form_valid(self, form):

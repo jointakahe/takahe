@@ -6,11 +6,11 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, View
 
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 from users.models import Follow, InboxMessage
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class ImportExportPage(FormView):
     """
     Lets the identity's profile be edited
@@ -116,7 +116,6 @@ class CsvView(View):
 
 
 class CsvFollowing(CsvView):
-
     columns = {
         "Account address": "get_handle",
         "Show boosts": "boosts",
@@ -140,7 +139,6 @@ class CsvFollowing(CsvView):
 
 
 class CsvFollowers(CsvView):
-
     columns = {
         "Account address": "get_handle",
     }

@@ -2,11 +2,11 @@ from django.db import models
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 from users.models import Follow, FollowStates, IdentityStates
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class Follows(ListView):
     """
     Shows followers/follows.

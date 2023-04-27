@@ -9,7 +9,7 @@ from activities.models import Post, PostInteraction, PostStates
 from activities.services import PostService
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 from users.models import Identity
 from users.shortcuts import by_handle_or_404
 
@@ -19,7 +19,6 @@ from users.shortcuts import by_handle_or_404
 )
 @method_decorator(vary_on_headers("Accept"), name="dispatch")
 class Individual(TemplateView):
-
     template_name = "activities/post.html"
 
     identity: Identity
@@ -32,7 +31,7 @@ class Individual(TemplateView):
         self.post_obj = get_object_or_404(
             PostService.queryset()
             .filter(author=self.identity)
-            .visible_to(request.identity, include_replies=True),
+            .unlisted(include_replies=True),
             pk=post_id,
         )
         if self.post_obj.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
@@ -48,18 +47,12 @@ class Individual(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        ancestors, descendants = PostService(self.post_obj).context(
-            self.request.identity
-        )
+        ancestors, descendants = PostService(self.post_obj).context(None)
 
         context.update(
             {
                 "identity": self.identity,
                 "post": self.post_obj,
-                "interactions": PostInteraction.get_post_interactions(
-                    [self.post_obj] + ancestors + descendants,
-                    self.request.identity,
-                ),
                 "link_original": True,
                 "ancestors": ancestors,
                 "descendants": descendants,
@@ -78,108 +71,7 @@ class Individual(TemplateView):
         )
 
 
-@method_decorator(identity_required, name="dispatch")
-class Like(View):
-    """
-    Adds/removes a like from the current identity to the post
-    """
-
-    undo = False
-
-    def post(self, request, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(
-            PostService.queryset()
-            .filter(author=identity)
-            .visible_to(request.identity, include_replies=True),
-            pk=post_id,
-        )
-        service = PostService(post)
-        if self.undo:
-            service.unlike_as(request.identity)
-        else:
-            service.like_as(request.identity)
-        # Return either a redirect or a HTMX snippet
-        if request.htmx:
-            return render(
-                request,
-                "activities/_like.html",
-                {
-                    "post": post,
-                    "interactions": {"like": set() if self.undo else {post.pk}},
-                },
-            )
-        return redirect(post.urls.view)
-
-
-@method_decorator(identity_required, name="dispatch")
-class Boost(View):
-    """
-    Adds/removes a boost from the current identity to the post
-    """
-
-    undo = False
-
-    def post(self, request, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(
-            PostService.queryset()
-            .filter(author=identity)
-            .visible_to(request.identity, include_replies=True),
-            pk=post_id,
-        )
-        service = PostService(post)
-        if self.undo:
-            service.unboost_as(request.identity)
-        else:
-            service.boost_as(request.identity)
-        # Return either a redirect or a HTMX snippet
-        if request.htmx:
-            return render(
-                request,
-                "activities/_boost.html",
-                {
-                    "post": post,
-                    "interactions": {"boost": set() if self.undo else {post.pk}},
-                },
-            )
-        return redirect(post.urls.view)
-
-
-@method_decorator(identity_required, name="dispatch")
-class Bookmark(View):
-    """
-    Adds/removes a bookmark from the current identity to the post
-    """
-
-    undo = False
-
-    def post(self, request, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(
-            PostService.queryset()
-            .filter(author=identity)
-            .visible_to(request.identity, include_replies=True),
-            pk=post_id,
-        )
-        if self.undo:
-            request.identity.bookmarks.filter(post=post).delete()
-        else:
-            request.identity.bookmarks.get_or_create(post=post)
-        # Return either a redirect or a HTMX snippet
-        if request.htmx:
-            return render(
-                request,
-                "activities/_bookmark.html",
-                {
-                    "post": post,
-                    "bookmarks": set() if self.undo else {post.pk},
-                },
-            )
-        return redirect(post.urls.view)
-
-
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class Delete(TemplateView):
     """
     Deletes a post

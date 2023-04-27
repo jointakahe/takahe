@@ -3,12 +3,12 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 from users.models import Report
 from users.shortcuts import by_handle_or_404
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class SubmitReport(FormView):
     """
     Submits a report on a user or a post

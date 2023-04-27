@@ -111,7 +111,6 @@ class IdentityStates(StateGraph):
 
     @classmethod
     async def handle_outdated(cls, identity: "Identity"):
-
         # Local identities never need fetching
         if identity.local:
             return cls.updated
@@ -231,6 +230,7 @@ class Identity(StatorModel):
 
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
+        settings = "{view}settings/"
         action = "{view}action/"
         followers = "{view}followers/"
         following = "{view}following/"

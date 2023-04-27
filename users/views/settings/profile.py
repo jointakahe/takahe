@@ -6,12 +6,13 @@ from django.views.generic import FormView
 
 from core.html import FediverseHtmlParser
 from core.models.config import Config
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 from users.models import IdentityStates
+from users.shortcuts import by_handle_or_404
 from users.services import IdentityService
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class ProfilePage(FormView):
     """
     Lets the identity's profile be edited
@@ -61,28 +62,35 @@ class ProfilePage(FormView):
                 return None
             return metadata
 
+    def dispatch(self, request, handle: str, *args, **kwargs):
+        self.identity = by_handle_or_404(self.request, handle, local=True, fetch=False)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["identity"] = self.identity
+        return context
+
     def get_initial(self):
-        identity = self.request.identity
         return {
-            "name": identity.name,
+            "name": self.identity.name,
             "summary": (
-                FediverseHtmlParser(identity.summary).plain_text
-                if identity.summary
+                FediverseHtmlParser(self.identity.summary).plain_text
+                if self.identity.summary
                 else ""
             ),
-            "icon": identity.icon and identity.icon.url,
-            "image": identity.image and identity.image.url,
-            "discoverable": identity.discoverable,
-            "visible_follows": identity.config_identity.visible_follows,
-            "metadata": identity.metadata or [],
+            "icon": self.identity.icon and self.identity.icon.url,
+            "image": self.identity.image and self.identity.image.url,
+            "discoverable": self.identity.discoverable,
+            "visible_follows": self.identity.config_identity.visible_follows,
+            "metadata": self.identity.metadata or [],
         }
 
     def form_valid(self, form):
         # Update basic info
-        identity = self.request.identity
-        service = IdentityService(identity)
-        identity.name = form.cleaned_data["name"]
-        identity.discoverable = form.cleaned_data["discoverable"]
+        service = IdentityService(self.identity)
+        self.identity.name = form.cleaned_data["name"]
+        self.identity.discoverable = form.cleaned_data["discoverable"]
         service.set_summary(form.cleaned_data["summary"])
         # Resize images
         icon = form.cleaned_data.get("icon")
@@ -91,20 +99,20 @@ class ProfilePage(FormView):
             service.set_icon(icon)
         if isinstance(image, File):
             service.set_image(image)
-        identity.metadata = form.cleaned_data.get("metadata")
+        self.identity.metadata = form.cleaned_data.get("metadata")
 
         # Clear images if specified
         if "icon__clear" in self.request.POST:
-            identity.icon = None
+            self.identity.icon = None
         if "image__clear" in self.request.POST:
-            identity.image = None
+            self.identity.image = None
 
         # Save and propagate
-        identity.save()
-        identity.transition_perform(IdentityStates.edited)
+        self.identity.save()
+        self.identity.transition_perform(IdentityStates.edited)
 
         # Save profile-specific identity Config
         Config.set_identity(
-            identity, "visible_follows", form.cleaned_data["visible_follows"]
+            self.identity, "visible_follows", form.cleaned_data["visible_follows"]
         )
         return redirect(".")

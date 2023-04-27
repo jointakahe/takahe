@@ -29,7 +29,6 @@ from users.views import (
 urlpatterns = [
     path("", core.homepage),
     path("robots.txt", core.RobotsTxt.as_view()),
-    path("manifest.json", core.AppManifest.as_view()),
     # Activity views
     path("notifications/", timelines.Notifications.as_view(), name="notifications"),
     path("local/", timelines.Local.as_view(), name="local"),
@@ -57,27 +56,32 @@ urlpatterns = [
         name="settings_security",
     ),
     path(
-        "settings/profile/",
+        "@<handle>/settings/",
+        settings.SettingsRoot.as_view(),
+        name="settings",
+    ),
+    path(
+        "@<handle>/settings/profile/",
         settings.ProfilePage.as_view(),
         name="settings_profile",
     ),
     path(
-        "settings/interface/",
+        "@<handle>/settings/interface/",
         settings.InterfacePage.as_view(),
         name="settings_interface",
     ),
     path(
-        "settings/import_export/",
+        "@<handle>/settings/import_export/",
         settings.ImportExportPage.as_view(),
         name="settings_import_export",
     ),
     path(
-        "settings/import_export/following.csv",
+        "@<handle>/settings/import_export/following.csv",
         settings.CsvFollowing.as_view(),
         name="settings_export_following_csv",
     ),
     path(
-        "settings/import_export/followers.csv",
+        "@<handle>/settings/import_export/followers.csv",
         settings.CsvFollowers.as_view(),
         name="settings_export_followers_csv",
     ),
@@ -242,21 +246,13 @@ urlpatterns = [
     path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
     path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
     # Posts
-    path("compose/", compose.Compose.as_view(), name="compose"),
+    path("@<handle>/compose/", compose.Compose.as_view(), name="compose"),
     path(
-        "compose/image_upload/",
+        "@<handle>/compose/image_upload/",
         compose.ImageUpload.as_view(),
         name="compose_image_upload",
     ),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
-    path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
-    path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
-    path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
-    path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
-    path("@<handle>/posts/<int:post_id>/bookmark/", posts.Bookmark.as_view()),
-    path(
-        "@<handle>/posts/<int:post_id>/unbookmark/", posts.Bookmark.as_view(undo=True)
-    ),
     path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
     path("@<handle>/posts/<int:post_id>/report/", report.SubmitReport.as_view()),
     path("@<handle>/posts/<int:post_id>/edit/", compose.Compose.as_view()),
@@ -267,9 +263,7 @@ urlpatterns = [
     path("auth/signup/<token>/", auth.Signup.as_view(), name="signup"),
     path("auth/reset/", auth.TriggerReset.as_view(), name="trigger_reset"),
     path("auth/reset/<token>/", auth.PerformReset.as_view(), name="password_reset"),
-    # Identity selection
-    path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
-    path("identity/select/", identity.SelectIdentity.as_view(), name="identity_select"),
+    # Identity handling
     path("identity/create/", identity.CreateIdentity.as_view(), name="identity_create"),
     # Flat pages
     path("about/", core.About.as_view(), name="about"),

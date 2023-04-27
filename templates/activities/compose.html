@@ -26,7 +26,7 @@
             {% endif %}
             {% if not post or post.attachments.count < 4 %}
                 <button class="add-image"
-                    hx-get='{% url "compose_image_upload" %}'
+                    hx-get='{% url "compose_image_upload" handle=identity.handle %}'
                     hx-target="this"
                     hx-swap="outerHTML">
                     Add Image

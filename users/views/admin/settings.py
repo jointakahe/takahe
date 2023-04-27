@@ -14,6 +14,7 @@ class AdminSettingsPage(SettingsPage):
     """
 
     options_class = Config.SystemOptions
+    template_name = "admin/settings.html"
 
     def load_config(self):
         return Config.load_system()

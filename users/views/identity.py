@@ -17,7 +17,7 @@ from activities.services import TimelineService
 from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 from users.models import Domain, FollowStates, Identity, IdentityStates
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
@@ -65,15 +65,11 @@ class ViewIdentity(ListView):
         )
 
     def get_queryset(self):
-        return TimelineService(self.request.identity).identity_public(self.identity)
+        return TimelineService(None).identity_public(self.identity)
 
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
-        context["interactions"] = PostInteraction.get_post_interactions(
-            context["page_obj"],
-            self.request.identity,
-        )
         context["post_count"] = self.identity.posts.count()
         if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
@@ -82,10 +78,6 @@ class ViewIdentity(ListView):
             context["following_count"] = self.identity.outbound_follows.filter(
                 state__in=FollowStates.group_active()
             ).count()
-        if self.request.identity:
-            context.update(
-                IdentityService(self.identity).relationships(self.request.identity)
-            )
         return context
 
 
@@ -242,7 +234,7 @@ class IdentityFollows(ListView):
         return context
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class ActionIdentity(View):
     def post(self, request, handle):
         identity = by_handle_or_404(self.request, handle, local=False)
@@ -267,30 +259,6 @@ class ActionIdentity(View):
         else:
             raise ValueError(f"Cannot handle identity action {action}")
         return redirect(identity.urls.view)
-
-
-@method_decorator(login_required, name="dispatch")
-class SelectIdentity(TemplateView):
-    template_name = "identity/select.html"
-
-    def get_context_data(self):
-        return {
-            "identities": Identity.objects.filter(users__pk=self.request.user.pk),
-        }
-
-
-@method_decorator(login_required, name="dispatch")
-class ActivateIdentity(View):
-    def get(self, request, handle):
-        identity = by_handle_or_404(request, handle)
-        if not identity.users.filter(pk=request.user.pk).exists():
-            raise Http404()
-        request.session["identity_id"] = identity.id
-        # Get next URL, not allowing offsite links
-        next = request.GET.get("next") or "/"
-        if ":" in next:
-            next = "/"
-        return redirect("/")
 
 
 @method_decorator(login_required, name="dispatch")

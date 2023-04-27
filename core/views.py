@@ -27,7 +27,6 @@ def homepage(request):
 
 @method_decorator(cache_page(public_only=True), name="dispatch")
 class About(TemplateView):
-
     template_name = "about.html"
 
     def get_context_data(self):
@@ -85,46 +84,6 @@ class RobotsTxt(TemplateView):
         return {
             "user_agents": getattr(settings, "ROBOTS_TXT_DISALLOWED_USER_AGENTS", []),
         }
-
-
-@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
-class AppManifest(StaticContentView):
-    """
-    Serves a PWA manifest file. This is a view as we want to drive some
-    items from settings.
-
-    NOTE: If this view changes to need runtime Config, it should change from
-          StaticContentView to View, otherwise the settings will only get
-          picked up during boot time.
-    """
-
-    content_type = "application/json"
-
-    def get_static_content(self) -> str | bytes:
-        return json.dumps(
-            {
-                "$schema": "https://json.schemastore.org/web-manifest-combined.json",
-                "name": "Takahē",
-                "short_name": "Takahē",
-                "start_url": "/",
-                "display": "standalone",
-                "background_color": "#26323c",
-                "theme_color": "#26323c",
-                "description": "An ActivityPub server",
-                "icons": [
-                    {
-                        "src": static("img/icon-128.png"),
-                        "sizes": "128x128",
-                        "type": "image/png",
-                    },
-                    {
-                        "src": static("img/icon-1024.png"),
-                        "sizes": "1024x1024",
-                        "type": "image/png",
-                    },
-                ],
-            }
-        )
 
 
 class FlatPage(TemplateView):

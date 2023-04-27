@@ -4,10 +4,10 @@ from django.utils.decorators import method_decorator
 from django.views.generic import View
 
 from activities.models.hashtag import Hashtag
-from users.decorators import identity_required
+from django.contrib.auth.decorators import login_required
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class HashtagFollow(View):
     """
     Follows/unfollows a hashtag with the current identity

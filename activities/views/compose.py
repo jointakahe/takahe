@@ -16,12 +16,12 @@ from activities.models import (
 from core.files import blurhash_image, resize_image
 from core.html import FediverseHtmlParser
 from core.models import Config
-from users.decorators import identity_required
+from users.shortcuts import by_handle_or_404
+from django.contrib.auth.decorators import login_required
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class Compose(FormView):
-
     template_name = "activities/compose.html"
 
     class form_class(forms.Form):
@@ -54,9 +54,9 @@ class Compose(FormView):
         )
         reply_to = forms.CharField(widget=forms.HiddenInput(), required=False)
 
-        def __init__(self, request, *args, **kwargs):
+        def __init__(self, identity, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.request = request
+            self.identity = identity
             self.fields["text"].widget.attrs[
                 "_"
             ] = rf"""
@@ -83,7 +83,7 @@ class Compose(FormView):
         def clean_text(self):
             text = self.cleaned_data.get("text")
             # Check minimum interval
-            last_post = self.request.identity.posts.order_by("-created").first()
+            last_post = self.identity.posts.order_by("-created").first()
             if (
                 last_post
                 and (timezone.now() - last_post.created).total_seconds()
@@ -103,7 +103,7 @@ class Compose(FormView):
             return text
 
     def get_form(self, form_class=None):
-        return self.form_class(request=self.request, **self.get_form_kwargs())
+        return self.form_class(identity=self.identity, **self.get_form_kwargs())
 
     def get_initial(self):
         initial = super().get_initial()
@@ -119,20 +119,20 @@ class Compose(FormView):
         else:
             initial[
                 "visibility"
-            ] = self.request.identity.config_identity.default_post_visibility
+            ] = self.identity.config_identity.default_post_visibility
             if self.reply_to:
                 initial["reply_to"] = self.reply_to.pk
                 if self.reply_to.visibility == Post.Visibilities.public:
                     initial[
                         "visibility"
-                    ] = self.request.identity.config_identity.default_reply_visibility
+                    ] = self.identity.config_identity.default_reply_visibility
                 else:
                     initial["visibility"] = self.reply_to.visibility
                 initial["content_warning"] = self.reply_to.summary
                 # Build a set of mentions for the content to start as
                 mentioned = {self.reply_to.author}
                 mentioned.update(self.reply_to.mentions.all())
-                mentioned.discard(self.request.identity)
+                mentioned.discard(self.identity)
                 initial["text"] = "".join(
                     f"@{identity.handle} "
                     for identity in mentioned
@@ -158,7 +158,7 @@ class Compose(FormView):
             self.post_obj.transition_perform(PostStates.edited)
         else:
             post = Post.create_local(
-                author=self.request.identity,
+                author=self.identity,
                 content=form.cleaned_data["text"],
                 summary=form.cleaned_data.get("content_warning"),
                 visibility=form.cleaned_data["visibility"],
@@ -166,17 +166,14 @@ class Compose(FormView):
                 attachments=attachments,
             )
             # Add their own timeline event for immediate visibility
-            TimelineEvent.add_post(self.request.identity, post)
+            TimelineEvent.add_post(self.identity, post)
         return redirect("/")
 
     def dispatch(self, request, handle=None, post_id=None, *args, **kwargs):
+        self.identity = by_handle_or_404(self.request, handle, local=True, fetch=False)
         self.post_obj = None
         if handle and post_id:
-            # Make sure the request identity owns the post!
-            if handle != request.identity.handle:
-                raise PermissionDenied("Post author is not requestor")
-
-            self.post_obj = get_object_or_404(request.identity.posts, pk=post_id)
+            self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
 
         # Grab the reply-to post info now
         self.reply_to = None
@@ -192,12 +189,13 @@ class Compose(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["reply_to"] = self.reply_to
+        context["identity"] = self.identity
         if self.post_obj:
             context["post"] = self.post_obj
         return context
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class ImageUpload(FormView):
     """
     Handles image upload - returns a new input type hidden to embed in
@@ -267,7 +265,7 @@ class ImageUpload(FormView):
             height=main_file.image.height,
             name=form.cleaned_data.get("description"),
             state=PostAttachmentStates.fetched,
-            author=self.request.identity,
+            author=self.identity,
         )
 
         attachment.file.save(

@@ -6,48 +6,30 @@ from django.views.generic import ListView, TemplateView
 from activities.models import Hashtag, PostInteraction, TimelineEvent
 from activities.services import TimelineService
 from core.decorators import cache_page
-from users.decorators import identity_required
-from users.models import Bookmark, HashtagFollow
-
-from .compose import Compose
+from django.contrib.auth.decorators import login_required
+from users.models import Bookmark, HashtagFollow, Identity
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class Home(TemplateView):
+    """
+    Homepage for logged-in users - shows identities primarily.
+    """
 
     template_name = "activities/home.html"
 
-    form_class = Compose.form_class
-
-    def get_form(self, form_class=None):
-        return self.form_class(request=self.request, **self.get_form_kwargs())
-
     def get_context_data(self):
-        events = TimelineService(self.request.identity).home()
-        paginator = Paginator(events, 25)
-        page_number = self.request.GET.get("page")
-        event_page = paginator.get_page(page_number)
-        context = {
-            "interactions": PostInteraction.get_event_interactions(
-                event_page,
-                self.request.identity,
-            ),
-            "bookmarks": Bookmark.for_identity(
-                self.request.identity, event_page, "subject_post_id"
-            ),
-            "current_page": "home",
-            "allows_refresh": True,
-            "page_obj": event_page,
-            "form": self.form_class(request=self.request),
+        return {
+            "identities": Identity.objects.filter(
+                users__pk=self.request.user.pk
+            ).order_by("created"),
         }
-        return context
 
 
 @method_decorator(
     cache_page("cache_timeout_page_timeline", public_only=True), name="dispatch"
 )
 class Tag(ListView):
-
     template_name = "activities/tag.html"
     extra_context = {
         "current_page": "tag",
@@ -86,7 +68,6 @@ class Tag(ListView):
     cache_page("cache_timeout_page_timeline", public_only=True), name="dispatch"
 )
 class Local(ListView):
-
     template_name = "activities/local.html"
     extra_context = {
         "current_page": "local",
@@ -108,9 +89,8 @@ class Local(ListView):
         return context
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class Federated(ListView):
-
     template_name = "activities/federated.html"
     extra_context = {
         "current_page": "federated",
@@ -132,9 +112,8 @@ class Federated(ListView):
         return context
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class Notifications(ListView):
-
     template_name = "activities/notifications.html"
     extra_context = {
         "current_page": "notifications",
