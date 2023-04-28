@@ -16,7 +16,7 @@ from activities.models import (
 from core.files import blurhash_image, resize_image
 from core.html import FediverseHtmlParser
 from core.models import Config
-from users.shortcuts import by_handle_or_404
+from users.shortcuts import by_handle_for_user_or_404
 from django.contrib.auth.decorators import login_required
 
 
@@ -167,10 +167,10 @@ class Compose(FormView):
             )
             # Add their own timeline event for immediate visibility
             TimelineEvent.add_post(self.identity, post)
-        return redirect("/")
+        return redirect(self.identity.urls.view)
 
     def dispatch(self, request, handle=None, post_id=None, *args, **kwargs):
-        self.identity = by_handle_or_404(self.request, handle, local=True, fetch=False)
+        self.identity = by_handle_for_user_or_404(self.request, handle)
         self.post_obj = None
         if handle and post_id:
             self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
@@ -190,94 +190,7 @@ class Compose(FormView):
         context = super().get_context_data(**kwargs)
         context["reply_to"] = self.reply_to
         context["identity"] = self.identity
+        context["section"] = "compose"
         if self.post_obj:
             context["post"] = self.post_obj
         return context
-
-
-@method_decorator(login_required, name="dispatch")
-class ImageUpload(FormView):
-    """
-    Handles image upload - returns a new input type hidden to embed in
-    the main form that references an orphaned PostAttachment
-    """
-
-    template_name = "activities/_image_upload.html"
-
-    class form_class(forms.Form):
-        image = forms.ImageField(
-            widget=forms.FileInput(
-                attrs={
-                    "_": f"""
-                        on change
-                            if me.files[0].size > {settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB * 1024 ** 2}
-                                add [@disabled=] to #upload
-
-                                remove <ul.errorlist/>
-                                make <ul.errorlist/> called errorlist
-                                make <li/> called error
-                                set size_in_mb to (me.files[0].size / 1024 / 1024).toFixed(2)
-                                put 'File must be {settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB}MB or less (actual: ' + size_in_mb + 'MB)' into error
-                                put error into errorlist
-                                put errorlist before me
-                            else
-                                remove @disabled from #upload
-                                remove <ul.errorlist/>
-                            end
-                        end
-                    """
-                }
-            )
-        )
-        description = forms.CharField(required=False)
-
-        def clean_image(self):
-            value = self.cleaned_data["image"]
-            max_mb = settings.SETUP.MEDIA_MAX_IMAGE_FILESIZE_MB
-            max_bytes = max_mb * 1024 * 1024
-            if value.size > max_bytes:
-                # Erase the file from our data to stop trying to show it again
-                self.files = {}
-                raise forms.ValidationError(
-                    f"File must be {max_mb}MB or less (actual: {value.size / 1024 ** 2:.2f})"
-                )
-            return value
-
-    def form_invalid(self, form):
-        return super().form_invalid(form)
-
-    def form_valid(self, form):
-        # Make a PostAttachment
-        main_file = resize_image(
-            form.cleaned_data["image"],
-            size=(2000, 2000),
-            cover=False,
-        )
-        thumbnail_file = resize_image(
-            form.cleaned_data["image"],
-            size=(400, 225),
-            cover=True,
-        )
-        attachment = PostAttachment.objects.create(
-            blurhash=blurhash_image(thumbnail_file),
-            mimetype="image/webp",
-            width=main_file.image.width,
-            height=main_file.image.height,
-            name=form.cleaned_data.get("description"),
-            state=PostAttachmentStates.fetched,
-            author=self.identity,
-        )
-
-        attachment.file.save(
-            main_file.name,
-            main_file,
-        )
-        attachment.thumbnail.save(
-            thumbnail_file.name,
-            thumbnail_file,
-        )
-        attachment.save()
-        # Return the response, with a hidden input plus a note
-        return render(
-            self.request, "activities/_image_uploaded.html", {"attachment": attachment}
-        )

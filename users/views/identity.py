@@ -235,33 +235,6 @@ class IdentityFollows(ListView):
 
 
 @method_decorator(login_required, name="dispatch")
-class ActionIdentity(View):
-    def post(self, request, handle):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        # See what action we should perform
-        action = self.request.POST["action"]
-        if action == "follow":
-            IdentityService(request.identity).follow(identity)
-        elif action == "unfollow":
-            IdentityService(request.identity).unfollow(identity)
-        elif action == "block":
-            IdentityService(request.identity).block(identity)
-        elif action == "unblock":
-            IdentityService(request.identity).unblock(identity)
-        elif action == "mute":
-            IdentityService(request.identity).mute(identity)
-        elif action == "unmute":
-            IdentityService(request.identity).unmute(identity)
-        elif action == "hide_boosts":
-            IdentityService(request.identity).follow(identity, boosts=False)
-        elif action == "show_boosts":
-            IdentityService(request.identity).follow(identity, boosts=True)
-        else:
-            raise ValueError(f"Cannot handle identity action {action}")
-        return redirect(identity.urls.view)
-
-
-@method_decorator(login_required, name="dispatch")
 class CreateIdentity(FormView):
     template_name = "identity/create.html"
 

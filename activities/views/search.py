@@ -15,7 +15,7 @@ class Search(FormView):
         )
 
     def form_valid(self, form):
-        searcher = SearchService(form.cleaned_data["query"], self.request.identity)
+        searcher = SearchService(form.cleaned_data["query"], identity=None)
         # Render results
         context = self.get_context_data(form=form)
         context["results"] = searcher.search_all()

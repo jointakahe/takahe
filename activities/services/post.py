@@ -72,7 +72,12 @@ class PostService:
     def unboost_as(self, identity: Identity):
         self.uninteract_as(identity, PostInteraction.Types.boost)
 
-    def context(self, identity: Identity | None) -> tuple[list[Post], list[Post]]:
+    def context(
+        self,
+        identity: Identity | None,
+        num_ancestors: int = 10,
+        num_descendants: int = 50,
+    ) -> tuple[list[Post], list[Post]]:
         """
         Returns ancestor/descendant information.
 
@@ -82,7 +87,6 @@ class PostService:
         If identity is provided, includes mentions/followers-only posts they
         can see. Otherwise, shows unlisted and above only.
         """
-        num_ancestors = 10
         num_descendants = 50
         # Retrieve ancestors via parent walk
         ancestors: list[Post] = []

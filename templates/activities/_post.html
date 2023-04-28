@@ -76,15 +76,15 @@
     <div class="actions">
         <a title="Replies">
             <i class="fa-solid fa-reply"></i>
-            <span class="like-count">{{ post.stats_with_defaults.replies }}</span>
+            <span class="like-count">{{ post.stats_with_defaults.replies|default:"0" }}</span>
         </a>
         <a title="Likes">
             <i class="fa-solid fa-star"></i>
-            <span class="like-count">{{ post.stats_with_defaults.likes }}</span>
+            <span class="like-count">{{ post.stats_with_defaults.likes|default:"0" }}</span>
         </a>
         <a title="Boosts">
             <i class="fa-solid fa-retweet"></i>
-            <span class="like-count">{{ post.stats_with_defaults.boosts }}</span>
+            <span class="like-count">{{ post.stats_with_defaults.boosts|default:"0" }}</span>
         </a>
         <a title="Menu" class="menu" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu" tabindex="0">
             <i class="fa-solid fa-bars"></i>
@@ -96,14 +96,7 @@
             <a href="{{ post.urls.action_report }}" role="menuitem">
                 <i class="fa-solid fa-flag"></i> Report
             </a>
-            {% if post.author == request.identity %}
-                <a href="{{ post.urls.action_edit }}" role="menuitem">
-                    <i class="fa-solid fa-pen-to-square"></i> Edit
-                </a>
-                <a href="{{ post.urls.action_delete }}" role="menuitem">
-                    <i class="fa-solid fa-trash"></i> Delete
-                </a>
-            {% elif not post.local and post.url %}
+            {% if not post.local and post.url %}
                 <a href="{{ post.url }}" role="menuitem">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
                 </a>

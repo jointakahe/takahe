@@ -1,6 +1,7 @@
 import csv
+from typing import Any
 
-from django import forms
+from django import forms, http
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -8,10 +9,11 @@ from django.views.generic import FormView, View
 
 from django.contrib.auth.decorators import login_required
 from users.models import Follow, InboxMessage
+from users.views.base import IdentityViewMixin
 
 
 @method_decorator(login_required, name="dispatch")
-class ImportExportPage(FormView):
+class ImportExportPage(IdentityViewMixin, FormView):
     """
     Lets the identity's profile be edited
     """
@@ -48,7 +50,7 @@ class ImportExportPage(FormView):
             InboxMessage.create_internal(
                 {
                     "type": "AddFollow",
-                    "source": self.request.identity.pk,
+                    "source": self.identity.pk,
                     "target_handle": entry["handle"],
                     "boosts": entry["boosts"],
                 }
@@ -58,14 +60,10 @@ class ImportExportPage(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["numbers"] = {
-            "outbound_follows": self.request.identity.outbound_follows.active().count(),
-            "inbound_follows": self.request.identity.inbound_follows.active().count(),
-            "blocks": self.request.identity.outbound_blocks.active()
-            .filter(mute=False)
-            .count(),
-            "mutes": self.request.identity.outbound_blocks.active()
-            .filter(mute=True)
-            .count(),
+            "outbound_follows": self.identity.outbound_follows.active().count(),
+            "inbound_follows": self.identity.inbound_follows.active().count(),
+            "blocks": self.identity.outbound_blocks.active().filter(mute=False).count(),
+            "mutes": self.identity.outbound_blocks.active().filter(mute=True).count(),
         }
         context["bad_format"] = self.request.GET.get("bad_format")
         context["success"] = self.request.GET.get("success")
@@ -115,7 +113,7 @@ class CsvView(View):
         return response
 
 
-class CsvFollowing(CsvView):
+class CsvFollowing(IdentityViewMixin, CsvView):
     columns = {
         "Account address": "get_handle",
         "Show boosts": "boosts",
@@ -126,7 +124,7 @@ class CsvFollowing(CsvView):
     filename = "following.csv"
 
     def get_queryset(self, request):
-        return self.request.identity.outbound_follows.active()
+        return self.identity.outbound_follows.active()
 
     def get_handle(self, follow: Follow):
         return follow.target.handle
@@ -138,7 +136,7 @@ class CsvFollowing(CsvView):
         return ""
 
 
-class CsvFollowers(CsvView):
+class CsvFollowers(IdentityViewMixin, CsvView):
     columns = {
         "Account address": "get_handle",
     }
@@ -146,7 +144,7 @@ class CsvFollowers(CsvView):
     filename = "followers.csv"
 
     def get_queryset(self, request):
-        return self.request.identity.inbound_follows.active()
+        return self.identity.inbound_follows.active()
 
     def get_handle(self, follow: Follow):
         return follow.source.handle

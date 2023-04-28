@@ -12,6 +12,7 @@ from users.views.settings.interface import InterfacePage  # noqa
 from users.views.settings.profile import ProfilePage  # noqa
 from users.views.settings.security import SecurityPage  # noqa
 from users.views.settings.settings_page import SettingsPage  # noqa
+from users.views.settings.follows import FollowsPage  # noqa
 
 
 @method_decorator(login_required, name="dispatch")

@@ -30,7 +30,7 @@ class About(TemplateView):
     template_name = "about.html"
 
     def get_context_data(self):
-        service = TimelineService(self.request.identity)
+        service = TimelineService(None)
         return {
             "current_page": "about",
             "content": mark_safe(

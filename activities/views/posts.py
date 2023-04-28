@@ -47,7 +47,9 @@ class Individual(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        ancestors, descendants = PostService(self.post_obj).context(None)
+        ancestors, descendants = PostService(self.post_obj).context(
+            identity=None, num_ancestors=2
+        )
 
         context.update(
             {
@@ -69,27 +71,3 @@ class Individual(TemplateView):
             canonicalise(self.post_obj.to_ap(), include_security=True),
             content_type="application/activity+json",
         )
-
-
-@method_decorator(login_required, name="dispatch")
-class Delete(TemplateView):
-    """
-    Deletes a post
-    """
-
-    template_name = "activities/post_delete.html"
-
-    def dispatch(self, request, handle, post_id):
-        # Make sure the request identity owns the post!
-        if handle != request.identity.handle:
-            raise PermissionDenied("Post author is not requestor")
-        self.identity = by_handle_or_404(self.request, handle, local=False)
-        self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
-        return super().dispatch(request)
-
-    def get_context_data(self):
-        return {"post": self.post_obj}
-
-    def post(self, request):
-        PostService(self.post_obj).delete()
-        return redirect("/")

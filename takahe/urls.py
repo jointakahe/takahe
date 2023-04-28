@@ -5,9 +5,6 @@ from django.urls import include, path, re_path
 from activities.views import (
     compose,
     debug,
-    explore,
-    follows,
-    hashtags,
     posts,
     search,
     timelines,
@@ -22,28 +19,21 @@ from users.views import (
     announcements,
     auth,
     identity,
-    report,
     settings,
 )
+from users.views.settings import follows
 
 urlpatterns = [
     path("", core.homepage),
     path("robots.txt", core.RobotsTxt.as_view()),
     # Activity views
-    path("notifications/", timelines.Notifications.as_view(), name="notifications"),
-    path("local/", timelines.Local.as_view(), name="local"),
-    path("federated/", timelines.Federated.as_view(), name="federated"),
+    path(
+        "@<handle>/notifications/",
+        timelines.Notifications.as_view(),
+        name="notifications",
+    ),
     path("search/", search.Search.as_view(), name="search"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
-    path("tags/<hashtag>/follow/", hashtags.HashtagFollow.as_view()),
-    path("tags/<hashtag>/unfollow/", hashtags.HashtagFollow.as_view(undo=True)),
-    path("explore/", explore.Explore.as_view(), name="explore"),
-    path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
-    path(
-        "follows/",
-        follows.Follows.as_view(),
-        name="follows",
-    ),
     # Settings views
     path(
         "settings/",
@@ -69,6 +59,11 @@ urlpatterns = [
         "@<handle>/settings/interface/",
         settings.InterfacePage.as_view(),
         name="settings_interface",
+    ),
+    path(
+        "@<handle>/settings/follows/",
+        settings.FollowsPage.as_view(),
+        name="settings_follows",
     ),
     path(
         "@<handle>/settings/import_export/",
@@ -240,22 +235,12 @@ urlpatterns = [
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/outbox/", activitypub.Outbox.as_view()),
-    path("@<handle>/action/", identity.ActionIdentity.as_view()),
     path("@<handle>/rss/", identity.IdentityFeed()),
-    path("@<handle>/report/", report.SubmitReport.as_view()),
     path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
     path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
     # Posts
     path("@<handle>/compose/", compose.Compose.as_view(), name="compose"),
-    path(
-        "@<handle>/compose/image_upload/",
-        compose.ImageUpload.as_view(),
-        name="compose_image_upload",
-    ),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
-    path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
-    path("@<handle>/posts/<int:post_id>/report/", report.SubmitReport.as_view()),
-    path("@<handle>/posts/<int:post_id>/edit/", compose.Compose.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),

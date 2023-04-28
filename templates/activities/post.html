@@ -7,11 +7,13 @@
 {% endblock %}
 
 {% block content %}
-    {% for ancestor in ancestors reversed %}
-        {% include "activities/_post.html" with post=ancestor reply=True link_original=False %}
-    {% endfor %}
-    {% include "activities/_post.html" %}
-    {% for descendant in descendants %}
-        {% include "activities/_post.html" with post=descendant reply=True link_original=False %}
-    {% endfor %}
+    <section class="invisible">
+        {% for ancestor in ancestors reversed %}
+            {% include "activities/_post.html" with post=ancestor reply=True link_original=False %}
+        {% endfor %}
+        {% include "activities/_post.html" %}
+        {% for descendant in descendants %}
+            {% include "activities/_post.html" with post=descendant reply=True link_original=False %}
+        {% endfor %}
+    </section>
 {% endblock %}

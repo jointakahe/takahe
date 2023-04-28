@@ -1,3 +1,5 @@
+from typing import Any
+from django.http import Http404
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -8,6 +10,7 @@ from activities.services import TimelineService
 from core.decorators import cache_page
 from django.contrib.auth.decorators import login_required
 from users.models import Bookmark, HashtagFollow, Identity
+from users.views.base import IdentityViewMixin
 
 
 @method_decorator(login_required, name="dispatch")
@@ -46,74 +49,15 @@ class Tag(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return TimelineService(self.request.identity).hashtag(self.hashtag)
+        return TimelineService(None).hashtag(self.hashtag)
 
     def get_context_data(self):
         context = super().get_context_data()
         context["hashtag"] = self.hashtag
-        context["interactions"] = PostInteraction.get_post_interactions(
-            context["page_obj"], self.request.identity
-        )
-        context["bookmarks"] = Bookmark.for_identity(
-            self.request.identity, context["page_obj"]
-        )
-        context["follow"] = HashtagFollow.maybe_get(
-            self.request.identity,
-            self.hashtag,
-        )
         return context
 
 
-@method_decorator(
-    cache_page("cache_timeout_page_timeline", public_only=True), name="dispatch"
-)
-class Local(ListView):
-    template_name = "activities/local.html"
-    extra_context = {
-        "current_page": "local",
-        "allows_refresh": True,
-    }
-    paginate_by = 25
-
-    def get_queryset(self):
-        return TimelineService(self.request.identity).local()
-
-    def get_context_data(self):
-        context = super().get_context_data()
-        context["interactions"] = PostInteraction.get_post_interactions(
-            context["page_obj"], self.request.identity
-        )
-        context["bookmarks"] = Bookmark.for_identity(
-            self.request.identity, context["page_obj"]
-        )
-        return context
-
-
-@method_decorator(login_required, name="dispatch")
-class Federated(ListView):
-    template_name = "activities/federated.html"
-    extra_context = {
-        "current_page": "federated",
-        "allows_refresh": True,
-    }
-    paginate_by = 25
-
-    def get_queryset(self):
-        return TimelineService(self.request.identity).federated()
-
-    def get_context_data(self):
-        context = super().get_context_data()
-        context["interactions"] = PostInteraction.get_post_interactions(
-            context["page_obj"], self.request.identity
-        )
-        context["bookmarks"] = Bookmark.for_identity(
-            self.request.identity, context["page_obj"]
-        )
-        return context
-
-
-@method_decorator(login_required, name="dispatch")
-class Notifications(ListView):
+class Notifications(IdentityViewMixin, ListView):
     template_name = "activities/notifications.html"
     extra_context = {
         "current_page": "notifications",
@@ -125,7 +69,6 @@ class Notifications(ListView):
         "boosted": TimelineEvent.Types.boosted,
         "mentioned": TimelineEvent.Types.mentioned,
         "liked": TimelineEvent.Types.liked,
-        "identity_created": TimelineEvent.Types.identity_created,
     }
 
     def get_queryset(self):
@@ -143,7 +86,7 @@ class Notifications(ListView):
         for type_name, type in self.notification_types.items():
             if notification_options.get(type_name, True):
                 types.append(type)
-        return TimelineService(self.request.identity).notifications(types)
+        return TimelineService(self.identity).notifications(types)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -164,12 +107,6 @@ class Notifications(ListView):
             events.append(event)
         # Retrieve what kinds of things to show
         context["events"] = events
+        context["identity"] = self.identity
         context["notification_options"] = self.request.session["notification_options"]
-        context["interactions"] = PostInteraction.get_event_interactions(
-            context["page_obj"],
-            self.request.identity,
-        )
-        context["bookmarks"] = Bookmark.for_identity(
-            self.request.identity, context["page_obj"], "subject_post_id"
-        )
         return context
