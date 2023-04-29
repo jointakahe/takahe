@@ -36,20 +36,25 @@ class ProfilePage(FormView):
             required=False, help_text="Shown at the top of your profile"
         )
         discoverable = forms.BooleanField(
-            help_text="If this user is visible on the frontpage and in user directories.",
+            help_text="If this user is visible on the frontpage and in user directories",
             widget=forms.Select(
                 choices=[(True, "Discoverable"), (False, "Not Discoverable")]
             ),
             required=False,
         )
         visible_follows = forms.BooleanField(
-            help_text="Whether or not to show your following and follower counts in your profile.",
+            help_text="Whether or not to show your following and follower counts in your profile",
             widget=forms.Select(choices=[(True, "Visible"), (False, "Hidden")]),
+            required=False,
+        )
+        search_enabled = forms.BooleanField(
+            help_text="If a search feature is provided for your posts on the profile page\n(Disabling this will not prevent third-party search crawlers from indexing your posts)",
+            widget=forms.Select(choices=[(True, "Enabled"), (False, "Disabled")]),
             required=False,
         )
         metadata = forms.JSONField(
             label="Profile Metadata Fields",
-            help_text="These values will appear on your profile below your Bio",
+            help_text="These values will appear on your profile below your bio",
             widget=forms.HiddenInput(attrs={"data-min-empty": 2}),
             required=False,
         )
@@ -84,6 +89,7 @@ class ProfilePage(FormView):
             "discoverable": self.identity.discoverable,
             "visible_follows": self.identity.config_identity.visible_follows,
             "metadata": self.identity.metadata or [],
+            "search_enabled": self.identity.config_identity.search_enabled,
         }
 
     def form_valid(self, form):
@@ -114,5 +120,8 @@ class ProfilePage(FormView):
         # Save profile-specific identity Config
         Config.set_identity(
             self.identity, "visible_follows", form.cleaned_data["visible_follows"]
+        )
+        Config.set_identity(
+            self.identity, "search_enabled", form.cleaned_data["search_enabled"]
         )
         return redirect(".")

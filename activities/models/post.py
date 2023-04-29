@@ -11,6 +11,7 @@ import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
@@ -312,6 +313,10 @@ class Post(StatorModel):
     class Meta:
         indexes = [
             GinIndex(fields=["hashtags"], name="hashtags_gin"),
+            GinIndex(
+                SearchVector("content", config="english"),
+                name="content_vector_gin",
+            ),
             models.Index(
                 fields=["visibility", "local", "published"],
                 name="ix_post_local_public_published",

@@ -122,12 +122,7 @@ class Compose(FormView):
             ] = self.identity.config_identity.default_post_visibility
             if self.reply_to:
                 initial["reply_to"] = self.reply_to.pk
-                if self.reply_to.visibility == Post.Visibilities.public:
-                    initial[
-                        "visibility"
-                    ] = self.identity.config_identity.default_reply_visibility
-                else:
-                    initial["visibility"] = self.reply_to.visibility
+                initial["visibility"] = self.reply_to.visibility
                 initial["content_warning"] = self.reply_to.summary
                 # Build a set of mentions for the content to start as
                 mentioned = {self.reply_to.author}

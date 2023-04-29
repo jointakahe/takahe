@@ -17,11 +17,6 @@
                 --color-highlight: {{ config.highlight_color }};
                 --color-text-link: {{ config.highlight_color }};
             }
-            {% if not config_identity.visible_reaction_counts %}
-                .like-count {
-                    display: none;
-                }
-            {% endif %}
         </style>
         {% if config_identity.custom_css %}
             <style>{{ config_identity.custom_css|safe }}</style>
@@ -32,7 +27,7 @@
         {% block extra_head %}{% endblock %}
         {% block custom_head %}{% if config.custom_head %}{{ config.custom_head|safe }}{% endif %}{% endblock %}
     </head>
-    <body class="{% if config_identity.light_theme %}light-theme {% endif %}{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <body class="{% if user.config_user.light_theme %}theme-light {% endif %}{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <a id="skip-to-main" class="screenreader-text" href="#main-content">Skip to Content</a>
         <a id="skip-to-nav" class="screenreader-text" href="#side-navigation">Skip to Navigation</a>
         <main>
@@ -41,17 +36,27 @@
                     <menu>
                         <a class="logo" href="/">
                             <img src="{{ config.site_icon }}" width="32">
-                            {{ config.site_name }}
+                            {{ request.domain.config_domain.site_name|default:config.site_name }}
                         </a>
                         {% if user.is_authenticated %}
                             <a href="/" title="My Account"><i class="fa-solid fa-user"></i></a>
-                        {% else %}
+                            {% if identity %}
+                                <a href="{{ identity.urls.settings }}" title="Settings"><i class="fa-solid fa-gear"></i></a>
+                            {% else %}
+                                <a href="/settings" title="Settings"><i class="fa-solid fa-gear"></i></a>
+                            {% endif %}
+                            {% if user.admin %}
+                                <a href="/admin" title="Administration"><i class="fa-solid fa-screwdriver-wrench"></i></a>
+                            {% endif %}
+                        {% elif not request.domain.config_domain.hide_login %}
                             <a href="{% url "login" %}" title="Login"><i class="fa-solid fa-right-to-bracket"></i></a>
                         {% endif %}
-                        <a href="/settings" title="Settings"><i class="fa-solid fa-gear"></i></a>
-                        <a href="/admin" title="Administration"><i class="fa-solid fa-screwdriver-wrench"></i></a>
                     </menu>
                 </header>
+
+                {% block announcements %}
+                    {% include "_announcements.html" %}
+                {% endblock %}
 
                 {% block content %}
                 {% endblock %}

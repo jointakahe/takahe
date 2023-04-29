@@ -27,7 +27,20 @@
             >
         </span>
 
-        {% if request.user.moderator or request.user.admin %}{% include "identity/_view_menu.html" %}{% endif %}
+        <div class="inline follow">
+            <div class="actions" role="menubar">
+                {% if request.user in identity.users.all %}
+                    <a href="{% url "settings_profile" handle=identity.handle %}" class="button" title="Edit Profile">
+                        <i class="fa-solid fa-user-edit"></i> Settings
+                    </a>
+                {% endif %}
+                {% if request.user.admin or request.user.moderator %}
+                    <a href="{% url "settings_profile" handle=identity.handle %}" class="button danger" title="View in Admin">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Admin
+                    </a>
+                {% endif %}
+            </div>
+        </div>
 
         <h1>{{ identity.html_name_or_handle }}</h1>
         <small>
@@ -72,15 +85,8 @@
         </section>
     {% else %}
 
-        <section class="view-options">
-            <a href="{{ identity.urls.view }}" {% if not follows_page %}class="selected"{% endif %}><strong>{{ post_count }}</strong> posts</a>
-            {% if identity.local and identity.config_identity.visible_follows %}
-                <a href="{{ identity.urls.following }}" {% if not inbound and follows_page %}class="selected"{% endif %}><strong>{{ following_count }}</strong> following</a>
-                <a href="{{ identity.urls.followers }}" {% if inbound and follows_page %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</a>
-            {% endif %}
-        </section>
+        {% include "identity/_tabs.html" %}
 
-        <section class="invisible">
         {% block subcontent %}
 
             {% for post in page_obj %}
@@ -90,10 +96,10 @@
                     {% if identity.local %}
                         No posts yet.
                     {% else %}
-                        No posts have been received/retrieved by this server yet.
+                        No posts have been received by this server yet.
 
                         {% if identity.profile_uri %}
-                            You might find historical posts at
+                            You may find historical posts at
                             <a href="{{ identity.profile_uri }}">their original profile ➔</a>
                         {% endif %}
                     {% endif %}
@@ -106,11 +112,10 @@
                 {% endif %}
 
                 {% if page_obj.has_next %}
-                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
+                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML">Next Page</a>
                 {% endif %}
             </div>
 
         {% endblock %}
-        </section>
     {% endif %}
 {% endblock %}

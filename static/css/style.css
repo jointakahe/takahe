@@ -82,13 +82,14 @@ td a {
 /* Base template styling */
 
 :root {
+    --color-highlight: #449c8c;
+
     --color-bg-main: #26323c;
     --color-bg-menu: #2e3e4c;
     --color-bg-box: #1a2631;
     --color-bg-error: rgb(87, 32, 32);
-    --color-highlight: #449c8c;
     --color-delete: #8b2821;
-    --color-header-menu: rgba(0, 0, 0, 0.5);
+    --color-header-menu: rgba(255, 255, 255, 0.8);
     --color-main-shadow: rgba(0, 0, 0, 0.6);
     --size-main-shadow: 50px;
 
@@ -96,40 +97,36 @@ td a {
     --color-text-dull: #99a;
     --color-text-main: #fff;
     --color-text-link: var(--color-highlight);
-    --color-text-in-highlight: #fff;
+    --color-text-in-highlight: var(--color-text-main);
 
-    --color-input-background: #26323c;
+    --color-input-background: var(--color-bg-main);
     --color-input-border: #000;
     --color-input-border-active: #444b5d;
     --color-button-secondary: #2e3e4c;
     --color-button-disabled: #7c9c97;
 
-    --sm-header-height: 50px;
-    --sm-sidebar-width: 50px;
-
-    --md-sidebar-width: 250px;
-    --md-header-height: 50px;
+    --width-sidebar-small: 200px;
+    --width-sidebar-medium: 250px;
 
     --emoji-height: 1.1em;
 }
 
-body.light-theme {
-    --color-bg-main: #dfe3e7;
-    --color-bg-menu: #cfd6dd;
-    --color-bg-box: #f2f5f8;
+body.theme-light {
+    --color-bg-main: #d4dee7;
+    --color-bg-menu: #c0ccd8;
+    --color-bg-box: #f0f3f5;
     --color-bg-error: rgb(219, 144, 144);
-    --color-highlight: #449c8c;
     --color-delete: #884743;
-    --color-header-menu: rgba(0, 0, 0, 0.1);
+    --color-header-menu: rgba(0, 0, 0, 0.7);
     --color-main-shadow: rgba(0, 0, 0, 0.1);
     --size-main-shadow: 20px;
 
-    --color-text-duller: #3a3b3d;
-    --color-text-dull: rgb(44, 44, 48);
+    --color-text-duller: #4f5157;
+    --color-text-dull: rgb(62, 62, 68);
     --color-text-main: rgb(0, 0, 0);
     --color-text-link: var(--color-highlight);
 
-    --color-input-background: #fff;
+    --color-input-background: var(--color-bg-main);
     --color-input-border: rgb(109, 109, 109);
     --color-input-border-active: #464646;
     --color-button-secondary: #5c6770;
@@ -145,10 +142,14 @@ body {
 }
 
 main {
-    width: 1100px;
+    width: 800px;
     margin: 20px auto;
     box-shadow: none;
     border-radius: 5px;
+}
+
+body.wide main {
+    width: 1100px;
 }
 
 footer {
@@ -168,7 +169,7 @@ footer a {
 header {
     display: flex;
     height: 42px;
-    margin-top: -20px;
+    margin: -20px 0 20px 0;
     justify-content: center;
 }
 
@@ -209,7 +210,7 @@ header menu {
 
 header menu a {
     padding: 6px 10px 4px 10px;
-    color: var(--color-text-main);
+    color: var(--color-header-menu);
     line-height: 30px;
     border-bottom: 3px solid rgba(0, 0, 0, 0);
     margin: 0 2px;
@@ -374,7 +375,7 @@ nav .identity-banner a:hover {
 }
 
 .settings nav {
-    width: var(--md-sidebar-width);
+    width: var(--width-sidebar-medium);
     background: var(--color-bg-menu);
     border-radius: 0 0 5px 0;
 }
@@ -400,7 +401,6 @@ img.emoji {
 /* Generic styling and sections */
 
 section {
-    max-width: 700px;
     background: var(--color-bg-box);
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     margin: 0 auto 45px auto;
@@ -742,24 +742,6 @@ div.follow {
     text-align: center;
 }
 
-div.follow-hashtag {
-    margin: 0;
-}
-
-.follow.has-reverse {
-    margin-top: 0;
-}
-
-.follow .reverse-follow {
-    display: block;
-    margin: 0 0 5px 0;
-}
-
-div.follow button,
-div.follow .button {
-    margin: 0;
-}
-
 div.follow .actions {
     /* display: flex; */
     position: relative;
@@ -769,69 +751,8 @@ div.follow .actions {
     align-content: center;
 }
 
-div.follow .actions a {
-    border-radius: 4px;
-    min-width: 40px;
+.follow .actions button {
     text-align: center;
-    cursor: pointer;
-}
-
-div.follow .actions menu {
-    display: none;
-    background-color: var(--color-bg-menu);
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    position: absolute;
-    right: 0;
-    top: 43px;
-}
-
-
-div.follow .actions menu.enabled {
-    display: block;
-    min-width: 160px;
-    z-index: 10;
-}
-
-div.follow .actions menu a {
-    text-align: left;
-    display: block;
-    font-size: 15px;
-    padding: 4px 10px;
-    color: var(--color-text-dull);
-}
-
-.follow .actions menu button {
-    background: none !important;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    display: block;
-    font-size: 15px;
-    padding: 4px 10px;
-    color: var(--color-text-dull);
-}
-
-.follow .actions menu button i {
-    margin-right: 4px;
-    width: 16px;
-}
-
-.follow .actions button:hover {
-    color: var(--color-text-main);
-}
-
-.follow .actions menu a i {
-    margin-right: 4px;
-    width: 16px;
-}
-
-div.follow .actions a:hover {
-    color: var(--color-text-main);
-}
-
-div.follow .actions a.active {
-    color: var(--color-text-link);
 }
 
 form.inline-menu {
@@ -1139,12 +1060,9 @@ button i:first-child,
     padding: 2px 6px;
 }
 
-form .field.multi-option {
+form .multi-option {
     margin-bottom: 10px;
-}
-
-form .field.multi-option {
-    margin-bottom: 10px;
+    display: block;
 }
 
 form .option.option-row {
@@ -1388,7 +1306,7 @@ table.metadata td .emoji {
 .announcement {
     background-color: var(--color-highlight);
     border-radius: 5px;
-    margin: 0 0 20px 0;
+    margin: 10px 0 0 0;
     padding: 5px 30px 5px 8px;
     position: relative;
 }
@@ -1607,7 +1525,7 @@ form .post {
 .post .actions {
     display: flex;
     position: relative;
-    justify-content: space-between;
+    justify-content: right;
     padding: 8px 0 0 0;
     align-items: center;
     align-content: center;
@@ -1620,6 +1538,12 @@ form .post {
     min-width: 60px;
     text-align: center;
     cursor: pointer;
+    color: var(--color-text-dull);
+}
+
+.post .actions a.no-action:hover {
+    background-color: transparent;
+    cursor: default;
     color: var(--color-text-dull);
 }
 
@@ -1780,37 +1704,30 @@ form .post {
     color: var(--color-text-dull);
 }
 
-@media (max-width: 1100px) {
-    main {
-        max-width: 900px;
+@media (max-width: 1120px),
+(display-mode: standalone) {
+
+    body.wide main {
+        width: 100%;
+        padding: 0 10px;
     }
+
 }
 
-@media (max-width: 920px),
+@media (max-width: 850px),
 (display-mode: standalone) {
-    .left-column {
-        margin: var(--md-header-height) var(--md-sidebar-width) 0 0;
-    }
 
-    .right-column {
-        width: var(--md-sidebar-width);
-        position: fixed;
-        height: 100%;
-        right: 0;
-        top: var(--md-header-height);
-        overflow-y: auto;
-        padding-bottom: 60px;
-    }
-
-    .right-column nav {
-        padding: 0;
-    }
 
     main {
         width: 100%;
         margin: 20px auto 20px auto;
         box-shadow: none;
         border-radius: 0;
+        padding: 0 10px;
+    }
+
+    .settings nav {
+        width: var(--width-sidebar-small);
     }
 
     .post .attachments a.image img {
@@ -1820,72 +1737,6 @@ form .post {
 
 
 @media (max-width: 750px) {
-    header {
-        height: var(--sm-header-height);
-    }
-
-    header menu a.identity {
-        width: var(--sm-sidebar-width);
-        padding: 10px 10px 0 0;
-        font-size: 0;
-    }
-
-    header menu a.identity i {
-        font-size: 22px;
-    }
-
-    #main-content {
-        padding: 8px;
-    }
-
-    .left-column {
-        margin: var(--sm-header-height) var(--sm-sidebar-width) 0 0;
-    }
-
-    .right-column {
-        width: var(--sm-sidebar-width);
-        top: var(--sm-header-height);
-    }
-
-    .right-column nav {
-        padding-right: 0;
-    }
-
-    .right-column nav hr {
-        display: block;
-        color: var(--color-text-dull);
-        margin: 20px 10px;
-    }
-
-    .right-column nav a {
-        padding: 10px 0 10px 10px;
-    }
-
-    .right-column nav a i {
-        font-size: 22px;
-    }
-
-    .right-column nav a .fa-solid {
-        display: flex;
-        justify-content: center;
-    }
-
-    .right-column nav a span {
-        display: none;
-    }
-
-    .right-column h3 {
-        display: none;
-    }
-
-    .right-column h2,
-    .right-column .compose {
-        display: none;
-    }
-
-    .right-column footer {
-        display: none;
-    }
 
     .post {
         margin-bottom: 15px;
@@ -1895,6 +1746,10 @@ form .post {
 
 
 @media (max-width: 550px) {
+
+    main {
+        padding: 0;
+    }
 
     .post .content,
     .post .summary,

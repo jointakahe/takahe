@@ -1,0 +1,23 @@
+{% extends "identity/view.html" %}
+
+{% block title %}Search - {{ identity }}{% endblock %}
+
+{% block subcontent %}
+
+    <form action="." method="post">
+        {% csrf_token %}
+        <fieldset>
+            {% include "forms/_field.html" with field=form.query %}
+        </fieldset>
+        <div class="buttons">
+            <button>Search</button>
+        </div>
+    </form>
+
+    {% for post in results %}
+        {% include "activities/_post.html" %}
+    {% empty %}
+        <p class="empty">No posts were found that match your search.</p>
+    {% endfor %}
+
+{% endblock %}

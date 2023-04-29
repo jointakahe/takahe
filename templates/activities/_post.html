@@ -74,15 +74,15 @@
     {% endif %}
 
     <div class="actions">
-        <a title="Replies">
+        <a title="Replies" href="{% if not post.local and post.url %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}">
             <i class="fa-solid fa-reply"></i>
             <span class="like-count">{{ post.stats_with_defaults.replies|default:"0" }}</span>
         </a>
-        <a title="Likes">
+        <a title="Likes" class="no-action">
             <i class="fa-solid fa-star"></i>
             <span class="like-count">{{ post.stats_with_defaults.likes|default:"0" }}</span>
         </a>
-        <a title="Boosts">
+        <a title="Boosts" class="no-action">
             <i class="fa-solid fa-retweet"></i>
             <span class="like-count">{{ post.stats_with_defaults.boosts|default:"0" }}</span>
         </a>
@@ -92,9 +92,6 @@
         <menu>
             <a href="{{ post.urls.view }}" role="menuitem">
                 <i class="fa-solid fa-comment"></i> View Post &amp; Replies
-            </a>
-            <a href="{{ post.urls.action_report }}" role="menuitem">
-                <i class="fa-solid fa-flag"></i> Report
             </a>
             {% if not post.local and post.url %}
                 <a href="{{ post.url }}" role="menuitem">

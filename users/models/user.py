@@ -1,4 +1,6 @@
 import urlman
+from functools import cached_property
+from core.models import Config
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
@@ -66,3 +68,7 @@ class User(AbstractBaseUser):
 
     def has_perm(self, perm):
         return self.admin
+
+    @cached_property
+    def config_user(self) -> Config.UserOptions:
+        return Config.load_user(self)

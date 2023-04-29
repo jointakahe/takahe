@@ -1,6 +1,7 @@
 import json
 import ssl
 from typing import Optional
+from functools import cached_property
 
 import httpx
 import pydantic
@@ -12,6 +13,7 @@ from django.db import models
 from core.exceptions import capture_message
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.schemas import NodeInfo
+from core.models import Config
 
 
 class DomainStates(StateGraph):
@@ -230,3 +232,9 @@ class Domain(StatorModel):
             version = software.get("version", "unknown")
             return f"{name:.10} - {version:.10}"
         return None
+
+    ### Config ###
+
+    @cached_property
+    def config_domain(self) -> Config.DomainOptions:
+        return Config.load_domain(self)

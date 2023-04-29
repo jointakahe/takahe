@@ -114,3 +114,17 @@ class SettingsPage(FormView):
                 form.cleaned_data[field.name],
             )
         return redirect(".")
+
+
+class UserSettingsPage(SettingsPage):
+    """
+    User-option oriented version of the settings page.
+    """
+
+    options_class = Config.UserOptions
+
+    def load_config(self):
+        return Config.load_user(self.request.user)
+
+    def save_config(self, key, value):
+        Config.set_user(self.request.user, key, value)

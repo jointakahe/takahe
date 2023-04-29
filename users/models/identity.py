@@ -234,6 +234,7 @@ class Identity(StatorModel):
         action = "{view}action/"
         followers = "{view}followers/"
         following = "{view}following/"
+        search = "{view}search/"
         activate = "{view}activate/"
         admin = "/admin/identities/"
         admin_edit = "{admin}{self.pk}/"

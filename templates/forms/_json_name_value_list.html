@@ -28,55 +28,65 @@
         {# fmt:on #}
     </script>
 
-    {% include "forms/_field.html" %}
+    <div class="field">
+        <div class="label-input">
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<small>(Required)</small>{% endif %}
+            </label>
+            {% if field.help_text %}
+                <p class="help">
+                    {{ field.help_text|safe|linebreaksbr }}
+                </p>
+            {% endif %}
+            {{ field.errors }}
+            {{ field }}
 
-    <div class="field multi-option">
-        <section class="icon-menu">
-            {# fmt:off #}
-            <span id="new_{{ field.name }}" stlye="display: none"
-                _="on load
-                       get the (value of #id_{{ field.name }}) as Object
-                       set items to it
-                       for item in items
-                           set f to {{ field.name }}.addEmptyField()
-                           set one to the first <input.{{ field.name }}-{{ name_one }}/> in f then
-                           set one@value to item.{{ name_one }}
+            <div class="multi-option">
+                {# fmt:off #}
+                <span id="new_{{ field.name }}" style="display: none"
+                    _="on load
+                            get the (value of #id_{{ field.name }}) as Object
+                            set items to it
+                            for item in items
+                                set f to {{ field.name }}.addEmptyField()
+                                set one to the first <input.{{ field.name }}-{{ name_one }}/> in f then
+                                set one@value to item.{{ name_one }}
 
-                           set two to the first <input.{{ field.name }}-{{ name_two }}/> in f then
-                           set two@value to item.{{ name_two }}
-                       end
-                       get the (@data-min-empty of #id_{{ field.name }})
-                       set min_empty to it
-                       if items.length < min_empty then
-                           repeat (min_empty - items.length) times
-                              call {{ field.name }}.addEmptyField()
-                           end
-                "></span>
-            {# fmt:on #}
+                                set two to the first <input.{{ field.name }}-{{ name_two }}/> in f then
+                                set two@value to item.{{ name_two }}
+                            end
+                            get the (@data-min-empty of #id_{{ field.name }})
+                            set min_empty to it
+                            if items.length < min_empty then
+                                repeat (min_empty - items.length) times
+                                    call {{ field.name }}.addEmptyField()
+                                end
+                    "></span>
+                {# fmt:on #}
 
-            <div class="option">
-                <span class="option-field">
-                    <button class="fa-solid fa-add" title="Add Row" _="on click {{ field.name }}.addEmptyField() then halt"></button>
-                </span>
-            </div>
+                <div class="option">
+                    <span class="option-field">
+                        <button class="fa-solid fa-add" title="Add Row" _="on click {{ field.name }}.addEmptyField() then halt"></button>
+                    </span>
+                </div>
 
-            <div id="blank_{{ field.name }}" class="option option-row hidden">
-                <span class="option-field">
-                    <input type=text class="{{ field.name }}-{{ name_one }}" name="{{ field.name }}_{{ name_one }}" value="">
-                </span>
-                <span class="option-field">
-                    <input type=text class="{{ field.name }}-{{ name_two }}" name="{{ field.name }}_{{ name_two }}" value="">
-                </span>
-                <div class="right">
-                    <button class="fa-solid fa-trash delete" title="Delete Row"
-                        _="on click remove (closest parent .option)
-                            then {{ field.name }}.collect{{ field.name|title }}Fields()
-                            then halt" />
+                <div id="blank_{{ field.name }}" class="option option-row hidden">
+                    <span class="option-field">
+                        <input type=text class="{{ field.name }}-{{ name_one }}" name="{{ field.name }}_{{ name_one }}" value="">
+                    </span>
+                    <span class="option-field">
+                        <input type=text class="{{ field.name }}-{{ name_two }}" name="{{ field.name }}_{{ name_two }}" value="">
+                    </span>
+                    <div class="right">
+                        <button class="fa-solid fa-trash delete" title="Delete Row"
+                            _="on click remove (closest parent .option)
+                                then {{ field.name }}.collect{{ field.name|title }}Fields()
+                                then halt" />
+                    </div>
                 </div>
             </div>
-
-        </section>
-
+        </div>
     </div>
 
 {% endwith %}

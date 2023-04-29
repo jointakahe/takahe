@@ -3,9 +3,6 @@
 {% block title %}Notifications{% endblock %}
 
 {% block settings_content %}
-    {% if page_obj.number == 1 %}
-        {% include "_announcements.html" %}
-    {% endif %}
 
     <section class="invisible">
         <div class="view-options">
@@ -37,14 +34,5 @@
             No notifications yet.
         {% endfor %}
 
-        <div class="pagination">
-            {% if page_obj.has_previous and not request.htmx %}
-                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-            {% endif %}
-
-            {% if page_obj.has_next %}
-                <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
-            {% endif %}
-        </div>
     </section>
 {% endblock %}

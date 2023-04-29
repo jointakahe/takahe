@@ -8,11 +8,12 @@ from users.views.settings.import_export import (  # noqa
     CsvFollowing,
     ImportExportPage,
 )
-from users.views.settings.interface import InterfacePage  # noqa
+from users.views.settings.posting import PostingPage  # noqa
 from users.views.settings.profile import ProfilePage  # noqa
 from users.views.settings.security import SecurityPage  # noqa
 from users.views.settings.settings_page import SettingsPage  # noqa
 from users.views.settings.follows import FollowsPage  # noqa
+from users.views.settings.interface import InterfacePage  # noqa
 
 
 @method_decorator(login_required, name="dispatch")

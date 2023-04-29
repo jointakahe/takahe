@@ -20,6 +20,7 @@ from core.models import Config
 from django.contrib.auth.decorators import login_required
 from users.models import Domain, FollowStates, Identity, IdentityStates
 from users.services import IdentityService
+from activities.services import SearchService
 from users.shortcuts import by_handle_or_404
 
 
@@ -213,17 +214,11 @@ class IdentityFollows(ListView):
             raise Http404("Hidden follows")
         return super().get(request, identity=self.identity)
 
-    def get_queryset(self):
-        if self.inbound:
-            return IdentityService(self.identity).followers()
-        else:
-            return IdentityService(self.identity).following()
-
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
         context["inbound"] = self.inbound
-        context["follows_page"] = True
+        context["section"] = "follows"
         context["followers_count"] = self.identity.inbound_follows.filter(
             state__in=FollowStates.group_active()
         ).count()
@@ -231,6 +226,43 @@ class IdentityFollows(ListView):
             state__in=FollowStates.group_active()
         ).count()
         context["post_count"] = self.identity.posts.count()
+        return context
+
+
+class IdentitySearch(FormView):
+    """
+    Allows an identity's posts to be searched.
+    """
+
+    template_name = "identity/search.html"
+
+    class form_class(forms.Form):
+        query = forms.CharField(help_text="The text to search for")
+
+    def dispatch(self, request, handle):
+        self.identity = by_handle_or_404(self.request, handle)
+        if not Config.load_identity(self.identity).search_enabled:
+            raise Http404("Search not enabled")
+        return super().dispatch(request, identity=self.identity)
+
+    def form_valid(self, form):
+        self.results = SearchService(
+            query=form.cleaned_data["query"], identity=self.identity
+        ).search_post_content()
+        return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["identity"] = self.identity
+        context["section"] = "search"
+        context["followers_count"] = self.identity.inbound_follows.filter(
+            state__in=FollowStates.group_active()
+        ).count()
+        context["following_count"] = self.identity.outbound_follows.filter(
+            state__in=FollowStates.group_active()
+        ).count()
+        context["post_count"] = self.identity.posts.count()
+        context["results"] = getattr(self, "results", None)
         return context
 
 

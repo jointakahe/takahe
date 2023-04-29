@@ -6,7 +6,6 @@ from activities.views import (
     compose,
     debug,
     posts,
-    search,
     timelines,
 )
 from api.views import oauth
@@ -27,12 +26,6 @@ urlpatterns = [
     path("", core.homepage),
     path("robots.txt", core.RobotsTxt.as_view()),
     # Activity views
-    path(
-        "@<handle>/notifications/",
-        timelines.Notifications.as_view(),
-        name="notifications",
-    ),
-    path("search/", search.Search.as_view(), name="search"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
     # Settings views
     path(
@@ -46,6 +39,11 @@ urlpatterns = [
         name="settings_security",
     ),
     path(
+        "settings/interface/",
+        settings.InterfacePage.as_view(),
+        name="settings_interface",
+    ),
+    path(
         "@<handle>/settings/",
         settings.SettingsRoot.as_view(),
         name="settings",
@@ -56,9 +54,9 @@ urlpatterns = [
         name="settings_profile",
     ),
     path(
-        "@<handle>/settings/interface/",
-        settings.InterfacePage.as_view(),
-        name="settings_interface",
+        "@<handle>/settings/posting/",
+        settings.PostingPage.as_view(),
+        name="settings_posting",
     ),
     path(
         "@<handle>/settings/follows/",
@@ -238,6 +236,12 @@ urlpatterns = [
     path("@<handle>/rss/", identity.IdentityFeed()),
     path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
     path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
+    path("@<handle>/search/", identity.IdentitySearch.as_view()),
+    path(
+        "@<handle>/notifications/",
+        timelines.Notifications.as_view(),
+        name="notifications",
+    ),
     # Posts
     path("@<handle>/compose/", compose.Compose.as_view(), name="compose"),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),

@@ -1,38 +1,54 @@
 <nav>
     {% if identity %}
-    {% include "identity/_identity_banner.html" %}
-    <h3>Settings</h3>
-    <a href="{% url "settings_profile" handle=identity.handle %}" {% if section == "profile" %}class="selected"{% endif %} title="Profile">
-        <i class="fa-solid fa-user"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{% url "settings_interface" handle=identity.handle %}" {% if section == "interface" %}class="selected"{% endif %} title="Interface">
-        <i class="fa-solid fa-display"></i>
-        <span>Interface</span>
-    </a>
-    <a href="{% url "settings_follows" handle=identity.handle %}" {% if section == "follows" %}class="selected"{% endif %} title="Follows">
-        <i class="fa-solid fa-arrow-right-arrow-left"></i>
-        <span>Follows</span>
-    </a>
-    <a href="{% url "settings_import_export" handle=identity.handle %}" {% if section == "importexport" %}class="selected"{% endif %} title="Interface">
-        <i class="fa-solid fa-cloud-arrow-up"></i>
-        <span>Import/Export</span>
-    </a>
-    <hr>
-    <h3>Tools</h3>
-    <a href="{% url "compose" handle=identity.handle %}" {% if section == "compose" %}class="selected"{% endif %} title="Compose">
-        <i class="fa-solid fa-pen-to-square"></i>
-        <span>Compose</span>
-    </a>
-    <hr>
+        {% include "identity/_identity_banner.html" %}
+        <h3>Identity Settings</h3>
+        <a href="{% url "settings_profile" handle=identity.handle %}" {% if section == "profile" %}class="selected"{% endif %} title="Profile">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </a>
+        <a href="{% url "settings_posting" handle=identity.handle %}" {% if section == "posting" %}class="selected"{% endif %} title="Posting">
+            <i class="fa-solid fa-message"></i>
+            <span>Posting</span>
+        </a>
+        <a href="{% url "settings_import_export" handle=identity.handle %}" {% if section == "importexport" %}class="selected"{% endif %} title="Interface">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Import/Export</span>
+        </a>
+        <hr>
+        <h3>Tools</h3>
+        <a href="{% url "settings_follows" handle=identity.handle %}" {% if section == "follows" %}class="selected"{% endif %} title="Follows">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            <span>Follows</span>
+        </a>
+        <a href="{% url "compose" handle=identity.handle %}" {% if section == "compose" %}class="selected"{% endif %} title="Compose">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Compose</span>
+        </a>
+        <hr>
+        <h3>User Settings</h3>
+        <a href="{% url "settings" %}" title="Switch to User Settings">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>Go to User Settings</span>
+        </a>
+    {% else %}
+        <h3>Account</h3>
+        <a href="{% url "settings_security" %}" {% if section == "security" %}class="selected"{% endif %} title="Login &amp; Security">
+            <i class="fa-solid fa-key"></i>
+            <span>Login &amp; Security</span>
+        </a>
+        <a href="{% url "settings_interface" %}" {% if section == "interface" %}class="selected"{% endif %} title="Interface">
+            <i class="fa-solid fa-display"></i>
+            <span>Interface</span>
+        </a>
+        <a href="{% url "logout" %}">
+            <i class="fa-solid fa-right-from-bracket" title="Logout"></i>
+            <span>Logout</span>
+        </a>
+        <hr>
+        <h3>Identity Settings</h3>
+        <a href="/" title="Go to Identity Select">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>Go to Identity Select</span>
+        </a>
     {% endif %}
-    <h3>Account</h3>
-    <a href="{% url "settings_security" %}" {% if section == "security" %}class="selected"{% endif %} title="Login &amp; Security">
-        <i class="fa-solid fa-key"></i>
-        <span>Login &amp; Security</span>
-    </a>
-    <a href="{% url "logout" %}">
-        <i class="fa-solid fa-right-from-bracket" title="Logout"></i>
-        <span>Logout</span>
-    </a>
 </nav>
