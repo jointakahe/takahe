@@ -10,6 +10,8 @@ class DomainMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        request.domain = Domain.get_domain(request.META["HTTP_HOST"])
+        request.domain = None
+        if "HTTP_HOST" in request.META:
+            request.domain = Domain.get_domain(request.META["HTTP_HOST"])
         response = self.get_response(request)
         return response

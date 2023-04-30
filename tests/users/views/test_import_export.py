@@ -10,7 +10,7 @@ from users.services import IdentityService
 
 @pytest.mark.django_db
 def test_import_following(
-    client_with_identity: Client,
+    client_with_user: Client,
     identity: Identity,
     remote_identity: Identity,
     stator: StatorRunner,
@@ -24,8 +24,8 @@ def test_import_following(
         "follows.csv",
         b"Account address,Show boosts,Notify on new posts,Languages\ntest@remote.test,true,false,",
     )
-    response = client_with_identity.post(
-        "/settings/import_export/",
+    response = client_with_user.post(
+        f"/@{identity.handle}/settings/import_export/",
         {
             "csv": csv_file,
             "import_type": "following",
@@ -45,7 +45,7 @@ def test_import_following(
 
 @pytest.mark.django_db
 def test_export_following(
-    client_with_identity: Client,
+    client_with_user: Client,
     identity: Identity,
     remote_identity: Identity,
     stator: StatorRunner,
@@ -58,7 +58,9 @@ def test_export_following(
     IdentityService(identity).follow(remote_identity)
 
     # Download the CSV
-    response = client_with_identity.get("/settings/import_export/following.csv")
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/following.csv"
+    )
     assert response.status_code == 200
     assert (
         response.content.strip()
@@ -68,7 +70,7 @@ def test_export_following(
 
 @pytest.mark.django_db
 def test_export_followers(
-    client_with_identity: Client,
+    client_with_user: Client,
     identity: Identity,
     identity2: Identity,
     stator: StatorRunner,
@@ -81,6 +83,8 @@ def test_export_followers(
     IdentityService(identity2).follow(identity)
 
     # Download the CSV
-    response = client_with_identity.get("/settings/import_export/followers.csv")
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/followers.csv"
+    )
     assert response.status_code == 200
     assert response.content.strip() == b"Account address\r\ntest@example2.com"

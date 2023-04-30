@@ -62,6 +62,8 @@ def _test_settings(settings):
     settings.STATICFILES_STORAGE = (
         "django.contrib.staticfiles.storage.StaticFilesStorage"
     )
+    settings.SETUP.MAIN_DOMAIN = "example.com"
+    settings.MAIN_DOMAIN = "example.com"
 
 
 @pytest.fixture
@@ -77,15 +79,11 @@ def config_system(keypair):
 
 
 @pytest.fixture
-def client_with_identity(client, identity, user):
+def client_with_user(client, user):
     """
-    Provides a logged-in test client with an identity selected
+    Provides a logged-in test client
     """
     client.force_login(user)
-    session = client.session
-    session["identity_id"] = identity.id
-    session.save()
-    client.cookies[settings.SESSION_COOKIE_NAME] = session.session_key
     return client
 
 

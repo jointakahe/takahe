@@ -13,7 +13,7 @@ def test_stats(client, identity, other_identity):
     Follow.objects.create(source=other_identity, target=identity)
     Config.set_identity(identity, "visible_follows", True)
     response = client.get(identity.urls.view)
-    assertContains(response, "<strong>1</strong> follower", status_code=200)
+    assertContains(response, "<strong>1</strong> Follower", status_code=200)
 
 
 @pytest.mark.django_db
@@ -23,7 +23,7 @@ def test_visible_follows_disabled(client, identity):
     """
     Config.set_identity(identity, "visible_follows", True)
     response = client.get(identity.urls.view)
-    assertContains(response, "follower", status_code=200)
+    assertContains(response, "Follower", status_code=200)
     Config.set_identity(identity, "visible_follows", False)
     response = client.get(identity.urls.view)
-    assertNotContains(response, "follower", status_code=200)
+    assertNotContains(response, "Follower", status_code=200)

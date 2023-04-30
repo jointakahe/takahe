@@ -71,6 +71,7 @@ class ViewIdentity(ListView):
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
+        context["public_styling"] = True
         context["post_count"] = self.identity.posts.count()
         if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
@@ -214,11 +215,18 @@ class IdentityFollows(ListView):
             raise Http404("Hidden follows")
         return super().get(request, identity=self.identity)
 
+    def get_queryset(self):
+        if self.inbound:
+            return IdentityService(self.identity).followers()
+        else:
+            return IdentityService(self.identity).following()
+
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
         context["inbound"] = self.inbound
         context["section"] = "follows"
+        context["public_styling"] = True
         context["followers_count"] = self.identity.inbound_follows.filter(
             state__in=FollowStates.group_active()
         ).count()
@@ -255,6 +263,7 @@ class IdentitySearch(FormView):
         context = super().get_context_data(**kwargs)
         context["identity"] = self.identity
         context["section"] = "search"
+        context["public_styling"] = True
         context["followers_count"] = self.identity.inbound_follows.filter(
             state__in=FollowStates.group_active()
         ).count()

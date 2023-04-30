@@ -4,6 +4,7 @@ from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
+from django.core.files import File
 
 from core.models import Config
 from users.decorators import admin_required
@@ -214,7 +215,8 @@ class DomainEdit(FormView):
             Domain.objects.exclude(pk=self.domain.pk).update(default=False)
         Config.set_domain(self.domain, "hide_login", form.cleaned_data["hide_login"])
         Config.set_domain(self.domain, "site_name", form.cleaned_data["site_name"])
-        Config.set_domain(self.domain, "site_icon", form.cleaned_data["site_icon"])
+        if isinstance(form.cleaned_data["site_icon"], File):
+            Config.set_domain(self.domain, "site_icon", form.cleaned_data["site_icon"])
         Config.set_domain(self.domain, "custom_css", form.cleaned_data["custom_css"])
         return redirect(Domain.urls.root)
 

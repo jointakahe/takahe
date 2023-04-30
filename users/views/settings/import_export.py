@@ -70,7 +70,7 @@ class ImportExportPage(IdentityViewMixin, FormView):
         return context
 
 
-class CsvView(View):
+class CsvView(IdentityViewMixin, View):
     """
     Generic view that exports a queryset as a CSV
     """
@@ -85,7 +85,7 @@ class CsvView(View):
     def get_queryset(self):
         raise NotImplementedError()
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         response = HttpResponse(
             content_type="text/csv",
             headers={"Content-Disposition": f'attachment; filename="{self.filename}"'},
@@ -113,7 +113,7 @@ class CsvView(View):
         return response
 
 
-class CsvFollowing(IdentityViewMixin, CsvView):
+class CsvFollowing(CsvView):
     columns = {
         "Account address": "get_handle",
         "Show boosts": "boosts",
@@ -136,7 +136,7 @@ class CsvFollowing(IdentityViewMixin, CsvView):
         return ""
 
 
-class CsvFollowers(IdentityViewMixin, CsvView):
+class CsvFollowers(CsvView):
     columns = {
         "Account address": "get_handle",
     }

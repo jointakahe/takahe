@@ -58,6 +58,7 @@ class Individual(TemplateView):
                 "link_original": True,
                 "ancestors": ancestors,
                 "descendants": descendants,
+                "public_styling": True,
             }
         )
 

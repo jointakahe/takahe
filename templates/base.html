@@ -18,8 +18,14 @@
                 --color-text-link: {{ config.highlight_color }};
             }
         </style>
-        {% if config_identity.custom_css %}
-            <style>{{ config_identity.custom_css|safe }}</style>
+        {% if identity and public_styling %}
+            {% if identity.domain.config_domain.custom_css %}
+                <style>{{ identity.domain.config_domain.custom_css|safe }}</style>
+            {% endif %}
+        {% else %}
+            {% if request.domain.config_domain.custom_css %}
+                <style>{{ request.domain.config_domain.custom_css|safe }}</style>
+            {% endif %}
         {% endif %}
         {% block opengraph %}
             {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
@@ -35,8 +41,13 @@
                 <header>
                     <menu>
                         <a class="logo" href="/">
-                            <img src="{{ config.site_icon }}" width="32">
-                            {{ request.domain.config_domain.site_name|default:config.site_name }}
+                            {% if identity and public_styling %}
+                                <img src="{{ identity.domain.config_domain.site_icon|default:config.site_icon }}" width="32">
+                                {{ identity.domain.config_domain.site_name|default:config.site_name }}
+                            {% else %}
+                                <img src="{{ request.domain.config_domain.site_icon|default:config.site_icon }}" width="32">
+                                {{ request.domain.config_domain.site_name|default:config.site_name }}
+                            {% endif %}
                         </a>
                         {% if user.is_authenticated %}
                             <a href="/" title="My Account"><i class="fa-solid fa-user"></i></a>
@@ -57,6 +68,8 @@
                 {% block announcements %}
                     {% include "_announcements.html" %}
                 {% endblock %}
+
+                {% include "activities/_image_viewer.html" %}
 
                 {% block content %}
                 {% endblock %}
