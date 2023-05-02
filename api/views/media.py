@@ -72,7 +72,10 @@ def update_media(
     focus: QueryOrBody[str] = "0,0",
 ) -> schemas.MediaAttachment:
     attachment = get_object_or_404(PostAttachment, pk=id)
-    if attachment.post.author != request.identity:
+    if attachment.post:
+        if attachment.post.author != request.identity:
+            raise ApiError(401, "Not the author of this attachment")
+    elif attachment.author != request.identity:
         raise ApiError(401, "Not the author of this attachment")
     attachment.name = description or None
     attachment.save()
