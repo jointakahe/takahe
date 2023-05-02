@@ -76,8 +76,8 @@ class PaginatingApiResponse(ApiResponse[list[TI]]):
         parts = [
             entry
             for entry in [
-                self.get_part(0, "min_id", "prev"),
                 self.get_part(-1, "max_id", "next"),
+                self.get_part(0, "min_id", "prev"),
             ]
             if entry
         ]
