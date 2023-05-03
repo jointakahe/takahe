@@ -266,17 +266,22 @@ urlpatterns = [
     path(
         "pages/privacy/",
         core.FlatPage.as_view(title="Privacy Policy", config_option="policy_privacy"),
-        name="privacy",
+        name="policy_privacy",
     ),
     path(
         "pages/terms/",
         core.FlatPage.as_view(title="Terms of Service", config_option="policy_terms"),
-        name="terms",
+        name="policy_terms",
     ),
     path(
         "pages/rules/",
         core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
-        name="rules",
+        name="policy_rules",
+    ),
+    path(
+        "pages/issues/",
+        core.FlatPage.as_view(title="Report a Problem", config_option="policy_issues"),
+        name="policy_issues",
     ),
     # Annoucements
     path("announcements/<id>/dismiss/", announcements.AnnouncementDismiss.as_view()),

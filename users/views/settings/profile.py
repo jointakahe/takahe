@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files import File
 from django.shortcuts import redirect
@@ -124,4 +125,6 @@ class ProfilePage(FormView):
         Config.set_identity(
             self.identity, "search_enabled", form.cleaned_data["search_enabled"]
         )
+
+        messages.success(self.request, "Your profile has been updated.")
         return redirect(".")

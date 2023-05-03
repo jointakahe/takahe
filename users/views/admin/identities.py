@@ -26,7 +26,8 @@ class IdentitiesRoot(ListView):
 
     def get_queryset(self):
         identities = (
-            Identity.objects.annotate(num_users=models.Count("users"))
+            Identity.objects.not_deleted()
+            .annotate(num_users=models.Count("users"))
             .annotate(followers_count=models.Count("inbound_follows"))
             .order_by("created")
         )

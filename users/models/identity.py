@@ -624,12 +624,12 @@ class Identity(StatorModel):
         from activities.models.post import Post, PostStates
 
         Post.transition_perform_queryset(self.posts, PostStates.deleted)
-        # Move ourselves to deleted
-        self.transition_perform(IdentityStates.deleted)
         # Remove all users from ourselves and mark deletion date
         self.users.set([])
         self.deleted = timezone.now()
         self.save()
+        # Move ourselves to deleted
+        self.transition_perform(IdentityStates.deleted)
 
     ### Actor/Webfinger fetching ###
 

@@ -215,6 +215,11 @@ class PoliciesSettings(AdminSettingsPage):
             "help_text": "Will only be shown if it has content. Use Markdown for formatting.\nIf you would like to redirect elsewhere, enter just a URL.",
             "display": "textarea",
         },
+        "policy_issues": {
+            "title": "Report a Problem Page",
+            "help_text": "Will only be shown if it has content. Use Markdown for formatting.\nIf you would like to redirect elsewhere, enter just a URL.",
+            "display": "textarea",
+        },
     }
 
     layout = {
@@ -222,5 +227,6 @@ class PoliciesSettings(AdminSettingsPage):
             "policy_rules",
             "policy_terms",
             "policy_privacy",
+            "policy_issues",
         ],
     }

@@ -2,6 +2,7 @@ from functools import partial
 from typing import ClassVar
 
 from django import forms
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files import File
 from django.shortcuts import redirect
@@ -113,6 +114,7 @@ class SettingsPage(FormView):
                 field.name,
                 form.cleaned_data[field.name],
             )
+        messages.success(self.request, "Your settings have been saved.")
         return redirect(".")
 
 
