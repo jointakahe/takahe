@@ -278,6 +278,7 @@ header menu a small {
 
 nav {
     padding: 10px 0px 20px 5px;
+    border-radius: 5px;
 }
 
 nav hr {
@@ -377,7 +378,6 @@ nav .identity-banner a:hover {
 .settings nav {
     width: var(--width-sidebar-medium);
     background: var(--color-bg-menu);
-    border-radius: 0 0 5px 0;
 }
 
 .settings nav h2 {
@@ -1095,6 +1095,25 @@ blockquote {
     border-left: 2px solid var(--color-bg-menu);
 }
 
+.secret .label {
+    background-color: var(--color-bg-menu);
+    padding: 3px 7px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.secret.visible .label {
+    display: none;
+}
+
+.secret .value {
+    display: none;
+}
+
+.secret.visible .value {
+    display: inline;
+}
+
 
 /* Logged out homepage */
 
@@ -1301,9 +1320,10 @@ table.metadata td .emoji {
     min-width: 16px;
 }
 
-/* Announcements */
+/* Announcements/Flash messages */
 
-.announcement {
+.announcement,
+.message {
     background-color: var(--color-highlight);
     border-radius: 5px;
     margin: 10px 0 0 0;
@@ -1311,7 +1331,12 @@ table.metadata td .emoji {
     position: relative;
 }
 
-.announcement .dismiss {
+.message {
+    background-color: var(--color-bg-menu);
+}
+
+.announcement .dismiss,
+.message .dismiss {
     position: absolute;
     top: 5px;
     right: 10px;

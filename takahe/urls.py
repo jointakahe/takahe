@@ -2,25 +2,12 @@ from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
 from django.urls import include, path, re_path
 
-from activities.views import (
-    compose,
-    debug,
-    posts,
-    timelines,
-)
+from activities.views import compose, debug, posts, timelines
 from api.views import oauth
 from core import views as core
 from mediaproxy import views as mediaproxy
 from stator import views as stator
-from users.views import (
-    activitypub,
-    admin,
-    announcements,
-    auth,
-    identity,
-    settings,
-)
-from users.views.settings import follows
+from users.views import activitypub, admin, announcements, auth, identity, settings
 
 urlpatterns = [
     path("", core.homepage),
@@ -77,6 +64,21 @@ urlpatterns = [
         "@<handle>/settings/import_export/followers.csv",
         settings.CsvFollowers.as_view(),
         name="settings_export_followers_csv",
+    ),
+    path(
+        "@<handle>/settings/tokens/",
+        settings.TokensRoot.as_view(),
+        name="settings_tokens",
+    ),
+    path(
+        "@<handle>/settings/tokens/create/",
+        settings.TokenCreate.as_view(),
+        name="settings_token_create",
+    ),
+    path(
+        "@<handle>/settings/tokens/<pk>/",
+        settings.TokenEdit.as_view(),
+        name="settings_token_edit",
     ),
     path(
         "admin/",

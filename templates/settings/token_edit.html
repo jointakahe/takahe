@@ -1,0 +1,49 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Token{% endblock %}
+
+{% block settings_content %}
+    <h1>{{ token.application.name }}</h1>
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Application</legend>
+            <table class="metadata">
+                <tr>
+                    <th>Name</th>
+                    <td>{{ token.application.name }}</td>
+                </tr>
+                {% if token.application.website %}
+                    <tr>
+                        <th>Website</th>
+                        <td>{{ token.application.website }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <th>Authorized</th>
+                    <td>{{ token.created }}</td>
+                </tr>
+            </table>
+        </fieldset>
+
+        <fieldset>
+            <legend>Token</legend>
+            <table class="metadata">
+                <tr>
+                    <th>Access Token</th>
+                    <td>
+                        <span class="secret" _="on click add .visible to me">
+                            <span class="label">Click to reveal</span>
+                            <tt class="value">{{ token.token }}</tt>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+
+        <div class="buttons">
+            <a href="{% url "settings_tokens" handle=identity.handle %}" class="button secondary left">Back</a>
+            <button class="danger">Remove Access</button>
+        </div>
+    </form>
+{% endblock %}

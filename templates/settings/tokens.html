@@ -1,0 +1,30 @@
+{% extends "settings/base.html" %}
+{% load activity_tags %}
+
+{% block subtitle %}Apps{% endblock %}
+
+{% block settings_content %}
+    <div class="view-options">
+        <span class="spacer"></span>
+        <a href="{% url "settings_token_create" handle=identity.handle %}" class="button"><i class="fa-solid fa-plus"></i> Create Personal Token</a>
+    </div>
+    <table class="items">
+        {% for token in tokens %}
+            <tr>
+                <td class="icon">
+                    <a href="{{ token.urls.edit }}" class="overlay"></a>
+                    <i class="fa-solid fa-window-restore"></i>
+                </td>
+                <td class="name">
+                    <a href="{{ token.urls.edit }}" class="overlay"></a>
+                    {{ token.application.name }}
+                </td>
+                <td class="stat">
+                    Created {{ token.created|timedeltashort }} ago
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="empty"><td>You have no apps authorized against this identity.</td></tr>
+        {% endfor %}
+    </table>
+{% endblock %}

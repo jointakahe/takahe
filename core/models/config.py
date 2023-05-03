@@ -292,6 +292,6 @@ class Config(models.Model):
     class DomainOptions(pydantic.BaseModel):
 
         site_name: str = ""
-        site_icon: UploadedImage | None = None  # type: ignore
+        site_icon: UploadedImage | None = None
         hide_login: bool = False
         custom_css: str = ""
