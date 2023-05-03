@@ -45,6 +45,9 @@ This release's major changes:
 * The logged-in homepage now shows a list of identities to select from as well
   as a set of recommended apps to use for timeline interfaces.
 
+* We have totally dropped our alpha-quality SQLite support; it just doesn't have
+  sufficient full-text-search and JSON operator support, unfortunately.
+
 There are many minor changes to support the new direction; important ones include:
 
 * The dark/light mode toggle is now a User (login) setting, not an Identity setting
