@@ -614,6 +614,23 @@ class Identity(StatorModel):
         except cls.DoesNotExist:
             pass
 
+    ### Deletion ###
+
+    def mark_deleted(self):
+        """
+        Marks the identity and all of its related content as deleted.
+        """
+        # Move all posts to deleted
+        from activities.models.post import Post, PostStates
+
+        Post.transition_perform_queryset(self.posts, PostStates.deleted)
+        # Move ourselves to deleted
+        self.transition_perform(IdentityStates.deleted)
+        # Remove all users from ourselves and mark deletion date
+        self.users.set([])
+        self.deleted = timezone.now()
+        self.save()
+
     ### Actor/Webfinger fetching ###
 
     @classmethod

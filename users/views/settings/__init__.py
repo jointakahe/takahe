@@ -3,6 +3,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 
+from users.views.settings.delete import DeleteIdentity  # noqa
 from users.views.settings.follows import FollowsPage  # noqa
 from users.views.settings.import_export import (  # noqa
     CsvFollowers,

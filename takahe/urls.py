@@ -81,6 +81,11 @@ urlpatterns = [
         name="settings_token_edit",
     ),
     path(
+        "@<handle>/settings/delete/",
+        settings.DeleteIdentity.as_view(),
+        name="settings_delete",
+    ),
+    path(
         "admin/",
         admin.AdminRoot.as_view(),
         name="admin",

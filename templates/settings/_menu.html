@@ -14,9 +14,13 @@
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span>Import/Export</span>
         </a>
-        <a href="{% url "settings_tokens" handle=identity.handle %}" {% if section == "tokens" %}class="selected"{% endif %} title="Interface">
+        <a href="{% url "settings_tokens" handle=identity.handle %}" {% if section == "tokens" %}class="selected"{% endif %} title="Authorized Apps">
             <i class="fa-solid fa-window-restore"></i>
             <span>Authorized Apps</span>
+        </a>
+        <a href="{% url "settings_delete" handle=identity.handle %}" {% if section == "delete" %}class="selected"{% endif %} title="Delete Identity">
+            <i class="fa-solid fa-user-slash"></i>
+            <span>Delete Identity</span>
         </a>
         <hr>
         <h3>Tools</h3>

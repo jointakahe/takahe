@@ -33,6 +33,7 @@ class TokenCreate(IdentityViewMixin, FormView):
     """
 
     template_name = "settings/token_create.html"
+    extra_context = {"section": "tokens"}
 
     class form_class(forms.Form):
         name = forms.CharField(help_text="Identifies this app in your app list")
