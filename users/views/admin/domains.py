@@ -1,10 +1,10 @@
 from django import forms
+from django.core.files import File
 from django.core.validators import RegexValidator
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
-from django.core.files import File
 
 from core.models import Config
 from users.decorators import admin_required

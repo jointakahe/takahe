@@ -28,7 +28,7 @@
 
     {% if post.summary %}
         <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt" tabindex="0">
-        {{ post.summary }}
+            {{ post.summary }}
         </div>
     {% endif %}
 

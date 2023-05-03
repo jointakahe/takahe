@@ -1,8 +1,7 @@
 from django import forms
+from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
-
-from django.contrib.auth.decorators import login_required
 
 
 @method_decorator(login_required, name="dispatch")

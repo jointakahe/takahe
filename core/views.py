@@ -1,14 +1,11 @@
-import json
 from typing import ClassVar
 
 import markdown_it
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from django.templatetags.static import static
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.views.decorators.cache import cache_control
 from django.views.generic import TemplateView, View
 from django.views.static import serve
 

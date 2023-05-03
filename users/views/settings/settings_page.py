@@ -2,13 +2,13 @@ from functools import partial
 from typing import ClassVar
 
 from django import forms
+from django.contrib.auth.decorators import login_required
 from django.core.files import File
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
 from core.models.config import Config, UploadedImage
-from django.contrib.auth.decorators import login_required
 from users.shortcuts import by_handle_or_404
 
 

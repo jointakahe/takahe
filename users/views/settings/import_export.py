@@ -1,13 +1,12 @@
 import csv
-from typing import Any
 
-from django import forms, http
+from django import forms
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, View
 
-from django.contrib.auth.decorators import login_required
 from users.models import Follow, InboxMessage
 from users.views.base import IdentityViewMixin
 

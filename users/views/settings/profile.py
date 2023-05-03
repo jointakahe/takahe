@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.decorators import login_required
 from django.core.files import File
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -6,10 +7,9 @@ from django.views.generic import FormView
 
 from core.html import FediverseHtmlParser
 from core.models.config import Config
-from django.contrib.auth.decorators import login_required
 from users.models import IdentityStates
-from users.shortcuts import by_handle_or_404
 from users.services import IdentityService
+from users.shortcuts import by_handle_or_404
 
 
 @method_decorator(login_required, name="dispatch")

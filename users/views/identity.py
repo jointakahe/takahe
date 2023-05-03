@@ -10,17 +10,15 @@ from django.utils.decorators import method_decorator
 from django.utils.feedgenerator import Rss201rev2Feed
 from django.utils.xmlutils import SimplerXMLGenerator
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import FormView, ListView, TemplateView, View
+from django.views.generic import FormView, ListView
 
-from activities.models import Post, PostInteraction
-from activities.services import TimelineService
+from activities.models import Post
+from activities.services import SearchService, TimelineService
 from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
-from django.contrib.auth.decorators import login_required
 from users.models import Domain, FollowStates, Identity, IdentityStates
 from users.services import IdentityService
-from activities.services import SearchService
 from users.shortcuts import by_handle_or_404
 
 

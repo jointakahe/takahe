@@ -2,8 +2,6 @@ import pytest
 from django.test.client import Client
 from pytest_django.asserts import assertContains
 
-from activities.models import Post
-from core.models import Config
 from users.models import Identity
 
 

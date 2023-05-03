@@ -1,6 +1,7 @@
-from users.shortcuts import by_handle_for_user_or_404
-from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+
+from users.shortcuts import by_handle_for_user_or_404
 
 
 @method_decorator(login_required, name="dispatch")

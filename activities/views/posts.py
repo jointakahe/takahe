@@ -1,15 +1,13 @@
-from django.core.exceptions import PermissionDenied
 from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
-from activities.models import Post, PostInteraction, PostStates
+from activities.models import Post, PostStates
 from activities.services import PostService
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
-from django.contrib.auth.decorators import login_required
 from users.models import Identity
 from users.shortcuts import by_handle_or_404
 

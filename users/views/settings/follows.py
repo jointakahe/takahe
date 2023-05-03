@@ -1,8 +1,6 @@
 from django.db import models
-from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
-from django.contrib.auth.decorators import login_required
 from users.models import Follow, FollowStates, IdentityStates
 from users.views.base import IdentityViewMixin
 

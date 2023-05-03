@@ -1,7 +1,6 @@
 import time
 
 import pytest
-from django.conf import settings
 from django.test import Client
 
 from api.models import Application, Token

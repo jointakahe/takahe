@@ -1,8 +1,10 @@
-import urlman
 from functools import cached_property
-from core.models import Config
+
+import urlman
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+
+from core.models import Config
 
 
 class UserManager(BaseUserManager):

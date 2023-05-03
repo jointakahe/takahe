@@ -1,15 +1,12 @@
-from typing import Any
-from django.http import Http404
-from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
 
-from activities.models import Hashtag, PostInteraction, TimelineEvent
+from activities.models import Hashtag, TimelineEvent
 from activities.services import TimelineService
 from core.decorators import cache_page
-from django.contrib.auth.decorators import login_required
-from users.models import Bookmark, HashtagFollow, Identity
+from users.models import Identity
 from users.views.base import IdentityViewMixin
 
 
