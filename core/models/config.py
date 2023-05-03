@@ -296,3 +296,4 @@ class Config(models.Model):
         site_icon: UploadedImage | None = None
         hide_login: bool = False
         custom_css: str = ""
+        single_user: str = ""

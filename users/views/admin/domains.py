@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib import messages
 from django.core.files import File
 from django.core.validators import RegexValidator
 from django.db import models
@@ -183,6 +184,12 @@ class DomainEdit(FormView):
             required=False,
         )
 
+        single_user = forms.CharField(
+            label="Single User Profile Redirect",
+            help_text="If provided, redirect the homepage of this domain to this identity's profile for logged-out users\nUse the identity's full handle - for example, <tt>takahe@jointakahe.org</tt>",
+            required=False,
+        )
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.fields["domain"].disabled = True
@@ -193,6 +200,9 @@ class DomainEdit(FormView):
 
         def clean_service_domain(self):
             return self.cleaned_data["service_domain"]
+
+        def clean_single_user(self):
+            return self.cleaned_data["single_user"].lstrip("@")
 
     def dispatch(self, request, domain):
         self.domain = get_object_or_404(
@@ -218,6 +228,8 @@ class DomainEdit(FormView):
         if isinstance(form.cleaned_data["site_icon"], File):
             Config.set_domain(self.domain, "site_icon", form.cleaned_data["site_icon"])
         Config.set_domain(self.domain, "custom_css", form.cleaned_data["custom_css"])
+        Config.set_domain(self.domain, "single_user", form.cleaned_data["single_user"])
+        messages.success(self.request, f"Domain {self.domain} saved.")
         return redirect(Domain.urls.root)
 
     def get_initial(self):
@@ -232,6 +244,7 @@ class DomainEdit(FormView):
             "site_icon": self.domain.config_domain.site_icon,
             "hide_login": self.domain.config_domain.hide_login,
             "custom_css": self.domain.config_domain.custom_css,
+            "single_user": self.domain.config_domain.single_user,
         }
 
 
