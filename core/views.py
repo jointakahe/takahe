@@ -18,7 +18,7 @@ from core.models import Config
 def homepage(request):
     if request.user.is_authenticated:
         return Home.as_view()(request)
-    elif request.domain.config_domain.single_user:
+    elif request.domain and request.domain.config_domain.single_user:
         return redirect(f"/@{request.domain.config_domain.single_user}/")
     else:
         return About.as_view()(request)
