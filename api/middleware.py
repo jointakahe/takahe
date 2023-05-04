@@ -15,6 +15,7 @@ class ApiTokenMiddleware:
     def __call__(self, request):
         auth_header = request.headers.get("authorization", None)
         request.token = None
+        request.identity = None
         if auth_header and auth_header.startswith("Bearer "):
             token_value = auth_header[7:]
             if token_value == "__app__":

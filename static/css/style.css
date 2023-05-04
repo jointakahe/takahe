@@ -411,6 +411,10 @@ section:first-of-type {
     margin-top: 30px;
 }
 
+section:first-of-type:has(>h1.above) {
+    margin-top: 50px;
+}
+
 section.invisible {
     background: none;
     box-shadow: none;

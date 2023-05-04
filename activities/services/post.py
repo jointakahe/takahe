@@ -87,7 +87,6 @@ class PostService:
         If identity is provided, includes mentions/followers-only posts they
         can see. Otherwise, shows unlisted and above only.
         """
-        num_descendants = 50
         # Retrieve ancestors via parent walk
         ancestors: list[Post] = []
         ancestor = self.post
