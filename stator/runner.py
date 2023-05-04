@@ -5,6 +5,7 @@ import signal
 import time
 import traceback
 import uuid
+from collections.abc import Callable
 
 from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
@@ -21,7 +22,7 @@ class LoopingTask:
     copy running at a time.
     """
 
-    def __init__(self, callable):
+    def __init__(self, callable: Callable):
         self.callable = callable
         self.task: asyncio.Task | None = None
 

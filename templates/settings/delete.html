@@ -1,0 +1,31 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Token{% endblock %}
+
+{% block settings_content %}
+    <h1>Deleting {{ identity.handle }}</h1>
+    <form action="." method="POST">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Confirmation</legend>
+            <p>
+                Deleting this account is <i>permanent and irreversible</i>. Once you
+                start the deletion process, all your posts, interactions and profile
+                data will be gone, and other servers will be contacted to remove
+                your data as well.
+            </p>
+            <p>
+                Some other servers in the Fediverse may maintain a copy of your
+                profile and posts; we do not control them, and cannot speed up
+                or affect your data's removal. Most data will disappear from
+                the network after a couple of weeks.
+            </p>
+            {% include "forms/_field.html" with field=form.confirmation %}
+        </fieldset>
+
+        <div class="buttons">
+            <a href="{% url "settings" handle=identity.handle %}" class="button secondary left">Cancel</a>
+            <button class="danger">Delete {{ identity.handle }}</button>
+        </div>
+    </form>
+{% endblock %}

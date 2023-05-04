@@ -18,14 +18,10 @@ jobs:
         python-version: ["3.10", "3.11"]
         db:
           - "postgres://postgres:postgres@localhost/postgres"
-          - "sqlite:///takahe.db"
         include:
           - db: "postgres://postgres:postgres@localhost/postgres"
             db_name: postgres
             search: true
-          - db: "sqlite:///takahe.db"
-            db_name: sqlite
-            search: false
     services:
       postgres:
         image: postgres:15

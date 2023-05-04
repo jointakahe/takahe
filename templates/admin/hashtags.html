@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}Hashtags{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <table class="items">
         {% for hashtag in page_obj %}
             <tr>

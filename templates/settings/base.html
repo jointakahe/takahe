@@ -2,6 +2,14 @@
 
 {% block title %}{% block subtitle %}{% endblock %} - Settings{% endblock %}
 
-{% block right_content %}
-    {% include "settings/_menu.html" %}
+{% block body_class %}wide{% endblock %}
+
+{% block content %}
+    <div class="settings">
+        {% include "settings/_menu.html" %}
+        <div class="settings-content">
+            {% block settings_content %}
+            {% endblock %}
+        </div>
+    </div>
 {% endblock %}

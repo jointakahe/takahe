@@ -1,9 +1,9 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 {% load activity_tags %}
 
 {% block subtitle %}Emoji{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." class="search">
         <input type="search" name="query" value="{{ query }}" placeholder="Search by shortcode or domain">
         {% if local_only %}

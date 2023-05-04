@@ -57,12 +57,12 @@ class ReportView(FormView):
         if "valid" in request.POST:
             self.report.resolved = timezone.now()
             self.report.valid = True
-            self.report.moderator = self.request.identity
+            self.report.moderator = self.request.user.identities.all()[0]
             self.report.save()
         if "invalid" in request.POST:
             self.report.resolved = timezone.now()
             self.report.valid = False
-            self.report.moderator = self.request.identity
+            self.report.moderator = self.request.user.identities.all()[0]
             self.report.save()
         return super().post(request, *args, **kwargs)
 

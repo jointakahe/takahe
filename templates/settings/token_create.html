@@ -1,0 +1,27 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Add App{% endblock %}
+
+{% block settings_content %}
+    <form action="." method="POST">
+        <h1>Create Personal Token</h1>
+        <p>
+            This lets you create a personal application token that you can
+            use to talk to the API.
+        </p>
+        <p>
+            <b>Do not create a token if someone else tells you to - it can let
+                them take over your account!</b>
+        </p>
+        {% csrf_token %}
+        <fieldset>
+            <legend>App Details</legend>
+            {% include "forms/_field.html" with field=form.name %}
+            {% include "forms/_field.html" with field=form.scope %}
+        </fieldset>
+        <div class="buttons">
+            <a href="{% url "settings_tokens" handle=identity.handle %}" class="button secondary left">Back</a>
+            <button>Create</button>
+        </div>
+    </form>
+{% endblock %}

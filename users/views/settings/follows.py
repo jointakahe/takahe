@@ -1,18 +1,16 @@
 from django.db import models
-from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
-from users.decorators import identity_required
 from users.models import Follow, FollowStates, IdentityStates
+from users.views.base import IdentityViewMixin
 
 
-@method_decorator(identity_required, name="dispatch")
-class Follows(ListView):
+class FollowsPage(IdentityViewMixin, ListView):
     """
     Shows followers/follows.
     """
 
-    template_name = "activities/follows.html"
+    template_name = "settings/follows.html"
     extra_context = {
         "section": "follows",
     }
@@ -24,9 +22,9 @@ class Follows(ListView):
 
     def get_queryset(self):
         if self.inbound:
-            follow_dir = models.Q(target=self.request.identity)
+            follow_dir = models.Q(target=self.identity)
         else:
-            follow_dir = models.Q(source=self.request.identity)
+            follow_dir = models.Q(source=self.identity)
 
         return (
             Follow.objects.filter(
@@ -65,7 +63,7 @@ class Follows(ListView):
             )
             identity_ids = [identity.id for identity in context["page_obj"]]
             context["outbound_ids"] = Follow.objects.filter(
-                source=self.request.identity,
+                source=self.identity,
                 target_id__in=identity_ids,
                 state__in=FollowStates.group_active(),
             ).values_list("target_id", flat=True)
@@ -75,17 +73,18 @@ class Follows(ListView):
             )
             identity_ids = [identity.id for identity in context["page_obj"]]
             context["inbound_ids"] = Follow.objects.filter(
-                target=self.request.identity,
+                target=self.identity,
                 source_id__in=identity_ids,
                 state__in=FollowStates.group_active(),
             ).values_list("source_id", flat=True)
         context["inbound"] = self.inbound
         context["num_inbound"] = Follow.objects.filter(
-            target=self.request.identity,
+            target=self.identity,
             state__in=FollowStates.group_active(),
         ).count()
         context["num_outbound"] = Follow.objects.filter(
-            source=self.request.identity,
+            source=self.identity,
             state__in=FollowStates.group_active(),
         ).count()
+        context["identity"] = self.identity
         return context

@@ -1,55 +1,38 @@
-{% extends "base.html" %}
+{% extends "settings/base.html" %}
 
 {% block title %}Notifications{% endblock %}
 
-{% block content %}
-    {% if page_obj.number == 1 %}
-        {% include "_announcements.html" %}
-    {% endif %}
+{% block settings_content %}
 
-    <div class="view-options">
-        {% if notification_options.followed %}
-            <a href=".?followed=false" class="selected"><i class="fa-solid fa-check"></i> Followers</a>
-        {% else %}
-            <a href=".?followed=true"><i class="fa-solid fa-xmark"></i> Followers</a>
-        {% endif %}
-        {% if notification_options.boosted %}
-            <a href=".?boosted=false" class="selected"><i class="fa-solid fa-check"></i> Boosts</a>
-        {% else %}
-            <a href=".?boosted=true"><i class="fa-solid fa-xmark"></i> Boosts</a>
-        {% endif %}
-        {% if notification_options.liked %}
-            <a href=".?liked=false" class="selected"><i class="fa-solid fa-check"></i> Likes</a>
-        {% else %}
-            <a href=".?liked=true"><i class="fa-solid fa-xmark"></i> Likes</a>
-        {% endif %}
-        {% if notification_options.mentioned %}
-            <a href=".?mentioned=false" class="selected"><i class="fa-solid fa-check"></i> Mentions</a>
-        {% else %}
-            <a href=".?mentioned=true"><i class="fa-solid fa-xmark"></i> Mentions</a>
-        {% endif %}
-        {% if request.user.admin %}
-            {% if notification_options.identity_created %}
-                <a href=".?identity_created=false" class="selected"><i class="fa-solid fa-check"></i> New Identities</a>
+    <section class="invisible">
+        <div class="view-options">
+            {% if notification_options.followed %}
+                <a href=".?followed=false" class="selected"><i class="fa-solid fa-check"></i> Followers</a>
             {% else %}
-                <a href=".?identity_created=true"><i class="fa-solid fa-xmark"></i> New Identities</a>
+                <a href=".?followed=true"><i class="fa-solid fa-xmark"></i> Followers</a>
             {% endif %}
-        {% endif %}
-    </div>
+            {% if notification_options.boosted %}
+                <a href=".?boosted=false" class="selected"><i class="fa-solid fa-check"></i> Boosts</a>
+            {% else %}
+                <a href=".?boosted=true"><i class="fa-solid fa-xmark"></i> Boosts</a>
+            {% endif %}
+            {% if notification_options.liked %}
+                <a href=".?liked=false" class="selected"><i class="fa-solid fa-check"></i> Likes</a>
+            {% else %}
+                <a href=".?liked=true"><i class="fa-solid fa-xmark"></i> Likes</a>
+            {% endif %}
+            {% if notification_options.mentioned %}
+                <a href=".?mentioned=false" class="selected"><i class="fa-solid fa-check"></i> Mentions</a>
+            {% else %}
+                <a href=".?mentioned=true"><i class="fa-solid fa-xmark"></i> Mentions</a>
+            {% endif %}
+        </div>
 
-    {% for event in events %}
-        {% include "activities/_event.html" %}
-    {% empty %}
-        No notifications yet.
-    {% endfor %}
+        {% for event in events %}
+            {% include "activities/_event.html" %}
+        {% empty %}
+            No notifications yet.
+        {% endfor %}
 
-    <div class="pagination">
-        {% if page_obj.has_previous and not request.htmx %}
-            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-            <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
-        {% endif %}
-    </div>
+    </section>
 {% endblock %}

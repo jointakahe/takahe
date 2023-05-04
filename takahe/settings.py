@@ -194,6 +194,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "corsheaders",
     "django_htmx",
     "hatchway",
@@ -220,7 +221,7 @@ MIDDLEWARE = [
     "core.middleware.HeadersMiddleware",
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
-    "users.middleware.IdentityMiddleware",
+    "users.middleware.DomainMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"

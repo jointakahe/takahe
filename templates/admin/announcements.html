@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}Announcements{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <div class="view-options">
         <a href="{% url "admin_announcement_create" %}" class="button"><i class="fa-solid fa-plus"></i> Create</a>
     </div>

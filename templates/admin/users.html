@@ -1,9 +1,9 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 {% load activity_tags %}
 
 {% block subtitle %}Users{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." class="search">
         <input type="search" name="query" value="{{ query }}" placeholder="Search by email">
         <button><i class="fa-solid fa-search"></i></button>

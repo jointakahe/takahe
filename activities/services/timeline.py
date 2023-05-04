@@ -47,12 +47,15 @@ class TimelineService:
         )
 
     def local(self) -> models.QuerySet[Post]:
-        return (
+        queryset = (
             PostService.queryset()
             .local_public()
             .filter(author__restriction=Identity.Restriction.none)
             .order_by("-id")
         )
+        if self.identity is not None:
+            queryset = queryset.filter(author__domain=self.identity.domain)
+        return queryset
 
     def federated(self) -> models.QuerySet[Post]:
         return (

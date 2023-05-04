@@ -123,6 +123,12 @@ class SearchService:
             results.add(hashtag)
         return results
 
+    def search_post_content(self):
+        """
+        Searches for posts on an identity via full text search
+        """
+        return self.identity.posts.filter(content__search=self.query)[:50]
+
     def search_all(self):
         """
         Returns all possible results for a search

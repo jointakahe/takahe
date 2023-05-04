@@ -4,3 +4,13 @@
         {{ announcement.html }}
     </div>
 {% endfor %}
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                <a class="dismiss" title="Dismiss" _="on click remove closest <div/>"><i class="fa-solid fa-xmark"></i></a>
+                {{ message }}
+            </div>
+        {% endfor %}
+    </ul>
+{% endif %}

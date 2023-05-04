@@ -2,49 +2,18 @@ from django.conf import settings as djsettings
 from django.contrib import admin as djadmin
 from django.urls import include, path, re_path
 
-from activities.views import (
-    compose,
-    debug,
-    explore,
-    follows,
-    hashtags,
-    posts,
-    search,
-    timelines,
-)
+from activities.views import compose, debug, posts, timelines
 from api.views import oauth
 from core import views as core
 from mediaproxy import views as mediaproxy
 from stator import views as stator
-from users.views import (
-    activitypub,
-    admin,
-    announcements,
-    auth,
-    identity,
-    report,
-    settings,
-)
+from users.views import activitypub, admin, announcements, auth, identity, settings
 
 urlpatterns = [
     path("", core.homepage),
     path("robots.txt", core.RobotsTxt.as_view()),
-    path("manifest.json", core.AppManifest.as_view()),
     # Activity views
-    path("notifications/", timelines.Notifications.as_view(), name="notifications"),
-    path("local/", timelines.Local.as_view(), name="local"),
-    path("federated/", timelines.Federated.as_view(), name="federated"),
-    path("search/", search.Search.as_view(), name="search"),
     path("tags/<hashtag>/", timelines.Tag.as_view(), name="tag"),
-    path("tags/<hashtag>/follow/", hashtags.HashtagFollow.as_view()),
-    path("tags/<hashtag>/unfollow/", hashtags.HashtagFollow.as_view(undo=True)),
-    path("explore/", explore.Explore.as_view(), name="explore"),
-    path("explore/tags/", explore.ExploreTag.as_view(), name="explore-tag"),
-    path(
-        "follows/",
-        follows.Follows.as_view(),
-        name="follows",
-    ),
     # Settings views
     path(
         "settings/",
@@ -57,29 +26,64 @@ urlpatterns = [
         name="settings_security",
     ),
     path(
-        "settings/profile/",
-        settings.ProfilePage.as_view(),
-        name="settings_profile",
-    ),
-    path(
         "settings/interface/",
         settings.InterfacePage.as_view(),
         name="settings_interface",
     ),
     path(
-        "settings/import_export/",
+        "@<handle>/settings/",
+        settings.SettingsRoot.as_view(),
+        name="settings",
+    ),
+    path(
+        "@<handle>/settings/profile/",
+        settings.ProfilePage.as_view(),
+        name="settings_profile",
+    ),
+    path(
+        "@<handle>/settings/posting/",
+        settings.PostingPage.as_view(),
+        name="settings_posting",
+    ),
+    path(
+        "@<handle>/settings/follows/",
+        settings.FollowsPage.as_view(),
+        name="settings_follows",
+    ),
+    path(
+        "@<handle>/settings/import_export/",
         settings.ImportExportPage.as_view(),
         name="settings_import_export",
     ),
     path(
-        "settings/import_export/following.csv",
+        "@<handle>/settings/import_export/following.csv",
         settings.CsvFollowing.as_view(),
         name="settings_export_following_csv",
     ),
     path(
-        "settings/import_export/followers.csv",
+        "@<handle>/settings/import_export/followers.csv",
         settings.CsvFollowers.as_view(),
         name="settings_export_followers_csv",
+    ),
+    path(
+        "@<handle>/settings/tokens/",
+        settings.TokensRoot.as_view(),
+        name="settings_tokens",
+    ),
+    path(
+        "@<handle>/settings/tokens/create/",
+        settings.TokenCreate.as_view(),
+        name="settings_token_create",
+    ),
+    path(
+        "@<handle>/settings/tokens/<pk>/",
+        settings.TokenEdit.as_view(),
+        name="settings_token_edit",
+    ),
+    path(
+        "@<handle>/settings/delete/",
+        settings.DeleteIdentity.as_view(),
+        name="settings_delete",
     ),
     path(
         "admin/",
@@ -236,30 +240,18 @@ urlpatterns = [
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/outbox/", activitypub.Outbox.as_view()),
-    path("@<handle>/action/", identity.ActionIdentity.as_view()),
     path("@<handle>/rss/", identity.IdentityFeed()),
-    path("@<handle>/report/", report.SubmitReport.as_view()),
     path("@<handle>/following/", identity.IdentityFollows.as_view(inbound=False)),
     path("@<handle>/followers/", identity.IdentityFollows.as_view(inbound=True)),
+    path("@<handle>/search/", identity.IdentitySearch.as_view()),
+    path(
+        "@<handle>/notifications/",
+        timelines.Notifications.as_view(),
+        name="notifications",
+    ),
     # Posts
-    path("compose/", compose.Compose.as_view(), name="compose"),
-    path(
-        "compose/image_upload/",
-        compose.ImageUpload.as_view(),
-        name="compose_image_upload",
-    ),
+    path("@<handle>/compose/", compose.Compose.as_view(), name="compose"),
     path("@<handle>/posts/<int:post_id>/", posts.Individual.as_view()),
-    path("@<handle>/posts/<int:post_id>/like/", posts.Like.as_view()),
-    path("@<handle>/posts/<int:post_id>/unlike/", posts.Like.as_view(undo=True)),
-    path("@<handle>/posts/<int:post_id>/boost/", posts.Boost.as_view()),
-    path("@<handle>/posts/<int:post_id>/unboost/", posts.Boost.as_view(undo=True)),
-    path("@<handle>/posts/<int:post_id>/bookmark/", posts.Bookmark.as_view()),
-    path(
-        "@<handle>/posts/<int:post_id>/unbookmark/", posts.Bookmark.as_view(undo=True)
-    ),
-    path("@<handle>/posts/<int:post_id>/delete/", posts.Delete.as_view()),
-    path("@<handle>/posts/<int:post_id>/report/", report.SubmitReport.as_view()),
-    path("@<handle>/posts/<int:post_id>/edit/", compose.Compose.as_view()),
     # Authentication
     path("auth/login/", auth.Login.as_view(), name="login"),
     path("auth/logout/", auth.Logout.as_view(), name="logout"),
@@ -267,26 +259,29 @@ urlpatterns = [
     path("auth/signup/<token>/", auth.Signup.as_view(), name="signup"),
     path("auth/reset/", auth.TriggerReset.as_view(), name="trigger_reset"),
     path("auth/reset/<token>/", auth.PerformReset.as_view(), name="password_reset"),
-    # Identity selection
-    path("@<handle>/activate/", identity.ActivateIdentity.as_view()),
-    path("identity/select/", identity.SelectIdentity.as_view(), name="identity_select"),
+    # Identity handling
     path("identity/create/", identity.CreateIdentity.as_view(), name="identity_create"),
     # Flat pages
     path("about/", core.About.as_view(), name="about"),
     path(
         "pages/privacy/",
         core.FlatPage.as_view(title="Privacy Policy", config_option="policy_privacy"),
-        name="privacy",
+        name="policy_privacy",
     ),
     path(
         "pages/terms/",
         core.FlatPage.as_view(title="Terms of Service", config_option="policy_terms"),
-        name="terms",
+        name="policy_terms",
     ),
     path(
         "pages/rules/",
         core.FlatPage.as_view(title="Server Rules", config_option="policy_rules"),
-        name="rules",
+        name="policy_rules",
+    ),
+    path(
+        "pages/issues/",
+        core.FlatPage.as_view(title="Report a Problem", config_option="policy_issues"),
+        name="policy_issues",
     ),
     # Annoucements
     path("announcements/<id>/dismiss/", announcements.AnnouncementDismiss.as_view()),

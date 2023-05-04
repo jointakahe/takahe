@@ -1,3 +1,4 @@
+import urlman
 from django.db import models
 
 
@@ -36,6 +37,9 @@ class Token(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     revoked = models.DateTimeField(blank=True, null=True)
+
+    class urls(urlman.Urls):
+        edit = "/@{self.identity.handle}/settings/tokens/{self.id}/"
 
     def has_scope(self, scope: str):
         """

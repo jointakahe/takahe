@@ -1,9 +1,9 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 {% load activity_tags %}
 
 {% block subtitle %}Invites{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <div class="view-options">
         <span class="spacer"></span>
         <a href="{% url "admin_invite_create" %}" class="button">Create New</a>

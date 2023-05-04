@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block title %}Delete {{ domain.domain }} - Admin{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST">
         {% csrf_token %}
 

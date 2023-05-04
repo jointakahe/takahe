@@ -1,37 +1,52 @@
 {% extends "base.html" %}
 {% load activity_tags %}
+{% load static %}
 
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    {% if page_obj.number == 1 %}
-        {% include "_announcements.html" %}
-    {% endif %}
-    {% for event in page_obj %}
-        {% if event.type == "post" %}
-            {% include "activities/_post.html" with post=event.subject_post %}
-        {% elif event.type == "boost" %}
-            <div class="boost-banner">
-                <a href="{{ event.subject_identity.urls.view }}">
-                    {{ event.subject_identity.html_name_or_handle }}
-                </a> boosted
-                <time>
-                    {{ event.subject_post_interaction.published | timedeltashort }} ago
-                </time>
-            </div>
-            {% include "activities/_post.html" with post=event.subject_post %}
-        {% endif %}
-    {% empty %}
-        Nothing to show yet.
-    {% endfor %}
-
-    <div class="pagination">
-        {% if page_obj.has_previous and not request.htmx %}
-            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-            <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
-        {% endif %}
-    </div>
+    <section class="icon-menu">
+        <h1 class="above">Identities</h1>
+        {% for identity in identities %}
+            <a class="option" href="{{ identity.urls.view }}">
+                <img src="{{ identity.local_icon_url.relative }}">
+                <span class="handle">
+                    {{ identity.html_name_or_handle }}
+                    <small>@{{ identity.handle }}</small>
+                </span>
+                <button class="right secondary" _="on click go to url {{ identity.urls.view }} then halt">View</button>
+                <button class="right secondary" _="on click go to url {{ identity.urls.settings }} then halt">Settings</button>
+            </a>
+        {% empty %}
+            <p class="option empty">You have no identities.</p>
+        {% endfor %}
+        <a href="{% url "identity_create" %}" class="option new">
+            <i class="fa-solid fa-plus"></i> Create a new identity
+        </a>
+    </section>
+    <section>
+        <h1 class="above">Apps</h1>
+        <p>
+            To see your timelines, compose and edit messages, and follow people,
+            you will need to use a Mastodon-compatible app. Our favourites
+            are listed below, but there's lots more options out there!
+        </p>
+        <div class="flex-icons">
+            <a href="https://elk.zone/">
+                <img src="{% static "img/apps/elk.svg" %}" alt="Elk logo">
+                <h2>Elk</h2>
+                <i>Web/Mobile (Free)</i>
+            </a>
+            <a href="https://tusky.app/">
+                <img src="{% static "img/apps/tusky.png" %}" alt="Tusky logo">
+                <h2>Tusky</h2>
+                <i>Android (Free)</i>
+            </a>
+            <a href="https://tapbots.com/ivory/">
+                <img src="{% static "img/apps/ivory.webp" %}" alt="Ivory logo">
+                <h2>Ivory</h2>
+                <i>iOS (Paid)</i>
+            </a>
+        </div>
+    </section>
 {% endblock %}

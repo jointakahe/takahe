@@ -1,10 +1,13 @@
 from django import forms
+from django.contrib import messages
+from django.core.files import File
 from django.core.validators import RegexValidator
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 
+from core.models import Config
 from users.decorators import admin_required
 from users.models import Domain, User
 
@@ -158,6 +161,35 @@ class DomainEdit(FormView):
     extra_context = {"section": "domains"}
 
     class form_class(DomainCreate.form_class):
+        site_name = forms.CharField(
+            help_text="Override the site name for this domain",
+            required=False,
+        )
+
+        site_icon = forms.ImageField(
+            required=False,
+            help_text="Override the site icon for this domain",
+        )
+
+        hide_login = forms.BooleanField(
+            help_text="If the login button should appear in the header for this domain",
+            widget=forms.Select(choices=[(False, "Show"), (True, "Hide")]),
+            initial=True,
+            required=False,
+        )
+
+        custom_css = forms.CharField(
+            help_text="Customise the appearance of this domain\nSee our <a href='#'>documentation</a> for help on common changes\n<b>WARNING: Do not put untrusted code in here!</b>",
+            widget=forms.Textarea,
+            required=False,
+        )
+
+        single_user = forms.CharField(
+            label="Single User Profile Redirect",
+            help_text="If provided, redirect the homepage of this domain to this identity's profile for logged-out users\nUse the identity's full handle - for example, <tt>takahe@jointakahe.org</tt>",
+            required=False,
+        )
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.fields["domain"].disabled = True
@@ -168,6 +200,9 @@ class DomainEdit(FormView):
 
         def clean_service_domain(self):
             return self.cleaned_data["service_domain"]
+
+        def clean_single_user(self):
+            return self.cleaned_data["single_user"].lstrip("@")
 
     def dispatch(self, request, domain):
         self.domain = get_object_or_404(
@@ -188,6 +223,13 @@ class DomainEdit(FormView):
         self.domain.users.set(form.cleaned_data["users"])
         if self.domain.default:
             Domain.objects.exclude(pk=self.domain.pk).update(default=False)
+        Config.set_domain(self.domain, "hide_login", form.cleaned_data["hide_login"])
+        Config.set_domain(self.domain, "site_name", form.cleaned_data["site_name"])
+        if isinstance(form.cleaned_data["site_icon"], File):
+            Config.set_domain(self.domain, "site_icon", form.cleaned_data["site_icon"])
+        Config.set_domain(self.domain, "custom_css", form.cleaned_data["custom_css"])
+        Config.set_domain(self.domain, "single_user", form.cleaned_data["single_user"])
+        messages.success(self.request, f"Domain {self.domain} saved.")
         return redirect(Domain.urls.root)
 
     def get_initial(self):
@@ -198,6 +240,11 @@ class DomainEdit(FormView):
             "public": self.domain.public,
             "default": self.domain.default,
             "users": "\n".join(sorted(user.email for user in self.domain.users.all())),
+            "site_name": self.domain.config_domain.site_name,
+            "site_icon": self.domain.config_domain.site_icon,
+            "hide_login": self.domain.config_domain.hide_login,
+            "custom_css": self.domain.config_domain.custom_css,
+            "single_user": self.domain.config_domain.single_user,
         }
 
 

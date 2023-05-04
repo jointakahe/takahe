@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}{{ editing_user.email }}{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <h1>{{ editing_user.email }}</h1>
     <form action="." method="POST">
         {% csrf_token %}

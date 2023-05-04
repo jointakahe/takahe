@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{% block subtitle %}{% endblock %} - Administration{% endblock %}
+
+{% block body_class %}wide{% endblock %}
+
+{% block content %}
+    <div class="settings">
+        {% include "admin/_menu.html" %}
+        <div class="settings-content">
+            {% block settings_content %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}
