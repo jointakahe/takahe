@@ -8,7 +8,6 @@
         <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
         <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
         <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
-        <link rel="manifest" href="/manifest.json" />
         <link rel="shortcut icon" href="{{ config.site_icon }}">
         <script src="{% static "js/hyperscript.min.js" %}"></script>
         <script src="{% static "js/htmx.min.js" %}"></script>
@@ -18,14 +17,15 @@
                 --color-highlight: {{ config.highlight_color }};
                 --color-text-link: {{ config.highlight_color }};
             }
-            {% if not config_identity.visible_reaction_counts %}
-                .like-count {
-                    display: none;
-                }
-            {% endif %}
         </style>
-        {% if config_identity.custom_css %}
-            <style>{{ config_identity.custom_css|safe }}</style>
+        {% if identity and public_styling %}
+            {% if identity.domain.config_domain.custom_css %}
+                <style>{{ identity.domain.config_domain.custom_css|safe }}</style>
+            {% endif %}
+        {% else %}
+            {% if request.domain.config_domain.custom_css %}
+                <style>{{ request.domain.config_domain.custom_css|safe }}</style>
+            {% endif %}
         {% endif %}
         {% block opengraph %}
             {% include "_opengraph.html" with opengraph_local=opengraph_defaults %}
@@ -33,67 +33,51 @@
         {% block extra_head %}{% endblock %}
         {% block custom_head %}{% if config.custom_head %}{{ config.custom_head|safe }}{% endif %}{% endblock %}
     </head>
-    <body class="{% if config_identity.light_theme %}light-theme {% endif %}{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <body class="{% if user.config_user.light_theme %}theme-light {% endif %}{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <a id="skip-to-main" class="screenreader-text" href="#main-content">Skip to Content</a>
         <a id="skip-to-nav" class="screenreader-text" href="#side-navigation">Skip to Navigation</a>
         <main>
             {% block body_main %}
                 <header>
-                    <a class="logo" href="/">
-                        <img src="{{ config.site_icon }}" width="32">
-                        {{ config.site_name }}
-                    </a>
                     <menu>
-                        {% if user.is_authenticated %}
-                            <a href="{% url "compose" %}" title="Compose" role="menuitem" {% if top_section == "compose" %}class="selected"{% endif %}>
-                                <i class="fa-solid fa-feather"></i>
-                            </a>
-                            <a href="{% url "search" %}" title="Search" role="menuitem" class="search {% if top_section == "search" %}selected{% endif %}">
-                                <i class="fa-solid fa-search"></i>
-                            </a>
-                            {% if allows_refresh %}
-                                <a href="." title="Refresh" role="menuitem" hx-get="." hx-select=".left-column" hx-target=".left-column" hx-swap="outerHTML" hx-trigger="click, every 120s[isAtTopOfPage()]">
-                                    <i class="fa-solid fa-rotate"></i>
-                                </a>
+                        <a class="logo" href="/">
+                            {% if identity and public_styling %}
+                                <img src="{{ identity.domain.config_domain.site_icon|default:config.site_icon }}" width="32">
+                                {{ identity.domain.config_domain.site_name|default:config.site_name }}
+                            {% else %}
+                                <img src="{{ request.domain.config_domain.site_icon|default:config.site_icon }}" width="32">
+                                {{ request.domain.config_domain.site_name|default:config.site_name }}
                             {% endif %}
-                            <div class="gap"></div>
-                            <a href="{{ request.identity.urls.view }}" role="menuitem" class="identity">
-                                {% if not request.identity %}
-                                    No Identity
-                                    <img src="{% static "img/unknown-icon-128.png" %}" title="No identity selected">
-                                {% else %}
-                                    {{ request.identity.username }}
-                                    <img src="{{ request.identity.local_icon_url.relative }}" title="{{ request.identity.handle }}">
-                                {% endif %}
-                            </a>
-                        {% else %}
-                            <div class="gap"></div>
-                            <a href="{% url "login" %}" role="menuitem" class="identity"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+                        </a>
+                        {% if user.is_authenticated %}
+                            <a href="/" title="My Account"><i class="fa-solid fa-user"></i></a>
+                            {% if identity %}
+                                <a href="{{ identity.urls.settings }}" title="Settings"><i class="fa-solid fa-gear"></i></a>
+                            {% else %}
+                                <a href="/settings" title="Settings"><i class="fa-solid fa-gear"></i></a>
+                            {% endif %}
+                            {% if user.admin %}
+                                <a href="/admin" title="Administration"><i class="fa-solid fa-screwdriver-wrench"></i></a>
+                            {% endif %}
+                        {% elif not request.domain.config_domain.hide_login %}
+                            <a href="{% url "login" %}" title="Login"><i class="fa-solid fa-right-to-bracket"></i></a>
                         {% endif %}
                     </menu>
                 </header>
 
-                {% block full_content %}
-                    {% include "activities/_image_viewer.html" %}
-                    {% block pre_content %}
-                    {% endblock %}
-                    <div class="columns">
-                        <div class="left-column" id="main-content">
-                            {% block content %}
-                            {% endblock %}
-                        </div>
-                        <div class="right-column" id="side-navigation">
-                            {% block right_content %}
-                                {% include "activities/_menu.html" %}
-                            {% endblock %}
-                            {% include "_footer.html" %}
-                        </div>
-                    </div>
+                {% block announcements %}
+                    {% include "_announcements.html" %}
+                {% endblock %}
+
+                {% include "activities/_image_viewer.html" %}
+
+                {% block content %}
                 {% endblock %}
             {% endblock %}
         </main>
 
         {% block footer %}
+            {% include "_footer.html" %}
         {% endblock %}
 
     </body>

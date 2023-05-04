@@ -2,16 +2,18 @@ from functools import partial
 from typing import ClassVar
 
 from django import forms
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.files import File
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
 from core.models.config import Config, UploadedImage
-from users.decorators import identity_required
+from users.shortcuts import by_handle_or_404
 
 
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class SettingsPage(FormView):
     """
     Shows a settings page dynamically created from our settings layout
@@ -67,11 +69,16 @@ class SettingsPage(FormView):
         # Create a form class dynamically (yeah, right?) and return that
         return type("SettingsForm", (forms.Form,), fields)
 
+    def dispatch(self, request, *args, **kwargs):
+        if "handle" in kwargs:
+            self.identity = by_handle_or_404(request, kwargs["handle"])
+        return super().dispatch(request, *args, **kwargs)
+
     def load_config(self):
-        return Config.load_identity(self.request.identity)
+        return Config.load_identity(self.identity)
 
     def save_config(self, key, value):
-        Config.set_identity(self.request.identity, key, value)
+        Config.set_identity(self.identity, key, value)
 
     def get_initial(self):
         config = self.load_config()
@@ -87,6 +94,8 @@ class SettingsPage(FormView):
         context["fieldsets"] = {}
         for title, fields in self.layout.items():
             context["fieldsets"][title] = [context["form"][field] for field in fields]
+        if hasattr(self, "identity"):
+            context["identity"] = self.identity
         return context
 
     def form_valid(self, form):
@@ -105,4 +114,19 @@ class SettingsPage(FormView):
                 field.name,
                 form.cleaned_data[field.name],
             )
+        messages.success(self.request, "Your settings have been saved.")
         return redirect(".")
+
+
+class UserSettingsPage(SettingsPage):
+    """
+    User-option oriented version of the settings page.
+    """
+
+    options_class = Config.UserOptions
+
+    def load_config(self):
+        return Config.load_user(self.request.user)
+
+    def save_config(self, key, value):
+        Config.set_user(self.request.user, key, value)

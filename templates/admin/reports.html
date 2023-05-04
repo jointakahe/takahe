@@ -1,9 +1,9 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 {% load activity_tags %}
 
 {% block subtitle %}Reports{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <div class="view-options">
         {% if all %}
             <a href="." class="selected"><i class="fa-solid fa-check"></i> Show Resolved</a>

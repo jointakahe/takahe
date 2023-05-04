@@ -1,0 +1,102 @@
+0.9
+===
+
+*Not yet released*
+
+This release is a large overhaul Takahē that removes all timeline UI elements
+in the web interface in favour of apps, while reworking the remaining pages
+to be a pleasant profile viewing, post viewing, and settings experience.
+
+We've also started on our path of making individual domains much more
+customisable; you can now theme them individually, the Local timeline is now
+domain-specific, and domains can be set to serve single user profiles.
+
+This release's major changes:
+
+* The Home, Notifications, Local and Federated timelines have been removed
+  from the web UI. They still function for apps.
+
+* The ability to like, boost, bookmark and reply to posts has been removed from
+  the web UI. They still function for apps.
+
+* The web Compose tool has been considerably simplified and relegated to a new
+  "tools" section; most users should now use an app for composing posts.
+
+* The Follows page is now in settings and is view-only.
+
+* Identity profiles and individual post pages are now considerably simplified
+  and have no sidebar.
+
+* A Search feature is now available for posts from a single identity on its
+  profile page; users can turn this on or off in their identity's profile
+  settings.
+
+* Domains can now have their own site name, site icon, and custom CSS
+
+* Domains can be set to a "single user mode" where they redirect to a user
+  profile, rather than showing their own homepage.
+
+* Added an Authorized Apps identity settings screen, that allows seeing what apps you've
+  authorized, revocation of app access, and generating your own personal API
+  tokens.
+
+* Added a Delete Profile settings screen that allows self-serve identity deletion.
+
+* The logged-in homepage now shows a list of identities to select from as well
+  as a set of recommended apps to use for timeline interfaces.
+
+* We have totally dropped our alpha-quality SQLite support; it just doesn't have
+  sufficient full-text-search and JSON operator support, unfortunately.
+
+There are many minor changes to support the new direction; important ones include:
+
+* The dark/light mode toggle is now a User (login) setting, not an Identity setting
+
+* Identity selection is no longer part of a session - now, multiple identity
+  settings pages can be opened at once.
+
+* The ability for users to add their own custom CSS has been removed, as it
+  was potentially confusing with our upcoming profile customization work (it
+  only ever applied to your own session, and with timelines gone, it no longer
+  makes much sense!)
+
+* API pagination has been further improved, specifically for Elk compatibility
+
+* Server admins can now add a "Report a Problem" footer link with either
+  hosted content or an external link.
+
+This is a large change in direction, and we hope that it will match the way
+that people use Takahē and its multi-domain support far better. For more
+discussion and rationale on the change, see `Andrew's blog post about it <https://aeracode.org/2023/04/29/refactor-treat/>`_.
+
+Our future plans include stability and polish in order to get us to a 1.0 release,
+as well as allowing users to customize their profiles more, account import
+support, and protocol enhancements like automatic fetching of replies for
+non-local posts. If you're curious about what we're up to, or have an idea,
+we're very happy to chat about it in our Discord!
+
+If you'd like to help with code, design, other areas, see
+:doc:`/contributing` to see how to get in touch.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.9``.
+
+
+Upgrade Notes
+-------------
+
+Despite the large refactor to the UI, Takahē's internals are not significantly
+changed, and this upgrade is operationally like any other minor release.
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations; they are backwards-compatible, so please
+apply them before restarting your webservers and stator processes.
+
+One of the migrations involves adding a large search index and may take some time to
+process (on the order of minutes) if you have a large database.
+
+You may wish to bring your site down into
+a maintenance mode before applying it to reduce the chance of lock conflicts
+slowing things down, or causing request timeouts.

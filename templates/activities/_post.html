@@ -27,12 +27,8 @@
     </div>
 
     {% if post.summary %}
-        {% if config_identity.expand_linked_cws %}
-            <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt" tabindex="0">
-        {% else %}
-            <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled then toggle .hidden on the next .content then halt" tabindex="0">
-        {% endif %}
-        {{ post.summary }}
+        <div class="summary" _="on click or keyup[key is 'Enter'] toggle .enabled on <.{{ post.summary_class }} .summary/> then toggle .hidden on <.{{ post.summary_class }} .content/> then halt" tabindex="0">
+            {{ post.summary }}
         </div>
     {% endif %}
 
@@ -77,41 +73,37 @@
         </div>
     {% endif %}
 
-    {% if request.identity %}
-        <div class="actions" role="menubar">
-            {% include "activities/_reply.html" %}
-            {% include "activities/_like.html" %}
-            {% include "activities/_boost.html" %}
-            {% include "activities/_bookmark.html" %}
-            <a title="Menu" class="menu" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu" tabindex="0">
-                <i class="fa-solid fa-bars"></i>
+    <div class="actions">
+        <a title="Replies" href="{% if not post.local and post.url %}{{ post.url }}{% else %}{{ post.urls.view }}{% endif %}">
+            <i class="fa-solid fa-reply"></i>
+            <span class="like-count">{{ post.stats_with_defaults.replies|default:"0" }}</span>
+        </a>
+        <a title="Likes" class="no-action">
+            <i class="fa-solid fa-star"></i>
+            <span class="like-count">{{ post.stats_with_defaults.likes|default:"0" }}</span>
+        </a>
+        <a title="Boosts" class="no-action">
+            <i class="fa-solid fa-retweet"></i>
+            <span class="like-count">{{ post.stats_with_defaults.boosts|default:"0" }}</span>
+        </a>
+        <a title="Menu" class="menu" _="on click or keyup[key is 'Enter'] toggle .enabled on the next <menu/> then halt" role="menuitem" aria-haspopup="menu" tabindex="0">
+            <i class="fa-solid fa-bars"></i>
+        </a>
+        <menu>
+            <a href="{{ post.urls.view }}" role="menuitem">
+                <i class="fa-solid fa-comment"></i> View Post &amp; Replies
             </a>
-            <menu>
-                <a href="{{ post.urls.view }}" role="menuitem">
-                    <i class="fa-solid fa-comment"></i> View Post &amp; Replies
+            {% if not post.local and post.url %}
+                <a href="{{ post.url }}" role="menuitem">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
                 </a>
-                <a href="{{ post.urls.action_report }}" role="menuitem">
-                    <i class="fa-solid fa-flag"></i> Report
+            {% endif %}
+            {% if request.user.admin %}
+                <a href="{{ post.urls.admin_edit }}" role="menuitem">
+                    <i class="fa-solid fa-gear"></i> View In Admin
                 </a>
-                {% if post.author == request.identity %}
-                    <a href="{{ post.urls.action_edit }}" role="menuitem">
-                        <i class="fa-solid fa-pen-to-square"></i> Edit
-                    </a>
-                    <a href="{{ post.urls.action_delete }}" role="menuitem">
-                        <i class="fa-solid fa-trash"></i> Delete
-                    </a>
-                {% elif not post.local and post.url %}
-                    <a href="{{ post.url }}" role="menuitem">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> See Original
-                    </a>
-                {% endif %}
-                {% if request.user.admin %}
-                    <a href="{{ post.urls.admin_edit }}" role="menuitem">
-                        <i class="fa-solid fa-gear"></i> View In Admin
-                    </a>
-                {% endif %}
-            </menu>
-        </div>
-    {% endif %}
+            {% endif %}
+        </menu>
+    </div>
 
 </div>

@@ -2,7 +2,7 @@
 
 {% block subtitle %}Profile{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST" enctype="multipart/form-data"
         _="on submit metadata.collectMetadataFields()">
         {% csrf_token %}
@@ -12,17 +12,22 @@
             {% include "forms/_field.html" with field=form.name %}
             {% include "forms/_field.html" with field=form.summary %}
             {% include "forms/_json_name_value_list.html" with field=form.metadata %}
-            {% include "forms/_field.html" with field=form.discoverable %}
-            {% include "forms/_field.html" with field=form.visible_follows %}
         </fieldset>
 
         <fieldset>
-            <legend>Images</legend>
+            <legend>Appearance</legend>
             {% include "forms/_field.html" with field=form.icon %}
             {% include "forms/_field.html" with field=form.image %}
+            {% include "forms/_field.html" with field=form.theme %}
+        </fieldset>
+
+        <fieldset>
+            <legend>Privacy</legend>
+            {% include "forms/_field.html" with field=form.discoverable %}
+            {% include "forms/_field.html" with field=form.visible_follows %}
+            {% include "forms/_field.html" with field=form.search_enabled %}
         </fieldset>
         <div class="buttons">
-            <a href="{{ request.identity.urls.view }}" class="button secondary left">View Profile</a>
             <button>Save</button>
         </div>
     </form>

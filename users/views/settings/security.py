@@ -1,11 +1,10 @@
 from django import forms
+from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 
-from users.decorators import identity_required
 
-
-@method_decorator(identity_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")
 class SecurityPage(FormView):
     """
     Lets the identity's profile be edited

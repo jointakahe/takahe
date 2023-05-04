@@ -12,88 +12,80 @@
     {% endif %}
 {% endblock %}
 
-{% block body_class %}has-banner{% endblock %}
-
 {% block content %}
-    {% if not request.htmx %}
-        <h1 class="identity">
-            {% if identity.local_image_url %}
-                <img src="{{ identity.local_image_url.relative }}" class="banner">
-            {% endif %}
+    <section class="identity">
+        {% if identity.local_image_url %}
+            <img src="{{ identity.local_image_url.relative }}" class="banner">
+        {% endif %}
 
-            <span
-                _="on click halt the event then call imageviewer.show(me)"
+        <span
+            _="on click halt the event then call imageviewer.show(me)"
+        >
+            <img src="{{ identity.local_icon_url.relative }}" class="icon"
+                data-original-url="{{ identity.local_icon_url.relative }}"
+                alt="Profile image for {{ identity.name }}"
             >
-                <img src="{{ identity.local_icon_url.relative }}" class="icon"
-                    data-original-url="{{ identity.local_icon_url.relative }}"
-                    alt="Profile image for {{ identity.name }}"
-                >
-            </span>
+        </span>
 
-            {% if request.identity %}{% include "identity/_view_menu.html" %}{% endif %}
-
-            {{ identity.html_name_or_handle }}
-            <small>
-                @{{ identity.handle }}
-                <a title="Copy handle"
-                    class="copy"
-                    tabindex="0"
-                    _="on click or keyup[key is 'Enter']
-                        writeText('@{{ identity.handle }}') into the navigator's clipboard
-                        then add .copied
-                        wait 2s
-                        then remove .copied">
-                    <i class="fa-solid fa-copy"></i>
-                </a>
-            </small>
-        </h1>
-    {% endif %}
-
-    {% if inbound_block %}
-        <p class="system-note">
-            This user has blocked you.
-        </p>
-    {% else %}
-
-        {% if not request.htmx %}
-            {% if identity.summary %}
-                <div class="bio">
-                    {{ identity.safe_summary }}
-                </div>
-            {% endif %}
-
-            {% if identity.metadata %}
-                <div class="identity-metadata">
-                    {% for entry in identity.safe_metadata %}
-                        <div class="metadata-pair">
-                            <span class="metadata-name">{{ entry.name }}</span>
-                            <span class="metadata-value">{{ entry.value }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <div class="view-options follows">
-                <a href="{{ identity.urls.view }}" {% if not follows_page %}class="selected"{% endif %}><strong>{{ post_count }}</strong> posts</a>
-                {% if identity.local and identity.config_identity.visible_follows %}
-                    <a href="{{ identity.urls.following }}" {% if not inbound and follows_page %}class="selected"{% endif %}><strong>{{ following_count }}</strong> following</a>
-                    <a href="{{ identity.urls.followers }}" {% if inbound and follows_page %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> follower{{ followers_count|pluralize }}</a>
+        <div class="inline follow">
+            <div class="actions" role="menubar">
+                {% if request.user in identity.users.all %}
+                    <a href="{% url "settings_profile" handle=identity.handle %}" class="button" title="Edit Profile">
+                        <i class="fa-solid fa-user-edit"></i> Settings
+                    </a>
+                {% endif %}
+                {% if request.user.admin or request.user.moderator %}
+                    <a href="{% url "settings_profile" handle=identity.handle %}" class="button danger" title="View in Admin">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Admin
+                    </a>
                 {% endif %}
             </div>
+        </div>
 
-            {% if not identity.local %}
-                {% if identity.outdated and not identity.name %}
-                    <p class="system-note">
-                        The system is still fetching this profile. Refresh to see updates.
-                    </p>
-                {% else %}
-                    <p class="system-note">
-                        This is a member of another server.
-                        <a href="{{ identity.profile_uri|default:identity.actor_uri }}">See their original profile ➔</a>
-                    </p>
-                {% endif %}
-            {% endif %}
+        <h1>{{ identity.html_name_or_handle }}</h1>
+        <small>
+            @{{ identity.handle }}
+            <a title="Copy handle"
+                class="copy"
+                tabindex="0"
+                _="on click or keyup[key is 'Enter']
+                    writeText('@{{ identity.handle }}') into the navigator's clipboard
+                    then add .copied
+                    wait 2s
+                    then remove .copied">
+                <i class="fa-solid fa-copy"></i>
+            </a>
+        </small>
+        {% if identity.summary %}
+            <div class="bio">
+                {{ identity.safe_summary }}
+            </div>
         {% endif %}
+    </section>
+
+    <section class="invisible identity-metadata">
+        {% if identity.metadata %}
+            {% for entry in identity.safe_metadata %}
+                <div class="metadata-pair">
+                    <span class="metadata-name">{{ entry.name }}</span>
+                    <span class="metadata-value">{{ entry.value }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </section>
+
+    {% if not identity.local %}
+        <section class="system-note">
+            {% if identity.outdated and not identity.name %}
+                The system is still fetching this profile. Refresh to see updates.
+            {% else %}
+                This is a member of another server.
+                <a href="{{ identity.profile_uri|default:identity.actor_uri }}">See their original profile ➔</a>
+            {% endif %}
+        </section>
+    {% else %}
+
+        {% include "identity/_tabs.html" %}
 
         {% block subcontent %}
 
@@ -104,10 +96,10 @@
                     {% if identity.local %}
                         No posts yet.
                     {% else %}
-                        No posts have been received/retrieved by this server yet.
+                        No posts have been received by this server yet.
 
                         {% if identity.profile_uri %}
-                            You might find historical posts at
+                            You may find historical posts at
                             <a href="{{ identity.profile_uri }}">their original profile ➔</a>
                         {% endif %}
                     {% endif %}
@@ -120,7 +112,7 @@
                 {% endif %}
 
                 {% if page_obj.has_next %}
-                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML" {% if config_identity.infinite_scroll %}hx-trigger="revealed"{% endif %}>Next Page</a>
+                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML">Next Page</a>
                 {% endif %}
             </div>
 

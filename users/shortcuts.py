@@ -34,3 +34,14 @@ def by_handle_or_404(request, handle, local=True, fetch=False) -> Identity:
     if identity.blocked:
         raise Http404("Blocked user")
     return identity
+
+
+def by_handle_for_user_or_404(request, handle):
+    """
+    Retrieves an identity the local user can control via their handle, or
+    raises a 404.
+    """
+    identity = by_handle_or_404(request, handle, local=True, fetch=False)
+    if not identity.users.filter(id=request.user.id).exists():
+        raise Http404("Current user does not own identity")
+    return identity

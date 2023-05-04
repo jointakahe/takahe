@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}{{ emoji.shortcode }}{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset>

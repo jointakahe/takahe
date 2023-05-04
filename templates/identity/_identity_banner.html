@@ -24,7 +24,7 @@
         <a href="{{ identity.urls.view }}" class="handle">
     {% endif %}
     <div class="link">{{ identity.html_name_or_handle }}</div>
-    <small>@{{ identity.handle }}</small>
+    <small>@{{ identity.username }}​@{{ identity.domain_id }}</small>
     {% if link_handle is False %}
         </div>
     {% else %}

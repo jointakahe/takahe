@@ -43,6 +43,14 @@ class Config(models.Model):
         on_delete=models.CASCADE,
     )
 
+    domain = models.ForeignKey(
+        "users.domain",
+        blank=True,
+        null=True,
+        related_name="configs",
+        on_delete=models.CASCADE,
+    )
+
     json = models.JSONField(blank=True, null=True)
     image = models.ImageField(
         blank=True,
@@ -52,7 +60,7 @@ class Config(models.Model):
 
     class Meta:
         unique_together = [
-            ("key", "user", "identity"),
+            ("key", "user", "identity", "domain"),
         ]
 
     system: ClassVar["Config.ConfigOptions"]  # type: ignore
@@ -86,7 +94,7 @@ class Config(models.Model):
         """
         return cls.load_values(
             cls.SystemOptions,
-            {"identity__isnull": True, "user__isnull": True},
+            {"identity__isnull": True, "user__isnull": True, "domain__isnull": True},
         )
 
     @classmethod
@@ -96,7 +104,7 @@ class Config(models.Model):
         """
         return await sync_to_async(cls.load_values)(
             cls.SystemOptions,
-            {"identity__isnull": True, "user__isnull": True},
+            {"identity__isnull": True, "user__isnull": True, "domain__isnull": True},
         )
 
     @classmethod
@@ -106,7 +114,7 @@ class Config(models.Model):
         """
         return cls.load_values(
             cls.UserOptions,
-            {"identity__isnull": True, "user": user},
+            {"identity__isnull": True, "user": user, "domain__isnull": True},
         )
 
     @classmethod
@@ -116,7 +124,7 @@ class Config(models.Model):
         """
         return await sync_to_async(cls.load_values)(
             cls.UserOptions,
-            {"identity__isnull": True, "user": user},
+            {"identity__isnull": True, "user": user, "domain__isnull": True},
         )
 
     @classmethod
@@ -126,7 +134,7 @@ class Config(models.Model):
         """
         return cls.load_values(
             cls.IdentityOptions,
-            {"identity": identity, "user__isnull": True},
+            {"identity": identity, "user__isnull": True, "domain__isnull": True},
         )
 
     @classmethod
@@ -136,7 +144,27 @@ class Config(models.Model):
         """
         return await sync_to_async(cls.load_values)(
             cls.IdentityOptions,
-            {"identity": identity, "user__isnull": True},
+            {"identity": identity, "user__isnull": True, "domain__isnull": True},
+        )
+
+    @classmethod
+    def load_domain(cls, domain):
+        """
+        Loads an domain config options object
+        """
+        return cls.load_values(
+            cls.DomainOptions,
+            {"domain": domain, "user__isnull": True, "identity__isnull": True},
+        )
+
+    @classmethod
+    async def aload_domain(cls, domain):
+        """
+        Async loads an domain config options object
+        """
+        return await sync_to_async(cls.load_values)(
+            cls.DomainOptions,
+            {"domain": domain, "user__isnull": True, "identity__isnull": True},
         )
 
     @classmethod
@@ -170,7 +198,7 @@ class Config(models.Model):
             key,
             value,
             cls.SystemOptions,
-            {"identity__isnull": True, "user__isnull": True},
+            {"identity__isnull": True, "user__isnull": True, "domain__isnull": True},
         )
 
     @classmethod
@@ -179,7 +207,7 @@ class Config(models.Model):
             key,
             value,
             cls.UserOptions,
-            {"identity__isnull": True, "user": user},
+            {"identity__isnull": True, "user": user, "domain__isnull": True},
         )
 
     @classmethod
@@ -188,7 +216,16 @@ class Config(models.Model):
             key,
             value,
             cls.IdentityOptions,
-            {"identity": identity, "user__isnull": True},
+            {"identity": identity, "user__isnull": True, "domain__isnull": True},
+        )
+
+    @classmethod
+    def set_domain(cls, domain, key, value):
+        cls.set_value(
+            key,
+            value,
+            cls.DomainOptions,
+            {"domain": domain, "user__isnull": True, "identity__isnull": True},
         )
 
     class SystemOptions(pydantic.BaseModel):
@@ -210,6 +247,7 @@ class Config(models.Model):
         policy_terms: str = ""
         policy_privacy: str = ""
         policy_rules: str = ""
+        policy_issues: str = ""
 
         signup_allowed: bool = True
         signup_text: str = ""
@@ -239,20 +277,23 @@ class Config(models.Model):
         custom_head: str | None
 
     class UserOptions(pydantic.BaseModel):
-
-        pass
+        light_theme: bool = False
 
     class IdentityOptions(pydantic.BaseModel):
 
         toot_mode: bool = False
         default_post_visibility: int = 0  # Post.Visibilities.public
-        default_reply_visibility: int = 1  # Post.Visibilities.unlisted
         visible_follows: bool = True
-        light_theme: bool = False
+        search_enabled: bool = True
 
-        # wellness Options
+        # Wellness Options
         visible_reaction_counts: bool = True
         expand_linked_cws: bool = True
-        infinite_scroll: bool = True
 
-        custom_css: str | None
+    class DomainOptions(pydantic.BaseModel):
+
+        site_name: str = ""
+        site_icon: UploadedImage | None = None
+        hide_login: bool = False
+        custom_css: str = ""
+        single_user: str = ""

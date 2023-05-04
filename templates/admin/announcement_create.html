@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}Create Announcement{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST">
         {% csrf_token %}
         <fieldset>

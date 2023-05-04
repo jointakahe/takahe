@@ -11,6 +11,7 @@ import httpx
 import urlman
 from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.db import models, transaction
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
@@ -312,6 +313,10 @@ class Post(StatorModel):
     class Meta:
         indexes = [
             GinIndex(fields=["hashtags"], name="hashtags_gin"),
+            GinIndex(
+                SearchVector("content", config="english"),
+                name="content_vector_gin",
+            ),
             models.Index(
                 fields=["visibility", "local", "published"],
                 name="ix_post_local_public_published",
@@ -484,7 +489,10 @@ class Post(StatorModel):
             # Strip all unwanted HTML and apply linebreaks filter, grabbing hashtags on the way
             parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
             content = parser.html
-            hashtags = sorted(parser.hashtags) or None
+            hashtags = (
+                sorted([tag[: Hashtag.MAXIMUM_LENGTH] for tag in parser.hashtags])
+                or None
+            )
             # Make the Post object
             post = cls.objects.create(
                 author=author,
@@ -518,12 +526,16 @@ class Post(StatorModel):
         sensitive: bool | None = None,
         visibility: int = Visibilities.public,
         attachments: list | None = None,
+        attachment_attributes: list | None = None,
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
             parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
             self.content = parser.html
-            self.hashtags = sorted(parser.hashtags) or None
+            self.hashtags = (
+                sorted([tag[: Hashtag.MAXIMUM_LENGTH] for tag in parser.hashtags])
+                or None
+            )
             self.summary = summary or None
             self.sensitive = bool(summary) if sensitive is None else sensitive
             self.visibility = visibility
@@ -532,6 +544,15 @@ class Post(StatorModel):
             self.emojis.set(Emoji.emojis_from_content(content, None))
             self.attachments.set(attachments or [])
             self.save()
+
+            for attrs in attachment_attributes or []:
+                attachment = next(
+                    (a for a in attachments or [] if str(a.id) == attrs.id), None
+                )
+                if attachment is None:
+                    continue
+                attachment.name = attrs.description
+                attachment.save()
 
     @classmethod
     def mentions_from_content(cls, content, author) -> set[Identity]:
@@ -562,7 +583,7 @@ class Post(StatorModel):
         if self.hashtags:
             for hashtag in self.hashtags:
                 tag, _ = await Hashtag.objects.aget_or_create(
-                    hashtag=hashtag,
+                    hashtag=hashtag[: Hashtag.MAXIMUM_LENGTH],
                 )
                 await tag.atransition_perform(HashtagStates.outdated)
 
@@ -861,7 +882,9 @@ class Post(StatorModel):
                     post.mentions.add(mention_identity)
                 elif tag_type in ["_:hashtag", "hashtag"]:
                     post.hashtags.append(
-                        get_value_or_map(tag, "name", "nameMap").lower().lstrip("#")
+                        get_value_or_map(tag, "name", "nameMap")
+                        .lower()
+                        .lstrip("#")[: Hashtag.MAXIMUM_LENGTH]
                     )
                 elif tag_type in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)

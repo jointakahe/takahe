@@ -1,15 +1,13 @@
-from django.core.exceptions import PermissionDenied
 from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
-from activities.models import Post, PostInteraction, PostStates
+from activities.models import Post, PostStates
 from activities.services import PostService
 from core.decorators import cache_page_by_ap_json
 from core.ld import canonicalise
-from users.decorators import identity_required
 from users.models import Identity
 from users.shortcuts import by_handle_or_404
 
@@ -19,7 +17,6 @@ from users.shortcuts import by_handle_or_404
 )
 @method_decorator(vary_on_headers("Accept"), name="dispatch")
 class Individual(TemplateView):
-
     template_name = "activities/post.html"
 
     identity: Identity
@@ -32,7 +29,7 @@ class Individual(TemplateView):
         self.post_obj = get_object_or_404(
             PostService.queryset()
             .filter(author=self.identity)
-            .visible_to(request.identity, include_replies=True),
+            .unlisted(include_replies=True),
             pk=post_id,
         )
         if self.post_obj.state in [PostStates.deleted, PostStates.deleted_fanned_out]:
@@ -49,20 +46,17 @@ class Individual(TemplateView):
         context = super().get_context_data(**kwargs)
 
         ancestors, descendants = PostService(self.post_obj).context(
-            self.request.identity
+            identity=None, num_ancestors=2
         )
 
         context.update(
             {
                 "identity": self.identity,
                 "post": self.post_obj,
-                "interactions": PostInteraction.get_post_interactions(
-                    [self.post_obj] + ancestors + descendants,
-                    self.request.identity,
-                ),
                 "link_original": True,
                 "ancestors": ancestors,
                 "descendants": descendants,
+                "public_styling": True,
             }
         )
 
@@ -76,128 +70,3 @@ class Individual(TemplateView):
             canonicalise(self.post_obj.to_ap(), include_security=True),
             content_type="application/activity+json",
         )
-
-
-@method_decorator(identity_required, name="dispatch")
-class Like(View):
-    """
-    Adds/removes a like from the current identity to the post
-    """
-
-    undo = False
-
-    def post(self, request, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(
-            PostService.queryset()
-            .filter(author=identity)
-            .visible_to(request.identity, include_replies=True),
-            pk=post_id,
-        )
-        service = PostService(post)
-        if self.undo:
-            service.unlike_as(request.identity)
-        else:
-            service.like_as(request.identity)
-        # Return either a redirect or a HTMX snippet
-        if request.htmx:
-            return render(
-                request,
-                "activities/_like.html",
-                {
-                    "post": post,
-                    "interactions": {"like": set() if self.undo else {post.pk}},
-                },
-            )
-        return redirect(post.urls.view)
-
-
-@method_decorator(identity_required, name="dispatch")
-class Boost(View):
-    """
-    Adds/removes a boost from the current identity to the post
-    """
-
-    undo = False
-
-    def post(self, request, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(
-            PostService.queryset()
-            .filter(author=identity)
-            .visible_to(request.identity, include_replies=True),
-            pk=post_id,
-        )
-        service = PostService(post)
-        if self.undo:
-            service.unboost_as(request.identity)
-        else:
-            service.boost_as(request.identity)
-        # Return either a redirect or a HTMX snippet
-        if request.htmx:
-            return render(
-                request,
-                "activities/_boost.html",
-                {
-                    "post": post,
-                    "interactions": {"boost": set() if self.undo else {post.pk}},
-                },
-            )
-        return redirect(post.urls.view)
-
-
-@method_decorator(identity_required, name="dispatch")
-class Bookmark(View):
-    """
-    Adds/removes a bookmark from the current identity to the post
-    """
-
-    undo = False
-
-    def post(self, request, handle, post_id):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        post = get_object_or_404(
-            PostService.queryset()
-            .filter(author=identity)
-            .visible_to(request.identity, include_replies=True),
-            pk=post_id,
-        )
-        if self.undo:
-            request.identity.bookmarks.filter(post=post).delete()
-        else:
-            request.identity.bookmarks.get_or_create(post=post)
-        # Return either a redirect or a HTMX snippet
-        if request.htmx:
-            return render(
-                request,
-                "activities/_bookmark.html",
-                {
-                    "post": post,
-                    "bookmarks": set() if self.undo else {post.pk},
-                },
-            )
-        return redirect(post.urls.view)
-
-
-@method_decorator(identity_required, name="dispatch")
-class Delete(TemplateView):
-    """
-    Deletes a post
-    """
-
-    template_name = "activities/post_delete.html"
-
-    def dispatch(self, request, handle, post_id):
-        # Make sure the request identity owns the post!
-        if handle != request.identity.handle:
-            raise PermissionDenied("Post author is not requestor")
-        self.identity = by_handle_or_404(self.request, handle, local=False)
-        self.post_obj = get_object_or_404(self.identity.posts, pk=post_id)
-        return super().dispatch(request)
-
-    def get_context_data(self):
-        return {"post": self.post_obj}
-
-    def post(self, request):
-        PostService(self.post_obj).delete()
-        return redirect("/")

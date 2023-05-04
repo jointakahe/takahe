@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}{{ identity.name_or_handle }}{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <h1>{{ identity.html_name_or_handle }} <small>{{ identity.handle }}</small></h1>
     <form action="." method="POST">
         {% csrf_token %}

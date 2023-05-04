@@ -2,7 +2,7 @@
 
 {% block subtitle %}Import/Export{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
@@ -32,7 +32,7 @@
                         <small>{{ numbers.outbound_follows }} {{ numbers.outbound_follows|pluralize:"follow,follows" }}</small>
                     </td>
                     <td>
-                        <a href="{% url "settings_export_following_csv" %}">Download CSV</a>
+                        <a href="{% url "settings_export_following_csv" handle=identity.handle %}">Download CSV</a>
                     </td>
                 </tr>
                 <tr>
@@ -41,7 +41,7 @@
                         <small>{{ numbers.inbound_follows }} {{ numbers.inbound_follows|pluralize:"follower,followers" }}</small>
                     </td>
                     <td>
-                        <a href="{% url "settings_export_followers_csv" %}">Download CSV</a>
+                        <a href="{% url "settings_export_followers_csv" handle=identity.handle %}">Download CSV</a>
                     </td>
                 </tr>
                 <tr>

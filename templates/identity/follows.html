@@ -1,6 +1,6 @@
 {% extends "identity/view.html" %}
 
-{% block title %}{% if self.inbound %}Followers{% else %}Following{% endif %} - {{ identity }}{% endblock %}
+{% block title %}{% if inbound %}Followers{% else %}Following{% endif %} - {{ identity }}{% endblock %}
 
 {% block subcontent %}
 
@@ -8,7 +8,7 @@
         {% include "activities/_identity.html" %}
     {% empty %}
         <span class="empty">
-            This person has no {% if self.inbound %}followers{% else %}follows{% endif %} yet.
+            This person has no {% if inbound %}followers{% else %}follows{% endif %} yet.
         </span>
     {% endfor %}
 

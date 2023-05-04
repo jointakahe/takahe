@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}Stator{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     {% for model, stats in model_stats.items %}
         <fieldset>
             <legend>{{ model }}</legend>

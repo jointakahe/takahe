@@ -20,16 +20,6 @@ def vary_by_ap_json(request, *args, **kwargs) -> str:
     return "not_ap"
 
 
-def vary_by_identity(request, *args, **kwargs) -> str:
-    """
-    Return a cache usable string token that is different based upon the
-    request.identity
-    """
-    if request.identity:
-        return f"ident{request.identity.pk}"
-    return "identNone"
-
-
 def cache_page(
     timeout: int | str = "cache_timeout_page_default",
     *,

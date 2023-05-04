@@ -50,12 +50,18 @@ class PostStatusSchema(Schema):
     poll: PostPollSchema | None = None
 
 
+class MediaAttributesSchema(Schema):
+    id: str
+    description: str
+
+
 class EditStatusSchema(Schema):
     status: str
     sensitive: bool = False
     spoiler_text: str | None = None
     language: str | None = None
     media_ids: list[str] = []
+    media_attributes: list[MediaAttributesSchema] = []
 
 
 def post_for_id(request: HttpRequest, id: str) -> Post:
@@ -134,6 +140,7 @@ def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
         summary=details.spoiler_text,
         sensitive=details.sensitive,
         attachments=attachments,
+        attachment_attributes=details.media_attributes,
     )
     return schemas.Status.from_post(post)
 

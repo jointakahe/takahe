@@ -1,0 +1,56 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Follows{% endblock %}
+
+{% block settings_content %}
+    <div class="view-options">
+        {% if inbound %}
+            <a href=".">Following ({{ num_outbound }})</a>
+            <a href="." class="selected">Followers ({{ num_inbound }})</a>
+        {% else %}
+            <a href=".?inbound=true" class="selected">Following ({{ num_outbound }})</a>
+            <a href=".?inbound=true">Followers ({{ num_inbound }})</a>
+        {% endif %}
+    </div>
+
+    <table class="items">
+        {% for other_identity in page_obj %}
+            <tr>
+                <td class="icon">
+                    <a href="{{ other_identity.urls.view }}" class="overlay"></a>
+                    <img
+                        src="{{ other_identity.local_icon_url.relative }}"
+                        class="icon"
+                        alt="Avatar for {{ other_identity.name_or_handle }}"
+                        loading="lazy"
+                        data-handle="{{ other_identity.name_or_handle }}"
+                        _="on error set my.src to generate_avatar(@data-handle)"
+                    >
+                </td>
+                <td class="name">
+                    <a href="{{ other_identity.urls.view }}" class="overlay"></a>
+                    {{ other_identity.html_name_or_handle }}
+                    <small>@{{ other_identity.handle }}</small>
+                </td>
+                <td class="stat">
+                    {% if other_identity.id in outbound_ids %}
+                        <span class="pill">Following</span>
+                    {% endif %}
+                    {% if other_identity.id in inbound_ids %}
+                        <span class="pill">Follows You</span>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="{{ other_identity.urls.view }}" title="View"><i class="fa-solid fa-eye"></i></a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="empty"><td>You {% if inbound %}have no followers{% else %}are not following anyone{% endif %}.</td></tr>
+        {% endfor %}
+    </table>
+    {% if inbound %}
+        {% include "admin/_pagination.html" with nouns="follower,followers" %}
+    {% else %}
+        {% include "admin/_pagination.html" with nouns="follow,follows" %}
+    {% endif %}
+{% endblock %}

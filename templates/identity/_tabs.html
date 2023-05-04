@@ -1,0 +1,10 @@
+<section class="view-options">
+    <a href="{{ identity.urls.view }}" {% if not section %}class="selected"{% endif %}><strong>{{ post_count }}</strong> Posts</a>
+    {% if identity.local and identity.config_identity.visible_follows %}
+        <a href="{{ identity.urls.following }}" {% if not inbound and section == "follows" %}class="selected"{% endif %}><strong>{{ following_count }}</strong> Following</a>
+        <a href="{{ identity.urls.followers }}" {% if inbound and section == "follows" %}class="selected"{% endif %}><strong>{{ followers_count }}</strong> Follower{{ followers_count|pluralize }}</a>
+    {% endif %}
+    {% if identity.local and identity.config_identity.search_enabled %}
+        <a href="{{ identity.urls.search }}" {% if section == "search" %}class="selected"{% endif %}>Search</a>
+    {% endif %}
+</section>

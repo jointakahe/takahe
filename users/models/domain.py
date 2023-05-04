@@ -1,5 +1,6 @@
 import json
 import ssl
+from functools import cached_property
 from typing import Optional
 
 import httpx
@@ -10,6 +11,7 @@ from django.conf import settings
 from django.db import models
 
 from core.exceptions import capture_message
+from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.schemas import NodeInfo
 
@@ -230,3 +232,9 @@ class Domain(StatorModel):
             version = software.get("version", "unknown")
             return f"{name:.10} - {version:.10}"
         return None
+
+    ### Config ###
+
+    @cached_property
+    def config_domain(self) -> Config.DomainOptions:
+        return Config.load_domain(self)

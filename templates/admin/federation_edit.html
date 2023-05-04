@@ -1,8 +1,8 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}{{ domain.domain }}{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST">
         {% csrf_token %}
         <h1>{{ domain }}</h1>

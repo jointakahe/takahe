@@ -87,6 +87,8 @@ class HashtagManager(models.Manager):
 
 class Hashtag(StatorModel):
 
+    MAXIMUM_LENGTH = 100
+
     # Normalized hashtag without the '#'
     hashtag = models.SlugField(primary_key=True, max_length=100)
 

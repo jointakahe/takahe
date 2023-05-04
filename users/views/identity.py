@@ -10,14 +10,13 @@ from django.utils.decorators import method_decorator
 from django.utils.feedgenerator import Rss201rev2Feed
 from django.utils.xmlutils import SimplerXMLGenerator
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import FormView, ListView, TemplateView, View
+from django.views.generic import FormView, ListView
 
-from activities.models import Post, PostInteraction
-from activities.services import TimelineService
+from activities.models import Post
+from activities.services import SearchService, TimelineService
 from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
-from users.decorators import identity_required
 from users.models import Domain, FollowStates, Identity, IdentityStates
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
@@ -65,15 +64,12 @@ class ViewIdentity(ListView):
         )
 
     def get_queryset(self):
-        return TimelineService(self.request.identity).identity_public(self.identity)
+        return TimelineService(None).identity_public(self.identity)
 
     def get_context_data(self):
         context = super().get_context_data()
         context["identity"] = self.identity
-        context["interactions"] = PostInteraction.get_post_interactions(
-            context["page_obj"],
-            self.request.identity,
-        )
+        context["public_styling"] = True
         context["post_count"] = self.identity.posts.count()
         if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
@@ -82,10 +78,6 @@ class ViewIdentity(ListView):
             context["following_count"] = self.identity.outbound_follows.filter(
                 state__in=FollowStates.group_active()
             ).count()
-        if self.request.identity:
-            context.update(
-                IdentityService(self.identity).relationships(self.request.identity)
-            )
         return context
 
 
@@ -231,7 +223,8 @@ class IdentityFollows(ListView):
         context = super().get_context_data()
         context["identity"] = self.identity
         context["inbound"] = self.inbound
-        context["follows_page"] = True
+        context["section"] = "follows"
+        context["public_styling"] = True
         context["followers_count"] = self.identity.inbound_follows.filter(
             state__in=FollowStates.group_active()
         ).count()
@@ -242,55 +235,42 @@ class IdentityFollows(ListView):
         return context
 
 
-@method_decorator(identity_required, name="dispatch")
-class ActionIdentity(View):
-    def post(self, request, handle):
-        identity = by_handle_or_404(self.request, handle, local=False)
-        # See what action we should perform
-        action = self.request.POST["action"]
-        if action == "follow":
-            IdentityService(request.identity).follow(identity)
-        elif action == "unfollow":
-            IdentityService(request.identity).unfollow(identity)
-        elif action == "block":
-            IdentityService(request.identity).block(identity)
-        elif action == "unblock":
-            IdentityService(request.identity).unblock(identity)
-        elif action == "mute":
-            IdentityService(request.identity).mute(identity)
-        elif action == "unmute":
-            IdentityService(request.identity).unmute(identity)
-        elif action == "hide_boosts":
-            IdentityService(request.identity).follow(identity, boosts=False)
-        elif action == "show_boosts":
-            IdentityService(request.identity).follow(identity, boosts=True)
-        else:
-            raise ValueError(f"Cannot handle identity action {action}")
-        return redirect(identity.urls.view)
+class IdentitySearch(FormView):
+    """
+    Allows an identity's posts to be searched.
+    """
 
+    template_name = "identity/search.html"
 
-@method_decorator(login_required, name="dispatch")
-class SelectIdentity(TemplateView):
-    template_name = "identity/select.html"
+    class form_class(forms.Form):
+        query = forms.CharField(help_text="The text to search for")
 
-    def get_context_data(self):
-        return {
-            "identities": Identity.objects.filter(users__pk=self.request.user.pk),
-        }
+    def dispatch(self, request, handle):
+        self.identity = by_handle_or_404(self.request, handle)
+        if not Config.load_identity(self.identity).search_enabled:
+            raise Http404("Search not enabled")
+        return super().dispatch(request, identity=self.identity)
 
+    def form_valid(self, form):
+        self.results = SearchService(
+            query=form.cleaned_data["query"], identity=self.identity
+        ).search_post_content()
+        return self.form_invalid(form)
 
-@method_decorator(login_required, name="dispatch")
-class ActivateIdentity(View):
-    def get(self, request, handle):
-        identity = by_handle_or_404(request, handle)
-        if not identity.users.filter(pk=request.user.pk).exists():
-            raise Http404()
-        request.session["identity_id"] = identity.id
-        # Get next URL, not allowing offsite links
-        next = request.GET.get("next") or "/"
-        if ":" in next:
-            next = "/"
-        return redirect("/")
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["identity"] = self.identity
+        context["section"] = "search"
+        context["public_styling"] = True
+        context["followers_count"] = self.identity.inbound_follows.filter(
+            state__in=FollowStates.group_active()
+        ).count()
+        context["following_count"] = self.identity.outbound_follows.filter(
+            state__in=FollowStates.group_active()
+        ).count()
+        context["post_count"] = self.identity.posts.count()
+        context["results"] = getattr(self, "results", None)
+        return context
 
 
 @method_decorator(login_required, name="dispatch")

@@ -1,38 +1,5 @@
 {% extends "base.html" %}
 
-{% block body_class %}no-sidebar{% endblock %}
-
 {% block opengraph %}
     {# Error pages don't have the context loaded, so disable opengraph to keep it from spewing errors #}
-{% endblock %}
-
-{% block body_main %}
-    <header>
-        <menu>
-            {% if not request.user.is_authenticated and current_page == "about" and config.signup_allowed %}
-                <a href="{% url "signup" %}">Sign Up</a>
-            {% else %}
-                <a href="/">Home</a>
-            {% endif %}
-            <a class="logo" href="/">
-                <img src="{{ config.site_icon }}" width="32">
-                {{ config.site_name }}
-            </a>
-            {% if request.user.is_authenticated %}
-                <a href="javascript:history.back()">Back</a>
-            {% else %}
-                <a href="{% url "login" %}">Login</a>
-            {% endif %}
-        </menu>
-    </header>
-
-    <div id="main-content">
-        {% include "activities/_image_viewer.html" %}
-        {% block content %}
-        {% endblock %}
-    </div>
-{% endblock %}
-
-{% block footer %}
-    {% include "_footer.html" %}
 {% endblock %}

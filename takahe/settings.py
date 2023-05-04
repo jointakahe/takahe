@@ -194,6 +194,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "corsheaders",
     "django_htmx",
     "hatchway",
@@ -220,7 +221,7 @@ MIDDLEWARE = [
     "core.middleware.HeadersMiddleware",
     "core.middleware.ConfigLoadingMiddleware",
     "api.middleware.ApiTokenMiddleware",
-    "users.middleware.IdentityMiddleware",
+    "users.middleware.DomainMiddleware",
 ]
 
 ROOT_URLCONF = "takahe.urls"
@@ -324,6 +325,7 @@ CORS_ORIGIN_ALLOW_ALL = True  # Temporary
 CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
 CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 604800
+CORS_EXPOSE_HEADERS = ("link",)
 
 JSONLD_MAX_SIZE = 1024 * 50  # 50 KB
 

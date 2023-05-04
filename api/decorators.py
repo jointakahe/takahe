@@ -6,8 +6,7 @@ from django.http import JsonResponse
 
 def identity_required(function):
     """
-    API version of the identity_required decorator that just makes sure the
-    token is tied to one, not an app only.
+    Makes sure the token is tied to an identity, not an app only.
     """
 
     @wraps(function)

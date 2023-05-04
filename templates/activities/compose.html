@@ -1,41 +1,26 @@
-{% extends "base.html" %}
+{% extends "settings/base.html" %}
 
 {% block title %}Compose{% endblock %}
 
-{% block content %}
-    <form action="." method="POST">
+{% block settings_content %}
+    <form action="." method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset>
-            <legend>Content</legend>
-            {% if reply_to %}
-                <label>Replying to</label>
-                {% include "activities/_mini_post.html" with post=reply_to %}
-            {% endif %}
-            {{ form.reply_to }}
+            <legend>Compose</legend>
+            <p><i>For more advanced posting options, like editing and multiple image uploads, please use an app.</i></p>
             {{ form.id }}
             {% include "forms/_field.html" with field=form.text %}
-            {% include "forms/_field.html" with field=form.content_warning %}
             {% include "forms/_field.html" with field=form.visibility %}
+            {% include "forms/_field.html" with field=form.content_warning %}
         </fieldset>
         <fieldset>
-            <legend>Images</legend>
-            {% if post %}
-                {% for attachment in post.attachments.all %}
-                    {% include "activities/_image_uploaded.html" %}
-                {% endfor %}
-            {% endif %}
-            {% if not post or post.attachments.count < 4 %}
-                <button class="add-image"
-                    hx-get='{% url "compose_image_upload" %}'
-                    hx-target="this"
-                    hx-swap="outerHTML">
-                    Add Image
-                </button>
-            {% endif %}
+            <legend>Image</legend>
+            {% include "forms/_field.html" with field=form.image %}
+            {% include "forms/_field.html" with field=form.image_caption %}
         </fieldset>
         <div class="buttons">
             <span id="character-counter">{{ config.post_length }}</span>
-            <button id="post-button">{% if post %}Save Edits{% elif config_identity.toot_mode %}Toot!{% else %}Post{% endif %}</button>
+            <button id="post-button">{% if post %}Save Edits{% else %}Post{% endif %}</button>
         </div>
     </form>
 {% endblock %}

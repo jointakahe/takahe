@@ -111,7 +111,6 @@ class IdentityStates(StateGraph):
 
     @classmethod
     async def handle_outdated(cls, identity: "Identity"):
-
         # Local identities never need fetching
         if identity.local:
             return cls.updated
@@ -231,9 +230,11 @@ class Identity(StatorModel):
 
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
+        settings = "{view}settings/"
         action = "{view}action/"
         followers = "{view}followers/"
         following = "{view}following/"
+        search = "{view}search/"
         activate = "{view}activate/"
         admin = "/admin/identities/"
         admin_edit = "{admin}{self.pk}/"
@@ -612,6 +613,23 @@ class Identity(StatorModel):
             actor.delete()
         except cls.DoesNotExist:
             pass
+
+    ### Deletion ###
+
+    def mark_deleted(self):
+        """
+        Marks the identity and all of its related content as deleted.
+        """
+        # Move all posts to deleted
+        from activities.models.post import Post, PostStates
+
+        Post.transition_perform_queryset(self.posts, PostStates.deleted)
+        # Remove all users from ourselves and mark deletion date
+        self.users.set([])
+        self.deleted = timezone.now()
+        self.save()
+        # Move ourselves to deleted
+        self.transition_perform(IdentityStates.deleted)
 
     ### Actor/Webfinger fetching ###
 

@@ -1,9 +1,9 @@
-{% extends "settings/base.html" %}
+{% extends "admin/base_main.html" %}
 
 {% block subtitle %}{{ domain.domain }}{% endblock %}
 
-{% block content %}
-    <form action="." method="POST">
+{% block settings_content %}
+    <form action="." method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <fieldset>
             <legend>Domain Details</legend>
@@ -15,6 +15,14 @@
             {% include "forms/_field.html" with field=form.public %}
             {% include "forms/_field.html" with field=form.default %}
             {% include "forms/_field.html" with field=form.users %}
+        </fieldset>
+        <fieldset>
+            <legend>Appearance</legend>
+            {% include "forms/_field.html" with field=form.site_name %}
+            {% include "forms/_field.html" with field=form.site_icon %}
+            {% include "forms/_field.html" with field=form.hide_login %}
+            {% include "forms/_field.html" with field=form.single_user %}
+            {% include "forms/_field.html" with field=form.custom_css %}
         </fieldset>
         <fieldset>
             <legend>Admin Notes</legend>

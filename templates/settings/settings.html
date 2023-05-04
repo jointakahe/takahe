@@ -2,7 +2,7 @@
 
 {% block subtitle %}{{ section.title }}{% endblock %}
 
-{% block content %}
+{% block settings_content %}
     <form action="." method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {% for title, fields in fieldsets.items %}
