@@ -1,7 +1,7 @@
 import pytest
 from pytest_httpx import HTTPXMock
 
-from activities.models import Post, PostStates
+from activities.models import Hashtag, Post, PostStates
 from activities.models.post_types import QuestionData
 from users.models import Identity, InboxMessage
 
@@ -55,6 +55,34 @@ def test_post_create_edit(identity: Identity, config_system):
     post.edit_local(content="Now I like #hashtags")
     assert post.hashtags == ["hashtags"]
     assert list(post.mentions.all()) == []
+
+
+@pytest.mark.django_db
+def test_ensure_hashtag(identity: Identity, config_system, stator):
+    """
+    Tests that normal hashtags get a Hashtag object created, and a hashtag
+    over our limit of 100 characters is truncated.
+    """
+    # Normal length hashtag
+    post = Post.create_local(
+        author=identity,
+        content="Hello, #testtag",
+    )
+    stator.run_single_cycle_sync()
+    assert post.hashtags == ["testtag"]
+    assert Hashtag.objects.filter(hashtag="testtag").exists()
+    # Excessively long hashtag
+    post = Post.create_local(
+        author=identity,
+        content="Hello, #thisisahashtagthatiswaytoolongandissignificantlyaboveourmaximumlimitofonehundredcharacterswhytheywouldbethislongidontknow",
+    )
+    stator.run_single_cycle_sync()
+    assert post.hashtags == [
+        "thisisahashtagthatiswaytoolongandissignificantlyaboveourmaximumlimitofonehundredcharacterswhytheywou"
+    ]
+    assert Hashtag.objects.filter(
+        hashtag="thisisahashtagthatiswaytoolongandissignificantlyaboveourmaximumlimitofonehundredcharacterswhytheywou"
+    ).exists()
 
 
 @pytest.mark.django_db
