@@ -489,7 +489,10 @@ class Post(StatorModel):
             # Strip all unwanted HTML and apply linebreaks filter, grabbing hashtags on the way
             parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
             content = parser.html
-            hashtags = sorted(parser.hashtags) or None
+            hashtags = (
+                sorted([tag[: Hashtag.MAXIMUM_LENGTH] for tag in parser.hashtags])
+                or None
+            )
             # Make the Post object
             post = cls.objects.create(
                 author=author,
@@ -529,7 +532,10 @@ class Post(StatorModel):
             # Strip all HTML and apply linebreaks filter
             parser = FediverseHtmlParser(linebreaks_filter(content), find_hashtags=True)
             self.content = parser.html
-            self.hashtags = sorted(parser.hashtags) or None
+            self.hashtags = (
+                sorted([tag[: Hashtag.MAXIMUM_LENGTH] for tag in parser.hashtags])
+                or None
+            )
             self.summary = summary or None
             self.sensitive = bool(summary) if sensitive is None else sensitive
             self.visibility = visibility
@@ -577,7 +583,7 @@ class Post(StatorModel):
         if self.hashtags:
             for hashtag in self.hashtags:
                 tag, _ = await Hashtag.objects.aget_or_create(
-                    hashtag=hashtag,
+                    hashtag=hashtag[: Hashtag.MAXIMUM_LENGTH],
                 )
                 await tag.atransition_perform(HashtagStates.outdated)
 
@@ -876,7 +882,9 @@ class Post(StatorModel):
                     post.mentions.add(mention_identity)
                 elif tag_type in ["_:hashtag", "hashtag"]:
                     post.hashtags.append(
-                        get_value_or_map(tag, "name", "nameMap").lower().lstrip("#")
+                        get_value_or_map(tag, "name", "nameMap")
+                        .lower()
+                        .lstrip("#")[: Hashtag.MAXIMUM_LENGTH]
                     )
                 elif tag_type in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
