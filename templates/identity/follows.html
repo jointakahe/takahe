@@ -4,21 +4,23 @@
 
 {% block subcontent %}
 
-    {% for identity in page_obj %}
-        {% include "activities/_identity.html" %}
-    {% empty %}
-        <span class="empty">
-            This person has no {% if inbound %}followers{% else %}follows{% endif %} yet.
-        </span>
-    {% endfor %}
+    <div class="page-content">
+        {% for identity in page_obj %}
+            {% include "activities/_identity.html" %}
+        {% empty %}
+            <span class="empty">
+                This person has no {% if inbound %}followers{% else %}follows{% endif %} yet.
+            </span>
+        {% endfor %}
 
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-            <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-        {% endif %}
-        {% if page_obj.has_next %}
-            <a class="button" href=".?page={{ page_obj.next_page_number }}">Next Page</a>
-        {% endif %}
+        <div class="pagination">
+            {% if page_obj.has_previous and not request.htmx %}
+                <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-boost="true" hx-select=".page-content" hx-target=".pagination" hx-swap="outerHTML">Next Page</a>
+            {% endif %}
+        </div>
     </div>
 
 {% endblock %}

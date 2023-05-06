@@ -1148,7 +1148,6 @@ section.identity .banner {
     display: block;
     width: calc(100% + 30px);
     margin: -5px -15px 0px -15px;
-    border-radius: 5px 0 0 0;
 }
 
 section.identity .icon {
@@ -1430,7 +1429,7 @@ form .post {
 .post time {
     display: block;
     color: var(--color-text-duller);
-    width: 65px;
+    width: 70px;
     text-align: center;
     background-color: var(--color-bg-main);
     border-radius: 3px;

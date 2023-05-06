@@ -89,31 +89,33 @@
 
         {% block subcontent %}
 
-            {% for post in page_obj %}
-                {% include "activities/_post.html" %}
-            {% empty %}
-                <span class="empty">
-                    {% if identity.local %}
-                        No posts yet.
-                    {% else %}
-                        No posts have been received by this server yet.
+            <div class="page-content">
+                {% for post in page_obj %}
+                    {% include "activities/_post.html" %}
+                {% empty %}
+                    <span class="empty">
+                        {% if identity.local %}
+                            No posts yet.
+                        {% else %}
+                            No posts have been received by this server yet.
 
-                        {% if identity.profile_uri %}
-                            You may find historical posts at
-                            <a href="{{ identity.profile_uri }}">their original profile ➔</a>
+                            {% if identity.profile_uri %}
+                                You may find historical posts at
+                                <a href="{{ identity.profile_uri }}">their original profile ➔</a>
+                            {% endif %}
                         {% endif %}
+                    </span>
+                {% endfor %}
+
+                <div class="pagination">
+                    {% if page_obj.has_previous and not request.htmx %}
+                        <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
                     {% endif %}
-                </span>
-            {% endfor %}
 
-            <div class="pagination">
-                {% if page_obj.has_previous and not request.htmx %}
-                    <a class="button" href=".?page={{ page_obj.previous_page_number }}">Previous Page</a>
-                {% endif %}
-
-                {% if page_obj.has_next %}
-                    <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-get=".?page={{ page_obj.next_page_number }}" hx-select=".left-column > *:not(.view-options)" hx-target=".pagination" hx-swap="outerHTML">Next Page</a>
-                {% endif %}
+                    {% if page_obj.has_next %}
+                        <a class="button" href=".?page={{ page_obj.next_page_number }}" hx-boost="true" hx-select=".page-content" hx-target=".pagination" hx-swap="outerHTML">Next Page</a>
+                    {% endif %}
+                </div>
             </div>
 
         {% endblock %}
