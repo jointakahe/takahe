@@ -82,6 +82,7 @@ urlpatterns = [
     # Preferences
     path("v1/preferences", preferences.preferences),
     # Search
+    path("v1/search", search.search),
     path("v2/search", search.search),
     # Statuses
     path("v1/statuses", statuses.post_status),
