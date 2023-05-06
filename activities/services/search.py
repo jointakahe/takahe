@@ -127,7 +127,9 @@ class SearchService:
         """
         Searches for posts on an identity via full text search
         """
-        return self.identity.posts.filter(content__search=self.query)[:50]
+        return self.identity.posts.unlisted(include_replies=True).filter(
+            content__search=self.query
+        )[:50]
 
     def search_all(self):
         """

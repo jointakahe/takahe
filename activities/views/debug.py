@@ -56,7 +56,8 @@ class JsonViewer(FormView):
                 except json.JSONDecodeError as ex:
                     result = str(ex)
                 else:
-                    result = json.dumps(document, indent=4, sort_keys=True)
+                    context["raw_result"] = json.dumps(response.json(), indent=2)
+                    result = json.dumps(document, indent=2, sort_keys=True)
                     # result = pprint.pformat(document)
         context["result"] = result
         return self.render_to_response(context)
