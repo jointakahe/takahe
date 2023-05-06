@@ -60,7 +60,7 @@ kwIDAQAB
 def _test_settings(settings):
     settings.STORAGES = {
         "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
         },
     }
     settings.SETUP.MAIN_DOMAIN = "example.com"
