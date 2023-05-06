@@ -58,9 +58,11 @@ kwIDAQAB
 
 @pytest.fixture(autouse=True)
 def _test_settings(settings):
-    settings.STATICFILES_STORAGE = (
-        "django.contrib.staticfiles.storage.StaticFilesStorage"
-    )
+    settings.STORAGES = {
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+        },
+    }
     settings.SETUP.MAIN_DOMAIN = "example.com"
     settings.MAIN_DOMAIN = "example.com"
 
