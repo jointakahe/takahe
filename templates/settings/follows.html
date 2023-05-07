@@ -30,7 +30,9 @@
                 <td class="name">
                     <a href="{{ other_identity.urls.view }}" class="overlay"></a>
                     {{ other_identity.html_name_or_handle }}
+                    <!--email_off-->
                     <small>@{{ other_identity.handle }}</small>
+                    <!--/email_off-->
                 </td>
                 <td class="stat">
                     {% if other_identity.id in outbound_ids %}
