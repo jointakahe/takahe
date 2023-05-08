@@ -307,6 +307,9 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
     },
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
@@ -404,14 +407,14 @@ if SETUP.MEDIA_BACKEND:
     parsed = urllib.parse.urlparse(SETUP.MEDIA_BACKEND)
     query = urllib.parse.parse_qs(parsed.query)
     if parsed.scheme == "gs":
-        DEFAULT_FILE_STORAGE = "core.uploads.TakaheGoogleCloudStorage"
+        STORAGES["default"]["BACKEND"] = "core.uploads.TakaheGoogleCloudStorage"
         GS_BUCKET_NAME = parsed.path.lstrip("/")
         GS_QUERYSTRING_AUTH = False
         if parsed.hostname is not None:
             port = parsed.port or 443
             GS_CUSTOM_ENDPOINT = f"https://{parsed.hostname}:{port}"
     elif parsed.scheme == "s3":
-        DEFAULT_FILE_STORAGE = "core.uploads.TakaheS3Storage"
+        STORAGES["default"]["BACKEND"] = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
         AWS_DEFAULT_ACL = SETUP.MEDIA_BACKEND_S3_ACL
