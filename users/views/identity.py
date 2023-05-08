@@ -370,3 +370,10 @@ class CreateIdentity(FormView):
         )
         self.request.session["identity_id"] = identity.id
         return redirect(identity.urls.view)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["user"] = self.request.user
+        if len(context["form"].fields["domain"].choices) == 0:
+            context["no_valid_domains"] = True
+        return context

@@ -3,23 +3,38 @@
 {% block title %}Create Identity{% endblock %}
 
 {% block content %}
-    <form action="." method="POST">
-        <h1>Create New Identity</h1>
-        <p>
-            You can have multiple identities - they are totally separate, and share
-            nothing apart from your login details. They can also be shared among multiple
-            users, so you can use them for company or project accounts.
-        </p>
-        {% csrf_token %}
-        <fieldset>
-            <legend>Identity Details</legend>
-            {% include "forms/_field.html" with field=form.username %}
-            {% include "forms/_field.html" with field=form.domain %}
-            {% include "forms/_field.html" with field=form.name %}
-            {% include "forms/_field.html" with field=form.discoverable %}
-        </fieldset>
-        <div class="buttons">
-            <button>Create</button>
-        </div>
-    </form>
+    {% if no_valid_domains %}
+        {% if user.admin %}
+            <section class="icon-menu">
+                <p class="option empty">There are no domains configured for this user account.</p>
+                <a href="{% url "admin_domains" %}" class="option">
+                    <i class="fa-solid fa-list"></i> View domains
+                </a>
+            </section>
+        {% else %}
+            <section>
+                <p class="option empty">There are no domains available for this user account.</p>
+            </section>
+        {% endif %}
+    {% else %}
+        <form action="." method="POST">
+            <h1>Create New Identity</h1>
+            <p>
+                You can have multiple identities - they are totally separate, and share
+                nothing apart from your login details. They can also be shared among multiple
+                users, so you can use them for company or project accounts.
+            </p>
+            {% csrf_token %}
+            <fieldset>
+                <legend>Identity Details</legend>
+                {% include "forms/_field.html" with field=form.username %}
+                {% include "forms/_field.html" with field=form.domain %}
+                {% include "forms/_field.html" with field=form.name %}
+                {% include "forms/_field.html" with field=form.discoverable %}
+            </fieldset>
+            <div class="buttons">
+                <button>Create</button>
+            </div>
+        </form>
+    {% endif %}
 {% endblock %}
