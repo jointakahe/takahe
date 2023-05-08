@@ -58,9 +58,13 @@ kwIDAQAB
 
 @pytest.fixture(autouse=True)
 def _test_settings(settings):
-    settings.STATICFILES_STORAGE = (
-        "django.contrib.staticfiles.storage.StaticFilesStorage"
-    )
+    # We use `StaticFilesStorage` instead of `ManifestStaticFilesStorage` in tests
+    # since want stable filenames (`css/styles.css`) instead of hashed (`css/styles.55e7cbb9ba48.css`)
+    settings.STORAGES = {
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
     settings.SETUP.MAIN_DOMAIN = "example.com"
     settings.MAIN_DOMAIN = "example.com"
 
