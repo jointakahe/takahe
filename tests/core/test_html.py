@@ -79,7 +79,9 @@ def test_parser(identity):
         find_hashtags=True,
         find_emojis=True,
     )
-    assert parser.html == '<p><a href="/@test@example.com/">@test</a></p>'
+    assert (
+        parser.html == '<p><a href="/@test@example.com/" class="mention">@test</a></p>'
+    )
     assert parser.plain_text == "@test@example.com"
     assert parser.mentions == {"test@example.com"}
 
@@ -90,7 +92,9 @@ def test_parser(identity):
         find_hashtags=True,
         find_emojis=True,
     )
-    assert parser.html == '<p><a href="/@test@example.com/">@TeSt</a></p>'
+    assert (
+        parser.html == '<p><a href="/@test@example.com/" class="mention">@TeSt</a></p>'
+    )
     assert parser.plain_text == "@TeSt@ExamPle.com"
     assert parser.mentions == {"test@example.com"}
 
@@ -131,6 +135,6 @@ def test_parser_same_name_mentions(remote_identity, remote_identity2):
     )
     assert (
         parser.html
-        == '<a href="/@test@remote.test/">@test</a> <a href="/@test@remote2.test/">@test</a>'
+        == '<a href="/@test@remote.test/" class="mention">@test</a> <a href="/@test@remote2.test/" class="mention">@test</a>'
     )
     assert parser.plain_text == "@test @test"
