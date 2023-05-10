@@ -275,7 +275,7 @@ class Notification(Schema):
 class Tag(Schema):
     name: str
     url: str
-    history: dict
+    history: list
     following: bool | None
 
     @classmethod
