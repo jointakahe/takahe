@@ -164,7 +164,12 @@ class IdentityFeed(Feed):
         return {"image": image}
 
     def items(self, identity: Identity):
-        return TimelineService(None).identity_public(identity)[:20]
+        return [
+            e.subject_post
+            for e in TimelineService(None).identity_public(
+                identity, include_boosts=False
+            )[:20]
+        ]
 
     def item_description(self, item: Post):
         return item.safe_content_remote()

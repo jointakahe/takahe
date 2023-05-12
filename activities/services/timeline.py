@@ -81,15 +81,31 @@ class TimelineService:
             .order_by("-created")
         )
 
-    def identity_public(self, identity: Identity):
+    def identity_public(self, identity: Identity, include_boosts: bool = True):
         """
-        Returns all publically visible posts for an identity
+        Returns timeline events with all of an identity's publicly visible posts
+        and their boosts
         """
+        filter = models.Q(
+            type=TimelineEvent.Types.post,
+            subject_post__author=identity,
+            subject_post__visibility__in=[
+                Post.Visibilities.public,
+                Post.Visibilities.local_only,
+                Post.Visibilities.unlisted,
+            ],
+        )
+        if include_boosts:
+            filter = filter | models.Q(
+                type=TimelineEvent.Types.boost, subject_identity=identity
+            )
         return (
-            PostService.queryset()
-            .filter(author=identity)
-            .unlisted(include_replies=True)
-            .order_by("-id")
+            self.event_queryset()
+            .filter(
+                filter,
+                identity=identity,
+            )
+            .order_by("-created")
         )
 
     def likes(self) -> models.QuerySet[Post]:

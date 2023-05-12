@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load activity_tags %}
 
 {% block title %}{{ identity }}{% endblock %}
 
@@ -90,8 +91,20 @@
         {% block subcontent %}
 
             <div class="page-content">
-                {% for post in page_obj %}
-                    {% include "activities/_post.html" %}
+                {% for event in page_obj %}
+                    {% if event.type == "post" %}
+                        {% include "activities/_post.html" with post=event.subject_post %}
+                    {% elif event.type == "boost" %}
+                        <div class="boost-banner">
+                            <a href="{{ event.subject_identity.urls.view }}">
+                                {{ event.subject_identity.html_name_or_handle }}
+                            </a> boosted
+                            <time>
+                                {{ event.subject_post_interaction.published | timedeltashort }} ago
+                            </time>
+                        </div>
+                        {% include "activities/_post.html" with post=event.subject_post %}
+                    {% endif %}
                 {% empty %}
                     <span class="empty">
                         {% if identity.local %}
