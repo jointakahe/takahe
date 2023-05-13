@@ -32,6 +32,7 @@ class ViewIdentity(ListView):
 
     template_name = "identity/view.html"
     paginate_by = 25
+    with_replies = False
 
     def get(self, request, handle):
         # Make sure we understand this handle
@@ -64,7 +65,11 @@ class ViewIdentity(ListView):
         )
 
     def get_queryset(self):
-        return TimelineService(None).identity_public(self.identity)
+        return TimelineService(None).identity_public(
+            self.identity,
+            include_boosts=self.identity.config_identity.boosts_on_profile,
+            include_replies=self.with_replies,
+        )
 
     def get_context_data(self):
         context = super().get_context_data()
@@ -72,6 +77,8 @@ class ViewIdentity(ListView):
         context["public_styling"] = True
         context["post_count"] = self.identity.posts.count()
         context["pinned_posts"] = TimelineService(self.identity).identity_pinned()
+        if self.with_replies:
+            context["section"] = "replies"
         if self.identity.config_identity.visible_follows:
             context["followers_count"] = self.identity.inbound_follows.filter(
                 state__in=FollowStates.group_active()

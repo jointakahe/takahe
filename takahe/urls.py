@@ -238,6 +238,7 @@ urlpatterns = [
     ),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
+    path("@<handle>/replies/", identity.ViewIdentity.as_view(with_replies=True)),
     path("@<handle>/inbox/", activitypub.Inbox.as_view()),
     path("@<handle>/outbox/", activitypub.Outbox.as_view()),
     path("@<handle>/collections/featured/", activitypub.FeaturedCollection.as_view()),

@@ -231,6 +231,7 @@ class Identity(StatorModel):
 
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
+        replies = "{view}replies/"
         settings = "{view}settings/"
         action = "{view}action/"
         followers = "{view}followers/"

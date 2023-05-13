@@ -81,7 +81,12 @@ class TimelineService:
             .order_by("-created")
         )
 
-    def identity_public(self, identity: Identity, include_boosts: bool = True):
+    def identity_public(
+        self,
+        identity: Identity,
+        include_boosts: bool = True,
+        include_replies: bool = True,
+    ):
         """
         Returns timeline events with all of an identity's publicly visible posts
         and their boosts
@@ -99,6 +104,8 @@ class TimelineService:
             filter = filter | models.Q(
                 type=TimelineEvent.Types.boost, subject_identity=identity
             )
+        if not include_replies:
+            filter = filter & models.Q(subject_post__in_reply_to__isnull=True)
         return (
             self.event_queryset()
             .filter(

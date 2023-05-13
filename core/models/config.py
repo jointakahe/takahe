@@ -229,7 +229,6 @@ class Config(models.Model):
         )
 
     class SystemOptions(pydantic.BaseModel):
-
         version: str = __version__
 
         system_actor_public_key: str = ""
@@ -280,18 +279,15 @@ class Config(models.Model):
         light_theme: bool = False
 
     class IdentityOptions(pydantic.BaseModel):
-
         toot_mode: bool = False
         default_post_visibility: int = 0  # Post.Visibilities.public
         visible_follows: bool = True
         search_enabled: bool = True
-
-        # Wellness Options
         visible_reaction_counts: bool = True
-        expand_linked_cws: bool = True
+        expand_content_warnings: bool = False
+        boosts_on_profile: bool = True
 
     class DomainOptions(pydantic.BaseModel):
-
         site_name: str = ""
         site_icon: UploadedImage | None = None
         hide_login: bool = False

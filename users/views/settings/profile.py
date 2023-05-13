@@ -53,6 +53,11 @@ class ProfilePage(FormView):
             widget=forms.Select(choices=[(True, "Enabled"), (False, "Disabled")]),
             required=False,
         )
+        boosts_on_profile = forms.BooleanField(
+            help_text="Include your boosts with your posts on your profile page",
+            widget=forms.Select(choices=[(True, "Enabled"), (False, "Disabled")]),
+            required=False,
+        )
         metadata = forms.JSONField(
             label="Profile Metadata Fields",
             help_text="These values will appear on your profile below your bio",
@@ -91,6 +96,7 @@ class ProfilePage(FormView):
             "visible_follows": self.identity.config_identity.visible_follows,
             "metadata": self.identity.metadata or [],
             "search_enabled": self.identity.config_identity.search_enabled,
+            "boosts_on_profile": self.identity.config_identity.boosts_on_profile,
         }
 
     def form_valid(self, form):
@@ -124,6 +130,9 @@ class ProfilePage(FormView):
         )
         Config.set_identity(
             self.identity, "search_enabled", form.cleaned_data["search_enabled"]
+        )
+        Config.set_identity(
+            self.identity, "boosts_on_profile", form.cleaned_data["boosts_on_profile"]
         )
 
         messages.success(self.request, "Your profile has been updated.")

@@ -430,6 +430,6 @@ class Preferences(Schema):
                 "posting:default:sensitive": False,
                 "posting:default:language": None,
                 "reading:expand:media": "default",
-                "reading:expand:spoilers": identity.config_identity.expand_linked_cws,
+                "reading:expand:spoilers": identity.config_identity.expand_content_warnings,
             }
         )
