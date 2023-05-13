@@ -163,22 +163,24 @@ class FanOutStates(StateGraph):
                     interaction=interaction,
                 )
 
-            # Handle sending remote boosts/likes/votes
+            # Handle sending remote boosts/likes/votes/pins
             case (FanOut.Types.interaction, False):
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send it to the remote inbox
                 try:
+                    if interaction.type == interaction.Types.vote:
+                        body = interaction.to_ap()
+                    elif interaction.type == interaction.Types.pin:
+                        body = interaction.to_add_ap()
+                    else:
+                        body = interaction.to_create_ap()
                     await interaction.identity.signed_request(
                         method="post",
                         uri=(
                             fan_out.identity.shared_inbox_uri
                             or fan_out.identity.inbox_uri
                         ),
-                        body=canonicalise(
-                            interaction.to_create_ap()
-                            if interaction.type == interaction.Types.vote
-                            else interaction.to_ap()
-                        ),
+                        body=canonicalise(body),
                     )
                 except httpx.RequestError:
                     return
@@ -193,18 +195,22 @@ class FanOutStates(StateGraph):
                     interaction=interaction,
                 )
 
-            # Handle sending remote undoing boosts/likes
+            # Handle sending remote undoing boosts/likes/pins
             case (FanOut.Types.undo_interaction, False):  # noqa:F841
                 interaction = await fan_out.subject_post_interaction.afetch_full()
                 # Send an undo to the remote inbox
                 try:
+                    if interaction.type == interaction.Types.pin:
+                        body = interaction.to_remove_ap()
+                    else:
+                        body = interaction.to_undo_ap()
                     await interaction.identity.signed_request(
                         method="post",
                         uri=(
                             fan_out.identity.shared_inbox_uri
                             or fan_out.identity.inbox_uri
                         ),
-                        body=canonicalise(interaction.to_undo_ap()),
+                        body=canonicalise(body),
                     )
                 except httpx.RequestError:
                     return

@@ -129,11 +129,9 @@ class InboxMessageStates(StateGraph):
                                 f"Cannot handle activity of type delete.{unknown}"
                             )
             case "add":
-                # We are ignoring these right now (probably pinned items)
-                pass
+                await sync_to_async(PostInteraction.handle_add_ap)(instance.message)
             case "remove":
-                # We are ignoring these right now (probably pinned items)
-                pass
+                await sync_to_async(PostInteraction.handle_remove_ap)(instance.message)
             case "move":
                 # We're ignoring moves for now
                 pass

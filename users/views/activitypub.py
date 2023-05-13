@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from activities.models import Post
+from activities.services import TimelineService
 from core import exceptions
 from core.decorators import cache_page
 from core.ld import canonicalise
@@ -214,6 +215,34 @@ class Outbox(View):
             canonicalise(
                 {
                     "type": "OrderedCollection",
+                    "totalItems": len(posts),
+                    "orderedItems": [post.to_ap() for post in posts],
+                }
+            ),
+            content_type="application/activity+json",
+        )
+
+
+class FeaturedCollection(View):
+    """
+    An ordered collection of all pinned posts of an identity
+    """
+
+    def get(self, request, handle):
+        self.identity = by_handle_or_404(
+            request,
+            handle,
+            local=False,
+            fetch=True,
+        )
+        if not self.identity.local:
+            raise Http404("Not a local identity")
+        posts = list(TimelineService(self.identity).identity_pinned())
+        return JsonResponse(
+            canonicalise(
+                {
+                    "type": "OrderedCollection",
+                    "id": self.identity.actor_uri + "collections/featured/",
                     "totalItems": len(posts),
                     "orderedItems": [post.to_ap() for post in posts],
                 }

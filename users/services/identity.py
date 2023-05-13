@@ -1,7 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
 
-from activities.models import FanOut
+from activities.models import FanOut, Post, PostInteraction, PostInteractionStates
 from core.files import resize_image
 from core.html import FediverseHtmlParser
 from users.models import (
@@ -183,6 +183,26 @@ class IdentityService:
                 from_identity, self.identity, mute=True, require_active=True
             ),
         }
+
+    def sync_pins(self, object_uris):
+        if not object_uris:
+            return
+
+        with transaction.atomic():
+            for object_uri in object_uris:
+                post = Post.by_object_uri(object_uri, fetch=True)
+                PostInteraction.objects.get_or_create(
+                    type=PostInteraction.Types.pin,
+                    identity=self.identity,
+                    post=post,
+                    state__in=PostInteractionStates.group_active(),
+                )
+            for removed in PostInteraction.objects.filter(
+                type=PostInteraction.Types.pin,
+                identity=self.identity,
+                state__in=PostInteractionStates.group_active(),
+            ).exclude(post__object_uri__in=object_uris):
+                removed.transition_perform(PostInteractionStates.undone_fanned_out)
 
     def mastodon_json_relationship(self, from_identity: Identity):
         """

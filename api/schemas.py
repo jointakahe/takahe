@@ -170,7 +170,9 @@ class Status(Schema):
     ) -> "Status":
         return cls(
             **post.to_mastodon_json(
-                interactions=interactions, bookmarks=bookmarks, identity=identity
+                interactions=interactions,
+                bookmarks=bookmarks,
+                identity=identity,
             )
         )
 
@@ -186,7 +188,10 @@ class Status(Schema):
         bookmarks = users_models.Bookmark.for_identity(identity, posts)
         return [
             cls.from_post(
-                post, interactions=interactions, bookmarks=bookmarks, identity=identity
+                post,
+                interactions=interactions,
+                bookmarks=bookmarks,
+                identity=identity,
             )
             for post in posts
         ]

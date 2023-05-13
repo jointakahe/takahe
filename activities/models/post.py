@@ -1160,6 +1160,7 @@ class Post(StatorModel):
         if interactions:
             value["favourited"] = self.pk in interactions.get("like", [])
             value["reblogged"] = self.pk in interactions.get("boost", [])
+            value["pinned"] = self.pk in interactions.get("pin", [])
         if bookmarks:
             value["bookmarked"] = self.pk in bookmarks
         return value

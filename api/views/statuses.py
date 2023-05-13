@@ -339,3 +339,28 @@ def unbookmark_status(request, id: str) -> schemas.Status:
     return schemas.Status.from_post(
         post, interactions=interactions, identity=request.identity
     )
+
+
+@scope_required("write:accounts")
+@api_view.post
+def pin_status(request, id: str) -> schemas.Status:
+    post = post_for_id(request, id)
+    try:
+        PostService(post).pin_as(request.identity)
+        interactions = PostInteraction.get_post_interactions([post], request.identity)
+        return schemas.Status.from_post(
+            post, identity=request.identity, interactions=interactions
+        )
+    except ValueError as e:
+        raise ApiError(422, str(e))
+
+
+@scope_required("write:accounts")
+@api_view.post
+def unpin_status(request, id: str) -> schemas.Status:
+    post = post_for_id(request, id)
+    PostService(post).unpin_as(request.identity)
+    interactions = PostInteraction.get_post_interactions([post], request.identity)
+    return schemas.Status.from_post(
+        post, identity=request.identity, interactions=interactions
+    )

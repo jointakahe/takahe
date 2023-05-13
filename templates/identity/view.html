@@ -91,6 +91,12 @@
         {% block subcontent %}
 
             <div class="page-content">
+                {% for post in pinned_posts %}
+                    <div class="pinned-post-banner">
+                        Pinned post
+                    </div>
+                    {% include "activities/_post.html" %}
+                {% endfor %}
                 {% for event in page_obj %}
                     {% if event.type == "post" %}
                         {% include "activities/_post.html" with post=event.subject_post %}

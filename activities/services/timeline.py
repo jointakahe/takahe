@@ -108,6 +108,20 @@ class TimelineService:
             .order_by("-created")
         )
 
+    def identity_pinned(self) -> models.QuerySet[Post]:
+        """
+        Return all pinned posts that are publicly visible for an identity
+        """
+        return (
+            PostService.queryset()
+            .public()
+            .filter(
+                interactions__identity=self.identity,
+                interactions__type=PostInteraction.Types.pin,
+                interactions__state__in=PostInteractionStates.group_active(),
+            )
+        )
+
     def likes(self) -> models.QuerySet[Post]:
         """
         Return all liked posts for an identity

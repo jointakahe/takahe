@@ -34,8 +34,12 @@ class PostInteractionStates(StateGraph):
         interaction = await instance.afetch_full()
         # Boost: send a copy to all people who follow this user (limiting
         # to just local follows if it's a remote boost)
-        if interaction.type == interaction.Types.boost:
-            for target in await interaction.aget_boost_targets():
+        # Pin: send Add activity to all people who follow this user
+        if (
+            interaction.type == interaction.Types.boost
+            or interaction.type == interaction.Types.pin
+        ):
+            for target in await interaction.aget_targets():
                 await FanOut.objects.acreate(
                     type=FanOut.Types.interaction,
                     identity=target,
@@ -85,7 +89,11 @@ class PostInteractionStates(StateGraph):
         """
         interaction = await instance.afetch_full()
         # Undo Boost: send a copy to all people who follow this user
-        if interaction.type == interaction.Types.boost:
+        # Undo Pin: send a Remove activity to all people who follow this user
+        if (
+            interaction.type == interaction.Types.boost
+            or interaction.type == interaction.Types.pin
+        ):
             async for follow in interaction.identity.inbound_follows.select_related(
                 "source", "target"
             ):
@@ -129,6 +137,7 @@ class PostInteraction(StatorModel):
         like = "like"
         boost = "boost"
         vote = "vote"
+        pin = "pin"
 
     id = models.BigIntegerField(
         primary_key=True,
@@ -186,7 +195,7 @@ class PostInteraction(StatorModel):
         ids_with_interaction_type = cls.objects.filter(
             identity=identity,
             post_id__in=[post.pk for post in posts],
-            type__in=[cls.Types.like, cls.Types.boost],
+            type__in=[cls.Types.like, cls.Types.boost, cls.Types.pin],
             state__in=[PostInteractionStates.new, PostInteractionStates.fanned_out],
         ).values_list("post_id", "type")
         # Make it into the return dict
@@ -215,18 +224,22 @@ class PostInteraction(StatorModel):
             "identity", "post", "post__author"
         ).aget(pk=self.pk)
 
-    async def aget_boost_targets(self) -> Iterable[Identity]:
+    async def aget_targets(self) -> Iterable[Identity]:
         """
         Returns an iterable with Identities of followers that have unique
-        shared_inbox among each other to be used as target to the boost
+        shared_inbox among each other to be used as target.
+
+        When interaction is boost, only boost follows are considered,
+        for pins all followers are considered.
         """
         # Start including the post author
         targets = {self.post.author}
 
+        query = self.identity.inbound_follows.active()
         # Include all followers that are following the boosts
-        async for follow in self.identity.inbound_follows.active().filter(
-            boosts=True
-        ).select_related("source"):
+        if self.type == self.Types.boost:
+            query = query.filter(boosts=True)
+        async for follow in query.select_related("source"):
             targets.add(follow.source)
 
         # Fetch the full blocks and remove them as targets
@@ -326,7 +339,7 @@ class PostInteraction(StatorModel):
                 "inReplyTo": self.post.object_uri,
                 "attributedTo": self.identity.actor_uri,
             }
-        else:
+        elif self.type == self.Types.pin:
             raise ValueError("Cannot turn into AP")
         return value
 
@@ -354,6 +367,28 @@ class PostInteraction(StatorModel):
             "type": "Undo",
             "actor": self.identity.actor_uri,
             "object": object,
+        }
+
+    def to_add_ap(self):
+        """
+        Returns the AP JSON to add a pin interaction to the featured collection
+        """
+        return {
+            "type": "Add",
+            "actor": self.identity.actor_uri,
+            "object": self.post.object_uri,
+            "target": self.identity.actor_uri + "collections/featured/",
+        }
+
+    def to_remove_ap(self):
+        """
+        Returns the AP JSON to remove a pin interaction from the featured collection
+        """
+        return {
+            "type": "Remove",
+            "actor": self.identity.actor_uri,
+            "object": self.post.object_uri,
+            "target": self.identity.actor_uri + "collections/featured/",
         }
 
     ### ActivityPub (inbound) ###
@@ -463,6 +498,76 @@ class PostInteraction(StatorModel):
             # Recalculate post stats
             interaction.post.calculate_stats()
             interaction.post.calculate_type_data()
+
+    @classmethod
+    def handle_add_ap(cls, data):
+        """
+        Handles an incoming Add activity which is a pin
+        """
+        target = data.get("target", None)
+        if not target:
+            return
+
+        # we only care about pinned posts, not hashtags
+        object = data.get("object", {})
+        if isinstance(object, dict) and object.get("type") == "Hashtag":
+            return
+
+        with transaction.atomic():
+            identity = Identity.by_actor_uri(data["actor"], create=True)
+            # it's only a pin if the target is the identity's featured collection URI
+            if identity.featured_collection_uri != target:
+                return
+
+            object_uri = get_str_or_id(object)
+            if not object_uri:
+                return
+            post = Post.by_object_uri(object_uri, fetch=True)
+
+            return PostInteraction.objects.get_or_create(
+                type=cls.Types.pin,
+                identity=identity,
+                post=post,
+                state__in=PostInteractionStates.group_active(),
+            )[0]
+
+    @classmethod
+    def handle_remove_ap(cls, data):
+        """
+        Handles an incoming Remove activity which is an unpin
+        """
+        target = data.get("target", None)
+        if not target:
+            return
+
+        # we only care about pinned posts, not hashtags
+        object = data.get("object", {})
+        if isinstance(object, dict) and object.get("type") == "Hashtag":
+            return
+
+        with transaction.atomic():
+            identity = Identity.by_actor_uri(data["actor"], create=True)
+            # it's only an unpin if the target is the identity's featured collection URI
+            if identity.featured_collection_uri != target:
+                return
+
+            try:
+                object_uri = get_str_or_id(object)
+                if not object_uri:
+                    return
+                post = Post.by_object_uri(object_uri, fetch=False)
+                for interaction in cls.objects.filter(
+                    type=cls.Types.pin,
+                    identity=identity,
+                    post=post,
+                    state__in=PostInteractionStates.group_active(),
+                ):
+                    # Force it into undone_fanned_out as it's not ours
+                    interaction.transition_perform(
+                        PostInteractionStates.undone_fanned_out
+                    )
+            except (cls.DoesNotExist, Post.DoesNotExist):
+                return
 
     ### Mastodon API ###
 

@@ -142,3 +142,22 @@ class PostService:
             ),
             PostInteractionStates.undone,
         )
+
+    def pin_as(self, identity: Identity):
+        if identity != self.post.author:
+            raise ValueError("Not the author of this post")
+        if self.post.visibility == Post.Visibilities.mentioned:
+            raise ValueError("Cannot pin a mentioned-only post")
+        if (
+            PostInteraction.objects.filter(
+                type=PostInteraction.Types.pin,
+                identity=identity,
+            ).count()
+            >= 5
+        ):
+            raise ValueError("Maximum number of pins already reached")
+
+        self.interact_as(identity, PostInteraction.Types.pin)
+
+    def unpin_as(self, identity: Identity):
+        self.uninteract_as(identity, PostInteraction.Types.pin)
