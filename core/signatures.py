@@ -87,9 +87,9 @@ class HttpSignature:
             if header_name == "(request-target)":
                 value = f"{request.method.lower()} {request.path}"
             elif header_name == "content-type":
-                value = request.META["CONTENT_TYPE"]
+                value = request.headers["content-type"]
             elif header_name == "content-length":
-                value = request.META["CONTENT_LENGTH"]
+                value = request.headers["content-length"]
             else:
                 value = request.META["HTTP_%s" % header_name.upper().replace("-", "_")]
             headers[header_name] = value

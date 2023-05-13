@@ -226,8 +226,10 @@ def api_token(identity) -> Token:
 @pytest.fixture
 def api_client(api_token):
     return Client(
-        HTTP_AUTHORIZATION=f"Bearer {api_token.token}",
-        HTTP_ACCEPT="application/json",
+        headers={
+            "authorization": f"Bearer {api_token.token}",
+            "accept": "application/json",
+        }
     )
 
 
