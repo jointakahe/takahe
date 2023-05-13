@@ -71,7 +71,7 @@ def test_mention_format(api_client, identity, remote_identity):
     ).json()
     assert (
         response["content"]
-        == '<p>Hello, <a href="https://example.com/@test/" class="mention">@test</a>!</p>'
+        == '<p>Hello, <span class="h-card"><a href="https://example.com/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span>!</p>'
     )
     assert response["visibility"] == "unlisted"
 
@@ -88,7 +88,7 @@ def test_mention_format(api_client, identity, remote_identity):
     ).json()
     assert (
         response["text"]
-        == '<p>Hey <a href="https://example.com/@test/" class="mention">@test</a></p>'
+        == '<p>Hey <span class="h-card"><a href="https://example.com/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
     )
 
 

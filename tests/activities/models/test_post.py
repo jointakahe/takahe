@@ -101,7 +101,7 @@ def test_linkify_mentions_remote(
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_remote()
-        == '<p>Hello <a href="https://remote.test/@test/" class="mention">@test</a></p>'
+        == '<p>Hello <span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
     )
     # Test a full username (local)
     post = Post.objects.create(
@@ -112,7 +112,7 @@ def test_linkify_mentions_remote(
     post.mentions.add(identity)
     assert (
         post.safe_content_remote()
-        == '<p><a href="https://example.com/@test/" class="mention">@test</a>, welcome!</p>'
+        == '<p><span class="h-card"><a href="https://example.com/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span>, welcome!</p>'
     )
     # Test that they don't get touched without a mention
     post = Post.objects.create(
@@ -131,7 +131,7 @@ def test_linkify_mentions_remote(
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_remote()
-        == '<p>Hey <a href="https://remote.test/@test/" class="mention">@TeSt</a></p>'
+        == '<p>Hey <span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>TeSt</span></a></span></p>'
     )
 
     # Test trailing dot (remote)
@@ -143,7 +143,7 @@ def test_linkify_mentions_remote(
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_remote()
-        == '<p>Hey <a href="https://remote.test/@test/" class="mention">@test</a>.</p>'
+        == '<p>Hey <span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span>.</p>'
     )
 
     # Test that collapsing only applies to the first unique, short username
@@ -154,15 +154,15 @@ def test_linkify_mentions_remote(
     )
     post.mentions.set([remote_identity, remote_identity2])
     assert post.safe_content_remote() == (
-        '<p>Hey <a href="https://remote.test/@test/" class="mention">@TeSt</a> '
-        'and <a href="https://remote2.test/@test/" class="mention">@test@remote2.test</a></p>'
+        '<p>Hey <span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>TeSt</span></a></span> '
+        'and <span class="h-card"><a href="https://remote2.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test@remote2.test</span></a></span></p>'
     )
 
     post.content = "<p>Hey @TeSt, @Test@remote.test and @test</p>"
     assert post.safe_content_remote() == (
-        '<p>Hey <a href="https://remote2.test/@test/" class="mention">@TeSt</a>, '
-        '<a href="https://remote.test/@test/" class="mention">@Test@remote.test</a> '
-        'and <a href="https://remote2.test/@test/" class="mention">@test</a></p>'
+        '<p>Hey <span class="h-card"><a href="https://remote2.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>TeSt</span></a></span>, '
+        '<span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>Test@remote.test</span></a></span> '
+        'and <span class="h-card"><a href="https://remote2.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
     )
 
 
@@ -180,7 +180,7 @@ def test_linkify_mentions_local(config_system, identity, identity2, remote_ident
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_local()
-        == '<p>Hello <a href="/@test@remote.test/" class="mention">@test</a></p>'
+        == '<p>Hello <span class="h-card"><a href="/@test@remote.test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
     )
     # Test a full username (local)
     post = Post.objects.create(
@@ -191,9 +191,9 @@ def test_linkify_mentions_local(config_system, identity, identity2, remote_ident
     post.mentions.add(identity)
     post.mentions.add(identity2)
     assert post.safe_content_local() == (
-        '<p><a href="/@test@example.com/" class="mention">@test</a>, welcome!'
-        ' <a href="/@test@example2.com/" class="mention">@test@example2.com</a>'
-        ' <a href="/@test@example.com/" class="mention">@test</a></p>'
+        '<p><span class="h-card"><a href="/@test@example.com/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span>, welcome!'
+        ' <span class="h-card"><a href="/@test@example2.com/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test@example2.com</span></a></span>'
+        ' <span class="h-card"><a href="/@test@example.com/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
     )
     # Test a full username (remote) with no <p>
     post = Post.objects.create(
@@ -204,7 +204,7 @@ def test_linkify_mentions_local(config_system, identity, identity2, remote_ident
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_local()
-        == '<a href="/@test@remote.test/" class="mention">@test</a> hello!'
+        == '<span class="h-card"><a href="/@test@remote.test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span> hello!'
     )
     # Test that they don't get touched without a mention
     post = Post.objects.create(
@@ -217,7 +217,6 @@ def test_linkify_mentions_local(config_system, identity, identity2, remote_ident
 
 @pytest.mark.django_db
 def test_post_transitions(identity, stator):
-
     # Create post
     post = Post.objects.create(
         content="<p>Hello!</p>",
