@@ -102,10 +102,7 @@ class StatorModel(models.Model):
 
     class Meta:
         abstract = True
-        index_together = [("state_ready", "state_locked_until", "state")]
-        # Need this empty indexes to ensure child Models have a Meta.indexes
-        # that will look to add indexes (that we inject with class_prepared)
-        indexes: list = []
+        indexes = [models.Index(fields=["state_ready", "state_locked_until", "state"])]
 
     def __init_subclass__(cls) -> None:
         if cls is not StatorModel:
@@ -194,13 +191,11 @@ class StatorModel(models.Model):
         """
         Returns how many instances are "queued"
         """
-        return await (
-            cls.objects.filter(
-                state_locked_until__isnull=True,
-                state_ready=True,
-                state__in=cls.state_graph.automatic_states,
-            ).acount()
-        )
+        return await cls.objects.filter(
+            state_locked_until__isnull=True,
+            state_ready=True,
+            state__in=cls.state_graph.automatic_states,
+        ).acount()
 
     @classmethod
     async def atransition_clean_locks(cls):

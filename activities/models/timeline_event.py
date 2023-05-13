@@ -59,11 +59,13 @@ class TimelineEvent(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        index_together = [
+        indexes = [
             # This relies on a DB that can use left subsets of indexes
-            ("identity", "type", "subject_post", "subject_identity"),
-            ("identity", "type", "subject_identity"),
-            ("identity", "created"),
+            models.Index(
+                fields=["identity", "type", "subject_post", "subject_identity"]
+            ),
+            models.Index(fields=["identity", "type", "subject_identity"]),
+            models.Index(fields=["identity", "created"]),
         ]
 
     ### Alternate constructors ###

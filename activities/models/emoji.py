@@ -86,7 +86,6 @@ class EmojiManager(models.Manager):
 
 
 class Emoji(StatorModel):
-
     # Normalized Emoji without the ':'
     shortcode = models.SlugField(max_length=100, db_index=True)
 
@@ -128,7 +127,7 @@ class Emoji(StatorModel):
 
     class Meta:
         unique_together = ("domain", "shortcode")
-        index_together = StatorModel.Meta.index_together
+        indexes = StatorModel.Meta.indexes
 
     class urls(urlman.Urls):
         admin = "/admin/emoji/"
