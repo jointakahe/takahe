@@ -958,8 +958,8 @@ class Identity(StatorModel):
                 else []
             ),
             "emojis": [emoji.to_mastodon_json() for emoji in emojis],
-            "bot": False,
-            "group": False,
+            "bot": self.actor_type.lower() in ["service", "application"],
+            "group": self.actor_type.lower() == "group",
             "discoverable": self.discoverable,
             "suspended": False,
             "limited": False,
