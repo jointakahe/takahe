@@ -5,18 +5,14 @@ FROM ${IMAGE_HOST}:${IMAGE_LABEL}
 
 ENV PYTHONUNBUFFERED=1
 
+COPY requirements.txt requirements.txt
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
         libxslt1.1 \
         nginx \
         busybox \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt requirements.txt
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
         netcat \
         gcc \
         libc6-dev \
@@ -24,6 +20,7 @@ RUN apt-get update \
         # Required to build lxml on arm64.
         libxslt1-dev \
         zlib1g-dev \
+        postgresql-client \
     && python3 -m pip install --no-cache-dir --upgrade -r requirements.txt \
     && apt-get purge -y --auto-remove \
         gcc \
