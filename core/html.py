@@ -196,7 +196,7 @@ class FediverseHtmlParser(HTMLParser):
                 self.mention_aliases[short_hash] = handle_hash
             elif self.mention_aliases.get(short_hash) != handle_hash:
                 short_handle = handle
-            return f'<a href="{html.escape(url)}" class="mention">@<span>{html.escape(short_handle)}</span></a>'
+            return f'<span class="h-card"><a href="{html.escape(url)}" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>{html.escape(short_handle)}</span></a></span>'
         else:
             return "@" + html.escape(handle)
 
