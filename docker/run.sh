@@ -12,7 +12,7 @@ sed "s/__CACHESIZE__/${CACHE_SIZE}/g" /etc/nginx/conf.d/default.conf.tpl | sed "
 # Run nginx and gunicorn
 nginx &
 
-gunicorn takahe.wsgi:application -b 0.0.0.0:8001 $GUNICORN_EXTRA_CMD_ARGS &
+gunicorn takahe.wsgi:application -b 0.0.0.0:8001 --workers ${TAKAHE_WORKERS:-8} $GUNICORN_EXTRA_CMD_ARGS &
 
 # Wait for any process to exit
 wait -n

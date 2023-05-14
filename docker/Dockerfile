@@ -50,7 +50,6 @@ RUN TAKAHE_DATABASE_SERVER="postgres://x@example.com/x" TAKAHE_SECRET_KEY="takah
 
 EXPOSE 8000
 
-# Set some sensible defaults
-ENV GUNICORN_CMD_ARGS="--workers 8"
+ENV GUNICORN_CMD_ARGS=""
 
 CMD ["bash", "docker/run.sh"]
