@@ -30,7 +30,7 @@ using more resources if you give them to it), you can:
   has to send a copy of each of their posts to every follower, separately.
 
 * Takahe is run with Gunicorn which spawns several
-  [workers](https://docs.gunicorn.org/en/stable/settings.html#workers)to
+  [workers](https://docs.gunicorn.org/en/stable/settings.html#workers) to
   handle requests. Depending on what environment you are running Takahe on,
   you might want to customize the worker count via the `TAHAKE_WORKERS`
   environment variable. The default is `8`.
