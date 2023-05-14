@@ -16,6 +16,7 @@ httpx~=0.23
 markdown_it_py~=2.1.0
 pillow~=9.3.0
 psycopg~=3.1.8
+pycountry~=22.3.5
 pydantic~=1.10.2
 pyld~=2.0.3
 pylibmc~=1.6.3

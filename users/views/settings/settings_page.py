@@ -23,7 +23,7 @@ class SettingsPage(FormView):
     options_class = Config.IdentityOptions
     template_name = "settings/settings.html"
     section: ClassVar[str]
-    options: dict[str, dict[str, str | int]]
+    options: dict[str, dict[str, str | int | list[tuple[int | str, str]]]]
     layout: dict[str, list[str]]
 
     def get_form_class(self):
@@ -42,7 +42,11 @@ class SettingsPage(FormView):
             elif config_field.type_ is UploadedImage:
                 form_field = forms.ImageField
             elif config_field.type_ is str:
-                if details.get("display") == "textarea":
+                choices = details.get("choices")
+                if choices:
+                    field_kwargs["widget"] = forms.Select(choices=choices)
+                    form_field = forms.CharField
+                elif details.get("display") == "textarea":
                     form_field = partial(
                         forms.CharField,
                         widget=forms.Textarea,

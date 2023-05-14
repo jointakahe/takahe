@@ -428,7 +428,7 @@ class Preferences(Schema):
                     identity.config_identity.default_post_visibility
                 ],
                 "posting:default:sensitive": False,
-                "posting:default:language": None,
+                "posting:default:language": identity.config_identity.preferred_posting_language,
                 "reading:expand:media": "default",
                 "reading:expand:spoilers": identity.config_identity.expand_content_warnings,
             }
