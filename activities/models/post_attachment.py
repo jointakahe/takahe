@@ -8,15 +8,10 @@ from stator.models import State, StateField, StateGraph, StatorModel
 
 
 class PostAttachmentStates(StateGraph):
-    new = State(try_interval=30000)
+    new = State(externally_progressed=True)
     fetched = State()
 
     new.transitions_to(fetched)
-
-    @classmethod
-    async def handle_new(cls, instance):
-        # TODO: Fetch images to our own media storage
-        pass
 
 
 class PostAttachment(StatorModel):
