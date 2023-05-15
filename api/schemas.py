@@ -151,7 +151,7 @@ class Status(Schema):
     reblog: Optional["Status"] = Field(...)
     poll: Poll | None = Field(...)
     card: None = Field(...)
-    language: None = Field(...)
+    language: str | None = Field(...)
     text: str | None = Field(...)
     edited_at: str | None
     favourited: bool = False
