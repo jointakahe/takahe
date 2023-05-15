@@ -761,9 +761,13 @@ class Identity(StatorModel):
         try:
             data = canonicalise(response.json(), include_security=True)
             if "orderedItems" in data:
-                return [item["id"] for item in reversed(data["orderedItems"])]
+                return [
+                    item["id"]
+                    for item in reversed(data["orderedItems"])
+                    if isinstance(item, dict)
+                ]
             elif "items" in data:
-                return [item["id"] for item in data["items"]]
+                return [item["id"] for item in data["items"] if isinstance(item, dict)]
             return []
         except ValueError:
             # Some servers return these with a 200 status code!
