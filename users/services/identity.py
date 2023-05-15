@@ -190,13 +190,17 @@ class IdentityService:
 
         with transaction.atomic():
             for object_uri in object_uris:
-                post = Post.by_object_uri(object_uri, fetch=True)
-                PostInteraction.objects.get_or_create(
-                    type=PostInteraction.Types.pin,
-                    identity=self.identity,
-                    post=post,
-                    state__in=PostInteractionStates.group_active(),
-                )
+                try:
+                    post = Post.by_object_uri(object_uri, fetch=True)
+                    PostInteraction.objects.get_or_create(
+                        type=PostInteraction.Types.pin,
+                        identity=self.identity,
+                        post=post,
+                        state__in=PostInteractionStates.group_active(),
+                    )
+                except Post.DoesNotExist:
+                    # ignore 404s...
+                    pass
             for removed in PostInteraction.objects.filter(
                 type=PostInteraction.Types.pin,
                 identity=self.identity,

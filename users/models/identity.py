@@ -771,7 +771,7 @@ class Identity(StatorModel):
                 if not isinstance(item, dict):
                     continue
                 post_obj: dict | None = item
-                if item["type"] == "Create":
+                if item["type"] in ["Create", "Update"]:
                     post_obj = item.get("object")
                 if post_obj:
                     ids.append(post_obj["id"])
