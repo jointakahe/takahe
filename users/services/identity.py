@@ -185,7 +185,7 @@ class IdentityService:
         }
 
     def sync_pins(self, object_uris):
-        if not object_uris:
+        if not object_uris or self.identity.domain.blocked:
             return
 
         with transaction.atomic():

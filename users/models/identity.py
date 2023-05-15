@@ -760,11 +760,22 @@ class Identity(StatorModel):
 
         try:
             data = canonicalise(response.json(), include_security=True)
+            items: list[dict | str] = []
             if "orderedItems" in data:
-                return [item["id"] for item in reversed(data["orderedItems"])]
+                items = list(reversed(data["orderedItems"]))
             elif "items" in data:
-                return [item["id"] for item in data["items"]]
-            return []
+                items = list(data["items"])
+
+            ids = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                post_obj: dict | None = item
+                if item["type"] == "Create":
+                    post_obj = item.get("object")
+                if post_obj:
+                    ids.append(post_obj["id"])
+            return ids
         except ValueError:
             # Some servers return these with a 200 status code!
             if b"not found" in response.content.lower():
