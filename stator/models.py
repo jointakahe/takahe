@@ -81,6 +81,8 @@ class StatorModel(models.Model):
     concrete model yourself.
     """
 
+    SCHEDULE_BATCH_SIZE = 1000
+
     state: StateField
 
     # If this row is up for transition attempts (which it always is on creation!)
@@ -141,7 +143,8 @@ class StatorModel(models.Model):
                     ),
                     state=state.name,
                 )
-        await cls.objects.filter(q).aupdate(state_ready=True)
+        select_query = cls.objects.filter(q)[: cls.SCHEDULE_BATCH_SIZE]
+        await cls.objects.filter(pk__in=select_query).aupdate(state_ready=True)
 
     @classmethod
     async def atransition_delete_due(cls, now=None):
@@ -153,12 +156,13 @@ class StatorModel(models.Model):
         for state in cls.state_graph.states.values():
             state = cast(State, state)
             if state.delete_after:
-                await cls.objects.filter(
+                select_query = cls.objects.filter(
                     state=state,
                     state_changed__lte=(
                         now - datetime.timedelta(seconds=state.delete_after)
                     ),
-                ).adelete()
+                )[: cls.SCHEDULE_BATCH_SIZE]
+                await cls.objects.filter(pk__in=select_query).adelete()
 
     @classmethod
     def transition_get_with_lock(
@@ -199,9 +203,10 @@ class StatorModel(models.Model):
 
     @classmethod
     async def atransition_clean_locks(cls):
-        await cls.objects.filter(state_locked_until__lte=timezone.now()).aupdate(
-            state_locked_until=None
-        )
+        select_query = cls.objects.filter(state_locked_until__lte=timezone.now())[
+            : cls.SCHEDULE_BATCH_SIZE
+        ]
+        await cls.objects.filter(pk__in=select_query).aupdate(state_locked_until=None)
 
     def transition_schedule(self):
         """

@@ -169,9 +169,13 @@ class StatorRunner:
             print("No tasks handled since last flush.")
         with sentry.start_transaction(op="task", name="stator.run_scheduling"):
             for model in self.models:
+                print(f"Scheduling {model._meta.label_lower}")
                 await self.submit_stats(model)
+                print("  Cleaning locks")
                 await model.atransition_clean_locks()
+                print("  Scheduling due items")
                 await model.atransition_schedule_due()
+                print("  Deleting due items")
                 await model.atransition_delete_due()
 
     async def submit_stats(self, model):
