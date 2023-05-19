@@ -32,8 +32,9 @@ using more resources if you give them to it), you can:
 * Takahe is run with Gunicorn which spawns several
   [workers](https://docs.gunicorn.org/en/stable/settings.html#workers) to
   handle requests. Depending on what environment you are running Takahe on,
-  you might want to customize the worker count via the `TAHAKE_WORKERS`
-  environment variable. The default is `8`.
+  you might want to customize this via the ``GUNICORN_CMD_ARGS`` environment
+  variable. For example - ``GUNICORN_CMD_ARGS="--workers 2"`` to set the
+  worker count to 2.
 
 
 As you scale up the number of containers, keep the PostgreSQL connection limit
