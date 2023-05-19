@@ -9,7 +9,6 @@ We recommend that all installations are run behind a CDN, and
 have caches configured. See below for more details on each.
 
 
-
 Scaling
 -------
 
@@ -29,6 +28,14 @@ using more resources if you give them to it), you can:
   relation to the sum of the number of followers each user in your instance has;
   a "celebrity" or other popular account will give Stator a lot of work as it
   has to send a copy of each of their posts to every follower, separately.
+
+* Takahe is run with Gunicorn which spawns several
+  [workers](https://docs.gunicorn.org/en/stable/settings.html#workers) to
+  handle requests. Depending on what environment you are running Takahe on,
+  you might want to customize this via the ``GUNICORN_CMD_ARGS`` environment
+  variable. For example - ``GUNICORN_CMD_ARGS="--workers 2"`` to set the
+  worker count to 2.
+
 
 As you scale up the number of containers, keep the PostgreSQL connection limit
 in mind; this is generally the first thing that will fail, as Stator workers in
