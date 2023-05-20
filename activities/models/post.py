@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import json
 import mimetypes
 import ssl
@@ -436,7 +435,7 @@ class Post(StatorModel):
         """
         if not self.summary:
             return ""
-        return "summary-" + hashlib.md5(self.summary.encode("utf8")).hexdigest()
+        return "summary-{self.id}"
 
     @property
     def stats_with_defaults(self):
