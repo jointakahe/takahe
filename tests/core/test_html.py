@@ -54,7 +54,7 @@ def test_parser(identity):
     parser = FediverseHtmlParser(f"<p>{full_url}</p>")
     assert (
         parser.html
-        == f'<p><a href="{full_url}" rel="nofollow" class="ellipsis" title="{full_url.removeprefix("https://")}">social.example.com/a-long/path</a></p>'
+        == f'<p><a href="{full_url}" rel="nofollow" class="ellipsis" title="{full_url.removeprefix("https://")}"><span class="ellipsis">social.example.com/a-long/path</span><span class="invisible">/that-should-be-shortened</span></a></p>'
     )
     assert (
         parser.plain_text
