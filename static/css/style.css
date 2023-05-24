@@ -394,7 +394,7 @@ img.emoji {
     vertical-align: baseline;
 }
 
-.ellipsis::after {
+span.ellipsis::after {
     content: "…";
 }
 
@@ -1483,6 +1483,10 @@ form .post {
 
 .post .content p {
     margin: 12px 0 4px 0;
+}
+
+.post .content p a .invisible {
+    display: none;
 }
 
 .post .attachments {

@@ -169,7 +169,7 @@ class FediverseHtmlParser(HTMLParser):
         if looks_like_link:
             content = content.split("://", 1)[1]
         if (looks_like_link and len(content) > 30) or has_ellipsis:
-            return f'<a href="{html.escape(href)}" rel="nofollow" class="ellipsis" title="{html.escape(content)}">{html.escape(content[:30])}</a>'
+            return f'<a href="{html.escape(href)}" rel="nofollow" class="ellipsis" title="{html.escape(content)}"><span class="ellipsis">{html.escape(content[:30])}</span><span class="invisible">{html.escape(content[30:])}</span></a>'
         else:
             return f'<a href="{html.escape(href)}" rel="nofollow">{html.escape(content)}</a>'
 

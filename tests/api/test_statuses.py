@@ -155,3 +155,23 @@ def test_question_format(api_client, remote_identity):
         ],
         "emojis": [],
     }
+
+
+@pytest.mark.django_db
+def test_content_link(api_client, identity, remote_identity):
+    """
+    Ensures mentions work, and only have one link around them.
+    """
+    # Make a local post and check it
+    response = api_client.post(
+        "/api/v1/statuses",
+        data={
+            "status": "Takahē - return to the wild - https://www.youtube.com/watch?v=IG423K3pmQI",
+        },
+    ).json()
+
+    # temp fix
+    assert (
+        response["content"]
+        == '<p>Takahē - return to the wild - <a href="https://www.youtube.com/watch?v=IG423K3pmQI" rel="nofollow" class="ellipsis" title="www.youtube.com/watch?v=IG423K3pmQI"><span class="ellipsis">www.youtube.com/watch?v=IG423K</span><span class="invisible">3pmQI</span></a></p>'
+    )
