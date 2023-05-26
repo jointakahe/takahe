@@ -170,8 +170,7 @@ def test_content_link(api_client, identity, remote_identity):
         },
     ).json()
 
-    # temp fix
     assert (
         response["content"]
-        == '<p>Takahē - return to the wild - <a href="https://www.youtube.com/watch?v=IG423K3pmQI" rel="nofollow" class="ellipsis" title="www.youtube.com/watch?v=IG423K3pmQI"><span class="ellipsis">www.youtube.com/watch?v=IG423K</span><span class="invisible">3pmQI</span></a></p>'
+        == '<p>Takahē - return to the wild - <a href="https://www.youtube.com/watch?v=IG423K3pmQI" rel="nofollow" class="ellipsis" title="www.youtube.com/watch?v=IG423K3pmQI"><span class="invisible">https://</span><span class="ellipsis">www.youtube.com/watch?v=IG423K</span><span class="invisible">3pmQI</span></a></p>'
     )
