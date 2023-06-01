@@ -254,7 +254,7 @@ class Post(StatorModel):
     content = models.TextField()
 
     # The language of the content
-    language = models.CharField(max_length=2, null=True)
+    language = models.CharField(max_length=50, null=True)
 
     type = models.CharField(
         max_length=20,
