@@ -254,7 +254,7 @@ class Post(StatorModel):
     content = models.TextField()
 
     # The language of the content
-    language = models.CharField(max_length=50, null=True)
+    language = models.CharField(default="")
 
     type = models.CharField(
         max_length=20,
@@ -497,7 +497,7 @@ class Post(StatorModel):
                 sorted([tag[: Hashtag.MAXIMUM_LENGTH] for tag in parser.hashtags])
                 or None
             )
-            if language is None:
+            if language is None or language == "":
                 language = author.config_identity.preferred_posting_language
 
             # Make the Post object
@@ -548,7 +548,7 @@ class Post(StatorModel):
             self.summary = summary or None
             self.sensitive = bool(summary) if sensitive is None else sensitive
             self.visibility = visibility
-            if language is None:
+            if language is None or language == "":
                 language = self.author.config_identity.preferred_posting_language
             self.language = language
             self.edited = timezone.now()
@@ -662,7 +662,7 @@ class Post(StatorModel):
             "tag": [],
             "attachment": [],
         }
-        if self.language is not None:
+        if self.language != "":
             value["contentMap"] = {
                 self.language: value["content"],
             }
@@ -889,7 +889,7 @@ class Post(StatorModel):
             post.published = parse_ld_date(data.get("published"))
             post.edited = parse_ld_date(data.get("updated"))
             post.in_reply_to = data.get("inReplyTo")
-            post.language = get_language(data)
+            post.language = get_language(data) or ""
             # Mentions and hashtags
             post.hashtags = []
             for tag in get_list(data, "tag"):
@@ -1124,13 +1124,16 @@ class Post(StatorModel):
             self.Visibilities.mentioned: "direct",
             self.Visibilities.local_only: "public",
         }
+        language = self.language
+        if self.language == "":
+            language = None
         value = {
             "id": self.pk,
             "uri": self.object_uri,
             "created_at": format_ld_date(self.published),
             "account": self.author.to_mastodon_json(include_counts=False),
             "content": self.safe_content_remote(),
-            "language": self.language,
+            "language": language,
             "visibility": visibility_mapping[self.visibility],
             "sensitive": self.sensitive,
             "spoiler_text": self.summary or "",
