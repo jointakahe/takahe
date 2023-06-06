@@ -21,11 +21,16 @@ class PostingPage(SettingsPage):
             "title": "Default posting language",
             "help_text": "",
             "choices": sorted(
-                [
-                    (lang.alpha_2, lang.name)
-                    for lang in pycountry.languages
-                    if hasattr(lang, "alpha_2")
-                ],
+                (
+                    [
+                        ("", ""),
+                    ]
+                    + [
+                        (lang.alpha_2, lang.name)
+                        for lang in pycountry.languages
+                        if hasattr(lang, "alpha_2")
+                    ]
+                ),
                 key=lambda lang: lang[1],
             ),
         },
