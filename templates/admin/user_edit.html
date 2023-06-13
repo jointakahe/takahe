@@ -29,7 +29,7 @@
             <p>Created: <time title="{{ editing_user.created }} UTC">{{ editing_user.created | timesince }} ago</time></p>
         </fieldset>
         <div class="buttons">
-            <a href="{{ editing_user.urls.admin }}" class="button secondary left">Back</a>
+            <a href="{{ editing_user.urls.admin }}?page={{ page }}" class="button secondary left">Back</a>
             <button>Save</button>
         </div>
     </form>
