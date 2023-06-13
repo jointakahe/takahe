@@ -12,11 +12,11 @@
         {% for domain in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ domain.urls.edit_federation }}" class="overlay"></a>
+                    <a href="{{ domain.urls.edit_federation }}?page={{ page_obj.number }}" class="overlay"></a>
                     <i class="fa-solid fa-globe"></i>
                 </td>
                 <td class="name">
-                    <a href="{{ domain.urls.edit_federation }}" class="overlay"></a>
+                    <a href="{{ domain.urls.edit_federation }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ domain.domain }}
                     <small>{{ domain.software }}</small>
                 </td>
