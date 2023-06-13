@@ -10,11 +10,11 @@
         {% for announcement in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ announcement.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ announcement.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     <i class="fa-solid fa-bullhorn"></i>
                 </td>
                 <td class="name">
-                    <a href="{{ announcement.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ announcement.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ announcement.html|truncatewords_html:"10" }}
                     <small>
                         {% if announcement.service_announcement %}{{ domain.service_domain }}{% endif %}

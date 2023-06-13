@@ -49,7 +49,11 @@ class AnnouncementEdit(UpdateView):
     model = Announcement
     template_name = "admin/announcement_edit.html"
     extra_context = {"section": "announcements"}
-    success_url = Announcement.urls.admin_root
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page"] = self.request.GET.get("page")
+        return context
 
     class form_class(AnnouncementCreate.form_class):
         pass
