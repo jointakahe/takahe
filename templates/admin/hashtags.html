@@ -7,11 +7,11 @@
         {% for hashtag in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ hashtag.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ hashtag.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     <i class="fa-solid fa-hashtag"></i>
                 </td>
                 <td class="name">
-                    <a href="{{ hashtag.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ hashtag.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ hashtag.display_name }}
                     <small>{% if hashtag.public %}Public{% elif hashtag.public is None %}Unreviewed{% else %}Private{% endif %}</small>
                 </td>
