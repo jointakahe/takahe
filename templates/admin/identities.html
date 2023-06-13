@@ -22,7 +22,7 @@
         {% for identity in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ identity.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ identity.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     <img
                         src="{{ identity.local_icon_url.relative }}"
                         class="icon"
@@ -33,7 +33,7 @@
                     >
                 </td>
                 <td class="name">
-                    <a href="{{ identity.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ identity.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ identity.html_name_or_handle }}
                     <small>@{{ identity.handle }}</small>
                 </td>
