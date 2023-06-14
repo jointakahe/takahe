@@ -81,4 +81,5 @@ class UserEdit(FormView):
         context = super().get_context_data(**kwargs)
         context["editing_user"] = self.user
         context["same_user"] = self.user == self.request.user
+        context["page"] = self.request.GET.get("page")
         return context

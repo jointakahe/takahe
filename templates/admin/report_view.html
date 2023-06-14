@@ -77,7 +77,7 @@
             </table>
         </fieldset>
         <div class="buttons">
-            <a href="{{ report.urls.admin }}" class="button secondary left">Back</a>
+            <a href="{{ report.urls.admin }}?page={{ page }}" class="button secondary left">Back</a>
             <a href="{{ report.subject_identity.urls.view }}" class="button secondary">View Profile</a>
             <a href="{{ report.subject_identity.urls.admin_edit }}" class="button secondary">Identity Admin</a>
             <button>Save Notes</button>

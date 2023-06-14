@@ -90,4 +90,5 @@ class IdentityEdit(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["identity"] = self.identity
+        context["page"] = self.request.GET.get("page")
         return context

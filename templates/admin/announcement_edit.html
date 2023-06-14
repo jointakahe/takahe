@@ -16,7 +16,7 @@
             {% include "forms/_field.html" with field=form.end %}
         </fieldset>
         <div class="buttons">
-            <a href="{{ announcement.urls.admin_root }}" class="button secondary left">Back</a>
+            <a href="{{ announcement.urls.admin_root }}?page={{ page }}" class="button secondary left">Back</a>
             <a href="{{ announcement.urls.admin_delete }}" class="button delete">Delete</a>
             <button>Save</button>
         </div>

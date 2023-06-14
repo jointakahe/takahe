@@ -12,11 +12,11 @@
         {% for invite in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ invite.urls.admin_view }}" class="overlay"></a>
+                    <a href="{{ invite.urls.admin_view }}?page={{ page_obj.number }}" class="overlay"></a>
                     <i class="fa-solid fa-envelope"></i>
                 </td>
                 <td class="name">
-                    <a href="{{ invite.urls.admin_view }}" class="overlay"></a>
+                    <a href="{{ invite.urls.admin_view }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ invite.token }}
                     <small>
                         {% if invite.note %}

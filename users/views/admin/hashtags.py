@@ -64,6 +64,7 @@ class HashtagEdit(FormView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["hashtag"] = self.hashtag
+        context["page"] = self.request.GET.get("page")
         return context
 
     def form_valid(self, form):

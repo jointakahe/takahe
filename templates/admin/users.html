@@ -12,11 +12,11 @@
         {% for user in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ user.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ user.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     <i class="fa-solid fa-user"></i>
                 </td>
                 <td class="name">
-                    <a href="{{ user.urls.admin_edit }}" class="overlay"></a>
+                    <a href="{{ user.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ user.email }}
                     <small>{% if user.admin %}Admin{% elif user.moderator %}Moderator{% endif %}</small>
                 </td>

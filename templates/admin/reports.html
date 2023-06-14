@@ -15,11 +15,11 @@
         {% for report in page_obj %}
             <tr>
                 <td class="icon">
-                    <a href="{{ report.urls.admin_view }}" class="overlay"></a>
+                    <a href="{{ report.urls.admin_view }}?page={{ page_obj.number }}" class="overlay"></a>
                     <img src="{{ report.subject_identity.local_icon_url.relative }}" class="icon" alt="Avatar for {{ report.subject_identity.name_or_handle }}">
                 </td>
                 <td class="name">
-                    <a href="{{ report.urls.admin_view }}" class="overlay"></a>
+                    <a href="{{ report.urls.admin_view }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ report.subject_identity.html_name_or_handle }}
                     {% if report.subject_post %}
                         <small>

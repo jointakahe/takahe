@@ -13,7 +13,7 @@
             {% include "forms/_field.html" with field=form.notes %}
         </fieldset>
         <div class="buttons">
-            <a href="{% url "admin_invites" %}" class="button secondary left">Back</a>
+            <a href="{% url 'admin_invites' %}?page={{ page }}" class="button secondary left">Back</a>
             <button class="delete" name="delete">Delete</button>
             <button>Save</button>
         </div>
