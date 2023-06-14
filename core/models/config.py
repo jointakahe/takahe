@@ -286,6 +286,7 @@ class Config(models.Model):
         visible_reaction_counts: bool = True
         expand_content_warnings: bool = False
         boosts_on_profile: bool = True
+        preferred_posting_language: str = ""
 
     class DomainOptions(pydantic.BaseModel):
         site_name: str = ""

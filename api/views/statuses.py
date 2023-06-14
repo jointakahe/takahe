@@ -110,6 +110,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
         reply_to=reply_post,
         attachments=attachments,
         question=details.poll.dict() if details.poll else None,
+        language=details.language,
     )
     # Add their own timeline event for immediate visibility
     TimelineEvent.add_post(request.identity, post)
@@ -141,6 +142,7 @@ def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
         sensitive=details.sensitive,
         attachments=attachments,
         attachment_attributes=details.media_attributes,
+        language=details.language,
     )
     return schemas.Status.from_post(post)
 

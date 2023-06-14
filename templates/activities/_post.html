@@ -32,7 +32,7 @@
         </div>
     {% endif %}
 
-    <div class="content {% if post.summary %}hidden {% endif %}">
+    <div class="content {% if post.summary %}hidden {% endif %}"{% if post.language %} lang="{{ post.language }}"{% endif %}>
         {{ post.safe_content_local }}
 
         {% if post.attachments.exists %}

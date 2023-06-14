@@ -2,7 +2,7 @@ import datetime
 
 from dateutil.tz import tzutc
 
-from core.ld import parse_ld_date
+from core.ld import get_language, parse_ld_date
 
 
 def test_parse_ld_date():
@@ -41,3 +41,41 @@ def test_parse_ld_date():
         tzinfo=tzutc(),
     )
     assert difference.total_seconds() == 0
+
+
+def test_get_language():
+    assert (
+        get_language(
+            {
+                "contentMap": {
+                    "en": "<p>Hello</p>",
+                    "es": "<p>hola</p>",
+                },
+                "nameMap": {"de": "Hallo"},
+                "summaryMap": {"fr": "Bonjour"},
+            }
+        )
+        == "en"
+    )
+    assert (
+        get_language(
+            {
+                "nameMap": {"de": "Hallo"},
+                "summaryMap": {"fr": "Bonjour"},
+            }
+        )
+        == "de"
+    )
+    assert (
+        get_language(
+            {
+                "summaryMap": {"fr": "Bonjour"},
+            }
+        )
+        == "fr"
+    )
+    assert get_language({"contentMap": {"en-gb": "<p>Hello</p>"}}) == "en"
+    assert get_language({"contentMap": {"en_GB": "<p>Hello</p>"}}) == "en"
+    assert get_language({"contentMap": {"EN": "<p>Hello</p>"}}) == "en"
+    assert get_language({"contentMap": {"und": "<p>Hello</p>"}}) is None
+    assert get_language({}) is None

@@ -151,7 +151,7 @@ class Status(Schema):
     reblog: Optional["Status"] = Field(...)
     poll: Poll | None = Field(...)
     card: None = Field(...)
-    language: None = Field(...)
+    language: str | None = Field(...)
     text: str | None = Field(...)
     edited_at: str | None
     favourited: bool = False
@@ -422,13 +422,19 @@ class Preferences(Schema):
             activities_models.Post.Visibilities.mentioned: "direct",
             activities_models.Post.Visibilities.local_only: "public",
         }
+        preferred_posting_language = None
+        if identity.config_identity.preferred_posting_language != "":
+            preferred_posting_language = (
+                identity.config_identity.preferred_posting_language
+            )
+
         return cls.parse_obj(
             {
                 "posting:default:visibility": visibility_mapping[
                     identity.config_identity.default_post_visibility
                 ],
                 "posting:default:sensitive": False,
-                "posting:default:language": None,
+                "posting:default:language": preferred_posting_language,
                 "reading:expand:media": "default",
                 "reading:expand:spoilers": identity.config_identity.expand_content_warnings,
             }

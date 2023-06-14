@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import urllib.parse as urllib_parse
 
 from dateutil import parser
@@ -692,3 +693,24 @@ def media_type_from_filename(filename):
         return "image/webp"
     else:
         return "application/octet-stream"
+
+
+def get_language(data) -> str | None:
+    """Detects and returns a document's language"""
+    map_ = None
+    if "contentMap" in data:
+        map_ = data["contentMap"]
+    elif "nameMap" in data:
+        map_ = data["nameMap"]
+    elif "summaryMap" in data:
+        map_ = data["summaryMap"]
+
+    if not map_:
+        return None
+
+    lang = list(map_.keys())[0]
+    if not lang or lang == "und":
+        return None
+
+    lang = re.split("-|_", lang)[0]
+    return lang.lower()

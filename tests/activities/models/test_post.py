@@ -259,6 +259,7 @@ def test_content_map(remote_identity):
         create=True,
     )
     assert post.content == "Hi World"
+    assert post.language == ""
 
     post2 = Post.by_ap(
         data={
@@ -271,6 +272,7 @@ def test_content_map(remote_identity):
         create=True,
     )
     assert post2.content == "Hey World"
+    assert post2.language == ""
 
     post3 = Post.by_ap(
         data={
@@ -283,6 +285,7 @@ def test_content_map(remote_identity):
         create=True,
     )
     assert post3.content == "Hello World"
+    assert post3.language == "en"
 
 
 @pytest.mark.django_db

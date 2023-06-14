@@ -30,6 +30,7 @@ from core.html import ContentRenderer, FediverseHtmlParser
 from core.ld import (
     canonicalise,
     format_ld_date,
+    get_language,
     get_list,
     get_value_or_map,
     parse_ld_date,
@@ -250,6 +251,9 @@ class Post(StatorModel):
 
     # The main (HTML) content
     content = models.TextField()
+
+    # The language of the content
+    language = models.CharField(default="")
 
     type = models.CharField(
         max_length=20,
@@ -473,6 +477,7 @@ class Post(StatorModel):
         reply_to: Optional["Post"] = None,
         attachments: list | None = None,
         question: dict | None = None,
+        language: str | None = None,
     ) -> "Post":
         with transaction.atomic():
             # Find mentions in this post
@@ -491,6 +496,9 @@ class Post(StatorModel):
                 sorted([tag[: Hashtag.MAXIMUM_LENGTH] for tag in parser.hashtags])
                 or None
             )
+            if language is None or language == "":
+                language = author.config_identity.preferred_posting_language
+
             # Make the Post object
             post = cls.objects.create(
                 author=author,
@@ -501,6 +509,7 @@ class Post(StatorModel):
                 visibility=visibility,
                 hashtags=hashtags,
                 in_reply_to=reply_to.object_uri if reply_to else None,
+                language=language,
             )
             post.object_uri = post.urls.object_uri
             post.url = post.absolute_object_uri()
@@ -525,6 +534,7 @@ class Post(StatorModel):
         visibility: int = Visibilities.public,
         attachments: list | None = None,
         attachment_attributes: list | None = None,
+        language: str | None = None,
     ):
         with transaction.atomic():
             # Strip all HTML and apply linebreaks filter
@@ -537,6 +547,9 @@ class Post(StatorModel):
             self.summary = summary or None
             self.sensitive = bool(summary) if sensitive is None else sensitive
             self.visibility = visibility
+            if language is None or language == "":
+                language = self.author.config_identity.preferred_posting_language
+            self.language = language
             self.edited = timezone.now()
             self.mentions.set(self.mentions_from_content(content, self.author))
             self.emojis.set(Emoji.emojis_from_content(content, None))
@@ -648,6 +661,10 @@ class Post(StatorModel):
             "tag": [],
             "attachment": [],
         }
+        if self.language != "":
+            value["contentMap"] = {
+                self.language: value["content"],
+            }
         if self.type == Post.Types.question and self.type_data:
             value[self.type_data.mode] = [
                 {
@@ -871,6 +888,7 @@ class Post(StatorModel):
             post.published = parse_ld_date(data.get("published"))
             post.edited = parse_ld_date(data.get("updated"))
             post.in_reply_to = data.get("inReplyTo")
+            post.language = get_language(data) or ""
             # Mentions and hashtags
             post.hashtags = []
             for tag in get_list(data, "tag"):
@@ -1105,12 +1123,16 @@ class Post(StatorModel):
             self.Visibilities.mentioned: "direct",
             self.Visibilities.local_only: "public",
         }
+        language = self.language
+        if self.language == "":
+            language = None
         value = {
             "id": self.pk,
             "uri": self.object_uri,
             "created_at": format_ld_date(self.published),
             "account": self.author.to_mastodon_json(include_counts=False),
             "content": self.safe_content_remote(),
+            "language": language,
             "visibility": visibility_mapping[self.visibility],
             "sensitive": self.sensitive,
             "spoiler_text": self.summary or "",
@@ -1151,7 +1173,6 @@ class Post(StatorModel):
             if isinstance(self.type_data, QuestionData)
             else None,
             "card": None,
-            "language": None,
             "text": self.safe_content_remote(),
             "edited_at": format_ld_date(self.edited) if self.edited else None,
         }
