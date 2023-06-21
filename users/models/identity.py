@@ -534,7 +534,7 @@ class Identity(StatorModel):
         if self.metadata:
             response["attachment"] = [
                 {
-                    "type": "http://schema.org#PropertyValue",
+                    "type": "PropertyValue",
                     "name": FediverseHtmlParser(item["name"]).plain_text,
                     "value": FediverseHtmlParser(item["value"]).html,
                 }

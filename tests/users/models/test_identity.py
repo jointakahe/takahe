@@ -240,3 +240,31 @@ async def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
         await Identity.fetch_webfinger_url("example.com")
         == "https://example.com/.well-known/webfinger?resource={uri}"
     )
+
+
+@pytest.mark.django_db
+def test_attachment_to_ap(identity: Identity, config_system):
+    """
+    Tests identity attachment conversion to AP format.
+    """
+    identity.metadata = [
+        {
+            "type": "http://schema.org#PropertyValue",
+            "name": "Website",
+            "value": "http://example.com",
+        }
+    ]
+
+    response = identity.to_ap()
+
+    assert response["attachment"]
+    assert len(response["attachment"]) == 1
+
+    attachment = response["attachment"][0]
+
+    assert attachment["type"] == "PropertyValue"
+    assert attachment["name"] == "Website"
+    assert attachment["value"] == (
+        '<a href="http://example.com" rel="nofollow">'
+        '<span class="invisible">http://</span>example.com</a>'
+    )
