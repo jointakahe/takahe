@@ -11,7 +11,7 @@ from api import schemas
 from api.decorators import scope_required
 from api.pagination import MastodonPaginator, PaginatingApiResponse, PaginationResult
 from core.models import Config
-from users.models import Identity
+from users.models import Identity, IdentityStates
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
@@ -70,6 +70,7 @@ def update_credentials(
     if header:
         service.set_image(header)
     identity.save()
+    identity.transition_perform(IdentityStates.edited)
     return schemas.Account.from_identity(identity, source=True)
 
 
