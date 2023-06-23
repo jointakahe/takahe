@@ -854,16 +854,14 @@ class Identity(StatorModel):
         self.metadata = []
         for attachment in get_list(document, "attachment"):
             if (
-                attachment["type"] == "http://schema.org#PropertyValue"
+                attachment["type"] == "PropertyValue"
                 and "name" in attachment
-                and "http://schema.org#value" in attachment
+                and "value" in attachment
             ):
                 self.metadata.append(
                     {
-                        "name": attachment.get("name"),
-                        "value": FediverseHtmlParser(
-                            attachment.get("http://schema.org#value")
-                        ).html,
+                        "name": attachment["name"],
+                        "value": FediverseHtmlParser(attachment["value"]).html,
                     }
                 )
         # Now go do webfinger with that info to see if we can get a canonical domain

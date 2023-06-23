@@ -2,7 +2,7 @@ import datetime
 
 from dateutil.tz import tzutc
 
-from core.ld import parse_ld_date
+from core.ld import canonicalise, parse_ld_date
 
 
 def test_parse_ld_date():
@@ -41,3 +41,68 @@ def test_parse_ld_date():
         tzinfo=tzutc(),
     )
     assert difference.total_seconds() == 0
+
+
+def test_canonicalise_single_attachment():
+    data = {
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            {
+                "schema": "http://schema.org#",
+                "PropertyValue": "schema:PropertyValue",
+                "value": "schema:value",
+            },
+        ],
+        "attachment": [
+            {
+                "type": "http://schema.org#PropertyValue",
+                "name": "Location",
+                "http://schema.org#value": "Test Location",
+            },
+        ],
+    }
+
+    parsed = canonicalise(data)
+    attachment = parsed["attachment"]
+
+    assert attachment["type"] == "PropertyValue"
+    assert attachment["name"] == "Location"
+    assert attachment["value"] == "Test Location"
+
+
+def test_canonicalise_multiple_attachment():
+    data = {
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            {
+                "schema": "http://schema.org#",
+                "PropertyValue": "schema:PropertyValue",
+                "value": "schema:value",
+            },
+        ],
+        "attachment": [
+            {
+                "type": "http://schema.org#PropertyValue",
+                "name": "Attachment 1",
+                "http://schema.org#value": "Test 1",
+            },
+            {
+                "type": "http://schema.org#PropertyValue",
+                "name": "Attachment 2",
+                "http://schema.org#value": "Test 2",
+            },
+        ],
+    }
+
+    parsed = canonicalise(data)
+    attachment = parsed["attachment"]
+
+    assert len(attachment) == 2
+
+    assert attachment[0]["type"] == "PropertyValue"
+    assert attachment[0]["name"] == "Attachment 1"
+    assert attachment[0]["value"] == "Test 1"
+
+    assert attachment[1]["type"] == "PropertyValue"
+    assert attachment[1]["name"] == "Attachment 2"
+    assert attachment[1]["value"] == "Test 2"
