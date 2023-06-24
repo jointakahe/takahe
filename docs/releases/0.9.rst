@@ -1,9 +1,9 @@
 0.9
 ===
 
-*Not yet released*
+*Released: 2023/06/24*
 
-This release is a large overhaul Takahē that removes all timeline UI elements
+This release is a large overhaul of Takahē that removes all timeline UI elements
 in the web interface in favour of apps, while reworking the remaining pages
 to be a pleasant profile viewing, post viewing, and settings experience.
 
@@ -94,7 +94,8 @@ Migrations
 There are new database migrations; they are backwards-compatible, so please
 apply them before restarting your webservers and stator processes.
 
-One of the migrations involves adding a large search index and may take some time to
+One of the migrations involves adding a large search index for opt-in post
+searching, and may take some time to
 process (on the order of minutes) if you have a large database.
 
 You may wish to bring your site down into
