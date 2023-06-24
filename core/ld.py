@@ -547,6 +547,18 @@ schemas = {
             }
         },
     },
+    "schema.org": {
+        "contentType": "application/ld+json",
+        "documentUrl": "https://schema.org/docs/jsonldcontext.json",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "schema": "http://schema.org/",
+                "PropertyValue": {"@id": "schema:PropertyValue"},
+                "value": {"@id": "schema:value"},
+            },
+        },
+    },
 }
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.Z"
@@ -592,24 +604,32 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
     """
     if not isinstance(json_data, dict):
         raise ValueError("Pass decoded JSON data into LDDocument")
-    context = [
-        "https://www.w3.org/ns/activitystreams",
-        {
-            "blurhash": "toot:blurhash",
-            "Emoji": "toot:Emoji",
-            "focalPoint": {"@container": "@list", "@id": "toot:focalPoint"},
-            "Hashtag": "as:Hashtag",
-            "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
-            "sensitive": "as:sensitive",
-            "toot": "http://joinmastodon.org/ns#",
-            "votersCount": "toot:votersCount",
-            "featured": {"@id": "toot:featured", "@type": "@id"},
-        },
-    ]
+
+    context = json_data.get("@context", [])
+
+    if not isinstance(context, list):
+        context = [context]
+
+    if not context:
+        context.append("https://www.w3.org/ns/activitystreams")
+        context.append(
+            {
+                "blurhash": "toot:blurhash",
+                "Emoji": "toot:Emoji",
+                "focalPoint": {"@container": "@list", "@id": "toot:focalPoint"},
+                "Hashtag": "as:Hashtag",
+                "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+                "sensitive": "as:sensitive",
+                "toot": "http://joinmastodon.org/ns#",
+                "votersCount": "toot:votersCount",
+                "featured": {"@id": "toot:featured", "@type": "@id"},
+            }
+        )
+
     if include_security:
         context.append("https://w3id.org/security/v1")
-    if "@context" not in json_data:
-        json_data["@context"] = context
+
+    json_data["@context"] = context
 
     return jsonld.compact(jsonld.expand(json_data), context)
 
