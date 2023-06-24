@@ -4,6 +4,7 @@ from typing import Literal, TypedDict, cast
 from urllib.parse import urlparse
 
 import httpx
+from ssl import SSLError, SSLCertVerificationError
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -16,7 +17,6 @@ from idna.core import InvalidCodepoint
 from pyld import jsonld
 
 from core.ld import format_ld_date
-
 
 class VerificationError(BaseException):
     """
@@ -249,6 +249,10 @@ class HttpSignature:
                     content=body_bytes,
                     follow_redirects=method == "get",
                 )
+            except SSLError as e:
+                # Not our problem if the other end doesn't have proper SSL
+                print(f"{uri} {e}")
+                raise SSLCertVerificationError(e)
             except InvalidCodepoint as ex:
                 # Convert to a more generic error we handle
                 raise httpx.HTTPError(f"InvalidCodepoint: {str(ex)}") from None
