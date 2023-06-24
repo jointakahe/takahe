@@ -547,6 +547,18 @@ schemas = {
             }
         },
     },
+    "schema.org": {
+        "contentType": "application/ld+json",
+        "documentUrl": "https://schema.org/docs/jsonldcontext.json",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "schema": "http://schema.org/",
+                "PropertyValue": {"@id": "schema:PropertyValue"},
+                "value": {"@id": "schema:value"},
+            },
+        },
+    },
 }
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.Z"
