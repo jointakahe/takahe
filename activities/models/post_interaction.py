@@ -411,7 +411,11 @@ class PostInteraction(StatorModel):
                 # Resolve the post
                 object = data["object"]
                 target = get_str_or_id(object, "inReplyTo") or get_str_or_id(object)
-                post = Post.by_object_uri(target, fetch=True)
+                try:
+                    post = Post.by_object_uri(target, fetch=True)
+                except Post.DoesNotExist:
+                    # can't interact with a post we don't have
+                    return
                 value = None
                 # Get the right type
                 if data["type"].lower() == "like":

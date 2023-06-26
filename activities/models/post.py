@@ -16,6 +16,9 @@ from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 
+from django.db.utils import IntegrityError
+from psycopg.errors import UniqueViolation
+
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
 from activities.models.hashtag import Hashtag, HashtagStates
@@ -850,13 +853,17 @@ class Post(StatorModel):
                 # If the post is from a blocked domain, stop and drop
                 if author.domain.blocked:
                     raise cls.DoesNotExist("Post is from a blocked domain")
-                post = cls.objects.create(
-                    object_uri=data["id"],
-                    author=author,
-                    content="",
-                    local=False,
-                    type=data["type"],
-                )
+                try:
+                    post = cls.objects.create(
+                        object_uri=data["id"],
+                        author=author,
+                        content="",
+                        local=False,
+                        type=data["type"],
+                    )
+                except (IntegrityError, UniqueViolation):
+                    print(f"attempting to create post with ID {data['id']} twice")
+                    pass
                 created = True
             else:
                 raise cls.DoesNotExist(f"No post with ID {data['id']}", data)
