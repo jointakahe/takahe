@@ -697,7 +697,7 @@ class Identity(StatorModel):
                 if (
                     response
                     and response.status_code < 500
-                    and response.status_code not in [401, 403, 404, 406, 410]
+                    and response.status_code not in [400, 401, 403, 404, 406, 410]
                 ):
                     raise ValueError(
                         f"Client error fetching webfinger: {response.status_code}",
