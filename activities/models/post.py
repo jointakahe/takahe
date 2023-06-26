@@ -854,6 +854,7 @@ class Post(StatorModel):
                 if author.domain.blocked:
                     raise cls.DoesNotExist("Post is from a blocked domain")
                 try:
+                    print(f"attempting to create post with ID {data['id']}")
                     post = cls.objects.create(
                         object_uri=data["id"],
                         author=author,
