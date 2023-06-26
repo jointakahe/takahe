@@ -16,6 +16,9 @@ from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
 
+from django.db.utils import IntegrityError
+from pyld.jsonld import JsonLdError
+
 from activities.models.emoji import Emoji
 from activities.models.fan_out import FanOut
 from activities.models.hashtag import Hashtag, HashtagStates
@@ -843,6 +846,9 @@ class Post(StatorModel):
                 if author.domain is None:
                     if fetch_author:
                         async_to_sync(author.fetch_actor)()
+                        # perhaps the entire "try again" logic below
+                        # could be replaced with TryAgainLater for
+                        # _all_ fetches, to let it handle pinned posts?
                         if author.domain is None:
                             raise TryAgainLater()
                     else:
@@ -850,22 +856,46 @@ class Post(StatorModel):
                 # If the post is from a blocked domain, stop and drop
                 if author.domain.blocked:
                     raise cls.DoesNotExist("Post is from a blocked domain")
-                post = cls.objects.create(
-                    object_uri=data["id"],
-                    author=author,
-                    content="",
-                    local=False,
-                    type=data["type"],
-                )
-                created = True
+                try:
+                    # try again, because fetch_actor() also fetches pinned posts
+                    post = cls.objects.select_related("author__domain").get(
+                        object_uri=data["id"]
+                    )
+                except cls.DoesNotExist:
+                    # finally, create a stub
+                    try:
+                        post = cls.objects.create(
+                            object_uri=data["id"],
+                            author=author,
+                            content="",
+                            local=False,
+                            type=data["type"],
+                        )
+                        created = True
+                    except IntegrityError as dupe:
+                        # there's still some kind of race condition here
+                        # it's far more rare, but sometimes we fire an
+                        # IntegrityError on activities_post_object_uri_key
+                        # this transaction is now aborted and anything following
+                        # in the caller function will fail in the database.
+                        raise TryAgainLater() from dupe
             else:
                 raise cls.DoesNotExist(f"No post with ID {data['id']}", data)
         if update or created:
             post.type = data["type"]
             if post.type in (cls.Types.article, cls.Types.question):
                 post.type_data = PostTypeData(__root__=data).__root__
-            post.content = get_value_or_map(data, "content", "contentMap")
-            post.summary = data.get("summary")
+            try:
+                # apparently sometimes posts (Pages?) in the fediverse 
+                # don't have content?!
+                post.content = get_value_or_map(data, "content", "contentMap")
+            except KeyError:
+                post.content = None
+            # Document types have names, not summaries
+            post.summary = data.get("summary") or data.get("name")
+            if not post.content and post.summary:
+                post.content = post.summary
+                post.summary = None
             post.sensitive = data.get("sensitive", False)
             post.url = data.get("url", data["id"])
             post.published = parse_ld_date(data.get("published"))
@@ -879,10 +909,13 @@ class Post(StatorModel):
                     mention_identity = Identity.by_actor_uri(tag["href"], create=True)
                     post.mentions.add(mention_identity)
                 elif tag_type in ["_:hashtag", "hashtag"]:
+                    # kbin produces tags with 'tag' instead of 'name'
+                    if 'tag' in tag and 'name' not in tag:
+                        name = get_value_or_map(tag,'tag','tagMap')
+                    else:
+                        name = get_value_or_map(tag, "name", "nameMap")
                     post.hashtags.append(
-                        get_value_or_map(tag, "name", "nameMap")
-                        .lower()
-                        .lstrip("#")[: Hashtag.MAXIMUM_LENGTH]
+                        name.lower().lstrip("#")[: Hashtag.MAXIMUM_LENGTH]
                     )
                 elif tag_type in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
@@ -908,6 +941,10 @@ class Post(StatorModel):
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
+                if not "url" in attachment.keys():
+                    # sometimes attachments don't have URLs. Skip them.
+                    print(f"no URL for {attachment} in {post}")
+                    continue
                 if "focalPoint" in attachment:
                     try:
                         focal_x, focal_y = attachment["focalPoint"]
@@ -981,8 +1018,8 @@ class Post(StatorModel):
                         update=True,
                         fetch_author=True,
                     )
-                except (json.JSONDecodeError, ValueError):
-                    raise cls.DoesNotExist(f"Invalid ld+json response for {object_uri}")
+                except (json.JSONDecodeError, ValueError, JsonLdError) as err:
+                    raise cls.DoesNotExist(f"Invalid ld+json response for {object_uri}") from err
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:
                     async_to_sync(post.author.fetch_actor)()

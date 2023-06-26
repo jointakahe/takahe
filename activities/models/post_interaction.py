@@ -473,8 +473,9 @@ class PostInteraction(StatorModel):
                 # TODO: Limited retry state?
                 return
 
-            interaction.post.calculate_stats()
-            interaction.post.calculate_type_data()
+            if interaction and interaction.post:
+                interaction.post.calculate_stats()
+                interaction.post.calculate_type_data()
 
     @classmethod
     def handle_undo_ap(cls, data):
