@@ -15,7 +15,7 @@ x-takahe-common:
       TAKAHE_DATABASE_SERVER: "postgres://postgres:insecure_password@db/takahe"
       TAKAHE_DEBUG: "true"
       TAKAHE_SECRET_KEY: "insecure_secret"
-      TAKAHE_CSRF_TRUSTED_ORIGINS: '["http://127.0.0.1:8000", "https://127.0.0.1:8000"]'
+      TAKAHE_CSRF_HOSTS: '["http://127.0.0.1:8000", "https://127.0.0.1:8000"]'
       TAKAHE_USE_PROXY_HEADERS: "true"
       TAKAHE_EMAIL_BACKEND: "console://console"
       TAKAHE_MAIN_DOMAIN: "example.com"
