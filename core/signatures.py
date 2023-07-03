@@ -1,10 +1,10 @@
 import base64
 import json
+from ssl import SSLCertVerificationError, SSLError
 from typing import Literal, TypedDict, cast
 from urllib.parse import urlparse
 
 import httpx
-from ssl import SSLError, SSLCertVerificationError
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -17,6 +17,7 @@ from idna.core import InvalidCodepoint
 from pyld import jsonld
 
 from core.ld import format_ld_date
+
 
 class VerificationError(BaseException):
     """
