@@ -2,7 +2,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from hatchway import ApiResponse, api_view
 
-from activities.models import TimelineEvent
+from activities.models import PostInteraction, TimelineEvent
 from activities.services import TimelineService
 from api import schemas
 from api.decorators import scope_required
@@ -45,8 +45,15 @@ def notifications(
         since_id=since_id,
         limit=limit,
     )
+    interactions = PostInteraction.get_event_interactions(
+        pager.results,
+        request.identity,
+    )
     return PaginatingApiResponse(
-        [schemas.Notification.from_timeline_event(event) for event in pager.results],
+        [
+            schemas.Notification.from_timeline_event(event, interactions=interactions)
+            for event in pager.results
+        ],
         request=request,
         include_params=["limit", "account_id"],
     )
