@@ -25,7 +25,7 @@ from activities.models.post_types import (
     PostTypeDataEncoder,
     QuestionData,
 )
-from core.exceptions import capture_message
+from core.exceptions import ActivityPubFormatError, capture_message
 from core.html import ContentRenderer, FediverseHtmlParser
 from core.ld import (
     canonicalise,
@@ -916,6 +916,8 @@ class Post(StatorModel):
                     focal_x, focal_y = None, None
                 mimetype = attachment.get("mediaType")
                 if not mimetype or not isinstance(mimetype, str):
+                    if "url" not in attachment:
+                        raise ActivityPubFormatError("No URL present on attachment")
                     mimetype, _ = mimetypes.guess_type(attachment["url"])
                     if not mimetype:
                         mimetype = "application/octet-stream"
