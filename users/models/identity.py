@@ -46,7 +46,7 @@ class IdentityStates(StateGraph):
     """
 
     outdated = State(try_interval=3600, force_initial=True)
-    updated = State(try_interval=86400 * 7, attempt_immediately=False)
+    updated = State(try_interval=86400 * 15, attempt_immediately=False)
 
     edited = State(try_interval=300, attempt_immediately=True)
     deleted = State(try_interval=300, attempt_immediately=True)
