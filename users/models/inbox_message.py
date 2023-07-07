@@ -1,4 +1,5 @@
 from django.db import models
+from pyld.jsonld import JsonLdError
 
 from core.exceptions import ActivityPubError
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -155,7 +156,7 @@ class InboxMessageStates(StateGraph):
                 case unknown:
                     raise ValueError(f"Cannot handle activity of type {unknown}")
             return cls.processed
-        except ActivityPubError:
+        except (ActivityPubError, JsonLdError):
             return cls.errored
 
 
