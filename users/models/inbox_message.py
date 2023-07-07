@@ -154,7 +154,7 @@ class InboxMessageStates(StateGraph):
                                 f"Cannot handle activity of type __internal__.{unknown}"
                             )
                 case unknown:
-                    raise ValueError(f"Cannot handle activity of type {unknown}")
+                    return cls.errored
             return cls.processed
         except (ActivityPubError, JsonLdError):
             return cls.errored
