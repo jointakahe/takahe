@@ -13,6 +13,7 @@ class StateGraph:
     initial_state: ClassVar["State"]
     terminal_states: ClassVar[set["State"]]
     automatic_states: ClassVar[set["State"]]
+    deletion_states: ClassVar[set["State"]]
 
     def __init_subclass__(cls) -> None:
         # Collect state members
@@ -33,6 +34,7 @@ class StateGraph:
         # Check the graph layout
         terminal_states = set()
         automatic_states = set()
+        deletion_states = set()
         initial_state = None
         for state in cls.states.values():
             # Check for multiple initial states
@@ -42,6 +44,9 @@ class StateGraph:
                         f"The graph has more than one initial state: {initial_state} and {state}"
                     )
                 initial_state = state
+            # Collect states that require deletion handling (they can be terminal or not)
+            if state.delete_after:
+                deletion_states.add(state)
             # Collect terminal states
             if state.terminal:
                 state.externally_progressed = True
@@ -74,6 +79,7 @@ class StateGraph:
         cls.initial_state = initial_state
         cls.terminal_states = terminal_states
         cls.automatic_states = automatic_states
+        cls.deletion_states = deletion_states
         # Generate choices
         cls.choices = [(name, name) for name in cls.states.keys()]
 
@@ -98,6 +104,9 @@ class State:
         self.attempt_immediately = attempt_immediately
         self.force_initial = force_initial
         self.delete_after = delete_after
+        # Deletes are also only attempted on try_intervals
+        if self.delete_after and not self.try_interval:
+            self.try_interval = self.delete_after
         self.parents: set["State"] = set()
         self.children: set["State"] = set()
         self.timeout_state: State | None = None

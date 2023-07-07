@@ -1,4 +1,3 @@
-from asgiref.sync import sync_to_async
 from django.db import models
 
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -13,61 +12,59 @@ class InboxMessageStates(StateGraph):
     processed.transitions_to(purge)  # Delete after release (back compat)
 
     @classmethod
-    async def handle_received(cls, instance: "InboxMessage"):
+    def handle_received(cls, instance: "InboxMessage"):
         from activities.models import Post, PostInteraction, TimelineEvent
         from users.models import Block, Follow, Identity, Report
         from users.services import IdentityService
 
         match instance.message_type:
             case "follow":
-                await sync_to_async(Follow.handle_request_ap)(instance.message)
+                Follow.handle_request_ap(instance.message)
             case "block":
-                await sync_to_async(Block.handle_ap)(instance.message)
+                Block.handle_ap(instance.message)
             case "announce":
-                await sync_to_async(PostInteraction.handle_ap)(instance.message)
+                PostInteraction.handle_ap(instance.message)
             case "like":
-                await sync_to_async(PostInteraction.handle_ap)(instance.message)
+                PostInteraction.handle_ap(instance.message)
             case "create":
                 match instance.message_object_type:
                     case "note":
                         if instance.message_object_has_content:
-                            await sync_to_async(Post.handle_create_ap)(instance.message)
+                            Post.handle_create_ap(instance.message)
                         else:
                             # Notes without content are Interaction candidates
-                            await sync_to_async(PostInteraction.handle_ap)(
-                                instance.message
-                            )
+                            PostInteraction.handle_ap(instance.message)
                     case "question":
-                        await sync_to_async(Post.handle_create_ap)(instance.message)
+                        Post.handle_create_ap(instance.message)
                     case unknown:
                         if unknown in Post.Types.names:
-                            await sync_to_async(Post.handle_create_ap)(instance.message)
+                            Post.handle_create_ap(instance.message)
             case "update":
                 match instance.message_object_type:
                     case "note":
-                        await sync_to_async(Post.handle_update_ap)(instance.message)
+                        Post.handle_update_ap(instance.message)
                     case "person":
-                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                        Identity.handle_update_ap(instance.message)
                     case "service":
-                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                        Identity.handle_update_ap(instance.message)
                     case "group":
-                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                        Identity.handle_update_ap(instance.message)
                     case "organization":
-                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                        Identity.handle_update_ap(instance.message)
                     case "application":
-                        await sync_to_async(Identity.handle_update_ap)(instance.message)
+                        Identity.handle_update_ap(instance.message)
                     case "question":
-                        await sync_to_async(Post.handle_update_ap)(instance.message)
+                        Post.handle_update_ap(instance.message)
                     case unknown:
                         if unknown in Post.Types.names:
-                            await sync_to_async(Post.handle_update_ap)(instance.message)
+                            Post.handle_update_ap(instance.message)
             case "accept":
                 match instance.message_object_type:
                     case "follow":
-                        await sync_to_async(Follow.handle_accept_ap)(instance.message)
+                        Follow.handle_accept_ap(instance.message)
                     case None:
                         # It's a string object, but these will only be for Follows
-                        await sync_to_async(Follow.handle_accept_ap)(instance.message)
+                        Follow.handle_accept_ap(instance.message)
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type accept.{unknown}"
@@ -75,10 +72,10 @@ class InboxMessageStates(StateGraph):
             case "reject":
                 match instance.message_object_type:
                     case "follow":
-                        await sync_to_async(Follow.handle_reject_ap)(instance.message)
+                        Follow.handle_reject_ap(instance.message)
                     case None:
                         # It's a string object, but these will only be for Follows
-                        await sync_to_async(Follow.handle_reject_ap)(instance.message)
+                        Follow.handle_reject_ap(instance.message)
                     case unknown:
                         raise ValueError(
                             f"Cannot handle activity of type reject.{unknown}"
@@ -86,17 +83,13 @@ class InboxMessageStates(StateGraph):
             case "undo":
                 match instance.message_object_type:
                     case "follow":
-                        await sync_to_async(Follow.handle_undo_ap)(instance.message)
+                        Follow.handle_undo_ap(instance.message)
                     case "block":
-                        await sync_to_async(Block.handle_undo_ap)(instance.message)
+                        Block.handle_undo_ap(instance.message)
                     case "like":
-                        await sync_to_async(PostInteraction.handle_undo_ap)(
-                            instance.message
-                        )
+                        PostInteraction.handle_undo_ap(instance.message)
                     case "announce":
-                        await sync_to_async(PostInteraction.handle_undo_ap)(
-                            instance.message
-                        )
+                        PostInteraction.handle_undo_ap(instance.message)
                     case "http://litepub.social/ns#emojireact":
                         # We're ignoring emoji reactions for now
                         pass
@@ -107,31 +100,31 @@ class InboxMessageStates(StateGraph):
             case "delete":
                 # If there is no object type, we need to see if it's a profile or a post
                 if not isinstance(instance.message["object"], dict):
-                    if await Identity.objects.filter(
+                    if Identity.objects.filter(
                         actor_uri=instance.message["object"]
-                    ).aexists():
-                        await sync_to_async(Identity.handle_delete_ap)(instance.message)
-                    elif await Post.objects.filter(
+                    ).exists():
+                        Identity.handle_delete_ap(instance.message)
+                    elif Post.objects.filter(
                         object_uri=instance.message["object"]
-                    ).aexists():
-                        await sync_to_async(Post.handle_delete_ap)(instance.message)
+                    ).exists():
+                        Post.handle_delete_ap(instance.message)
                     else:
                         # It is presumably already deleted
                         pass
                 else:
                     match instance.message_object_type:
                         case "tombstone":
-                            await sync_to_async(Post.handle_delete_ap)(instance.message)
+                            Post.handle_delete_ap(instance.message)
                         case "note":
-                            await sync_to_async(Post.handle_delete_ap)(instance.message)
+                            Post.handle_delete_ap(instance.message)
                         case unknown:
                             raise ValueError(
                                 f"Cannot handle activity of type delete.{unknown}"
                             )
             case "add":
-                await sync_to_async(PostInteraction.handle_add_ap)(instance.message)
+                PostInteraction.handle_add_ap(instance.message)
             case "remove":
-                await sync_to_async(PostInteraction.handle_remove_ap)(instance.message)
+                PostInteraction.handle_remove_ap(instance.message)
             case "move":
                 # We're ignoring moves for now
                 pass
@@ -140,19 +133,15 @@ class InboxMessageStates(StateGraph):
                 pass
             case "flag":
                 # Received reports
-                await sync_to_async(Report.handle_ap)(instance.message)
+                Report.handle_ap(instance.message)
             case "__internal__":
                 match instance.message_object_type:
                     case "fetchpost":
-                        await sync_to_async(Post.handle_fetch_internal)(
-                            instance.message["object"]
-                        )
+                        Post.handle_fetch_internal(instance.message["object"])
                     case "cleartimeline":
-                        await sync_to_async(TimelineEvent.handle_clear_timeline)(
-                            instance.message["object"]
-                        )
+                        TimelineEvent.handle_clear_timeline(instance.message["object"])
                     case "addfollow":
-                        await sync_to_async(IdentityService.handle_internal_add_follow)(
+                        IdentityService.handle_internal_add_follow(
                             instance.message["object"]
                         )
                     case unknown:

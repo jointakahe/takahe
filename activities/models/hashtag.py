@@ -22,11 +22,7 @@ class HashtagStates(StateGraph):
         """
         Computes the stats and other things for a Hashtag
         """
-        from time import time
-
         from .post import Post
-
-        start = time()
 
         posts_query = Post.objects.local_public().tagged_with(instance)
         total = await posts_query.acount()
@@ -57,7 +53,6 @@ class HashtagStates(StateGraph):
             instance.stats_updated = timezone.now()
             await sync_to_async(instance.save)()
 
-        print(f"Updated hashtag {instance.hashtag} in {time() - start:.5f} seconds")
         return cls.updated
 
 
@@ -86,7 +81,6 @@ class HashtagManager(models.Manager):
 
 
 class Hashtag(StatorModel):
-
     MAXIMUM_LENGTH = 100
 
     # Normalized hashtag without the '#'

@@ -127,7 +127,7 @@ class Emoji(StatorModel):
 
     class Meta:
         unique_together = ("domain", "shortcode")
-        indexes = StatorModel.Meta.indexes
+        indexes: list = []  # We need this so Stator can add its own
 
     class urls(urlman.Urls):
         admin = "/admin/emoji/"
@@ -314,11 +314,11 @@ class Emoji(StatorModel):
                     emoji.remote_url = icon["url"]
                     emoji.mimetype = mimetype
                     emoji.category = category
-                    emoji.transition_set_state("outdated")
                     if emoji.file:
                         emoji.file.delete(save=True)
                     else:
                         emoji.save()
+                    emoji.transition_perform("outdated")
                 return emoji
 
         emoji = cls.objects.create(

@@ -1,0 +1,40 @@
+0.9
+===
+
+*Released: Not Yet Released*
+
+This release is a polish release that is prepping us for the road to 1.0.
+
+This release's major changes:
+
+* Stator, the background task system, has been significantly reworked to require
+  smaller indexes, spend less time scheduling, and has had most of its async
+  nature removed, as this both reduces deadlocks and improves performance in
+  most situations (the context switching was costing more than the gains from
+  talking to other servers asynchronously).
+
+* TBC
+
+If you'd like to help with code, design, or other areas, see
+:doc:`/contributing` to see how to get in touch.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.10``.
+
+
+Upgrade Notes
+-------------
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations; they are backwards-compatible, but contain
+very significant index changes to all of the main tables that may cause the
+PostgreSQL deadlock detector to trigger if you attempt to apply them while your
+site is live.
+
+We recommend:
+
+* Temporarily stopping all instances of the webserver and Stator
+* Applying the migration (should be less than a few minutes on most installs)
+* Restarting the instances of webserver and Stator

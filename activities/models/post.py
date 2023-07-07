@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import async_to_sync
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from django.db import models, transaction
@@ -63,45 +63,44 @@ class PostStates(StateGraph):
     edited_fanned_out.transitions_to(deleted)
 
     @classmethod
-    async def targets_fan_out(cls, post: "Post", type_: str) -> None:
+    def targets_fan_out(cls, post: "Post", type_: str) -> None:
         # Fan out to each target
-        for follow in await post.aget_targets():
-            await FanOut.objects.acreate(
+        for follow in post.get_targets():
+            FanOut.objects.create(
                 identity=follow,
                 type=type_,
                 subject_post=post,
             )
 
     @classmethod
-    async def handle_new(cls, instance: "Post"):
+    def handle_new(cls, instance: "Post"):
         """
         Creates all needed fan-out objects for a new Post.
         """
-        post = await instance.afetch_full()
         # Only fan out if the post was published in the last day or it's local
         # (we don't want to fan out anything older that that which is remote)
-        if post.local or (timezone.now() - post.published) < datetime.timedelta(days=1):
-            await cls.targets_fan_out(post, FanOut.Types.post)
-        await post.ensure_hashtags()
+        if instance.local or (timezone.now() - instance.published) < datetime.timedelta(
+            days=1
+        ):
+            cls.targets_fan_out(instance, FanOut.Types.post)
+        instance.ensure_hashtags()
         return cls.fanned_out
 
     @classmethod
-    async def handle_deleted(cls, instance: "Post"):
+    def handle_deleted(cls, instance: "Post"):
         """
         Creates all needed fan-out objects needed to delete a Post.
         """
-        post = await instance.afetch_full()
-        await cls.targets_fan_out(post, FanOut.Types.post_deleted)
+        cls.targets_fan_out(instance, FanOut.Types.post_deleted)
         return cls.deleted_fanned_out
 
     @classmethod
-    async def handle_edited(cls, instance: "Post"):
+    def handle_edited(cls, instance: "Post"):
         """
         Creates all needed fan-out objects for an edited Post.
         """
-        post = await instance.afetch_full()
-        await cls.targets_fan_out(post, FanOut.Types.post_edited)
-        await post.ensure_hashtags()
+        cls.targets_fan_out(instance, FanOut.Types.post_edited)
+        instance.ensure_hashtags()
         return cls.edited_fanned_out
 
 
@@ -324,7 +323,7 @@ class Post(StatorModel):
                 fields=["visibility", "local", "created"],
                 name="ix_post_local_public_created",
             ),
-        ] + StatorModel.Meta.indexes
+        ]
 
     class urls(urlman.Urls):
         view = "{self.author.urls.view}posts/{self.id}/"
@@ -374,8 +373,6 @@ class Post(StatorModel):
             .select_related("author")
             .first()
         )
-
-    ain_reply_to_post = sync_to_async(in_reply_to_post)
 
     ### Content cleanup and extraction ###
     def clean_type_data(self, value):
@@ -552,6 +549,8 @@ class Post(StatorModel):
                 attachment.name = attrs.description
                 attachment.save()
 
+            self.transition_perform(PostStates.edited)
+
     @classmethod
     def mentions_from_content(cls, content, author) -> set[Identity]:
         mention_hits = FediverseHtmlParser(content, find_mentions=True).mentions
@@ -572,7 +571,7 @@ class Post(StatorModel):
                 mentions.add(identity)
         return mentions
 
-    async def ensure_hashtags(self) -> None:
+    def ensure_hashtags(self) -> None:
         """
         Ensure any of the already parsed hashtags from this Post
         have a corresponding Hashtag record.
@@ -580,10 +579,10 @@ class Post(StatorModel):
         # Ensure hashtags
         if self.hashtags:
             for hashtag in self.hashtags:
-                tag, _ = await Hashtag.objects.aget_or_create(
+                tag, _ = Hashtag.objects.get_or_create(
                     hashtag=hashtag[: Hashtag.MAXIMUM_LENGTH],
                 )
-                await tag.atransition_perform(HashtagStates.outdated)
+                tag.transition_perform(HashtagStates.outdated)
 
     def calculate_stats(self, save=True):
         """
@@ -739,33 +738,33 @@ class Post(StatorModel):
             "object": object,
         }
 
-    async def aget_targets(self) -> Iterable[Identity]:
+    def get_targets(self) -> Iterable[Identity]:
         """
         Returns a list of Identities that need to see posts and their changes
         """
         targets = set()
-        async for mention in self.mentions.all():
+        for mention in self.mentions.all():
             targets.add(mention)
         # Then, if it's not mentions only, also deliver to followers and all hashtag followers
         if self.visibility != Post.Visibilities.mentioned:
-            async for follower in self.author.inbound_follows.filter(
+            for follower in self.author.inbound_follows.filter(
                 state__in=FollowStates.group_active()
             ).select_related("source"):
                 targets.add(follower.source)
             if self.hashtags:
-                async for follow in HashtagFollow.objects.by_hashtags(
+                for follow in HashtagFollow.objects.by_hashtags(
                     self.hashtags
                 ).prefetch_related("identity"):
                     targets.add(follow.identity)
 
         # If it's a reply, always include the original author if we know them
-        reply_post = await self.ain_reply_to_post()
+        reply_post = self.in_reply_to_post()
         if reply_post:
             targets.add(reply_post.author)
             # And if it's a reply to one of our own, we have to re-fan-out to
             # the original author's followers
             if reply_post.author.local:
-                async for follower in reply_post.author.inbound_follows.filter(
+                for follower in reply_post.author.inbound_follows.filter(
                     state__in=FollowStates.group_active()
                 ).select_related("source"):
                     targets.add(follower.source)
@@ -782,7 +781,7 @@ class Post(StatorModel):
             .filter(mute=False)
             .select_related("target")
         )
-        async for block in blocks:
+        for block in blocks:
             try:
                 targets.remove(block.target)
             except KeyError:

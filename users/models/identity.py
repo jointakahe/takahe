@@ -158,7 +158,7 @@ class Identity(StatorModel):
 
     state = StateField(IdentityStates)
 
-    local = models.BooleanField()
+    local = models.BooleanField(db_index=True)
     users = models.ManyToManyField(
         "users.User",
         related_name="identities",
@@ -227,7 +227,7 @@ class Identity(StatorModel):
     class Meta:
         verbose_name_plural = "identities"
         unique_together = [("username", "domain")]
-        indexes = StatorModel.Meta.indexes
+        indexes: list = []  # We need this so Stator can add its own
 
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
