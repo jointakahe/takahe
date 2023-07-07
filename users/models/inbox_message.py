@@ -69,9 +69,7 @@ class InboxMessageStates(StateGraph):
                             # It's a string object, but these will only be for Follows
                             Follow.handle_accept_ap(instance.message)
                         case unknown:
-                            raise ValueError(
-                                f"Cannot handle activity of type accept.{unknown}"
-                            )
+                            return cls.errored
                 case "reject":
                     match instance.message_object_type:
                         case "follow":
@@ -80,9 +78,7 @@ class InboxMessageStates(StateGraph):
                             # It's a string object, but these will only be for Follows
                             Follow.handle_reject_ap(instance.message)
                         case unknown:
-                            raise ValueError(
-                                f"Cannot handle activity of type reject.{unknown}"
-                            )
+                            return cls.errored
                 case "undo":
                     match instance.message_object_type:
                         case "follow":
@@ -97,9 +93,7 @@ class InboxMessageStates(StateGraph):
                             # We're ignoring emoji reactions for now
                             pass
                         case unknown:
-                            raise ValueError(
-                                f"Cannot handle activity of type undo.{unknown}"
-                            )
+                            return cls.errored
                 case "delete":
                     # If there is no object type, we need to see if it's a profile or a post
                     if not isinstance(instance.message["object"], dict):
@@ -121,9 +115,7 @@ class InboxMessageStates(StateGraph):
                             case "note":
                                 Post.handle_delete_ap(instance.message)
                             case unknown:
-                                raise ValueError(
-                                    f"Cannot handle activity of type delete.{unknown}"
-                                )
+                                return cls.errored
                 case "add":
                     PostInteraction.handle_add_ap(instance.message)
                 case "remove":
@@ -150,9 +142,7 @@ class InboxMessageStates(StateGraph):
                                 instance.message["object"]
                             )
                         case unknown:
-                            raise ValueError(
-                                f"Cannot handle activity of type __internal__.{unknown}"
-                            )
+                            return cls.errored
                 case unknown:
                     return cls.errored
             return cls.processed
