@@ -76,7 +76,9 @@ urlpatterns = [
     path("v1/statuses/<id>/source", statuses.status_source),
     # Notifications
     path("v1/notifications", notifications.notifications),
+    path("v1/notifications/clear", notifications.dismiss_notifications),
     path("v1/notifications/<id>", notifications.get_notification),
+    path("v1/notifications/<id>/dismiss", notifications.dismiss_notification),
     # Polls
     path("v1/polls/<id>", polls.get_poll),
     path("v1/polls/<id>/votes", polls.vote_poll),

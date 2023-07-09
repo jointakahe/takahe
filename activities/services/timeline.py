@@ -77,7 +77,7 @@ class TimelineService:
     def notifications(self, types: list[str]) -> models.QuerySet[TimelineEvent]:
         return (
             self.event_queryset()
-            .filter(identity=self.identity, type__in=types)
+            .filter(identity=self.identity, type__in=types, dismissed=False)
             .order_by("-created")
         )
 
