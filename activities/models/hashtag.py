@@ -2,7 +2,6 @@ import re
 from datetime import date, timedelta
 
 import urlman
-from asgiref.sync import sync_to_async
 from django.db import models
 from django.utils import timezone
 
@@ -18,27 +17,27 @@ class HashtagStates(StateGraph):
     updated.transitions_to(outdated)
 
     @classmethod
-    async def handle_outdated(cls, instance: "Hashtag"):
+    def handle_outdated(cls, instance: "Hashtag"):
         """
         Computes the stats and other things for a Hashtag
         """
         from .post import Post
 
         posts_query = Post.objects.local_public().tagged_with(instance)
-        total = await posts_query.acount()
+        total = posts_query.count()
 
         today = timezone.now().date()
-        total_today = await posts_query.filter(
+        total_today = posts_query.filter(
             created__gte=today,
             created__lte=today + timedelta(days=1),
-        ).acount()
-        total_month = await posts_query.filter(
+        ).count()
+        total_month = posts_query.filter(
             created__year=today.year,
             created__month=today.month,
-        ).acount()
-        total_year = await posts_query.filter(
+        ).count()
+        total_year = posts_query.filter(
             created__year=today.year,
-        ).acount()
+        ).count()
         if total:
             if not instance.stats:
                 instance.stats = {}
@@ -51,7 +50,7 @@ class HashtagStates(StateGraph):
                 }
             )
             instance.stats_updated = timezone.now()
-            await sync_to_async(instance.save)()
+            instance.save()
 
         return cls.updated
 
