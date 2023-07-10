@@ -61,6 +61,9 @@
                             {% endif %}
                         {% elif not request.domain.config_domain.hide_login %}
                             <a href="{% url "login" %}" title="Login"><i class="fa-solid fa-right-to-bracket"></i></a>
+                            {% if config.signup_allowed %}
+                                <a href="{% url "signup" %}" title="Create Account"><i class="fa-solid fa-user-plus"></i></a>
+                            {% endif %}
                         {% endif %}
                     </menu>
                 </header>
