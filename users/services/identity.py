@@ -1,10 +1,10 @@
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
 
-from stator.exceptions import TryAgainLater
 from activities.models import FanOut, Post, PostInteraction, PostInteractionStates
 from core.files import resize_image
 from core.html import FediverseHtmlParser
+from stator.exceptions import TryAgainLater
 from users.models import (
     Block,
     BlockStates,

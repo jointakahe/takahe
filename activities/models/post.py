@@ -12,11 +12,10 @@ from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from django.db import models, transaction
+from django.db.utils import IntegrityError
 from django.template import loader
 from django.template.defaultfilters import linebreaks_filter
 from django.utils import timezone
-
-from django.db.utils import IntegrityError
 from pyld.jsonld import JsonLdError
 
 from activities.models.emoji import Emoji
@@ -886,7 +885,7 @@ class Post(StatorModel):
             if post.type in (cls.Types.article, cls.Types.question):
                 post.type_data = PostTypeData(__root__=data).__root__
             try:
-                # apparently sometimes posts (Pages?) in the fediverse 
+                # apparently sometimes posts (Pages?) in the fediverse
                 # don't have content?!
                 post.content = get_value_or_map(data, "content", "contentMap")
             except KeyError:
@@ -910,8 +909,8 @@ class Post(StatorModel):
                     post.mentions.add(mention_identity)
                 elif tag_type in ["_:hashtag", "hashtag"]:
                     # kbin produces tags with 'tag' instead of 'name'
-                    if 'tag' in tag and 'name' not in tag:
-                        name = get_value_or_map(tag,'tag','tagMap')
+                    if "tag" in tag and "name" not in tag:
+                        name = get_value_or_map(tag, "tag", "tagMap")
                     else:
                         name = get_value_or_map(tag, "name", "nameMap")
                     post.hashtags.append(
@@ -941,7 +940,7 @@ class Post(StatorModel):
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
-                if not "url" in attachment.keys():
+                if "url" not in attachment.keys():
                     # sometimes attachments don't have URLs. Skip them.
                     print(f"no URL for {attachment} in {post}")
                     continue
@@ -1019,7 +1018,9 @@ class Post(StatorModel):
                         fetch_author=True,
                     )
                 except (json.JSONDecodeError, ValueError, JsonLdError) as err:
-                    raise cls.DoesNotExist(f"Invalid ld+json response for {object_uri}") from err
+                    raise cls.DoesNotExist(
+                        f"Invalid ld+json response for {object_uri}"
+                    ) from err
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:
                     async_to_sync(post.author.fetch_actor)()
