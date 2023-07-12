@@ -175,7 +175,7 @@ class Domain(StatorModel):
                 )
             except httpx.HTTPError:
                 pass
-            except ssl.SSLCertVerificationError:
+            except (ssl.SSLCertVerificationError, ssl.SSLError):
                 return None
             else:
                 try:
