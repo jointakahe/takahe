@@ -108,6 +108,9 @@ class Domain(StatorModel):
         root_federation = "/admin/federation/"
         edit_federation = "/admin/federation/{self.domain}/"
 
+    class Meta:
+        indexes: list = []
+
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":
         return cls.objects.get_or_create(domain=domain.lower(), local=False)[0]

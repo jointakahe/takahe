@@ -122,6 +122,18 @@ be provided to the containers from the first boot.
 There are some other, optional variables you can tweak once the
 system is up and working - see :doc:`tuning` for more.
 
+If you are behind a caching proxy, such as Cloudflare, you may need to update
+your CSRF host settings to match. Takahē validates that requests have an
+Origin header that matches their Referer header by default, and these services
+can break that relationship.
+
+Takahē lets you set this up via the ``TAKAHE_CSRF_HOSTS`` environment variable, which takes
+a Python-list-formatted list of additional protocols/domains to allow, with wildcards. It feeds
+directly into Django's `CSRF_TRUSTED_ORIGINS <https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-trusted-origins>`_
+setting, so for more information about how to use it, see `the Django documentation <https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-trusted-origins>`_ - generally, you'd want to set it to
+your website's public address, so for our server it would have been
+``TAKAHE_CSRF_HOSTS='["https://takahe.social"]'``.
+
 
 .. _media_configuration:
 
