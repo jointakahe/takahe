@@ -27,7 +27,7 @@ def test_follow(
         url="https://remote.test/@test/inbox/",
         status_code=202,
     )
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     outbound_data = json.loads(httpx_mock.get_request().content)
     assert outbound_data["type"] == "Follow"
     assert outbound_data["actor"] == identity.actor_uri
@@ -52,5 +52,5 @@ def test_follow(
         }
     InboxMessage.objects.create(message=message)
     # Run stator and ensure that accepted our follow
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     assert Follow.objects.get(pk=follow.pk).state == FollowStates.accepted

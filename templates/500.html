@@ -1,8 +1,21 @@
-{% extends "base_plain.html" %}
-
-{% block content %}
-    <h1>Internal Error</h1>
-    <section class="markdown">
-        <p>Sorry about that. We'll try to have this working again soon.</p>
-    </section>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Internal Error</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {% load static %}
+        <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
+        <link rel="stylesheet" href="{% static "fonts/raleway/raleway.css" %}" type="text/css" />
+        <link rel="stylesheet" href="{% static "fonts/font_awesome/all.min.css" %}" type="text/css" />
+        <link rel="shortcut icon" href="{{ config.site_icon }}">
+    </head>
+    <body>
+        <main>
+            <section class="markdown">
+                <h1 class="above">Internal Server Error</h1>
+                <p>The server encountered an error trying to process your request.</p>
+            </section>
+        </main>
+    </body>
+</html>

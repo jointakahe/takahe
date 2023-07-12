@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.cache import cache
 from hatchway import api_view
 
 from activities.models import Post
@@ -10,6 +11,15 @@ from users.models import Domain, Identity
 
 @api_view.get
 def instance_info_v1(request):
+    # The stats are expensive to calculate, so don't do it very often
+    stats = cache.get("instance_info_stats")
+    if stats is None:
+        stats = {
+            "user_count": Identity.objects.filter(local=True).count(),
+            "status_count": Post.objects.filter(local=True).not_hidden().count(),
+            "domain_count": Domain.objects.count(),
+        }
+        cache.set("instance_info_stats", stats, timeout=300)
     return {
         "uri": request.headers.get("host", settings.SETUP.MAIN_DOMAIN),
         "title": Config.system.site_name,
@@ -18,11 +28,7 @@ def instance_info_v1(request):
         "email": "",
         "version": f"takahe/{__version__}",
         "urls": {},
-        "stats": {
-            "user_count": Identity.objects.filter(local=True).count(),
-            "status_count": Post.objects.filter(local=True).not_hidden().count(),
-            "domain_count": Domain.objects.count(),
-        },
+        "stats": stats,
         "thumbnail": Config.system.site_banner,
         "languages": ["en"],
         "registrations": (Config.system.signup_allowed),

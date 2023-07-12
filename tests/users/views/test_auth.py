@@ -120,5 +120,5 @@ def test_signup_email(client, config_system, stator):
 
     # Run Stator and verify it sends the email
     assert len(mail.outbox) == 0
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     assert len(mail.outbox) == 1

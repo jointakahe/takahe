@@ -273,8 +273,9 @@ class Notification(Schema):
     def from_timeline_event(
         cls,
         event: activities_models.TimelineEvent,
+        interactions=None,
     ) -> "Notification":
-        return cls(**event.to_mastodon_notification_json())
+        return cls(**event.to_mastodon_notification_json(interactions=interactions))
 
 
 class Tag(Schema):

@@ -1,9 +1,9 @@
 ![takahē](static/img/logo-128.png)
 
-A *beta* Fediverse server for microblogging/"toots". Not fully polished yet -
+A *beta* Fediverse server for microblogging. Not fully polished yet -
 we're still working towards a 1.0!
 
-**Current version: [0.8](https://docs.jointakahe.org/en/latest/releases/0.8/)**
+**Current version: [0.9](https://docs.jointakahe.org/en/latest/releases/0.9/)**
 
 Key features:
 

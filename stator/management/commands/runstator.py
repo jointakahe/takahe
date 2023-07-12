@@ -1,6 +1,5 @@
 from typing import cast
 
-from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.core.management.base import BaseCommand
 
@@ -84,6 +83,6 @@ class Command(BaseCommand):
             run_for=run_for,
         )
         try:
-            async_to_sync(runner.run)()
+            runner.run()
         except KeyboardInterrupt:
             print("Ctrl-C received")

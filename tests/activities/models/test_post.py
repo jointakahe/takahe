@@ -68,7 +68,7 @@ def test_ensure_hashtag(identity: Identity, config_system, stator):
         author=identity,
         content="Hello, #testtag",
     )
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     assert post.hashtags == ["testtag"]
     assert Hashtag.objects.filter(hashtag="testtag").exists()
     # Excessively long hashtag
@@ -76,7 +76,7 @@ def test_ensure_hashtag(identity: Identity, config_system, stator):
         author=identity,
         content="Hello, #thisisahashtagthatiswaytoolongandissignificantlyaboveourmaximumlimitofonehundredcharacterswhytheywouldbethislongidontknow",
     )
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     assert post.hashtags == [
         "thisisahashtagthatiswaytoolongandissignificantlyaboveourmaximumlimitofonehundredcharacterswhytheywou"
     ]
@@ -226,19 +226,19 @@ def test_post_transitions(identity, stator):
     )
     # Test: | --> new --> fanned_out
     assert post.state == str(PostStates.new)
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     post = Post.objects.get(id=post.id)
     assert post.state == str(PostStates.fanned_out)
 
     # Test: fanned_out --> (forced) edited --> edited_fanned_out
     Post.transition_perform(post, PostStates.edited)
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     post = Post.objects.get(id=post.id)
     assert post.state == str(PostStates.edited_fanned_out)
 
     # Test: edited_fanned_out --> (forced) deleted --> deleted_fanned_out
     Post.transition_perform(post, PostStates.deleted)
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     post = Post.objects.get(id=post.id)
     assert post.state == str(PostStates.deleted_fanned_out)
 
@@ -392,7 +392,7 @@ def test_inbound_posts(
     InboxMessage.objects.create(message=message)
 
     # Run stator and ensure that made the post
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     post = Post.objects.get(object_uri="https://remote.test/test-post")
     assert post.content == "post version one"
     assert post.published.day == 13
@@ -416,7 +416,7 @@ def test_inbound_posts(
     InboxMessage.objects.create(message=message)
 
     # Run stator and ensure that edited the post
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     post = Post.objects.get(object_uri="https://remote.test/test-post")
     assert post.content == "post version two"
     assert post.edited.day == 14
@@ -455,7 +455,7 @@ def test_inbound_posts(
     InboxMessage.objects.create(message=message)
 
     # Run stator and ensure that deleted the post
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     assert not Post.objects.filter(object_uri="https://remote.test/test-post").exists()
 
     # Create an inbound new post message with only contentMap
@@ -474,7 +474,7 @@ def test_inbound_posts(
     InboxMessage.objects.create(message=message)
 
     # Run stator and ensure that made the post
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
     post = Post.objects.get(object_uri="https://remote.test/test-map-only")
     assert post.content == "post with only content map"
     assert post.published.day == 13

@@ -53,9 +53,10 @@ def test_mentioned(
     elif blocked == "mute":
         Block.create_local_mute(identity, author)
 
-    # Run stator twice - to make fanouts and then process them
-    stator.run_single_cycle_sync()
-    stator.run_single_cycle_sync()
+    # Run stator thrice - to receive the post, make fanouts and then process them
+    stator.run_single_cycle()
+    stator.run_single_cycle()
+    stator.run_single_cycle()
 
     if blocked in ["full", "mute"]:
         # Verify we were not mentioned
@@ -121,9 +122,10 @@ def test_interaction_local_post(
     elif blocked == "mute_with_notifications":
         Block.create_local_mute(identity, interactor, include_notifications=True)
 
-    # Run stator twice - to make fanouts and then process them
-    stator.run_single_cycle_sync()
-    stator.run_single_cycle_sync()
+    # Run stator thrice - to receive the post, make fanouts and then process them
+    stator.run_single_cycle()
+    stator.run_single_cycle()
+    stator.run_single_cycle()
 
     timeline_event_type = (
         TimelineEvent.Types.boosted if type == "boost" else TimelineEvent.Types.liked
@@ -177,9 +179,10 @@ def test_old_new_post(
     }
     InboxMessage.objects.create(message=message)
 
-    # Run stator twice - to make fanouts and then process them
-    stator.run_single_cycle_sync()
-    stator.run_single_cycle_sync()
+    # Run stator thrice - to receive the post, make fanouts and then process them
+    stator.run_single_cycle()
+    stator.run_single_cycle()
+    stator.run_single_cycle()
 
     if old:
         # Verify it did not appear on the timeline
@@ -229,9 +232,10 @@ def test_clear_timeline(
     }
     InboxMessage.objects.create(message=message)
 
-    # Run stator twice - to make fanouts and then process them
-    stator.run_single_cycle_sync()
-    stator.run_single_cycle_sync()
+    # Run stator thrice - to receive the post, make fanouts and then process them
+    stator.run_single_cycle()
+    stator.run_single_cycle()
+    stator.run_single_cycle()
 
     # Make sure it appeared on our timeline as a post and a mentioned
     assert TimelineEvent.objects.filter(
@@ -248,7 +252,7 @@ def test_clear_timeline(
         service.unfollow(remote_identity)
 
     # Run stator once to process the timeline clear message
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
 
     # Verify that the right things vanished
     assert not TimelineEvent.objects.filter(
@@ -308,9 +312,10 @@ def test_hashtag_followed(
     elif blocked == "mute":
         Block.create_local_mute(identity, author)
 
-    # Run stator twice - to make fanouts and then process them
-    stator.run_single_cycle_sync()
-    stator.run_single_cycle_sync()
+    # Run stator thrice - to receive the post, make fanouts and then process them
+    stator.run_single_cycle()
+    stator.run_single_cycle()
+    stator.run_single_cycle()
 
     if blocked in ["full", "mute"]:
         # Verify post is not in timeline
