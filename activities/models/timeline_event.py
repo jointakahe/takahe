@@ -55,6 +55,7 @@ class TimelineEvent(models.Model):
 
     published = models.DateTimeField(default=timezone.now)
     seen = models.BooleanField(default=False)
+    dismissed = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
 

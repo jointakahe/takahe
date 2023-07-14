@@ -73,6 +73,7 @@ class AuthorizationView(LoginRequiredMixin, View):
                 request,
                 "api/oauth_error.html",
                 {"error": f"Invalid response type '{response_type}'"},
+                status=400,
             )
 
         application = Application.objects.filter(
@@ -81,7 +82,10 @@ class AuthorizationView(LoginRequiredMixin, View):
 
         if application is None:
             return render(
-                request, "api/oauth_error.html", {"error": "Invalid client_id"}
+                request,
+                "api/oauth_error.html",
+                {"error": "Invalid client_id"},
+                status=400,
             )
 
         if application.redirect_uris and redirect_uri not in application.redirect_uris:
@@ -89,6 +93,7 @@ class AuthorizationView(LoginRequiredMixin, View):
                 request,
                 "api/oauth_error.html",
                 {"error": "Invalid application redirect URI"},
+                status=401,
             )
 
         context = {

@@ -37,7 +37,7 @@ def test_import_following(
     assert InboxMessage.objects.count() == 1
 
     # Run stator to process it
-    stator.run_single_cycle_sync()
+    stator.run_single_cycle()
 
     # See if we're now following that identity
     assert identity.outbound_follows.filter(target=remote_identity).count() == 1

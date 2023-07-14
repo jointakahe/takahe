@@ -46,7 +46,7 @@ class IdentityStates(StateGraph):
     """
 
     outdated = State(try_interval=3600, force_initial=True)
-    updated = State(try_interval=86400 * 7, attempt_immediately=False)
+    updated = State(try_interval=86400 * 15, attempt_immediately=False)
 
     edited = State(try_interval=300, attempt_immediately=True)
     deleted = State(try_interval=300, attempt_immediately=True)
@@ -158,7 +158,7 @@ class Identity(StatorModel):
 
     state = StateField(IdentityStates)
 
-    local = models.BooleanField()
+    local = models.BooleanField(db_index=True)
     users = models.ManyToManyField(
         "users.User",
         related_name="identities",
@@ -227,7 +227,7 @@ class Identity(StatorModel):
     class Meta:
         verbose_name_plural = "identities"
         unique_together = [("username", "domain")]
-        indexes = StatorModel.Meta.indexes
+        indexes: list = []  # We need this so Stator can add its own
 
     class urls(urlman.Urls):
         view = "/@{self.username}@{self.domain_id}/"
@@ -697,7 +697,7 @@ class Identity(StatorModel):
                 if (
                     response
                     and response.status_code < 500
-                    and response.status_code not in [401, 403, 404, 406, 410]
+                    and response.status_code not in [400, 401, 403, 404, 406, 410]
                 ):
                     raise ValueError(
                         f"Client error fetching webfinger: {response.status_code}",

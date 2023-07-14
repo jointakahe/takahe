@@ -210,8 +210,8 @@ class TimelineEventAdmin(admin.ModelAdmin):
 
 @admin.register(FanOut)
 class FanOutAdmin(admin.ModelAdmin):
-    list_display = ["id", "state", "created", "state_attempted", "type", "identity"]
-    list_filter = (IdentityLocalFilter, "type", "state", "state_attempted")
+    list_display = ["id", "state", "created", "state_next_attempt", "type", "identity"]
+    list_filter = (IdentityLocalFilter, "type", "state")
     raw_id_fields = ["subject_post", "subject_post_interaction"]
     autocomplete_fields = ["identity"]
     readonly_fields = ["created", "updated", "state_changed"]
@@ -229,7 +229,7 @@ class FanOutAdmin(admin.ModelAdmin):
 
 @admin.register(PostInteraction)
 class PostInteractionAdmin(admin.ModelAdmin):
-    list_display = ["id", "state", "state_attempted", "type", "identity", "post"]
+    list_display = ["id", "state", "state_next_attempt", "type", "identity", "post"]
     list_filter = (IdentityLocalFilter, "type", "state")
     raw_id_fields = ["post"]
     autocomplete_fields = ["identity"]

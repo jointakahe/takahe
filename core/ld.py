@@ -6,6 +6,8 @@ from dateutil import parser
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
 
+from core.exceptions import ActivityPubFormatError
+
 schemas = {
     "www.w3.org/ns/activitystreams": {
         "contentType": "application/ld+json",
@@ -695,7 +697,7 @@ def get_value_or_map(data, key, map_key):
         if "und" in map_key:
             return data[map_key]["und"]
         return list(data[map_key].values())[0]
-    raise KeyError(f"Cannot find {key} or {map_key}")
+    raise ActivityPubFormatError(f"Cannot find {key} or {map_key}")
 
 
 def media_type_from_filename(filename):

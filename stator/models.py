@@ -1,8 +1,8 @@
 import datetime
 import traceback
-from typing import ClassVar, cast
+from typing import ClassVar
 
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, iscoroutinefunction
 from django.db import models, transaction
 from django.db.models.signals import class_prepared
 from django.utils import timezone
@@ -47,19 +47,15 @@ def add_stator_indexes(sender, **kwargs):
     if issubclass(sender, StatorModel):
         indexes = [
             models.Index(
-                fields=["state", "state_attempted"],
-                name=f"ix_{sender.__name__.lower()[:11]}_state_attempted",
-            ),
-            models.Index(
-                fields=["state_locked_until", "state"],
-                condition=models.Q(state_locked_until__isnull=False),
-                name=f"ix_{sender.__name__.lower()[:11]}_state_locked",
+                fields=["state", "state_next_attempt", "state_locked_until"],
+                name=f"ix_{sender.__name__.lower()[:11]}_state_next",
             ),
         ]
 
         if not sender._meta.indexes:
             # Meta.indexes needs to not be None to trigger Django behaviors
             sender.Meta.indexes = []
+            sender._meta.indexes = []
 
         for idx in indexes:
             sender._meta.indexes.append(idx)
@@ -81,30 +77,26 @@ class StatorModel(models.Model):
     concrete model yourself.
     """
 
-    SCHEDULE_BATCH_SIZE = 1000
+    CLEAN_BATCH_SIZE = 1000
+    DELETE_BATCH_SIZE = 500
 
     state: StateField
-
-    # If this row is up for transition attempts (which it always is on creation!)
-    state_ready = models.BooleanField(default=True)
 
     # When the state last actually changed, or the date of instance creation
     state_changed = models.DateTimeField(auto_now_add=True)
 
-    # When the last state change for the current state was attempted
-    # (and not successful, as this is cleared on transition)
-    state_attempted = models.DateTimeField(blank=True, null=True)
+    # When the next state change should be attempted (null means immediately)
+    state_next_attempt = models.DateTimeField(blank=True, null=True)
 
     # If a lock is out on this row, when it is locked until
     # (we don't identify the lock owner, as there's no heartbeats)
-    state_locked_until = models.DateTimeField(null=True, blank=True)
+    state_locked_until = models.DateTimeField(null=True, blank=True, db_index=True)
 
     # Collection of subclasses of us
     subclasses: ClassVar[list[type["StatorModel"]]] = []
 
     class Meta:
         abstract = True
-        indexes = [models.Index(fields=["state_ready", "state_locked_until", "state"])]
 
     def __init_subclass__(cls) -> None:
         if cls is not StatorModel:
@@ -119,52 +111,6 @@ class StatorModel(models.Model):
         return (timezone.now() - self.state_changed).total_seconds()
 
     @classmethod
-    async def atransition_schedule_due(cls, now=None):
-        """
-        Finds instances of this model that need to run and schedule them.
-        """
-        if now is None:
-            now = timezone.now()
-        q = models.Q()
-        for state in cls.state_graph.states.values():
-            state = cast(State, state)
-            if not state.externally_progressed:
-                q = q | models.Q(
-                    (
-                        models.Q(
-                            state_attempted__lte=(
-                                now
-                                - datetime.timedelta(
-                                    seconds=cast(float, state.try_interval)
-                                )
-                            )
-                        )
-                        | models.Q(state_attempted__isnull=True)
-                    ),
-                    state=state.name,
-                )
-        select_query = cls.objects.filter(q)[: cls.SCHEDULE_BATCH_SIZE]
-        await cls.objects.filter(pk__in=select_query).aupdate(state_ready=True)
-
-    @classmethod
-    async def atransition_delete_due(cls, now=None):
-        """
-        Finds instances of this model that need to be deleted and deletes them.
-        """
-        if now is None:
-            now = timezone.now()
-        for state in cls.state_graph.states.values():
-            state = cast(State, state)
-            if state.delete_after:
-                select_query = cls.objects.filter(
-                    state=state,
-                    state_changed__lte=(
-                        now - datetime.timedelta(seconds=state.delete_after)
-                    ),
-                )[: cls.SCHEDULE_BATCH_SIZE]
-                await cls.objects.filter(pk__in=select_query).adelete()
-
-    @classmethod
     def transition_get_with_lock(
         cls, number: int, lock_expiry: datetime.datetime
     ) -> list["StatorModel"]:
@@ -172,11 +118,17 @@ class StatorModel(models.Model):
         Returns up to `number` tasks for execution, having locked them.
         """
         with transaction.atomic():
+            # Query for `number` rows that:
+            #  - Have a next_attempt that's either null or in the past
+            #  - Have one of the states we care about
+            # Then, sort them by next_attempt NULLS FIRST, so that we handle the
+            # rows in a roughly FIFO order.
             selected = list(
                 cls.objects.filter(
-                    state_locked_until__isnull=True,
-                    state_ready=True,
+                    models.Q(state_next_attempt__isnull=True)
+                    | models.Q(state_next_attempt__lte=timezone.now()),
                     state__in=cls.state_graph.automatic_states,
+                    state_locked_until__isnull=True,
                 )[:number].select_for_update()
             )
             cls.objects.filter(pk__in=[i.pk for i in selected]).update(
@@ -185,44 +137,56 @@ class StatorModel(models.Model):
         return selected
 
     @classmethod
-    async def atransition_get_with_lock(
-        cls, number: int, lock_expiry: datetime.datetime
-    ) -> list["StatorModel"]:
-        return await sync_to_async(cls.transition_get_with_lock)(number, lock_expiry)
+    def transition_delete_due(cls) -> int | None:
+        """
+        Finds instances of this model that need to be deleted and deletes them
+        in small batches. Returns how many were deleted.
+        """
+        if cls.state_graph.deletion_states:
+            constraints = models.Q()
+            for state in cls.state_graph.deletion_states:
+                constraints |= models.Q(
+                    state=state,
+                    state_changed__lte=(
+                        timezone.now() - datetime.timedelta(seconds=state.delete_after)
+                    ),
+                )
+            select_query = cls.objects.filter(
+                models.Q(state_next_attempt__isnull=True)
+                | models.Q(state_next_attempt__lte=timezone.now()),
+                constraints,
+            )[: cls.DELETE_BATCH_SIZE]
+            return cls.objects.filter(pk__in=select_query).delete()[0]
+        return None
 
     @classmethod
-    async def atransition_ready_count(cls) -> int:
+    def transition_ready_count(cls) -> int:
         """
         Returns how many instances are "queued"
         """
-        return await cls.objects.filter(
+        return cls.objects.filter(
+            models.Q(state_next_attempt__isnull=True)
+            | models.Q(state_next_attempt__lte=timezone.now()),
             state_locked_until__isnull=True,
-            state_ready=True,
             state__in=cls.state_graph.automatic_states,
-        ).acount()
+        ).count()
 
     @classmethod
-    async def atransition_clean_locks(cls):
+    def transition_clean_locks(cls):
+        """
+        Deletes stale locks (in batches, to avoid a giant query)
+        """
         select_query = cls.objects.filter(state_locked_until__lte=timezone.now())[
-            : cls.SCHEDULE_BATCH_SIZE
+            : cls.CLEAN_BATCH_SIZE
         ]
-        await cls.objects.filter(pk__in=select_query).aupdate(state_locked_until=None)
+        cls.objects.filter(pk__in=select_query).update(state_locked_until=None)
 
-    def transition_schedule(self):
-        """
-        Adds this instance to the queue to get its state transition attempted.
-
-        The scheduler will call this, but you can also call it directly if you
-        know it'll be ready and want to lower latency.
-        """
-        self.state_ready = True
-        self.save()
-
-    async def atransition_attempt(self) -> State | None:
+    def transition_attempt(self) -> State | None:
         """
         Attempts to transition the current state by running its handler(s).
         """
         current_state: State = self.state_graph.states[self.state]
+
         # If it's a manual progression state don't even try
         # We shouldn't really be here in this case, but it could be a race condition
         if current_state.externally_progressed:
@@ -230,12 +194,17 @@ class StatorModel(models.Model):
                 f"Warning: trying to progress externally progressed state {self.state}!"
             )
             return None
+
+        # Try running its handler function
         try:
-            next_state = await current_state.handler(self)  # type: ignore
+            if iscoroutinefunction(current_state.handler):
+                next_state = async_to_sync(current_state.handler)(self)
+            else:
+                next_state = current_state.handler(self)
         except TryAgainLater:
             pass
         except BaseException as e:
-            await exceptions.acapture_exception(e)
+            exceptions.capture_exception(e)
             traceback.print_exc()
         else:
             if next_state:
@@ -247,20 +216,24 @@ class StatorModel(models.Model):
                     raise ValueError(
                         f"Cannot transition from {current_state} to {next_state} - not a declared transition"
                     )
-                await self.atransition_perform(next_state)
+                self.transition_perform(next_state)
                 return next_state
-        # See if it timed out
+
+        # See if it timed out since its last state change
         if (
             current_state.timeout_value
             and current_state.timeout_value
             <= (timezone.now() - self.state_changed).total_seconds()
         ):
-            await self.atransition_perform(current_state.timeout_state)
+            self.transition_perform(current_state.timeout_state)  # type: ignore
             return current_state.timeout_state
-        await self.__class__.objects.filter(pk=self.pk).aupdate(
-            state_attempted=timezone.now(),
+
+        # Nothing happened, set next execution and unlock it
+        self.__class__.objects.filter(pk=self.pk).update(
+            state_next_attempt=(
+                timezone.now() + datetime.timedelta(seconds=current_state.try_interval)  # type: ignore
+            ),
             state_locked_until=None,
-            state_ready=False,
         )
         return None
 
@@ -273,27 +246,6 @@ class StatorModel(models.Model):
             state,
         )
 
-    atransition_perform = sync_to_async(transition_perform)
-
-    def transition_set_state(self, state: State | str):
-        """
-        Sets the instance to the given state name for when it is saved.
-        """
-        if isinstance(state, State):
-            state = state.name
-        if state not in self.state_graph.states:
-            raise ValueError(f"Invalid state {state}")
-        self.state = state  # type: ignore
-        self.state_changed = timezone.now()
-        self.state_locked_until = None
-
-        if self.state_graph.states[state].attempt_immediately:
-            self.state_attempted = None
-            self.state_ready = True
-        else:
-            self.state_attempted = timezone.now()
-            self.state_ready = False
-
     @classmethod
     def transition_perform_queryset(
         cls,
@@ -303,26 +255,27 @@ class StatorModel(models.Model):
         """
         Transitions every instance in the queryset to the given state name, forcibly.
         """
+        # Really ensure we have the right state object
         if isinstance(state, State):
-            state = state.name
-        if state not in cls.state_graph.states:
-            raise ValueError(f"Invalid state {state}")
+            state_obj = cls.state_graph.states[state.name]
+        else:
+            state_obj = cls.state_graph.states[state]
         # See if it's ready immediately (if not, delay until first try_interval)
-        if cls.state_graph.states[state].attempt_immediately:
+        if state_obj.attempt_immediately or state_obj.try_interval is None:
             queryset.update(
-                state=state,
+                state=state_obj,
                 state_changed=timezone.now(),
-                state_attempted=None,
+                state_next_attempt=None,
                 state_locked_until=None,
-                state_ready=True,
             )
         else:
             queryset.update(
-                state=state,
+                state=state_obj,
                 state_changed=timezone.now(),
-                state_attempted=timezone.now(),
+                state_next_attempt=(
+                    timezone.now() + datetime.timedelta(seconds=state_obj.try_interval)
+                ),
                 state_locked_until=None,
-                state_ready=False,
             )
 
 
@@ -354,10 +307,6 @@ class Stats(models.Model):
             if key not in instance.statistics:
                 instance.statistics[key] = {}
         return instance
-
-    @classmethod
-    async def aget_for_model(cls, model: type[StatorModel]) -> "Stats":
-        return await sync_to_async(cls.get_for_model)(model)
 
     def set_queued(self, number: int):
         """

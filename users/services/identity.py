@@ -4,6 +4,7 @@ from django.template.defaultfilters import linebreaks_filter
 from activities.models import FanOut, Post, PostInteraction, PostInteractionStates
 from core.files import resize_image
 from core.html import FediverseHtmlParser
+from stator.exceptions import TryAgainLater
 from users.models import (
     Block,
     BlockStates,
@@ -200,6 +201,10 @@ class IdentityService:
                     )
                 except Post.DoesNotExist:
                     # ignore 404s...
+                    pass
+                except TryAgainLater:
+                    # when fetching a post -> author -> post we can
+                    # get into a state. Ignore this round.
                     pass
             for removed in PostInteraction.objects.filter(
                 type=PostInteraction.Types.pin,

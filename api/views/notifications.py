@@ -72,3 +72,29 @@ def get_notification(
         id=id,
     )
     return schemas.Notification.from_timeline_event(notification)
+
+
+@scope_required("write:notifications")
+@api_view.post
+def dismiss_notifications(request: HttpRequest) -> dict:
+    TimelineService(request.identity).notifications(
+        list(NOTIFICATION_TYPES.values())
+    ).update(dismissed=True)
+
+    return {}
+
+
+@scope_required("write:notifications")
+@api_view.post
+def dismiss_notification(request: HttpRequest, id: str) -> dict:
+    notification = get_object_or_404(
+        TimelineService(request.identity).notifications(
+            list(NOTIFICATION_TYPES.values())
+        ),
+        id=id,
+    )
+
+    notification.dismissed = True
+    notification.save()
+
+    return {}

@@ -1,5 +1,5 @@
 import httpx
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync
 from django.db import models
 
 from activities.models.timeline_event import TimelineEvent
@@ -19,26 +19,24 @@ class FanOutStates(StateGraph):
     new.times_out_to(failed, seconds=86400 * 3)
 
     @classmethod
-    async def handle_new(cls, instance: "FanOut"):
+    def handle_new(cls, instance: "FanOut"):
         """
         Sends the fan-out to the right inbox.
         """
 
-        fan_out = await instance.afetch_full()
-
         # Don't try to fan out to identities that are not fetched yet
-        if not (fan_out.identity.local or fan_out.identity.inbox_uri):
+        if not (instance.identity.local or instance.identity.inbox_uri):
             return
 
-        match (fan_out.type, fan_out.identity.local):
+        match (instance.type, instance.identity.local):
             # Handle creating/updating local posts
             case ((FanOut.Types.post | FanOut.Types.post_edited), True):
-                post = await fan_out.subject_post.afetch_full()
+                post = instance.subject_post
                 # If the author of the post is blocked or muted, skip out
                 if (
-                    await Block.objects.active()
-                    .filter(source=fan_out.identity, target=post.author)
-                    .aexists()
+                    Block.objects.active()
+                    .filter(source=instance.identity, target=post.author)
+                    .exists()
                 ):
                     return cls.skipped
                 # Make a timeline event directly
@@ -48,42 +46,42 @@ class FanOutStates(StateGraph):
                 add = True
                 mentioned = {identity.id for identity in post.mentions.all()}
                 if post.in_reply_to:
-                    followed = await sync_to_async(set)(
-                        fan_out.identity.outbound_follows.filter(
+                    followed = set(
+                        instance.identity.outbound_follows.filter(
                             state__in=FollowStates.group_active()
                         ).values_list("target_id", flat=True)
                     )
                     interested_in = followed.union(
-                        {post.author_id, fan_out.identity_id}
+                        {post.author_id, instance.identity_id}
                     )
                     add = (post.author_id in followed) and (
                         bool(mentioned.intersection(interested_in))
                     )
                 if add:
-                    await sync_to_async(TimelineEvent.add_post)(
-                        identity=fan_out.identity,
+                    TimelineEvent.add_post(
+                        identity=instance.identity,
                         post=post,
                     )
                 # We might have been mentioned
                 if (
-                    fan_out.identity.id in mentioned
-                    and fan_out.identity_id != post.author_id
+                    instance.identity.id in mentioned
+                    and instance.identity_id != post.author_id
                 ):
-                    await sync_to_async(TimelineEvent.add_mentioned)(
-                        identity=fan_out.identity,
+                    TimelineEvent.add_mentioned(
+                        identity=instance.identity,
                         post=post,
                     )
 
             # Handle sending remote posts create
             case (FanOut.Types.post, False):
-                post = await fan_out.subject_post.afetch_full()
+                post = instance.subject_post
                 # Sign it and send it
                 try:
-                    await post.author.signed_request(
+                    async_to_sync(post.author.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
                         body=canonicalise(post.to_create_ap()),
                     )
@@ -92,14 +90,14 @@ class FanOutStates(StateGraph):
 
             # Handle sending remote posts update
             case (FanOut.Types.post_edited, False):
-                post = await fan_out.subject_post.afetch_full()
+                post = instance.subject_post
                 # Sign it and send it
                 try:
-                    await post.author.signed_request(
+                    async_to_sync(post.author.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
                         body=canonicalise(post.to_update_ap()),
                     )
@@ -108,24 +106,24 @@ class FanOutStates(StateGraph):
 
             # Handle deleting local posts
             case (FanOut.Types.post_deleted, True):
-                post = await fan_out.subject_post.afetch_full()
-                if fan_out.identity.local:
+                post = instance.subject_post
+                if instance.identity.local:
                     # Remove all timeline events mentioning it
-                    await TimelineEvent.objects.filter(
-                        identity=fan_out.identity,
+                    TimelineEvent.objects.filter(
+                        identity=instance.identity,
                         subject_post=post,
-                    ).adelete()
+                    ).delete()
 
             # Handle sending remote post deletes
             case (FanOut.Types.post_deleted, False):
-                post = await fan_out.subject_post.afetch_full()
+                post = instance.subject_post
                 # Send it to the remote inbox
                 try:
-                    await post.author.signed_request(
+                    async_to_sync(post.author.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
                         body=canonicalise(post.to_delete_ap()),
                     )
@@ -134,38 +132,38 @@ class FanOutStates(StateGraph):
 
             # Handle local boosts/likes
             case (FanOut.Types.interaction, True):
-                interaction = await fan_out.subject_post_interaction.afetch_full()
+                interaction = instance.subject_post_interaction
                 # If the author of the interaction is blocked or their notifications
                 # are muted, skip out
                 if (
-                    await Block.objects.active()
+                    Block.objects.active()
                     .filter(
                         models.Q(mute=False) | models.Q(include_notifications=True),
-                        source=fan_out.identity,
+                        source=instance.identity,
                         target=interaction.identity,
                     )
-                    .aexists()
+                    .exists()
                 ):
                     return cls.skipped
                 # If blocked/muted the underlying post author, skip out
                 if (
-                    await Block.objects.active()
+                    Block.objects.active()
                     .filter(
-                        source=fan_out.identity,
+                        source=instance.identity,
                         target_id=interaction.post.author_id,
                     )
-                    .aexists()
+                    .exists()
                 ):
                     return cls.skipped
                 # Make a timeline event directly
-                await sync_to_async(TimelineEvent.add_post_interaction)(
-                    identity=fan_out.identity,
+                TimelineEvent.add_post_interaction(
+                    identity=instance.identity,
                     interaction=interaction,
                 )
 
             # Handle sending remote boosts/likes/votes/pins
             case (FanOut.Types.interaction, False):
-                interaction = await fan_out.subject_post_interaction.afetch_full()
+                interaction = instance.subject_post_interaction
                 # Send it to the remote inbox
                 try:
                     if interaction.type == interaction.Types.vote:
@@ -174,11 +172,11 @@ class FanOutStates(StateGraph):
                         body = interaction.to_add_ap()
                     else:
                         body = interaction.to_create_ap()
-                    await interaction.identity.signed_request(
+                    async_to_sync(interaction.identity.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
                         body=canonicalise(body),
                     )
@@ -187,28 +185,28 @@ class FanOutStates(StateGraph):
 
             # Handle undoing local boosts/likes
             case (FanOut.Types.undo_interaction, True):  # noqa:F841
-                interaction = await fan_out.subject_post_interaction.afetch_full()
+                interaction = instance.subject_post_interaction
 
                 # Delete any local timeline events
-                await sync_to_async(TimelineEvent.delete_post_interaction)(
-                    identity=fan_out.identity,
+                TimelineEvent.delete_post_interaction(
+                    identity=instance.identity,
                     interaction=interaction,
                 )
 
             # Handle sending remote undoing boosts/likes/pins
             case (FanOut.Types.undo_interaction, False):  # noqa:F841
-                interaction = await fan_out.subject_post_interaction.afetch_full()
+                interaction = instance.subject_post_interaction
                 # Send an undo to the remote inbox
                 try:
                     if interaction.type == interaction.Types.pin:
                         body = interaction.to_remove_ap()
                     else:
                         body = interaction.to_undo_ap()
-                    await interaction.identity.signed_request(
+                    async_to_sync(interaction.identity.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
                         body=canonicalise(body),
                     )
@@ -217,32 +215,30 @@ class FanOutStates(StateGraph):
 
             # Handle sending identity edited to remote
             case (FanOut.Types.identity_edited, False):
-                identity = await fan_out.subject_identity.afetch_full()
+                identity = instance.subject_identity
                 try:
-                    await identity.signed_request(
+                    async_to_sync(identity.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
-                        body=canonicalise(
-                            await sync_to_async(fan_out.subject_identity.to_update_ap)()
-                        ),
+                        body=canonicalise(instance.subject_identity.to_update_ap()),
                     )
                 except httpx.RequestError:
                     return
 
             # Handle sending identity deleted to remote
             case (FanOut.Types.identity_deleted, False):
-                identity = await fan_out.subject_identity.afetch_full()
+                identity = instance.subject_identity
                 try:
-                    await identity.signed_request(
+                    async_to_sync(identity.signed_request)(
                         method="post",
                         uri=(
-                            fan_out.identity.shared_inbox_uri
-                            or fan_out.identity.inbox_uri
+                            instance.identity.shared_inbox_uri
+                            or instance.identity.inbox_uri
                         ),
-                        body=canonicalise(fan_out.subject_identity.to_delete_ap()),
+                        body=canonicalise(instance.subject_identity.to_delete_ap()),
                     )
                 except httpx.RequestError:
                     return
@@ -255,14 +251,14 @@ class FanOutStates(StateGraph):
 
             # Created identities make a timeline event
             case (FanOut.Types.identity_created, True):
-                await sync_to_async(TimelineEvent.add_identity_created)(
-                    identity=fan_out.identity,
-                    new_identity=fan_out.subject_identity,
+                TimelineEvent.add_identity_created(
+                    identity=instance.identity,
+                    new_identity=instance.subject_identity,
                 )
 
             case _:
                 raise ValueError(
-                    f"Cannot fan out with type {fan_out.type} local={fan_out.identity.local}"
+                    f"Cannot fan out with type {instance.type} local={instance.identity.local}"
                 )
 
         return cls.sent

@@ -1,12 +1,17 @@
 import traceback
 
-from asgiref.sync import sync_to_async
 from django.conf import settings
 
 
 class ActivityPubError(BaseException):
     """
     A problem with an ActivityPub message
+    """
+
+
+class ActivityPubFormatError(ActivityPubError):
+    """
+    A problem with an ActivityPub message's format/keys
     """
 
 
@@ -40,6 +45,3 @@ def capture_exception(exception: BaseException, scope=None, **scope_args):
         capture_exception(exception, scope, **scope_args)
     elif settings.DEBUG:
         traceback.print_exc()
-
-
-acapture_exception = sync_to_async(capture_exception, thread_sensitive=False)
