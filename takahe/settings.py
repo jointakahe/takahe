@@ -397,7 +397,7 @@ if SETUP.EMAIL_SERVER:
         EMAIL_PORT = parsed.port
         if parsed.username is not None:
             EMAIL_HOST_USER = urllib.parse.unquote(parsed.username)
-        if parsed.password is not None
+        if parsed.password is not None:
             EMAIL_HOST_PASSWORD = urllib.parse.unquote(parsed.password)
         EMAIL_USE_TLS = as_bool(query.get("tls"))
         EMAIL_USE_SSL = as_bool(query.get("ssl"))
