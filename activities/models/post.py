@@ -939,10 +939,6 @@ class Post(StatorModel):
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()
             for attachment in get_list(data, "attachment"):
-                if "url" not in attachment.keys():
-                    # sometimes attachments don't have URLs. Skip them.
-                    print(f"no URL for {attachment} in {post}")
-                    continue
                 if "focalPoint" in attachment:
                     try:
                         focal_x, focal_y = attachment["focalPoint"]
