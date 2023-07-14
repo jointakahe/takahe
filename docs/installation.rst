@@ -218,6 +218,9 @@ with the password ``my:password``, it would be represented as::
 
   smtp://someone%40example.com:my%3Apassword@smtp.example.com:25/
 
+The username and password can be omitted, with a URL in the form
+``smtp://host:port/``, if your mail server is a (properly firewalled!)
+unauthenticated relay.
 
 SendGrid
 ########
