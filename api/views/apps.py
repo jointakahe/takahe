@@ -1,7 +1,8 @@
 from hatchway import QueryOrBody, api_view
 
-from .. import schemas
-from ..models import Application
+from api import schemas
+from api.decorators import scope_required
+from api.models import Application
 
 
 @api_view.post
@@ -18,4 +19,12 @@ def add_app(
         redirect_uris=redirect_uris,
         scopes=scopes,
     )
-    return schemas.Application.from_orm(application)
+    return schemas.Application.from_application(application)
+
+
+@scope_required("read")
+@api_view.get
+def verify_credentials(
+    request,
+) -> schemas.Application:
+    return schemas.Application.from_application_no_keys(request.token.application)

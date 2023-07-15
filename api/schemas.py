@@ -1,8 +1,10 @@
 from typing import Literal, Optional, Union
 
+from django.conf import settings
 from hatchway import Field, Schema
 
 from activities import models as activities_models
+from api import models as api_models
 from core.html import FediverseHtmlParser
 from users import models as users_models
 from users.services import IdentityService
@@ -15,6 +17,23 @@ class Application(Schema):
     client_id: str
     client_secret: str
     redirect_uri: str = Field(alias="redirect_uris")
+    vapid_key: str | None
+
+    @classmethod
+    def from_application(cls, application: api_models.Application) -> "Application":
+        instance = cls.from_orm(application)
+        instance.vapid_key = settings.SETUP.VAPID_PUBLIC_KEY
+        return instance
+
+    @classmethod
+    def from_application_no_keys(
+        cls, application: api_models.Application
+    ) -> "Application":
+        instance = cls.from_orm(application)
+        instance.vapid_key = settings.SETUP.VAPID_PUBLIC_KEY
+        instance.client_id = ""
+        instance.client_secret = ""
+        return instance
 
 
 class CustomEmoji(Schema):
@@ -434,3 +453,53 @@ class Preferences(Schema):
                 "reading:expand:spoilers": identity.config_identity.expand_content_warnings,
             }
         )
+
+
+class PushSubscriptionKeys(Schema):
+    p256dh: str
+    auth: str
+
+
+class PushSubscriptionCreation(Schema):
+    endpoint: str
+    keys: PushSubscriptionKeys
+
+
+class PushDataAlerts(Schema):
+    mention: bool = False
+    status: bool = False
+    reblog: bool = False
+    follow: bool = False
+    follow_request: bool = False
+    favourite: bool = False
+    poll: bool = False
+    update: bool = False
+    admin_sign_up: bool = Field(False, alias="admin.sign_up")
+    admin_report: bool = Field(False, alias="admin.report")
+
+
+class PushData(Schema):
+    alerts: PushDataAlerts
+    policy: Literal["all", "followed", "follower", "none"] = "all"
+
+
+class PushSubscription(Schema):
+    id: str
+    endpoint: str
+    alerts: PushDataAlerts
+    policy: str
+    server_key: str
+
+    @classmethod
+    def from_token(
+        cls,
+        token: api_models.Token,
+    ) -> Optional["PushSubscription"]:
+        value = token.push_subscription
+        if value:
+            value["id"] = "1"
+            value["server_key"] = settings.VAPID_PUBLIC_KEY
+            del value["keys"]
+            return value
+        else:
+            return None

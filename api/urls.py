@@ -15,6 +15,7 @@ from api.views import (
     notifications,
     polls,
     preferences,
+    push,
     search,
     statuses,
     tags,
@@ -46,6 +47,7 @@ urlpatterns = [
     path("v1/announcements/<pk>/dismiss", announcements.announcement_dismiss),
     # Apps
     path("v1/apps", apps.add_app),
+    path("v1/apps/verify_credentials", apps.verify_credentials),
     # Bookmarks
     path("v1/bookmarks", bookmarks.bookmarks),
     # Emoji
@@ -57,6 +59,7 @@ urlpatterns = [
     path("v1/follow_requests", follow_requests.follow_requests),
     # Instance
     path("v1/instance", instance.instance_info_v1),
+    path("v1/instance/activity", instance.activity),
     path("v1/instance/peers", instance.peers),
     path("v2/instance", instance.instance_info_v2),
     # Lists
@@ -84,6 +87,16 @@ urlpatterns = [
     path("v1/polls/<id>/votes", polls.vote_poll),
     # Preferences
     path("v1/preferences", preferences.preferences),
+    # Push
+    path(
+        "v1/push/subscription",
+        methods(
+            get=push.get_subscription,
+            post=push.create_subscription,
+            put=push.update_subscription,
+            delete=push.delete_subscription,
+        ),
+    ),
     # Search
     path("v1/search", search.search),
     path("v2/search", search.search),

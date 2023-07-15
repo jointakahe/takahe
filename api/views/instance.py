@@ -1,5 +1,8 @@
+import datetime
+
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 from hatchway import api_view
 
 from activities.models import Post
@@ -145,3 +148,37 @@ def peers(request) -> list[str]:
             "domain", flat=True
         )
     )
+
+
+@api_view.get
+def activity(request) -> list:
+    """
+    Weekly activity endpoint
+    """
+    # The stats are expensive to calculate, so don't do it very often
+    stats = cache.get("instance_activity_stats")
+    if stats is None:
+        stats = []
+        # Work out our most recent week start
+        now = timezone.now()
+        week_start = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) - datetime.timedelta(now.weekday())
+        for i in range(12):
+            week_end = week_start + datetime.timedelta(days=7)
+            stats.append(
+                {
+                    "week": int(week_start.timestamp()),
+                    "statuses": Post.objects.filter(
+                        local=True, created__gte=week_start, created__lt=week_end
+                    ).count(),
+                    # TODO: Populate when we have identity activity tracking
+                    "logins": 0,
+                    "registrations": Identity.objects.filter(
+                        local=True, created__gte=week_start, created__lt=week_end
+                    ).count(),
+                }
+            )
+            week_start -= datetime.timedelta(days=7)
+        cache.set("instance_activity_stats", stats, timeout=300)
+    return stats

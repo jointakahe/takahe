@@ -146,6 +146,11 @@ class Settings(BaseSettings):
     STATOR_CONCURRENCY: int = 50
     STATOR_CONCURRENCY_PER_MODEL: int = 15
 
+    # Web Push keys
+    # Generate via https://web-push-codelab.glitch.me/
+    VAPID_PUBLIC_KEY: str | None = None
+    VAPID_PRIVATE_KEY: str | None = None
+
     PGHOST: str | None = None
     PGPORT: int | None = 5432
     PGNAME: str = "takahe"

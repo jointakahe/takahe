@@ -1,5 +1,22 @@
 import urlman
 from django.db import models
+from pydantic import BaseModel
+
+
+class PushSubscriptionSchema(BaseModel):
+    """
+    Basic validating schema for push data
+    """
+
+    class Keys(BaseModel):
+        p256dh: str
+        auth: str
+
+    endpoint: str
+    keys: Keys
+    alerts: dict[str, bool]
+    policy: str
+    server_key: str
 
 
 class Token(models.Model):
@@ -38,6 +55,8 @@ class Token(models.Model):
     updated = models.DateTimeField(auto_now=True)
     revoked = models.DateTimeField(blank=True, null=True)
 
+    push_subscription = models.JSONField(blank=True, null=True)
+
     class urls(urlman.Urls):
         edit = "/@{self.identity.handle}/settings/tokens/{self.id}/"
 
@@ -49,3 +68,8 @@ class Token(models.Model):
         # TODO: Support granular scopes the other way?
         scope_prefix = scope.split(":")[0]
         return (scope in self.scopes) or (scope_prefix in self.scopes)
+
+    def set_push_subscription(self, data: dict):
+        # Validate schema and assign
+        self.push_subscription = PushSubscriptionSchema(**data).dict()
+        self.save()
