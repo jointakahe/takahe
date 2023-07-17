@@ -6,7 +6,6 @@ from typing import Optional
 import httpx
 import pydantic
 import urlman
-from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.db import models
 
@@ -33,15 +32,15 @@ class DomainStates(StateGraph):
     outdated.times_out_to(connection_issue, 60 * 60 * 24)
 
     @classmethod
-    async def handle_outdated(cls, instance: "Domain"):
-        info = await instance.fetch_nodeinfo()
+    def handle_outdated(cls, instance: "Domain"):
+        info = instance.fetch_nodeinfo()
         if info:
             instance.nodeinfo = info.dict()
-            await sync_to_async(instance.save)()
+            instance.save()
             return cls.updated
 
     @classmethod
-    async def handle_updated(cls, instance: "Domain"):
+    def handle_updated(cls, instance: "Domain"):
         return cls.outdated
 
 
@@ -157,18 +156,18 @@ class Domain(StatorModel):
                 )
         super().save(*args, **kwargs)
 
-    async def fetch_nodeinfo(self) -> NodeInfo | None:
+    def fetch_nodeinfo(self) -> NodeInfo | None:
         """
         Fetch the /NodeInfo/2.0 for the domain
         """
         nodeinfo20_url = f"https://{self.domain}/nodeinfo/2.0"
 
-        async with httpx.AsyncClient(
+        with httpx.Client(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
         ) as client:
             try:
-                response = await client.get(
+                response = client.get(
                     f"https://{self.domain}/.well-known/nodeinfo",
                     follow_redirects=True,
                     headers={"Accept": "application/json"},
@@ -190,7 +189,7 @@ class Domain(StatorModel):
                     pass
 
             try:
-                response = await client.get(
+                response = client.get(
                     nodeinfo20_url,
                     follow_redirects=True,
                     headers={"Accept": "application/json"},

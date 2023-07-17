@@ -57,7 +57,7 @@ def blurhash_image(file) -> str:
     return blurhash.encode(file, 4, 4)
 
 
-async def get_remote_file(
+def get_remote_file(
     url: str,
     *,
     timeout: float = settings.SETUP.REMOTE_TIMEOUT,
@@ -70,8 +70,8 @@ async def get_remote_file(
         "User-Agent": settings.TAKAHE_USER_AGENT,
     }
 
-    async with httpx.AsyncClient(headers=headers) as client:
-        async with client.stream(
+    with httpx.Client(headers=headers) as client:
+        with client.stream(
             "GET", url, timeout=timeout, follow_redirects=True
         ) as stream:
             allow_download = max_size is None
@@ -82,7 +82,7 @@ async def get_remote_file(
                 except (KeyError, TypeError):
                     pass
             if allow_download:
-                file = ContentFile(await stream.aread(), name=url)
+                file = ContentFile(stream.read(), name=url)
                 return file, stream.headers.get(
                     "content-type", "application/octet-stream"
                 )

@@ -1,5 +1,4 @@
 import httpx
-from asgiref.sync import async_to_sync
 from django.db import models
 
 from activities.models.timeline_event import TimelineEvent
@@ -77,7 +76,7 @@ class FanOutStates(StateGraph):
                 post = instance.subject_post
                 # Sign it and send it
                 try:
-                    async_to_sync(post.author.signed_request)(
+                    post.author.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri
@@ -93,7 +92,7 @@ class FanOutStates(StateGraph):
                 post = instance.subject_post
                 # Sign it and send it
                 try:
-                    async_to_sync(post.author.signed_request)(
+                    post.author.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri
@@ -119,7 +118,7 @@ class FanOutStates(StateGraph):
                 post = instance.subject_post
                 # Send it to the remote inbox
                 try:
-                    async_to_sync(post.author.signed_request)(
+                    post.author.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri
@@ -172,7 +171,7 @@ class FanOutStates(StateGraph):
                         body = interaction.to_add_ap()
                     else:
                         body = interaction.to_create_ap()
-                    async_to_sync(interaction.identity.signed_request)(
+                    interaction.identity.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri
@@ -202,7 +201,7 @@ class FanOutStates(StateGraph):
                         body = interaction.to_remove_ap()
                     else:
                         body = interaction.to_undo_ap()
-                    async_to_sync(interaction.identity.signed_request)(
+                    interaction.identity.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri
@@ -217,7 +216,7 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.identity_edited, False):
                 identity = instance.subject_identity
                 try:
-                    async_to_sync(identity.signed_request)(
+                    identity.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri
@@ -232,7 +231,7 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.identity_deleted, False):
                 identity = instance.subject_identity
                 try:
-                    async_to_sync(identity.signed_request)(
+                    identity.signed_request(
                         method="post",
                         uri=(
                             instance.identity.shared_inbox_uri

@@ -1,5 +1,4 @@
 import pytest
-from asgiref.sync import async_to_sync
 from pytest_httpx import HTTPXMock
 
 from core.models import Config
@@ -169,7 +168,7 @@ def test_fetch_actor(httpx_mock, config_system):
             "url": "https://example.com/test-actor/view/",
         },
     )
-    async_to_sync(identity.fetch_actor)()
+    identity.fetch_actor()
 
     # Verify the data arrived
     identity = Identity.objects.get(pk=identity.pk)
@@ -189,15 +188,14 @@ def test_fetch_actor(httpx_mock, config_system):
 
 
 @pytest.mark.django_db
-@pytest.mark.asyncio
-async def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
+def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
     """
     Ensures that we can deal with various kinds of webfinger URLs
     """
 
     # With no host-meta, it should be the default
     assert (
-        await Identity.fetch_webfinger_url("example.com")
+        Identity.fetch_webfinger_url("example.com")
         == "https://example.com/.well-known/webfinger?resource={uri}"
     )
 
@@ -210,7 +208,7 @@ async def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
         </XRD>""",
     )
     assert (
-        await Identity.fetch_webfinger_url("example.com")
+        Identity.fetch_webfinger_url("example.com")
         == "https://fedi.example.com/.well-known/webfinger?resource={uri}"
     )
 
@@ -223,7 +221,7 @@ async def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
         </XRD>""",
     )
     assert (
-        await Identity.fetch_webfinger_url("example.com")
+        Identity.fetch_webfinger_url("example.com")
         == "https://example.com/amazing-webfinger?query={uri}"
     )
 
@@ -237,7 +235,7 @@ async def test_fetch_webfinger_url(httpx_mock: HTTPXMock, config_system):
         </XRD>""",
     )
     assert (
-        await Identity.fetch_webfinger_url("example.com")
+        Identity.fetch_webfinger_url("example.com")
         == "https://example.com/.well-known/webfinger?resource={uri}"
     )
 

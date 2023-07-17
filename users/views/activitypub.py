@@ -1,6 +1,5 @@
 import json
 
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
@@ -140,7 +139,7 @@ class Inbox(View):
 
         if not identity.public_key:
             # See if we can fetch it right now
-            async_to_sync(identity.fetch_actor)()
+            identity.fetch_actor()
 
         if not identity.public_key:
             exceptions.capture_message(

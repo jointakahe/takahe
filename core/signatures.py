@@ -177,7 +177,7 @@ class HttpSignature:
         )
 
     @classmethod
-    async def signed_request(
+    def signed_request(
         cls,
         uri: str,
         body: dict | None,
@@ -241,9 +241,9 @@ class HttpSignature:
 
         # Send the request with all those headers except the pseudo one
         del headers["(request-target)"]
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        with httpx.Client(timeout=timeout) as client:
             try:
-                response = await client.request(
+                response = client.request(
                     method,
                     uri,
                     headers=headers,

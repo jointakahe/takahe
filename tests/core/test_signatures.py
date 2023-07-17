@@ -1,5 +1,4 @@
 import pytest
-from asgiref.sync import async_to_sync
 from django.test.client import RequestFactory
 from pytest_httpx import HTTPXMock
 
@@ -75,7 +74,7 @@ def test_sign_http(httpx_mock: HTTPXMock, keypair):
     }
     # Send the signed request to the mock library
     httpx_mock.add_response()
-    async_to_sync(HttpSignature.signed_request)(
+    HttpSignature.signed_request(
         uri="https://example.com/test-actor",
         body=document,
         private_key=keypair["private_key"],

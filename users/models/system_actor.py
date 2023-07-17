@@ -79,7 +79,7 @@ class SystemActor:
             ],
         }
 
-    async def signed_request(
+    def signed_request(
         self,
         method: Literal["get", "post"],
         uri: str,
@@ -88,7 +88,7 @@ class SystemActor:
         """
         Performs a signed request on behalf of the System Actor.
         """
-        return await HttpSignature.signed_request(
+        return HttpSignature.signed_request(
             method=method,
             uri=uri,
             body=body,

@@ -1,7 +1,6 @@
 import json
 
 import httpx
-from asgiref.sync import async_to_sync
 from django import forms
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
@@ -13,7 +12,6 @@ from users.models import SystemActor
 
 @method_decorator(admin_required, name="dispatch")
 class JsonViewer(FormView):
-
     template_name = "activities/debug_json.html"
 
     class form_class(forms.Form):
@@ -31,7 +29,7 @@ class JsonViewer(FormView):
         context = self.get_context_data(form=form)
 
         try:
-            response = async_to_sync(SystemActor().signed_request)(
+            response = SystemActor().signed_request(
                 method="get",
                 uri=uri,
             )
@@ -64,18 +62,15 @@ class JsonViewer(FormView):
 
 
 class NotFound(TemplateView):
-
     template_name = "404.html"
 
 
 class ServerError(TemplateView):
-
     template_name = "500.html"
 
 
 @method_decorator(admin_required, name="dispatch")
 class OauthAuthorize(TemplateView):
-
     template_name = "api/oauth_authorize.html"
 
     def get_context_data(self):

@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
-from asgiref.sync import async_to_sync
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from django.db import models, transaction
@@ -831,7 +830,7 @@ class Post(StatorModel):
                 # If the author is not fetched yet, try again later
                 if author.domain is None:
                     if fetch_author:
-                        async_to_sync(author.fetch_actor)()
+                        author.fetch_actor()
                         # perhaps the entire "try again" logic below
                         # could be replaced with TryAgainLater for
                         # _all_ fetches, to let it handle pinned posts?
@@ -981,7 +980,7 @@ class Post(StatorModel):
         except cls.DoesNotExist:
             if fetch:
                 try:
-                    response = async_to_sync(SystemActor().signed_request)(
+                    response = SystemActor().signed_request(
                         method="get", uri=object_uri
                     )
                 except (httpx.HTTPError, ssl.SSLCertVerificationError):
@@ -1008,7 +1007,7 @@ class Post(StatorModel):
                     ) from err
                 # We may need to fetch the author too
                 if post.author.state == IdentityStates.outdated:
-                    async_to_sync(post.author.fetch_actor)()
+                    post.author.fetch_actor()
                 return post
             else:
                 raise cls.DoesNotExist(f"Cannot find Post with URI {object_uri}")

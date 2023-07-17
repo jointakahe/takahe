@@ -1,5 +1,4 @@
 import pytest
-from asgiref.sync import async_to_sync
 from django.test.client import RequestFactory
 from pytest_httpx import HTTPXMock
 
@@ -16,7 +15,7 @@ def test_system_actor_signed(config_system, httpx_mock: HTTPXMock):
     system_actor.generate_keys()
     # Send a fake outbound request
     httpx_mock.add_response()
-    async_to_sync(system_actor.signed_request)(
+    system_actor.signed_request(
         method="get",
         uri="http://example.com/test-actor",
     )

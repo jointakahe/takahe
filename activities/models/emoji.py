@@ -4,7 +4,6 @@ from typing import ClassVar
 
 import httpx
 import urlman
-from asgiref.sync import sync_to_async
 from cachetools import TTLCache, cached
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -35,13 +34,13 @@ class EmojiStates(StateGraph):
     outdated.transitions_to(updated)
 
     @classmethod
-    async def handle_outdated(cls, instance: "Emoji"):
+    def handle_outdated(cls, instance: "Emoji"):
         """
         Fetches remote emoji and uploads to file for local caching
         """
         if instance.remote_url and not instance.file:
             try:
-                file, mimetype = await get_remote_file(
+                file, mimetype = get_remote_file(
                     instance.remote_url,
                     timeout=settings.SETUP.REMOTE_TIMEOUT,
                     max_size=settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB * 1024,
@@ -55,7 +54,7 @@ class EmojiStates(StateGraph):
 
                 instance.file = file
                 instance.mimetype = mimetype
-                await sync_to_async(instance.save)()
+                instance.save()
 
         return cls.updated
 

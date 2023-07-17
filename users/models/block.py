@@ -30,7 +30,7 @@ class BlockStates(StateGraph):
         return [cls.new, cls.sent, cls.awaiting_expiry]
 
     @classmethod
-    async def handle_new(cls, instance: "Block"):
+    def handle_new(cls, instance: "Block"):
         """
         Block that are new need us to deliver the Block object
         to the target server.
@@ -38,20 +38,18 @@ class BlockStates(StateGraph):
         # Mutes don't send but might need expiry
         if instance.mute:
             return cls.awaiting_expiry
-        # Fetch more info
-        block = await instance.afetch_full()
         # Remote blocks should not be here, local blocks just work
-        if not block.source.local or block.target.local:
+        if not instance.source.local or instance.target.local:
             return cls.sent
         # Don't try if the other identity didn't fetch yet
-        if not block.target.inbox_uri:
+        if not instance.target.inbox_uri:
             return
         # Sign it and send it
         try:
-            await block.source.signed_request(
+            instance.source.signed_request(
                 method="post",
-                uri=block.target.inbox_uri,
-                body=canonicalise(block.to_ap()),
+                uri=instance.target.inbox_uri,
+                body=canonicalise(instance.to_ap()),
             )
         except httpx.RequestError:
             return
@@ -66,19 +64,18 @@ class BlockStates(StateGraph):
             return cls.undone
 
     @classmethod
-    async def handle_undone(cls, instance: "Block"):
+    def handle_undone(cls, instance: "Block"):
         """
         Delivers the Undo object to the target server
         """
-        block = await instance.afetch_full()
         # Remote blocks should not be here, mutes don't send, local blocks just work
-        if not block.source.local or block.target.local or instance.mute:
+        if not instance.source.local or instance.target.local or instance.mute:
             return cls.undone_sent
         try:
-            await block.source.signed_request(
+            instance.source.signed_request(
                 method="post",
-                uri=block.target.inbox_uri,
-                body=canonicalise(block.to_undo_ap()),
+                uri=instance.target.inbox_uri,
+                body=canonicalise(instance.to_undo_ap()),
             )
         except httpx.RequestError:
             return
@@ -226,16 +223,6 @@ class Block(StatorModel):
     @property
     def active(self):
         return self.state in BlockStates.group_active()
-
-    ### Async helpers ###
-
-    async def afetch_full(self):
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return await Block.objects.select_related(
-            "source", "source__domain", "target"
-        ).aget(pk=self.pk)
 
     ### ActivityPub (outbound) ###
 

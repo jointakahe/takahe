@@ -238,10 +238,6 @@ def stator(config_system) -> StatorRunner:
     """
     Return an initialized StatorRunner for tests that need state transitioning
     to happen.
-
-    Example:
-        # Do some tasks with state side effects
-        async_to_sync(stator_runner.fetch_and_process_tasks)()
     """
     runner = StatorRunner(
         StatorModel.subclasses,

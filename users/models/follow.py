@@ -34,26 +34,25 @@ class FollowStates(StateGraph):
         return [cls.unrequested, cls.local_requested, cls.accepted]
 
     @classmethod
-    async def handle_unrequested(cls, instance: "Follow"):
+    def handle_unrequested(cls, instance: "Follow"):
         """
         Follows that are unrequested need us to deliver the Follow object
         to the target server.
         """
-        follow = await instance.afetch_full()
         # Remote follows should not be here
-        if not follow.source.local:
+        if not instance.source.local:
             return cls.remote_requested
-        if follow.target.local:
+        if instance.target.local:
             return cls.accepted
         # Don't try if the other identity didn't fetch yet
-        if not follow.target.inbox_uri:
+        if not instance.target.inbox_uri:
             return
         # Sign it and send it
         try:
-            await follow.source.signed_request(
+            instance.source.signed_request(
                 method="post",
-                uri=follow.target.inbox_uri,
-                body=canonicalise(follow.to_ap()),
+                uri=instance.target.inbox_uri,
+                body=canonicalise(instance.to_ap()),
             )
         except httpx.RequestError:
             return
@@ -65,33 +64,31 @@ class FollowStates(StateGraph):
         pass
 
     @classmethod
-    async def handle_remote_requested(cls, instance: "Follow"):
+    def handle_remote_requested(cls, instance: "Follow"):
         """
         Items in remote_requested need us to send an Accept object to the
         source server.
         """
-        follow = await instance.afetch_full()
         try:
-            await follow.target.signed_request(
+            instance.target.signed_request(
                 method="post",
-                uri=follow.source.inbox_uri,
-                body=canonicalise(follow.to_accept_ap()),
+                uri=instance.source.inbox_uri,
+                body=canonicalise(instance.to_accept_ap()),
             )
         except httpx.RequestError:
             return
         return cls.accepted
 
     @classmethod
-    async def handle_undone(cls, instance: "Follow"):
+    def handle_undone(cls, instance: "Follow"):
         """
         Delivers the Undo object to the target server
         """
-        follow = await instance.afetch_full()
         try:
-            await follow.source.signed_request(
+            instance.source.signed_request(
                 method="post",
-                uri=follow.target.inbox_uri,
-                body=canonicalise(follow.to_undo_ap()),
+                uri=instance.target.inbox_uri,
+                body=canonicalise(instance.to_undo_ap()),
             )
         except httpx.RequestError:
             return
@@ -203,16 +200,6 @@ class Follow(StatorModel):
                     TimelineEvent.add_follow(follow.target, follow.source)
                 follow.save()
         return follow
-
-    ### Async helpers ###
-
-    async def afetch_full(self):
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return await Follow.objects.select_related(
-            "source", "source__domain", "target"
-        ).aget(pk=self.pk)
 
     ### Properties ###
 

@@ -2,7 +2,6 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
-from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
@@ -22,26 +21,25 @@ class ReportStates(StateGraph):
     new.transitions_to(sent)
 
     @classmethod
-    async def handle_new(cls, instance: "Report"):
+    def handle_new(cls, instance: "Report"):
         """
         Sends the report to the remote server if we need to
         """
         from users.models import SystemActor, User
 
         recipients = []
-        report = await instance.afetch_full()
-        async for mod in User.objects.filter(
+        for mod in User.objects.filter(
             models.Q(moderator=True) | models.Q(admin=True)
         ).values_list("email", flat=True):
             recipients.append(mod)
 
-        if report.forward and not report.subject_identity.domain.local:
+        if instance.forward and not instance.subject_identity.domain.local:
             system_actor = SystemActor()
             try:
-                await system_actor.signed_request(
+                system_actor.signed_request(
                     method="post",
-                    uri=report.subject_identity.inbox_uri,
-                    body=canonicalise(report.to_ap()),
+                    uri=instance.subject_identity.inbox_uri,
+                    body=canonicalise(instance.to_ap()),
                 )
             except httpx.RequestError:
                 pass
@@ -50,7 +48,7 @@ class ReportStates(StateGraph):
             body=render_to_string(
                 "emails/report_new.txt",
                 {
-                    "report": report,
+                    "report": instance,
                     "config": Config.system,
                     "settings": settings,
                 },
@@ -62,14 +60,14 @@ class ReportStates(StateGraph):
             content=render_to_string(
                 "emails/report_new.html",
                 {
-                    "report": report,
+                    "report": instance,
                     "config": Config.system,
                     "settings": settings,
                 },
             ),
             mimetype="text/html",
         )
-        await sync_to_async(email.send)()
+        email.send()
         return cls.sent
 
 
@@ -144,15 +142,6 @@ class Report(StatorModel):
         admin_view = "{admin}{self.pk}/"
 
     ### ActivityPub ###
-
-    async def afetch_full(self) -> "Report":
-        return await Report.objects.select_related(
-            "source_identity",
-            "source_domain",
-            "subject_identity__domain",
-            "subject_identity",
-            "subject_post",
-        ).aget(pk=self.pk)
 
     @classmethod
     def handle_ap(cls, data):

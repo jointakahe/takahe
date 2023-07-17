@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
-from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.db import IntegrityError, models
 from django.utils import timezone
@@ -66,13 +65,13 @@ class IdentityStates(StateGraph):
         return [cls.deleted, cls.deleted_fanned_out]
 
     @classmethod
-    async def targets_fan_out(cls, identity: "Identity", type_: str) -> None:
+    def targets_fan_out(cls, identity: "Identity", type_: str) -> None:
         from activities.models import FanOut
         from users.models import Follow
 
         # Fan out to each target
         shared_inboxes = set()
-        async for follower in Follow.objects.select_related("source", "target").filter(
+        for follower in Follow.objects.select_related("source", "target").filter(
             target=identity
         ):
             # Dedupe shared_inbox_uri
@@ -80,7 +79,7 @@ class IdentityStates(StateGraph):
             if shared_uri and shared_uri in shared_inboxes:
                 continue
 
-            await FanOut.objects.acreate(
+            FanOut.objects.create(
                 identity=follower.source,
                 type=type_,
                 subject_identity=identity,
@@ -88,34 +87,32 @@ class IdentityStates(StateGraph):
             shared_inboxes.add(shared_uri)
 
     @classmethod
-    async def handle_edited(cls, instance: "Identity"):
+    def handle_edited(cls, instance: "Identity"):
         from activities.models import FanOut
 
         if not instance.local:
             return cls.updated
 
-        identity = await instance.afetch_full()
-        await cls.targets_fan_out(identity, FanOut.Types.identity_edited)
+        cls.targets_fan_out(instance, FanOut.Types.identity_edited)
         return cls.updated
 
     @classmethod
-    async def handle_deleted(cls, instance: "Identity"):
+    def handle_deleted(cls, instance: "Identity"):
         from activities.models import FanOut
 
         if not instance.local:
             return cls.updated
 
-        identity = await instance.afetch_full()
-        await cls.targets_fan_out(identity, FanOut.Types.identity_deleted)
+        cls.targets_fan_out(instance, FanOut.Types.identity_deleted)
         return cls.deleted_fanned_out
 
     @classmethod
-    async def handle_outdated(cls, identity: "Identity"):
+    def handle_outdated(cls, identity: "Identity"):
         # Local identities never need fetching
         if identity.local:
             return cls.updated
         # Run the actor fetch and progress to updated if it succeeds
-        if await identity.fetch_actor():
+        if identity.fetch_actor():
             return cls.updated
 
     @classmethod
@@ -365,9 +362,7 @@ class Identity(StatorModel):
                 )
         except cls.DoesNotExist:
             if fetch and not local:
-                actor_uri, handle = async_to_sync(cls.fetch_webfinger)(
-                    f"{username}@{domain}"
-                )
+                actor_uri, handle = cls.fetch_webfinger(f"{username}@{domain}")
                 if handle is None:
                     return None
                 # See if this actually does match an existing actor
@@ -448,14 +443,6 @@ class Identity(StatorModel):
     @property
     def limited(self) -> bool:
         return self.restriction == self.Restriction.limited
-
-    ### Async helpers ###
-
-    async def afetch_full(self):
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return await Identity.objects.select_related("domain").aget(pk=self.pk)
 
     ### ActivityPub (outbound) ###
 
@@ -637,17 +624,17 @@ class Identity(StatorModel):
     ### Actor/Webfinger fetching ###
 
     @classmethod
-    async def fetch_webfinger_url(cls, domain: str):
+    def fetch_webfinger_url(cls, domain: str):
         """
         Given a domain (hostname), returns the correct webfinger URL to use
         based on probing host-meta.
         """
-        async with httpx.AsyncClient(
+        with httpx.Client(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
         ) as client:
             try:
-                response = await client.get(
+                response = client.get(
                     f"https://{domain}/.well-known/host-meta",
                     follow_redirects=True,
                     headers={"Accept": "application/xml"},
@@ -669,24 +656,24 @@ class Identity(StatorModel):
         return f"https://{domain}/.well-known/webfinger?resource={{uri}}"
 
     @classmethod
-    async def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
+    def fetch_webfinger(cls, handle: str) -> tuple[str | None, str | None]:
         """
         Given a username@domain handle, returns a tuple of
         (actor uri, canonical handle) or None, None if it does not resolve.
         """
         domain = handle.split("@")[1].lower()
         try:
-            webfinger_url = await cls.fetch_webfinger_url(domain)
+            webfinger_url = cls.fetch_webfinger_url(domain)
         except ssl.SSLCertVerificationError:
             return None, None
 
         # Go make a Webfinger request
-        async with httpx.AsyncClient(
+        with httpx.Client(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
         ) as client:
             try:
-                response = await client.get(
+                response = client.get(
                     webfinger_url.format(uri=f"acct:{handle}"),
                     follow_redirects=True,
                     headers={"Accept": "application/json"},
@@ -730,16 +717,16 @@ class Identity(StatorModel):
         return None, None
 
     @classmethod
-    async def fetch_pinned_post_uris(cls, uri: str) -> list[str]:
+    def fetch_pinned_post_uris(cls, uri: str) -> list[str]:
         """
         Fetch an identity's featured collection.
         """
-        async with httpx.AsyncClient(
+        with httpx.Client(
             timeout=settings.SETUP.REMOTE_TIMEOUT,
             headers={"User-Agent": settings.TAKAHE_USER_AGENT},
         ) as client:
             try:
-                response = await client.get(
+                response = client.get(
                     uri,
                     follow_redirects=True,
                     headers={"Accept": "application/activity+json"},
@@ -785,7 +772,7 @@ class Identity(StatorModel):
                 response.content,
             )
 
-    async def fetch_actor(self) -> bool:
+    def fetch_actor(self) -> bool:
         """
         Fetches the user's actor information, as well as their domain from
         webfinger if it's available.
@@ -796,7 +783,7 @@ class Identity(StatorModel):
         if self.local:
             raise ValueError("Cannot fetch local identities")
         try:
-            response = await SystemActor().signed_request(
+            response = SystemActor().signed_request(
                 method="get",
                 uri=self.actor_uri,
             )
@@ -810,7 +797,7 @@ class Identity(StatorModel):
         if status_code >= 400:
             if status_code == 410 and self.pk:
                 # Their account got deleted, so let's do the same.
-                await Identity.objects.filter(pk=self.pk).adelete()
+                Identity.objects.filter(pk=self.pk).delete()
 
             if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
                 capture_message(
@@ -866,44 +853,43 @@ class Identity(StatorModel):
                 )
         # Now go do webfinger with that info to see if we can get a canonical domain
         actor_url_parts = urlparse(self.actor_uri)
-        get_domain = sync_to_async(Domain.get_remote_domain)
         if self.username:
-            webfinger_actor, webfinger_handle = await self.fetch_webfinger(
+            webfinger_actor, webfinger_handle = self.fetch_webfinger(
                 f"{self.username}@{actor_url_parts.hostname}"
             )
             if webfinger_handle:
                 webfinger_username, webfinger_domain = webfinger_handle.split("@")
                 self.username = webfinger_username
-                self.domain = await get_domain(webfinger_domain)
+                self.domain = Domain.get_remote_domain(webfinger_domain)
             else:
-                self.domain = await get_domain(actor_url_parts.hostname)
+                self.domain = Domain.get_remote_domain(actor_url_parts.hostname)
         else:
-            self.domain = await get_domain(actor_url_parts.hostname)
+            self.domain = Domain.get_remote_domain(actor_url_parts.hostname)
         # Emojis (we need the domain so we do them here)
         for tag in get_list(document, "tag"):
             if tag["type"].lower() in ["toot:emoji", "emoji"]:
-                await sync_to_async(Emoji.by_ap_tag)(self.domain, tag, create=True)
+                Emoji.by_ap_tag(self.domain, tag, create=True)
         # Mark as fetched
         self.fetched = timezone.now()
         try:
-            await sync_to_async(self.save)()
+            self.save()
         except IntegrityError as e:
             # See if we can fetch a PK and save there
             if self.pk is None:
                 try:
-                    other_row = await Identity.objects.aget(actor_uri=self.actor_uri)
+                    other_row = Identity.objects.get(actor_uri=self.actor_uri)
                 except Identity.DoesNotExist:
                     raise ValueError(
                         f"Could not save Identity at end of actor fetch: {e}"
                     )
                 self.pk: int | None = other_row.pk
-                await sync_to_async(self.save)()
+                self.save()
 
         # Fetch pinned posts after identity has been fetched and saved
         if self.featured_collection_uri:
-            featured = await self.fetch_pinned_post_uris(self.featured_collection_uri)
+            featured = self.fetch_pinned_post_uris(self.featured_collection_uri)
             service = IdentityService(self)
-            await sync_to_async(service.sync_pins)(featured)
+            service.sync_pins(featured)
 
         return True
 
@@ -1016,7 +1002,7 @@ class Identity(StatorModel):
 
     ### Cryptography ###
 
-    async def signed_request(
+    def signed_request(
         self,
         method: Literal["get", "post"],
         uri: str,
@@ -1025,7 +1011,7 @@ class Identity(StatorModel):
         """
         Performs a signed request on behalf of the System Actor.
         """
-        return await HttpSignature.signed_request(
+        return HttpSignature.signed_request(
             method=method,
             uri=uri,
             body=body,

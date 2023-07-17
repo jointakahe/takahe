@@ -1,5 +1,4 @@
 import httpx
-from asgiref.sync import async_to_sync
 
 from activities.models import Hashtag, Post
 from core.ld import canonicalise
@@ -49,7 +48,7 @@ class SearchService:
                             username, domain_instance or domain, fetch=True
                         )
                         if identity and identity.state == IdentityStates.outdated:
-                            async_to_sync(identity.fetch_actor)()
+                            identity.fetch_actor()
                     except ValueError:
                         pass
 
@@ -74,7 +73,7 @@ class SearchService:
 
         # Fetch the provided URL as the system actor to retrieve the AP JSON
         try:
-            response = async_to_sync(SystemActor().signed_request)(
+            response = SystemActor().signed_request(
                 method="get",
                 uri=self.query,
             )
@@ -90,7 +89,7 @@ class SearchService:
             # Try and retrieve the profile by actor URI
             identity = Identity.by_actor_uri(document["id"], create=True)
             if identity and identity.state == IdentityStates.outdated:
-                async_to_sync(identity.fetch_actor)()
+                identity.fetch_actor()
             return identity
 
         # Is it a post?
