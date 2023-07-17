@@ -12,7 +12,7 @@ class RequestRunner(View):
     For when you're on something serverless.
     """
 
-    async def get(self, request):
+    def get(self, request):
         # Check the token, if supplied
         if not settings.STATOR_TOKEN:
             return HttpResponseForbidden("No token set")
@@ -20,5 +20,5 @@ class RequestRunner(View):
             return HttpResponseForbidden("Invalid token")
         # Run on all models
         runner = StatorRunner(StatorModel.subclasses, run_for=2)
-        handled = await runner.run()
+        handled = runner.run()
         return HttpResponse(f"Handled {handled}")

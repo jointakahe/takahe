@@ -1,7 +1,6 @@
 import random
 import string
 
-from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import models
@@ -18,18 +17,17 @@ class PasswordResetStates(StateGraph):
     new.transitions_to(sent)
 
     @classmethod
-    async def handle_new(cls, instance: "PasswordReset"):
+    def handle_new(cls, instance: "PasswordReset"):
         """
         Sends the password reset email.
         """
-        reset = await instance.afetch_full()
-        if reset.new_account:
-            await sync_to_async(send_mail)(
+        if instance.new_account:
+            send_mail(
                 subject=f"{Config.system.site_name}: Confirm new account",
                 message=render_to_string(
                     "emails/account_new.txt",
                     {
-                        "reset": reset,
+                        "reset": instance,
                         "config": Config.system,
                         "settings": settings,
                     },
@@ -37,21 +35,21 @@ class PasswordResetStates(StateGraph):
                 html_message=render_to_string(
                     "emails/account_new.html",
                     {
-                        "reset": reset,
+                        "reset": instance,
                         "config": Config.system,
                         "settings": settings,
                     },
                 ),
                 from_email=settings.SERVER_EMAIL,
-                recipient_list=[reset.user.email],
+                recipient_list=[instance.user.email],
             )
         else:
-            await sync_to_async(send_mail)(
+            send_mail(
                 subject=f"{Config.system.site_name}: Reset password",
                 message=render_to_string(
                     "emails/password_reset.txt",
                     {
-                        "reset": reset,
+                        "reset": instance,
                         "config": Config.system,
                         "settings": settings,
                     },
@@ -59,13 +57,13 @@ class PasswordResetStates(StateGraph):
                 html_message=render_to_string(
                     "emails/password_reset.html",
                     {
-                        "reset": reset,
+                        "reset": instance,
                         "config": Config.system,
                         "settings": settings,
                     },
                 ),
                 from_email=settings.SERVER_EMAIL,
-                recipient_list=[reset.user.email],
+                recipient_list=[instance.user.email],
             )
         return cls.sent
 
@@ -96,13 +94,3 @@ class PasswordReset(StatorModel):
             token="".join(random.choice(string.ascii_lowercase) for i in range(42)),
             new_account=not user.password,
         )
-
-    ### Async helpers ###
-
-    async def afetch_full(self):
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return await PasswordReset.objects.select_related(
-            "user",
-        ).aget(pk=self.pk)

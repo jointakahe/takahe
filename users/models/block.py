@@ -58,7 +58,7 @@ class BlockStates(StateGraph):
         return cls.sent
 
     @classmethod
-    async def handle_awaiting_expiry(cls, instance: "Block"):
+    def handle_awaiting_expiry(cls, instance: "Block"):
         """
         Checks to see if there is an expiry we should undo
         """

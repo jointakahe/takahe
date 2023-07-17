@@ -498,7 +498,7 @@ class PushSubscription(Schema):
         value = token.push_subscription
         if value:
             value["id"] = "1"
-            value["server_key"] = settings.VAPID_PUBLIC_KEY
+            value["server_key"] = settings.SETUP.VAPID_PUBLIC_KEY
             del value["keys"]
             return value
         else:

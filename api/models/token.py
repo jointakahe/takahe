@@ -16,7 +16,6 @@ class PushSubscriptionSchema(BaseModel):
     keys: Keys
     alerts: dict[str, bool]
     policy: str
-    server_key: str
 
 
 class Token(models.Model):

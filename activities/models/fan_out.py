@@ -319,23 +319,3 @@ class FanOut(StatorModel):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-
-    ### Async helpers ###
-
-    async def afetch_full(self):
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return (
-            await FanOut.objects.select_related(
-                "identity",
-                "subject_post",
-                "subject_post_interaction",
-                "subject_identity",
-                "subject_identity__domain",
-            )
-            .prefetch_related(
-                "subject_post__emojis",
-            )
-            .aget(pk=self.pk)
-        )

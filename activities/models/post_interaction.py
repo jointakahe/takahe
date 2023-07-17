@@ -27,103 +27,89 @@ class PostInteractionStates(StateGraph):
         return [cls.new, cls.fanned_out]
 
     @classmethod
-    async def handle_new(cls, instance: "PostInteraction"):
+    def handle_new(cls, instance: "PostInteraction"):
         """
         Creates all needed fan-out objects for a new PostInteraction.
         """
-        interaction = await instance.afetch_full()
         # Boost: send a copy to all people who follow this user (limiting
         # to just local follows if it's a remote boost)
         # Pin: send Add activity to all people who follow this user
-        if (
-            interaction.type == interaction.Types.boost
-            or interaction.type == interaction.Types.pin
-        ):
-            for target in await interaction.aget_targets():
-                await FanOut.objects.acreate(
+        if instance.type == instance.Types.boost or instance.type == instance.Types.pin:
+            for target in instance.get_targets():
+                FanOut.objects.create(
                     type=FanOut.Types.interaction,
                     identity=target,
-                    subject_post=interaction.post,
-                    subject_post_interaction=interaction,
+                    subject_post=instance.post,
+                    subject_post_interaction=instance,
                 )
         # Like: send a copy to the original post author only,
         # if the liker is local or they are
-        elif interaction.type == interaction.Types.like:
-            if interaction.identity.local or interaction.post.local:
-                await FanOut.objects.acreate(
+        elif instance.type == instance.Types.like:
+            if instance.identity.local or instance.post.local:
+                FanOut.objects.create(
                     type=FanOut.Types.interaction,
-                    identity_id=interaction.post.author_id,
-                    subject_post=interaction.post,
-                    subject_post_interaction=interaction,
+                    identity_id=instance.post.author_id,
+                    subject_post=instance.post,
+                    subject_post_interaction=instance,
                 )
         # Vote: send a copy of the vote to the original
         # post author only if it's a local interaction
         # to a non local post
-        elif interaction.type == interaction.Types.vote:
-            if interaction.identity.local and not interaction.post.local:
-                await FanOut.objects.acreate(
+        elif instance.type == instance.Types.vote:
+            if instance.identity.local and not instance.post.local:
+                FanOut.objects.create(
                     type=FanOut.Types.interaction,
-                    identity_id=interaction.post.author_id,
-                    subject_post=interaction.post,
-                    subject_post_interaction=interaction,
+                    identity_id=instance.post.author_id,
+                    subject_post=instance.post,
+                    subject_post_interaction=instance,
                 )
         else:
             raise ValueError("Cannot fan out unknown type")
         # And one for themselves if they're local and it's a boost
-        if (
-            interaction.type == PostInteraction.Types.boost
-            and interaction.identity.local
-        ):
-            await FanOut.objects.acreate(
-                identity_id=interaction.identity_id,
+        if instance.type == PostInteraction.Types.boost and instance.identity.local:
+            FanOut.objects.create(
+                identity_id=instance.identity_id,
                 type=FanOut.Types.interaction,
-                subject_post=interaction.post,
-                subject_post_interaction=interaction,
+                subject_post=instance.post,
+                subject_post_interaction=instance,
             )
         return cls.fanned_out
 
     @classmethod
-    async def handle_undone(cls, instance: "PostInteraction"):
+    def handle_undone(cls, instance: "PostInteraction"):
         """
         Creates all needed fan-out objects to undo a PostInteraction.
         """
-        interaction = await instance.afetch_full()
         # Undo Boost: send a copy to all people who follow this user
         # Undo Pin: send a Remove activity to all people who follow this user
-        if (
-            interaction.type == interaction.Types.boost
-            or interaction.type == interaction.Types.pin
-        ):
-            async for follow in interaction.identity.inbound_follows.select_related(
+        if instance.type == instance.Types.boost or instance.type == instance.Types.pin:
+            for follow in instance.identity.inbound_follows.select_related(
                 "source", "target"
             ):
                 if follow.source.local or follow.target.local:
-                    await FanOut.objects.acreate(
+                    FanOut.objects.create(
                         type=FanOut.Types.undo_interaction,
                         identity_id=follow.source_id,
-                        subject_post=interaction.post,
-                        subject_post_interaction=interaction,
+                        subject_post=instance.post,
+                        subject_post_interaction=instance,
                     )
         # Undo Like: send a copy to the original post author only
-        elif interaction.type == interaction.Types.like:
-            await FanOut.objects.acreate(
+        elif instance.type == instance.Types.like:
+            FanOut.objects.create(
                 type=FanOut.Types.undo_interaction,
-                identity_id=interaction.post.author_id,
-                subject_post=interaction.post,
-                subject_post_interaction=interaction,
+                identity_id=instance.post.author_id,
+                subject_post=instance.post,
+                subject_post_interaction=instance,
             )
         else:
             raise ValueError("Cannot fan out unknown type")
         # And one for themselves if they're local and it's a boost
-        if (
-            interaction.type == PostInteraction.Types.boost
-            and interaction.identity.local
-        ):
-            await FanOut.objects.acreate(
-                identity_id=interaction.identity_id,
+        if instance.type == PostInteraction.Types.boost and instance.identity.local:
+            FanOut.objects.create(
+                identity_id=instance.identity_id,
                 type=FanOut.Types.undo_interaction,
-                subject_post=interaction.post,
-                subject_post_interaction=interaction,
+                subject_post=instance.post,
+                subject_post_interaction=instance,
             )
         return cls.undone_fanned_out
 
@@ -212,17 +198,7 @@ class PostInteraction(StatorModel):
             [e.subject_post for e in events if e.subject_post], identity
         )
 
-    ### Async helpers ###
-
-    async def afetch_full(self):
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return await PostInteraction.objects.select_related(
-            "identity", "post", "post__author"
-        ).aget(pk=self.pk)
-
-    async def aget_targets(self) -> Iterable[Identity]:
+    def get_targets(self) -> Iterable[Identity]:
         """
         Returns an iterable with Identities of followers that have unique
         shared_inbox among each other to be used as target.
@@ -237,13 +213,15 @@ class PostInteraction(StatorModel):
         # Include all followers that are following the boosts
         if self.type == self.Types.boost:
             query = query.filter(boosts=True)
-        async for follow in query.select_related("source"):
+        for follow in query.select_related("source"):
             targets.add(follow.source)
 
         # Fetch the full blocks and remove them as targets
-        async for block in self.identity.outbound_blocks.active().filter(
-            mute=False
-        ).select_related("target"):
+        for block in (
+            self.identity.outbound_blocks.active()
+            .filter(mute=False)
+            .select_related("target")
+        ):
             try:
                 targets.remove(block.target)
             except KeyError:

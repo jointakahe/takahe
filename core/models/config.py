@@ -2,7 +2,6 @@ from functools import partial
 from typing import ClassVar
 
 import pydantic
-from asgiref.sync import sync_to_async
 from django.core.files import File
 from django.db import models
 from django.utils.functional import lazy
@@ -98,31 +97,11 @@ class Config(models.Model):
         )
 
     @classmethod
-    async def aload_system(cls):
-        """
-        Async loads the system config options object
-        """
-        return await sync_to_async(cls.load_values)(
-            cls.SystemOptions,
-            {"identity__isnull": True, "user__isnull": True, "domain__isnull": True},
-        )
-
-    @classmethod
     def load_user(cls, user):
         """
         Loads a user config options object
         """
         return cls.load_values(
-            cls.UserOptions,
-            {"identity__isnull": True, "user": user, "domain__isnull": True},
-        )
-
-    @classmethod
-    async def aload_user(cls, user):
-        """
-        Async loads the user config options object
-        """
-        return await sync_to_async(cls.load_values)(
             cls.UserOptions,
             {"identity__isnull": True, "user": user, "domain__isnull": True},
         )
@@ -138,31 +117,11 @@ class Config(models.Model):
         )
 
     @classmethod
-    async def aload_identity(cls, identity):
-        """
-        Async loads an identity config options object
-        """
-        return await sync_to_async(cls.load_values)(
-            cls.IdentityOptions,
-            {"identity": identity, "user__isnull": True, "domain__isnull": True},
-        )
-
-    @classmethod
     def load_domain(cls, domain):
         """
         Loads an domain config options object
         """
         return cls.load_values(
-            cls.DomainOptions,
-            {"domain": domain, "user__isnull": True, "identity__isnull": True},
-        )
-
-    @classmethod
-    async def aload_domain(cls, domain):
-        """
-        Async loads an domain config options object
-        """
-        return await sync_to_async(cls.load_values)(
             cls.DomainOptions,
             {"domain": domain, "user__isnull": True, "identity__isnull": True},
         )

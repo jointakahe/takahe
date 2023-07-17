@@ -16,7 +16,7 @@ class Command(BaseCommand):
             "--concurrency",
             "-c",
             type=int,
-            default=30,
+            default=15,
             help="How many tasks to run at once",
         )
         parser.add_argument(

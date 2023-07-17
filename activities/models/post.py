@@ -447,18 +447,6 @@ class Post(StatorModel):
             "replies": self.stats.get("replies", 0) if self.stats else 0,
         }
 
-    ### Async helpers ###
-
-    async def afetch_full(self) -> "Post":
-        """
-        Returns a version of the object with all relations pre-loaded
-        """
-        return (
-            await Post.objects.select_related("author", "author__domain")
-            .prefetch_related("mentions", "mentions__domain", "attachments", "emojis")
-            .aget(pk=self.pk)
-        )
-
     ### Local creation/editing ###
 
     @classmethod

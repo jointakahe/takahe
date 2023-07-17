@@ -60,7 +60,7 @@ class FollowStates(StateGraph):
         return cls.local_requested
 
     @classmethod
-    async def handle_local_requested(cls, instance: "Follow"):
+    def handle_local_requested(cls, instance: "Follow"):
         # TODO: Resend follow requests occasionally
         pass
 
