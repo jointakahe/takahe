@@ -56,10 +56,16 @@ services:
       start_period: 15s
     ports:
       - "8000:8000"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
 
   stator:
     <<: *takahe-common
     command: ["/takahe/manage.py", "runstator"]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
 
   setup:
     <<: *takahe-common
