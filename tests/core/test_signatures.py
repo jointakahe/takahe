@@ -111,3 +111,24 @@ def test_verify_http(keypair):
     )
     # Verify that
     HttpSignature.verify_request(fake_request, keypair["public_key"], skip_date=True)
+
+
+def test_verify_http_bad_signature(keypair):
+    """
+    Tests that a signature missing the algorithm does not work
+    """
+    # Make our predictable request
+    fake_request = RequestFactory().post(
+        path="/test-actor",
+        data=b'{"id": "https://example.com/test-create", "type": "Create", "actor": "https://example.com/test-actor", "object": {"id": "https://example.com/test-object", "type": "Note"}}',
+        content_type="application/json",
+        HTTP_HOST="example.com",
+        HTTP_DATE="Sat, 12 Nov 2022 21:57:18 GMT",
+        HTTP_SIGNATURE='keyId="https://example.com/test-actor#test-key",headers="(request-target) host date digest content-type",signature="IRduYoDJIh90mprjUgOIdxY1iaBWHs5ou9vsDlcmSekg6DXMZTiXjmZxbNIrnpEbNFu3wTcqz1nv9H97Gp7orbYMuHm6j2ecxsvzSr37T9jxBbt3Ov3xSfuYWwhv6PuTWNxHtUQWNuAIc3wHDAQt8Flnak/uHe7swoAq4uHq2kt18iMW6CEV9XA5ESFho2HSUgRaifoNxJlIWbHYPJiP0t9aktgGBkpQoZ8ulOj3Ew4RwC1lwk9kzWiLIjU4tSAie8RbIy2g0aUvA1tQh9Uge1by3o7+349SL5iooj+B6WSCEvvjEl52wo3xoEQmv0ptYuSPLUgB9tP8q7DoHEc8Dw=="',
+        HTTP_DIGEST="SHA-256=07sIbQ3GlOHWMbFMNajtPNtmUQXXu20UuvrIYLlI3kc=",
+    )
+    # Verify that
+    with pytest.raises(VerificationError):
+        HttpSignature.verify_request(
+            fake_request, keypair["public_key"], skip_date=True
+        )

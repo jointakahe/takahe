@@ -103,12 +103,18 @@ class HttpSignature:
             name, value = item.split("=", 1)
             value = value.strip('"')
             bits[name.lower()] = value
-        signature_details: HttpSignatureDetails = {
-            "headers": bits["headers"].split(),
-            "signature": base64.b64decode(bits["signature"]),
-            "algorithm": bits["algorithm"],
-            "keyid": bits["keyid"],
-        }
+        try:
+            signature_details: HttpSignatureDetails = {
+                "headers": bits["headers"].split(),
+                "signature": base64.b64decode(bits["signature"]),
+                "algorithm": bits["algorithm"],
+                "keyid": bits["keyid"],
+            }
+        except KeyError as e:
+            key_names = " ".join(bits.keys())
+            raise VerificationError(
+                f"Missing item from details (have: {key_names}, error: {e})"
+            )
         return signature_details
 
     @classmethod
