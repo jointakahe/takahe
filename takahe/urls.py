@@ -129,6 +129,11 @@ urlpatterns = [
         name="admin_federation",
     ),
     path(
+        "admin/federation/blocklist/",
+        admin.FederationBlocklist.as_view(),
+        name="admin_federation_blocklist",
+    ),
+    path(
         "admin/federation/<domain>/",
         admin.FederationEdit.as_view(),
         name="admin_federation_edit",

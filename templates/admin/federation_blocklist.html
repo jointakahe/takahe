@@ -1,0 +1,25 @@
+{% extends "admin/base_main.html" %}
+
+{% block subtitle %}Federation Blocklist{% endblock %}
+
+{% block settings_content %}
+    <form action="." method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h1>Import Blocklist</h1>
+
+        {% if bad_format %}
+            <div class="announcement error">Error: The file you uploaded was not a valid blocklist CSV.</div>
+        {% endif %}
+        {% if success %}
+            <div class="announcement">Your blocklist CSV was processed processed with success!</div>
+        {% endif %}
+
+        <fieldset>
+            {% include "forms/_field.html" with field=form.blocklist %}
+        </fieldset>
+        <div class="buttons">
+            <a href="{% url "admin_federation" %}?page={{ page }}" class="button secondary left">Back</a>
+            <button>Save</button>
+        </div>
+    </form>
+{% endblock %}

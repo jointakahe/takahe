@@ -1346,6 +1346,10 @@ table.metadata td .emoji {
     cursor: pointer;
 }
 
+.announcement.error {
+    background-color: var(--color-bg-error);
+}
+
 /* Identity banner */
 
 .identity-banner {

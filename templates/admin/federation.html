@@ -8,6 +8,9 @@
         <input type="search" name="query" value="{{ query }}" placeholder="Search by domain">
         <button><i class="fa-solid fa-search"></i></button>
     </form>
+    <div class="view-options">
+        <a href="{% url "admin_federation_blocklist" %}?page={{ page_obj.number }}" class="button">Import Blocklist</a>
+    </div>
     <table class="items">
         {% for domain in page_obj %}
             <tr>
