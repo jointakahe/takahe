@@ -843,7 +843,7 @@ class Post(StatorModel):
                     else:
                         raise TryAgainLater()
                 # If the post is from a blocked domain, stop and drop
-                if author.domain.blocked:
+                if author.domain.recursively_blocked():
                     raise cls.DoesNotExist("Post is from a blocked domain")
                 try:
                     # try again, because fetch_actor() also fetches pinned posts

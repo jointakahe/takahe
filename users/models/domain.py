@@ -241,6 +241,24 @@ class Domain(StatorModel):
             return f"{name:.10} - {version:.10}"
         return None
 
+    def recursively_blocked(self) -> bool:
+        """
+        Checks for blocks on all right subsets of this domain, except the very
+        last part of the TLD.
+
+        Yes, I know this weirdly lets you block ".co.uk" or whatever, but
+        people can do that if they want I guess.
+        """
+        # Efficient short-circuit
+        if self.blocked:
+            return True
+        # Build domain list
+        domain_parts = [self.domain]
+        while "." in domain_parts[-1]:
+            domain_parts.append(domain_parts[-1].split(".", 1)[1])
+        # See if any of those are blocked
+        return Domain.objects.filter(domain__in=domain_parts, blocked=True).exists()
+
     ### Config ###
 
     @cached_property

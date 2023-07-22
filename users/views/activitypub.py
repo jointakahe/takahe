@@ -148,7 +148,7 @@ class Inbox(View):
             return HttpResponseBadRequest("Cannot retrieve actor")
 
         # See if it's from a blocked user or domain
-        if identity.blocked or identity.domain.blocked:
+        if identity.blocked or identity.domain.recursively_blocked():
             # I love to lie! Throw it away!
             exceptions.capture_message(
                 f"Inbox: Discarded message from {identity.actor_uri}"
