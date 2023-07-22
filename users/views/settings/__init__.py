@@ -11,6 +11,7 @@ from users.views.settings.import_export import (  # noqa
     ImportExportPage,
 )
 from users.views.settings.interface import InterfacePage  # noqa
+from users.views.settings.migration import MigrateInPage  # noqa
 from users.views.settings.posting import PostingPage  # noqa
 from users.views.settings.profile import ProfilePage  # noqa
 from users.views.settings.security import SecurityPage  # noqa

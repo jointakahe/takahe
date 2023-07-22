@@ -1,6 +1,6 @@
 import ssl
 from functools import cached_property, partial
-from typing import Literal
+from typing import Literal, Optional
 from urllib.parse import urlparse
 
 import httpx
@@ -201,6 +201,10 @@ class Identity(StatorModel):
     # Should be a list of object URIs (we don't want a full M2M here)
     pinned = models.JSONField(blank=True, null=True)
 
+    # A list of other actor URIs - if this account was moved, should contain
+    # the one URI it was moved to.
+    aliases = models.JSONField(blank=True, null=True)
+
     # Admin-only moderation fields
     sensitive = models.BooleanField(default=False)
     restriction = models.IntegerField(
@@ -330,7 +334,20 @@ class Identity(StatorModel):
             self.following_uri = self.actor_uri + "following/"
             self.shared_inbox_uri = f"https://{self.domain.uri_domain}/inbox/"
 
+    def add_alias(self, actor_uri: str):
+        self.aliases = (self.aliases or []) + [actor_uri]
+        self.save()
+
+    def remove_alias(self, actor_uri: str):
+        self.aliases = [x for x in (self.aliases or []) if x != actor_uri]
+        self.save()
+
     ### Alternate constructors/fetchers ###
+
+    @classmethod
+    def by_handle(cls, handle, fetch: bool = False) -> Optional["Identity"]:
+        username, domain = handle.lstrip("@").split("@", 1)
+        return cls.by_username_and_domain(username=username, domain=domain, fetch=fetch)
 
     @classmethod
     def by_username_and_domain(
@@ -339,7 +356,7 @@ class Identity(StatorModel):
         domain: str | Domain,
         fetch: bool = False,
         local: bool = False,
-    ):
+    ) -> Optional["Identity"]:
         """
         Get an Identity by username and domain.
 
@@ -543,6 +560,8 @@ class Identity(StatorModel):
                 }
                 for item in self.metadata
             ]
+        if self.aliases:
+            response["alsoKnownAs"] = self.aliases
         # Emoji
         emojis = Emoji.emojis_from_content(
             (self.name or "") + " " + (self.summary or ""), None

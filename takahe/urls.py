@@ -66,6 +66,11 @@ urlpatterns = [
         name="settings_export_followers_csv",
     ),
     path(
+        "@<handle>/settings/migrate_in/",
+        settings.MigrateInPage.as_view(),
+        name="settings_migrate_in",
+    ),
+    path(
         "@<handle>/settings/tokens/",
         settings.TokensRoot.as_view(),
         name="settings_tokens",

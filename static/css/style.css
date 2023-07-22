@@ -432,6 +432,17 @@ section h1.above {
     margin-bottom: -20px;
 }
 
+section h2.above {
+    position: relative;
+    top: -35px;
+    left: -15px;
+    font-weight: bold;
+    font-size: 100%;
+    text-transform: uppercase;
+    color: var(--color-text-dull);
+    margin-bottom: -20px;
+}
+
 section p {
     margin: 5px 0 10px 0;
 }
@@ -983,6 +994,7 @@ button,
     background-color: var(--color-highlight);
     color: var(--color-text-in-highlight);
     display: inline-block;
+    text-decoration: none;
 }
 
 button.delete,

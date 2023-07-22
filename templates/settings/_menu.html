@@ -14,6 +14,10 @@
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span>Import/Export</span>
         </a>
+        <a href="{% url "settings_migrate_in" handle=identity.handle %}" {% if section == "migrate_in" %}class="selected"{% endif %} title="Interface">
+            <i class="fa-solid fa-door-open"></i>
+            <span>Migrate Inbound</span>
+        </a>
         <a href="{% url "settings_tokens" handle=identity.handle %}" {% if section == "tokens" %}class="selected"{% endif %} title="Authorized Apps">
             <i class="fa-solid fa-window-restore"></i>
             <span>Authorized Apps</span>

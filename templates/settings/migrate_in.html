@@ -1,0 +1,36 @@
+{% extends "settings/base.html" %}
+
+{% block subtitle %}Migrate Here{% endblock %}
+
+{% block settings_content %}
+    <form action="." method="POST">
+        {% csrf_token %}
+
+
+        <fieldset>
+            <legend>Add New Alias</legend>
+            <p>
+                To move another account to this one, first add it as an alias here,
+                and then go to the server where it is hosted and initiate the move.
+            </p>
+            {% include "forms/_field.html" with field=form.alias %}
+        </fieldset>
+
+        <div class="buttons">
+            <button>Add</button>
+        </div>
+
+    </form>
+
+    <section>
+        <h2 class="above">Current Aliases</h2>
+        <table>
+            {% for alias in aliases %}
+                <tr><td>{{ alias.handle }} <a href=".?remove_alias={{ alias.actor_uri|urlencode }}" class="button danger">Remove Alias</button></td></tr>
+            {% empty %}
+                <tr><td class="empty">You have no aliases.</td></tr>
+            {% endfor %}
+        </table>
+    </section>
+
+{% endblock %}
