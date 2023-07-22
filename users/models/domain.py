@@ -45,6 +45,8 @@ class DomainStates(StateGraph):
 
     @classmethod
     def handle_updated(cls, instance: "Domain"):
+        if instance.blocked:
+            return cls.updated
         return cls.outdated
 
 
