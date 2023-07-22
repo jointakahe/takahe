@@ -1,5 +1,5 @@
-0.9
-===
+0.10
+====
 
 *Released: Not Yet Released*
 
@@ -14,6 +14,11 @@ This release's major changes:
   talking to other servers asynchronously).
 
 * TBC
+
+Minor changes also include:
+
+* Followers-only mode now works correctly inbound and outbound (though outbound
+  may need the other server to refresh the profile first).
 
 If you'd like to help with code, design, or other areas, see
 :doc:`/contributing` to see how to get in touch.

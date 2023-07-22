@@ -499,3 +499,45 @@ def test_post_hashtag_to_ap(identity: Identity, config_system):
     ]
     assert "#world" in ap["object"]["content"]
     assert 'rel="tag"' in ap["object"]["content"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "visibility",
+    [
+        Post.Visibilities.public,
+        Post.Visibilities.unlisted,
+        Post.Visibilities.followers,
+        Post.Visibilities.mentioned,
+    ],
+)
+def test_post_targets_to_ap(
+    identity: Identity, other_identity: Identity, visibility: Post.Visibilities
+):
+    """
+    Ensures that posts have the right targets in AP form.
+    """
+
+    # Make a post
+    post = Post.objects.create(
+        content="<p>Hello @other</p>",
+        author=identity,
+        local=True,
+        visibility=visibility,
+    )
+    post.mentions.add(other_identity)
+
+    # Check its AP targets
+    ap_dict = post.to_ap()
+    if visibility == Post.Visibilities.public:
+        assert ap_dict["to"] == ["as:Public"]
+        assert ap_dict["cc"] == [other_identity.actor_uri]
+    elif visibility == Post.Visibilities.unlisted:
+        assert "to" not in ap_dict
+        assert ap_dict["cc"] == ["as:Public", other_identity.actor_uri]
+    elif visibility == Post.Visibilities.followers:
+        assert ap_dict["to"] == [identity.followers_uri]
+        assert ap_dict["cc"] == [other_identity.actor_uri]
+    elif visibility == Post.Visibilities.mentioned:
+        assert "to" not in ap_dict
+        assert ap_dict["cc"] == [other_identity.actor_uri]

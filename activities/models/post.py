@@ -623,6 +623,7 @@ class Post(StatorModel):
         """
         Returns the AP JSON for this object
         """
+        self.author.ensure_uris()
         value = {
             "to": [],
             "cc": [],
@@ -655,11 +656,14 @@ class Post(StatorModel):
         if self.edited:
             value["updated"] = format_ld_date(self.edited)
         # Targeting
-        # TODO: Add followers object
         if self.visibility == self.Visibilities.public:
             value["to"].append("as:Public")
         elif self.visibility == self.Visibilities.unlisted:
             value["cc"].append("as:Public")
+        elif (
+            self.visibility == self.Visibilities.followers and self.author.followers_uri
+        ):
+            value["to"].append(self.author.followers_uri)
         # Mentions
         for mention in self.mentions.all():
             value["tag"].append(mention.to_ap_tag())
@@ -922,6 +926,8 @@ class Post(StatorModel):
                 post.visibility = Post.Visibilities.public
             elif "public" in cc or "as:public" in cc:
                 post.visibility = Post.Visibilities.unlisted
+            elif post.author.followers_uri in to:
+                post.visibility = Post.Visibilities.followers
             # Attachments
             # These have no IDs, so we have to wipe them each time
             post.attachments.all().delete()

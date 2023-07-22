@@ -317,6 +317,19 @@ class Identity(StatorModel):
             for data in self.metadata
         ]
 
+    def ensure_uris(self):
+        """
+        Ensures that local identities have all the URIs populated on their fields
+        (this lets us add new ones easily)
+        """
+        if self.local:
+            self.inbox_uri = self.actor_uri + "inbox/"
+            self.outbox_uri = self.actor_uri + "outbox/"
+            self.featured_collection_uri = self.actor_uri + "collections/featured/"
+            self.followers_uri = self.actor_uri + "followers/"
+            self.following_uri = self.actor_uri + "following/"
+            self.shared_inbox_uri = f"https://{self.domain.uri_domain}/inbox/"
+
     ### Alternate constructors/fetchers ###
 
     @classmethod
@@ -482,12 +495,15 @@ class Identity(StatorModel):
     def to_ap(self):
         from activities.models import Emoji
 
+        self.ensure_uris()
         response = {
             "id": self.actor_uri,
             "type": self.actor_type.title(),
-            "inbox": self.actor_uri + "inbox/",
-            "outbox": self.actor_uri + "outbox/",
-            "featured": self.actor_uri + "collections/featured/",
+            "inbox": self.inbox_uri,
+            "outbox": self.outbox_uri,
+            "featured": self.featured_collection_uri,
+            "followers": self.followers_uri,
+            "following": self.following_uri,
             "preferredUsername": self.username,
             "publicKey": {
                 "id": self.public_key_id,
@@ -514,9 +530,9 @@ class Identity(StatorModel):
                 "mediaType": media_type_from_filename(self.image.name),
                 "url": self.image.url,
             }
-        if self.local:
+        if self.shared_inbox_uri:
             response["endpoints"] = {
-                "sharedInbox": f"https://{self.domain.uri_domain}/inbox/",
+                "sharedInbox": self.shared_inbox_uri,
             }
         if self.metadata:
             response["attachment"] = [
