@@ -33,6 +33,10 @@ class DomainStates(StateGraph):
 
     @classmethod
     def handle_outdated(cls, instance: "Domain"):
+        # Don't talk to servers we've blocked
+        if instance.blocked:
+            return cls.updated
+        # Pull their nodeinfo URI
         info = instance.fetch_nodeinfo()
         if info:
             instance.nodeinfo = info.dict()
