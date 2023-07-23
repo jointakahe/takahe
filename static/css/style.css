@@ -1346,7 +1346,7 @@ table.metadata td .emoji {
     cursor: pointer;
 }
 
-.announcement.error {
+.message.error {
     background-color: var(--color-bg-error);
 }
 

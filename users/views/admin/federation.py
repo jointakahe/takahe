@@ -1,6 +1,7 @@
 import csv
 
 from django import forms
+from django.contrib import messages
 from django.core.validators import FileExtensionValidator, ValidationError
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
@@ -87,6 +88,8 @@ class FederationEdit(FormView):
 class FederationBlocklist(FormView):
     template_name = "admin/federation_blocklist.html"
     extra_context = {"section": "federation"}
+    error_msg = "The uploaded file has an invalid blocklist CSV format."
+    success_msg = "The blocklist CSV was processed processed with success!"
 
     class form_class(forms.Form):
         blocklist = forms.FileField(
@@ -121,18 +124,19 @@ class FederationBlocklist(FormView):
 
                 domains.append(domain)
         except (TypeError, ValueError):
-            return redirect(".?bad_format=true")
+            messages.error(self.request, self.error_msg)
+            return redirect(".")
 
         if not domains:
-            return redirect(".?bad_format=true")
+            messages.error(self.request, self.error_msg)
+            return redirect(".")
 
         DomainService.block(domains)
 
-        return redirect(".?success=true")
+        messages.success(self.request, self.success_msg)
+        return redirect("admin_federation")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page"] = self.request.GET.get("page")
-        context["bad_format"] = self.request.GET.get("bad_format")
-        context["success"] = self.request.GET.get("success")
         return context

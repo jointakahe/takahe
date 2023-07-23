@@ -7,13 +7,6 @@
         {% csrf_token %}
         <h1>Import Blocklist</h1>
 
-        {% if bad_format %}
-            <div class="announcement error">Error: The file you uploaded was not a valid blocklist CSV.</div>
-        {% endif %}
-        {% if success %}
-            <div class="announcement">Your blocklist CSV was processed processed with success!</div>
-        {% endif %}
-
         <fieldset>
             {% include "forms/_field.html" with field=form.blocklist %}
         </fieldset>
