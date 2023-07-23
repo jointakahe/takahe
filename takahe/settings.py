@@ -9,6 +9,7 @@ import dj_database_url
 import django_cache_url
 import httpx
 import sentry_sdk
+from corsheaders.defaults import default_headers
 from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -338,6 +339,7 @@ CORS_ORIGIN_WHITELIST = SETUP.CORS_HOSTS
 CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 604800
 CORS_EXPOSE_HEADERS = ("link",)
+CORS_ALLOW_HEADERS = (*default_headers, "Idempotency-Key")
 
 JSONLD_MAX_SIZE = 1024 * 50  # 50 KB
 
