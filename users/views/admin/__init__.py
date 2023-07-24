@@ -23,7 +23,11 @@ from users.views.admin.emoji import (  # noqa
     EmojiEnable,
     EmojiRoot,
 )
-from users.views.admin.federation import FederationEdit, FederationRoot  # noqa
+from users.views.admin.federation import (  # noqa
+    FederationBlocklist,
+    FederationEdit,
+    FederationRoot,
+)
 from users.views.admin.hashtags import HashtagEdit, HashtagEnable, Hashtags  # noqa
 from users.views.admin.identities import IdentitiesRoot, IdentityEdit  # noqa
 from users.views.admin.invites import InviteCreate, InvitesRoot, InviteView  # noqa

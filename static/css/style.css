@@ -1358,6 +1358,10 @@ table.metadata td .emoji {
     cursor: pointer;
 }
 
+.message.error {
+    background-color: var(--color-bg-error);
+}
+
 /* Identity banner */
 
 .identity-banner {
