@@ -23,6 +23,7 @@ class DomainStates(StateGraph):
 
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
+    updated.transitions_to(updated)
 
     outdated.transitions_to(connection_issue)
     outdated.transitions_to(purged)
@@ -45,6 +46,8 @@ class DomainStates(StateGraph):
 
     @classmethod
     def handle_updated(cls, instance: "Domain"):
+        if instance.blocked:
+            return cls.updated
         return cls.outdated
 
 
