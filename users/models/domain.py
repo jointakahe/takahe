@@ -23,6 +23,7 @@ class DomainStates(StateGraph):
 
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
+    updated.transitions_to(updated)
 
     outdated.transitions_to(connection_issue)
     outdated.transitions_to(purged)
