@@ -50,7 +50,7 @@
                         <small>{{ numbers.blocks }} {{ numbers.blocks|pluralize:"people,people" }}</small>
                     </td>
                     <td>
-
+                        <a href="{% url "settings_export_blocks_csv" handle=identity.handle %}">Download CSV</a>
                     </td>
                 </tr>
                 <tr>
@@ -59,7 +59,7 @@
                         <small>{{ numbers.mutes }} {{ numbers.mutes|pluralize:"people,people" }}</small>
                     </td>
                     <td>
-
+                        <a href="{% url "settings_export_mutes_csv" handle=identity.handle %}">Download CSV</a>
                     </td>
                 </tr>
             </table>

@@ -88,3 +88,92 @@ def test_export_followers(
     )
     assert response.status_code == 200
     assert response.content.strip() == b"Account address\r\ntest@example2.com"
+
+
+@pytest.mark.django_db
+def test_export_blocks(
+    client_with_user: Client,
+    identity: Identity,
+    identity2: Identity,
+    stator: StatorRunner,
+    httpx_mock: HTTPXMock,
+):
+    """
+    Validates the "export a CSV of blocked users" functionality works
+    """
+    # Block remote_identity
+    IdentityService(identity).block(identity2)
+
+    # Run stator to process it
+    stator.run_single_cycle()
+
+    # Download the CSV
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/blocks.csv"
+    )
+    assert response.status_code == 200
+    assert response.content.strip() == b"Account address\r\ntest@example2.com"
+
+    # Unblock should clear the CSV content
+    IdentityService(identity).unblock(identity2)
+
+    # Run stator to process it
+    stator.run_single_cycle()
+
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/blocks.csv"
+    )
+    assert response.status_code == 200
+    assert response.content.strip() == b"Account address"
+
+
+@pytest.mark.django_db
+def test_export_mutes(
+    client_with_user: Client,
+    identity: Identity,
+    identity2: Identity,
+    stator: StatorRunner,
+    httpx_mock: HTTPXMock,
+):
+    """
+    Validates the "export a CSV of muted users" functionality works
+    """
+    # Mute remote_identity
+    IdentityService(identity).mute(identity2)
+
+    # Run stator to process it
+    stator.run_single_cycle()
+
+    # Download the CSV
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/mutes.csv"
+    )
+    assert response.status_code == 200
+    assert (
+        response.content.strip()
+        == b"Account address,Hide notifications\r\ntest@example2.com,false"
+    )
+
+    # Mute remote_identity
+    IdentityService(identity).mute(identity2, include_notifications=True)
+
+    # Run stator to process it
+    stator.run_single_cycle()
+
+    # Download the CSV
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/mutes.csv"
+    )
+    assert response.status_code == 200
+    assert (
+        response.content.strip()
+        == b"Account address,Hide notifications\r\ntest@example2.com,true"
+    )
+
+    # Unmute should clear the CSV content
+    IdentityService(identity).unmute(identity2)
+    response = client_with_user.get(
+        f"/@{identity.handle}/settings/import_export/mutes.csv"
+    )
+    assert response.status_code == 200
+    assert response.content.strip() == b"Account address,Hide notifications"
