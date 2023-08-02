@@ -95,7 +95,7 @@ class FederationBlocklist(FormView):
         blocklist = forms.FileField(
             help_text=(
                 "Blocklist file with one domain per line. "
-                "Oliphant blocklist format is also supported."
+                "Mastodon domain blocklist format is also supported."
             ),
             validators=[FileExtensionValidator(allowed_extensions=["txt", "csv"])],
         )
