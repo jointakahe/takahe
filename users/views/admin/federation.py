@@ -95,7 +95,7 @@ class FederationBlocklist(FormView):
         blocklist = forms.FileField(
             help_text=(
                 "Blocklist file with one domain per line. "
-                "Oliphant blocklist format is also supported."
+                "CSVs with 'domain' and '#domain' headers are also supported."
             ),
             validators=[FileExtensionValidator(allowed_extensions=["txt", "csv"])],
         )
@@ -107,13 +107,13 @@ class FederationBlocklist(FormView):
         try:
             lines = form.cleaned_data["blocklist"].read().decode("utf-8").splitlines()
 
-            if "#domain" in lines[0]:
+            if "#domain" in lines[0] or "domain" in lines[0]:
                 reader = csv.DictReader(lines)
             else:
                 reader = csv.DictReader(lines, fieldnames=["#domain"])
 
             for row in reader:
-                domain = row["#domain"].strip()
+                domain = row.get("#domain", row.get("domain", "")).strip()
 
                 try:
                     validator(domain)
