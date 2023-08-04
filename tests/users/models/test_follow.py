@@ -53,4 +53,5 @@ def test_follow(
     InboxMessage.objects.create(message=message)
     # Run stator and ensure that accepted our follow
     stator.run_single_cycle()
-    assert Follow.objects.get(pk=follow.pk).state == FollowStates.accepting
+    stator.run_single_cycle()
+    assert Follow.objects.get(pk=follow.pk).state == FollowStates.accepted
