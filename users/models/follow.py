@@ -136,14 +136,6 @@ class FollowStates(StateGraph):
 
     @classmethod
     def handle_pending_removal(cls, instance: "Follow"):
-        if instance.source.local:
-            InboxMessage.create_internal(
-                {
-                    "type": "ClearTimeline",
-                    "object": instance.target.pk,
-                    "actor": instance.source.pk,
-                }
-            )
         if instance.target.local:
             from activities.models import TimelineEvent
 
@@ -406,6 +398,15 @@ class Follow(StatorModel):
         # Ensure the Accept actor is the Follow's target
         if data["actor"] != follow.target.actor_uri:
             raise ValueError("Reject actor does not match its Follow object", data)
+        # Clear timeline if remote target remove local source from their previously accepted follows
+        if follow.accepted:
+            InboxMessage.create_internal(
+                {
+                    "type": "ClearTimeline",
+                    "object": follow.target.pk,
+                    "actor": follow.source.pk,
+                }
+            )
         # Mark the follow rejected
         follow.transition_perform(FollowStates.rejecting)
 
