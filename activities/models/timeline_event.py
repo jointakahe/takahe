@@ -16,6 +16,7 @@ class TimelineEvent(models.Model):
         mentioned = "mentioned"
         liked = "liked"  # Someone liking one of our posts
         followed = "followed"
+        follow_requested = "follow_requested"
         boosted = "boosted"  # Someone boosting one of our posts
         announcement = "announcement"  # Server announcement
         identity_created = "identity_created"  # New identity created
@@ -79,6 +80,17 @@ class TimelineEvent(models.Model):
         return cls.objects.get_or_create(
             identity=identity,
             type=cls.Types.followed,
+            subject_identity=source_identity,
+        )[0]
+
+    @classmethod
+    def add_follow_request(cls, identity, source_identity):
+        """
+        Adds a follow request to the timeline if it's not there already
+        """
+        return cls.objects.get_or_create(
+            identity=identity,
+            type=cls.Types.follow_requested,
             subject_identity=source_identity,
         )[0]
 
@@ -218,6 +230,8 @@ class TimelineEvent(models.Model):
             )
         elif self.type == self.Types.followed:
             result["type"] = "follow"
+        elif self.type == self.Types.follow_requested:
+            result["type"] = "follow_request"
         elif self.type == self.Types.identity_created:
             result["type"] = "admin.sign_up"
         else:
