@@ -136,6 +136,7 @@ class IdentityService:
         if target_identity == self.identity:
             raise ValueError("You cannot block yourself")
         self.unfollow(target_identity)
+        self.reject_follow_request(target_identity)
         block = Block.create_local_block(self.identity, target_identity)
         InboxMessage.create_internal(
             {
