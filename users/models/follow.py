@@ -9,6 +9,7 @@ from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.block import Block
 from users.models.identity import Identity
+from users.models.inbox_message import InboxMessage
 
 
 class FollowStates(StateGraph):
@@ -18,13 +19,13 @@ class FollowStates(StateGraph):
     rejecting = State(try_interval=24 * 60 * 60)
     accepted = State(externally_progressed=True)
     undone = State(try_interval=24 * 60 * 60)
-    pending_removal = State(delete_after=1)
-    failed = State()
+    pending_removal = State(try_interval=60 * 60)
+    removed = State(delete_after=1)
 
     unrequested.transitions_to(pending_approval)
     unrequested.transitions_to(accepting)
     unrequested.transitions_to(rejecting)
-    unrequested.times_out_to(failed, seconds=24 * 60 * 60)
+    unrequested.times_out_to(removed, seconds=24 * 60 * 60)
     pending_approval.transitions_to(accepting)
     pending_approval.transitions_to(rejecting)
     pending_approval.transitions_to(pending_removal)
@@ -32,8 +33,10 @@ class FollowStates(StateGraph):
     accepting.times_out_to(accepted, seconds=7 * 24 * 60 * 60)
     rejecting.transitions_to(pending_removal)
     rejecting.times_out_to(pending_removal, seconds=24 * 60 * 60)
+    accepted.transitions_to(rejecting)
     accepted.transitions_to(undone)
     undone.transitions_to(pending_removal)
+    pending_removal.transitions_to(removed)
 
     @classmethod
     def group_active(cls):
@@ -61,7 +64,7 @@ class FollowStates(StateGraph):
         if not instance.target.local:
             if not instance.source.local:
                 # remote follow remote, invalid case
-                return cls.failed
+                return cls.removed
             # local follow remote, send Follow to target server
             # Don't try if the other identity didn't fetch yet
             if not instance.target.inbox_uri:
@@ -121,14 +124,31 @@ class FollowStates(StateGraph):
         Delivers the Undo object to the target server
         """
         try:
-            instance.source.signed_request(
-                method="post",
-                uri=instance.target.inbox_uri,
-                body=canonicalise(instance.to_undo_ap()),
-            )
+            if not instance.target.local:
+                instance.source.signed_request(
+                    method="post",
+                    uri=instance.target.inbox_uri,
+                    body=canonicalise(instance.to_undo_ap()),
+                )
         except httpx.RequestError:
             return
         return cls.pending_removal
+
+    @classmethod
+    def handle_pending_removal(cls, instance: "Follow"):
+        if instance.source.local:
+            InboxMessage.create_internal(
+                {
+                    "type": "ClearTimeline",
+                    "object": instance.target.pk,
+                    "actor": instance.source.pk,
+                }
+            )
+        if instance.target.local:
+            from activities.models import TimelineEvent
+
+            TimelineEvent.delete_follow(instance.target, instance.source)
+        return cls.removed
 
 
 class FollowQuerySet(models.QuerySet):

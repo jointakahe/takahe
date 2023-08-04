@@ -121,13 +121,6 @@ class IdentityService:
         existing_follow = Follow.maybe_get(self.identity, target_identity)
         if existing_follow:
             existing_follow.transition_perform(FollowStates.undone)
-            InboxMessage.create_internal(
-                {
-                    "type": "ClearTimeline",
-                    "object": target_identity.pk,
-                    "actor": self.identity.pk,
-                }
-            )
 
     def block(self, target_identity: Identity) -> Block:
         """

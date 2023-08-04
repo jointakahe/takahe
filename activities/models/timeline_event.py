@@ -75,8 +75,13 @@ class TimelineEvent(models.Model):
     @classmethod
     def add_follow(cls, identity, source_identity):
         """
-        Adds a follow to the timeline if it's not there already
+        Adds a follow to the timeline if it's not there already, remove follow request if any
         """
+        cls.objects.filter(
+            type=cls.Types.follow_requested,
+            identity=identity,
+            subject_identity=source_identity,
+        ).delete()
         return cls.objects.get_or_create(
             identity=identity,
             type=cls.Types.followed,
@@ -180,6 +185,14 @@ class TimelineEvent(models.Model):
                 subject_post_id=interaction.post_id,
                 subject_identity_id=interaction.identity_id,
             ).delete()
+
+    @classmethod
+    def delete_follow(cls, target, source):
+        TimelineEvent.objects.filter(
+            type__in=[cls.Types.followed, cls.Types.follow_requested],
+            identity=target,
+            subject_identity=source,
+        ).delete()
 
     ### Background tasks ###
 
