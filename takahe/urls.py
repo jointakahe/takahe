@@ -66,6 +66,16 @@ urlpatterns = [
         name="settings_export_followers_csv",
     ),
     path(
+        "@<handle>/settings/import_export/blocks.csv",
+        settings.CsvBlocks.as_view(),
+        name="settings_export_blocks_csv",
+    ),
+    path(
+        "@<handle>/settings/import_export/mutes.csv",
+        settings.CsvMutes.as_view(),
+        name="settings_export_mutes_csv",
+    ),
+    path(
         "@<handle>/settings/migrate_in/",
         settings.MigrateInPage.as_view(),
         name="settings_migrate_in",

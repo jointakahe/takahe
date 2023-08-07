@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, View
 
-from users.models import Follow, InboxMessage
+from users.models import Block, Follow, InboxMessage
 from users.views.base import IdentityViewMixin
 
 
@@ -147,3 +147,35 @@ class CsvFollowers(CsvView):
 
     def get_handle(self, follow: Follow):
         return follow.source.handle
+
+
+class CsvBlocks(CsvView):
+    columns = {
+        "Account address": "get_handle",
+    }
+
+    filename = "blocked_accounts.csv"
+
+    def get_queryset(self, request):
+        return self.identity.outbound_blocks.active().filter(mute=False)
+
+    def get_handle(self, block: Block):
+        return block.target.handle
+
+
+class CsvMutes(CsvView):
+    columns = {
+        "Account address": "get_handle",
+        "Hide notifications": "get_notification",
+    }
+
+    filename = "muted_accounts.csv"
+
+    def get_queryset(self, request):
+        return self.identity.outbound_blocks.active().filter(mute=True)
+
+    def get_handle(self, mute: Block):
+        return mute.target.handle
+
+    def get_notification(self, mute: Block):
+        return mute.include_notifications
