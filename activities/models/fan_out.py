@@ -166,11 +166,11 @@ class FanOutStates(StateGraph):
                 # Send it to the remote inbox
                 try:
                     if interaction.type == interaction.Types.vote:
-                        body = interaction.to_ap()
+                        body = interaction.to_create_ap()
                     elif interaction.type == interaction.Types.pin:
                         body = interaction.to_add_ap()
                     else:
-                        body = interaction.to_create_ap()
+                        body = interaction.to_ap()
                     interaction.identity.signed_request(
                         method="post",
                         uri=(
