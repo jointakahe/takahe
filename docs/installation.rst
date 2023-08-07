@@ -122,7 +122,7 @@ be provided to the containers from the first boot.
 * If you want to support push notifications, set ``TAKAHE_VAPID_PUBLIC_KEY``
   and ``TAKAHE_VAPID_PRIVATE_KEY`` to a valid VAPID keypair (note that if you
   ever change these, push notifications will stop working). You can generate
-  a keypair at `https://web-push-codelab.glitch.me/`_.
+  a keypair at `<https://web-push-codelab.glitch.me/>`_.
 
 There are some other, optional variables you can tweak once the
 system is up and working - see :doc:`tuning` for more.
