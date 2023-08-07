@@ -74,8 +74,12 @@ class NodeInfo2(View):
         # Fetch some user stats
         if request.domain:
             domain_config = Config.load_domain(request.domain)
-            local_identities = Identity.objects.filter(domain=request.domain).count()
-            local_posts = Post.objects.filter(author__domain=request.domain).count()
+            local_identities = Identity.objects.filter(
+                local=True, domain=request.domain
+            ).count()
+            local_posts = Post.objects.filter(
+                local=True, author__domain=request.domain
+            ).count()
             metadata = {"nodeName": domain_config.site_name}
         else:
             local_identities = Identity.objects.filter(local=True).count()
