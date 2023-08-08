@@ -51,6 +51,9 @@ class IdentityStates(StateGraph):
     deleted = State(try_interval=300, attempt_immediately=True)
     deleted_fanned_out = State(delete_after=86400 * 7)
 
+    moved = State(try_interval=300, attempt_immediately=True)
+    moved_fanned_out = State(externally_progressed=True)
+
     deleted.transitions_to(deleted_fanned_out)
 
     edited.transitions_to(updated)
@@ -59,6 +62,8 @@ class IdentityStates(StateGraph):
 
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
+
+    moved.transitions_to(moved_fanned_out)
 
     @classmethod
     def group_deleted(cls):
@@ -95,6 +100,16 @@ class IdentityStates(StateGraph):
 
         cls.targets_fan_out(instance, FanOut.Types.identity_edited)
         return cls.updated
+
+    @classmethod
+    def handle_moved(cls, instance: "Identity"):
+        from activities.models import FanOut
+
+        if not instance.local:
+            return cls.updated
+
+        cls.targets_fan_out(instance, FanOut.Types.identity_moved)
+        return cls.moved_fanned_out
 
     @classmethod
     def handle_deleted(cls, instance: "Identity"):

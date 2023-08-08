@@ -242,6 +242,10 @@ class FanOutStates(StateGraph):
                 except httpx.RequestError:
                     return
 
+            # Handle sending identity moved to remote
+            case (FanOut.Types.identity_moved, False):
+                raise NotImplementedError()
+
             # Sending identity edited/deleted to local is a no-op
             case (FanOut.Types.identity_edited, True):
                 pass
@@ -277,6 +281,7 @@ class FanOut(StatorModel):
         identity_edited = "identity_edited"
         identity_deleted = "identity_deleted"
         identity_created = "identity_created"
+        identity_moved = "identity_moved"
 
     state = StateField(FanOutStates)
 
