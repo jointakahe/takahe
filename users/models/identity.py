@@ -63,6 +63,7 @@ class IdentityStates(StateGraph):
     outdated.transitions_to(updated)
     updated.transitions_to(outdated)
 
+    updated.transitions_to(moved)
     moved.transitions_to(moved_fanned_out)
 
     @classmethod
