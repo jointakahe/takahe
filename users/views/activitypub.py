@@ -72,8 +72,19 @@ class NodeInfo2(View):
 
     def get(self, request):
         # Fetch some user stats
-        local_identities = Identity.objects.filter(local=True).count()
-        local_posts = Post.objects.filter(local=True).count()
+        if request.domain:
+            domain_config = Config.load_domain(request.domain)
+            local_identities = Identity.objects.filter(
+                local=True, domain=request.domain
+            ).count()
+            local_posts = Post.objects.filter(
+                local=True, author__domain=request.domain
+            ).count()
+            metadata = {"nodeName": domain_config.site_name}
+        else:
+            local_identities = Identity.objects.filter(local=True).count()
+            local_posts = Post.objects.filter(local=True).count()
+            metadata = {}
         return JsonResponse(
             {
                 "version": "2.0",
@@ -85,7 +96,7 @@ class NodeInfo2(View):
                     "localPosts": local_posts,
                 },
                 "openRegistrations": Config.system.signup_allowed,
-                "metadata": {},
+                "metadata": metadata,
             }
         )
 
