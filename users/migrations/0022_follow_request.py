@@ -10,5 +10,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL("DELETE FROM users_follow WHERE state <> 'accepted';"),
+        migrations.RunSQL(
+            "UPDATE users_follow SET state = 'pending_approval' WHERE state = 'local_requested';"
+        ),
+        migrations.RunSQL(
+            "UPDATE users_follow SET state = 'accepting' WHERE state = 'remote_requested';"
+        ),
+        migrations.RunSQL(
+            "DELETE FROM users_follow WHERE state not in ('accepted', 'accepting', 'pending_approval', 'unrequested');"
+        ),
     ]
