@@ -13,7 +13,7 @@ from api.decorators import scope_required
 def search(
     request,
     q: str,
-    type: Literal["accounts", "hashtags", "statuses"] | None = None,
+    type: Literal["accounts", "hashtags", "statuses", ""] | None = None,
     fetch_identities: bool = Field(False, alias="resolve"),
     following: bool = False,
     exclude_unreviewed: bool = False,
@@ -33,6 +33,8 @@ def search(
     # Run search
     searcher = SearchService(q, request.identity)
     search_result = searcher.search_all()
+    if type == "":
+        type = None
     if type is None or type == "accounts":
         result["accounts"] = [
             schemas.Account.from_identity(i, include_counts=False)
