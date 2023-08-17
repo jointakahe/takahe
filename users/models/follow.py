@@ -230,7 +230,7 @@ class Follow(StatorModel):
         """
         return {
             "type": "Accept",
-            "id": self.uri + "#accept",
+            "id": self.target.actor_uri + "#accept/follows/",
             "actor": self.target.actor_uri,
             "object": self.to_ap(),
         }
