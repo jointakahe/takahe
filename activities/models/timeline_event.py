@@ -16,6 +16,7 @@ class TimelineEvent(models.Model):
         mentioned = "mentioned"
         liked = "liked"  # Someone liking one of our posts
         followed = "followed"
+        follow_requested = "follow_requested"
         boosted = "boosted"  # Someone boosting one of our posts
         announcement = "announcement"  # Server announcement
         identity_created = "identity_created"  # New identity created
@@ -74,11 +75,27 @@ class TimelineEvent(models.Model):
     @classmethod
     def add_follow(cls, identity, source_identity):
         """
-        Adds a follow to the timeline if it's not there already
+        Adds a follow to the timeline if it's not there already, remove follow request if any
         """
+        cls.objects.filter(
+            type=cls.Types.follow_requested,
+            identity=identity,
+            subject_identity=source_identity,
+        ).delete()
         return cls.objects.get_or_create(
             identity=identity,
             type=cls.Types.followed,
+            subject_identity=source_identity,
+        )[0]
+
+    @classmethod
+    def add_follow_request(cls, identity, source_identity):
+        """
+        Adds a follow request to the timeline if it's not there already
+        """
+        return cls.objects.get_or_create(
+            identity=identity,
+            type=cls.Types.follow_requested,
             subject_identity=source_identity,
         )[0]
 
@@ -169,6 +186,14 @@ class TimelineEvent(models.Model):
                 subject_identity_id=interaction.identity_id,
             ).delete()
 
+    @classmethod
+    def delete_follow(cls, target, source):
+        TimelineEvent.objects.filter(
+            type__in=[cls.Types.followed, cls.Types.follow_requested],
+            identity=target,
+            subject_identity=source,
+        ).delete()
+
     ### Background tasks ###
 
     @classmethod
@@ -218,6 +243,8 @@ class TimelineEvent(models.Model):
             )
         elif self.type == self.Types.followed:
             result["type"] = "follow"
+        elif self.type == self.Types.follow_requested:
+            result["type"] = "follow_request"
         elif self.type == self.Types.identity_created:
             result["type"] = "admin.sign_up"
         else:

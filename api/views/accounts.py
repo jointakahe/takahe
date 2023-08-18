@@ -29,6 +29,7 @@ def update_credentials(
     display_name: QueryOrBody[str | None] = None,
     note: QueryOrBody[str | None] = None,
     discoverable: QueryOrBody[bool | None] = None,
+    locked: QueryOrBody[bool | None] = None,
     source: QueryOrBody[dict[str, Any] | None] = None,
     fields_attributes: QueryOrBody[dict[str, dict[str, str]] | None] = None,
     avatar: File | None = None,
@@ -42,6 +43,8 @@ def update_credentials(
         service.set_summary(note)
     if discoverable is not None:
         identity.discoverable = discoverable
+    if locked is not None:
+        identity.manually_approves_followers = locked
     if source:
         if "privacy" in source:
             privacy_map = {

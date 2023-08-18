@@ -991,7 +991,7 @@ class Identity(StatorModel):
             "avatar_static": self.local_icon_url().absolute,
             "header": header_image.absolute if header_image else missing,
             "header_static": header_image.absolute if header_image else missing,
-            "locked": False,
+            "locked": bool(self.manually_approves_followers),
             "fields": (
                 [
                     {

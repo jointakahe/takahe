@@ -73,13 +73,35 @@ class IdentityService:
         return (
             Identity.objects.filter(
                 outbound_follows__target=self.identity,
-                inbound_follows__state__in=FollowStates.group_active(),
+                outbound_follows__state=FollowStates.accepted,
             )
             .not_deleted()
             .distinct()
             .order_by("username")
             .select_related("domain")
         )
+
+    def follow_requests(self) -> models.QuerySet[Identity]:
+        return (
+            Identity.objects.filter(
+                outbound_follows__target=self.identity,
+                outbound_follows__state=FollowStates.pending_approval,
+            )
+            .not_deleted()
+            .distinct()
+            .order_by("username")
+            .select_related("domain")
+        )
+
+    def accept_follow_request(self, source_identity):
+        existing_follow = Follow.maybe_get(source_identity, self.identity)
+        if existing_follow:
+            existing_follow.transition_perform(FollowStates.accepting)
+
+    def reject_follow_request(self, source_identity):
+        existing_follow = Follow.maybe_get(source_identity, self.identity)
+        if existing_follow:
+            existing_follow.transition_perform(FollowStates.rejecting)
 
     def follow(self, target_identity: Identity, boosts=True) -> Follow:
         """
@@ -114,6 +136,7 @@ class IdentityService:
         if target_identity == self.identity:
             raise ValueError("You cannot block yourself")
         self.unfollow(target_identity)
+        self.reject_follow_request(target_identity)
         block = Block.create_local_block(self.identity, target_identity)
         InboxMessage.create_internal(
             {
@@ -221,8 +244,10 @@ class IdentityService:
         relationships = self.relationships(from_identity)
         return {
             "id": self.identity.pk,
-            "following": relationships["outbound_follow"] is not None,
-            "followed_by": relationships["inbound_follow"] is not None,
+            "following": relationships["outbound_follow"] is not None
+            and relationships["outbound_follow"].accepted,
+            "followed_by": relationships["inbound_follow"] is not None
+            and relationships["inbound_follow"].accepted,
             "showing_reblogs": (
                 relationships["outbound_follow"]
                 and relationships["outbound_follow"].boosts
@@ -233,7 +258,8 @@ class IdentityService:
             "blocked_by": relationships["inbound_block"] is not None,
             "muting": relationships["outbound_mute"] is not None,
             "muting_notifications": False,
-            "requested": False,
+            "requested": relationships["outbound_follow"] is not None
+            and relationships["outbound_follow"].state == FollowStates.pending_approval,
             "domain_blocking": False,
             "endorsed": False,
             "note": (

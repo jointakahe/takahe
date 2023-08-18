@@ -7,77 +7,116 @@ from core.exceptions import capture_message
 from core.ld import canonicalise, get_str_or_id
 from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models.block import Block
 from users.models.identity import Identity
+from users.models.inbox_message import InboxMessage
 
 
 class FollowStates(StateGraph):
     unrequested = State(try_interval=600)
-    local_requested = State(try_interval=24 * 60 * 60)
-    remote_requested = State(try_interval=24 * 60 * 60)
+    pending_approval = State(externally_progressed=True)
+    accepting = State(try_interval=24 * 60 * 60)
+    rejecting = State(try_interval=24 * 60 * 60)
     accepted = State(externally_progressed=True)
-    undone = State(try_interval=60 * 60)
-    undone_remotely = State(delete_after=24 * 60 * 60)
-    failed = State()
-    rejected = State()
+    undone = State(try_interval=24 * 60 * 60)
+    pending_removal = State(try_interval=60 * 60)
+    removed = State(delete_after=1)
 
-    unrequested.transitions_to(local_requested)
-    unrequested.transitions_to(remote_requested)
-    unrequested.times_out_to(failed, seconds=86400 * 7)
-    local_requested.transitions_to(accepted)
-    local_requested.transitions_to(rejected)
-    remote_requested.transitions_to(accepted)
+    unrequested.transitions_to(pending_approval)
+    unrequested.transitions_to(accepting)
+    unrequested.transitions_to(rejecting)
+    unrequested.times_out_to(removed, seconds=24 * 60 * 60)
+    pending_approval.transitions_to(accepting)
+    pending_approval.transitions_to(rejecting)
+    pending_approval.transitions_to(pending_removal)
+    accepting.transitions_to(accepted)
+    accepting.times_out_to(accepted, seconds=7 * 24 * 60 * 60)
+    rejecting.transitions_to(pending_removal)
+    rejecting.times_out_to(pending_removal, seconds=24 * 60 * 60)
+    accepted.transitions_to(rejecting)
     accepted.transitions_to(undone)
-    undone.transitions_to(undone_remotely)
+    undone.transitions_to(pending_removal)
+    pending_removal.transitions_to(removed)
 
     @classmethod
     def group_active(cls):
-        return [cls.unrequested, cls.local_requested, cls.accepted]
+        """
+        Follows that are active means they are being handled and no need to re-request
+        """
+        return [cls.unrequested, cls.pending_approval, cls.accepting, cls.accepted]
+
+    @classmethod
+    def group_accepted(cls):
+        """
+        Follows that are accepting/accepted means they should be consider accepted when deliver to followers
+        """
+        return [cls.accepting, cls.accepted]
 
     @classmethod
     def handle_unrequested(cls, instance: "Follow"):
         """
-        Follows that are unrequested need us to deliver the Follow object
-        to the target server.
+        Follows start unrequested as their initial state regardless of local/remote
         """
-        # Remote follows should not be here
+        if Block.maybe_get(
+            source=instance.target, target=instance.source, require_active=True
+        ):
+            return cls.rejecting
+        if not instance.target.local:
+            if not instance.source.local:
+                # remote follow remote, invalid case
+                return cls.removed
+            # local follow remote, send Follow to target server
+            # Don't try if the other identity didn't fetch yet
+            if not instance.target.inbox_uri:
+                return
+            # Sign it and send it
+            try:
+                instance.source.signed_request(
+                    method="post",
+                    uri=instance.target.inbox_uri,
+                    body=canonicalise(instance.to_ap()),
+                )
+            except httpx.RequestError:
+                return
+            return cls.pending_approval
+        # local/remote follow local, check manually_approve
+        if instance.target.manually_approves_followers:
+            from activities.models import TimelineEvent
+
+            TimelineEvent.add_follow_request(instance.target, instance.source)
+            return cls.pending_approval
+        return cls.accepting
+
+    @classmethod
+    def handle_accepting(cls, instance: "Follow"):
         if not instance.source.local:
-            return cls.remote_requested
-        if instance.target.local:
-            return cls.accepted
-        # Don't try if the other identity didn't fetch yet
-        if not instance.target.inbox_uri:
-            return
-        # Sign it and send it
-        try:
-            instance.source.signed_request(
-                method="post",
-                uri=instance.target.inbox_uri,
-                body=canonicalise(instance.to_ap()),
-            )
-        except httpx.RequestError:
-            return
-        return cls.local_requested
+            # send an Accept object to the source server
+            try:
+                instance.target.signed_request(
+                    method="post",
+                    uri=instance.source.inbox_uri,
+                    body=canonicalise(instance.to_accept_ap()),
+                )
+            except httpx.RequestError:
+                return
+        from activities.models import TimelineEvent
 
-    @classmethod
-    def handle_local_requested(cls, instance: "Follow"):
-        # TODO: Resend follow requests occasionally
-        pass
-
-    @classmethod
-    def handle_remote_requested(cls, instance: "Follow"):
-        """
-        Items in remote_requested need us to send an Accept object to the
-        source server.
-        """
-        try:
-            instance.target.signed_request(
-                method="post",
-                uri=instance.source.inbox_uri,
-                body=canonicalise(instance.to_accept_ap()),
-            )
-        except httpx.RequestError:
-            return
+        TimelineEvent.add_follow(instance.target, instance.source)
         return cls.accepted
+
+    @classmethod
+    def handle_rejecting(cls, instance: "Follow"):
+        if not instance.source.local:
+            # send a Reject object to the source server
+            try:
+                instance.target.signed_request(
+                    method="post",
+                    uri=instance.source.inbox_uri,
+                    body=canonicalise(instance.to_reject_ap()),
+                )
+            except httpx.RequestError:
+                return
+        return cls.pending_removal
 
     @classmethod
     def handle_undone(cls, instance: "Follow"):
@@ -85,19 +124,32 @@ class FollowStates(StateGraph):
         Delivers the Undo object to the target server
         """
         try:
-            instance.source.signed_request(
-                method="post",
-                uri=instance.target.inbox_uri,
-                body=canonicalise(instance.to_undo_ap()),
-            )
+            if not instance.target.local:
+                instance.source.signed_request(
+                    method="post",
+                    uri=instance.target.inbox_uri,
+                    body=canonicalise(instance.to_undo_ap()),
+                )
         except httpx.RequestError:
             return
-        return cls.undone_remotely
+        return cls.pending_removal
+
+    @classmethod
+    def handle_pending_removal(cls, instance: "Follow"):
+        if instance.target.local:
+            from activities.models import TimelineEvent
+
+            TimelineEvent.delete_follow(instance.target, instance.source)
+        return cls.removed
 
 
 class FollowQuerySet(models.QuerySet):
     def active(self):
         query = self.filter(state__in=FollowStates.group_active())
+        return query
+
+    def accepted(self):
+        query = self.filter(state__in=FollowStates.group_accepted())
         return query
 
 
@@ -107,6 +159,9 @@ class FollowManager(models.Manager):
 
     def active(self):
         return self.get_queryset().active()
+
+    def accepted(self):
+        return self.get_queryset().accepted()
 
 
 class Follow(StatorModel):
@@ -169,16 +224,13 @@ class Follow(StatorModel):
         Creates a Follow from a local Identity to the target
         (which can be local or remote).
         """
-        from activities.models import TimelineEvent
 
         if not source.local:
             raise ValueError("You cannot initiate follows from a remote Identity")
         try:
             follow = Follow.objects.get(source=source, target=target)
             if not follow.active:
-                follow.state = (
-                    FollowStates.accepted if target.local else FollowStates.unrequested
-                )
+                follow.state = FollowStates.unrequested
             follow.boosts = boosts
             follow.save()
         except Follow.DoesNotExist:
@@ -188,28 +240,21 @@ class Follow(StatorModel):
                     target=target,
                     boosts=boosts,
                     uri="",
-                    state=(
-                        FollowStates.accepted
-                        if target.local
-                        else FollowStates.unrequested
-                    ),
+                    state=FollowStates.unrequested,
                 )
                 follow.uri = source.actor_uri + f"follow/{follow.pk}/"
-                # TODO: Local follow approvals
-                if target.local:
-                    TimelineEvent.add_follow(follow.target, follow.source)
                 follow.save()
         return follow
 
     ### Properties ###
 
     @property
-    def pending(self):
-        return self.state in [FollowStates.unrequested, FollowStates.local_requested]
-
-    @property
     def active(self):
         return self.state in FollowStates.group_active()
+
+    @property
+    def accepted(self):
+        return self.state in FollowStates.group_accepted()
 
     ### ActivityPub (outbound) ###
 
@@ -231,6 +276,17 @@ class Follow(StatorModel):
         return {
             "type": "Accept",
             "id": f"{self.target.actor_uri}#accept/{self.id}",
+            "actor": self.target.actor_uri,
+            "object": self.to_ap(),
+        }
+
+    def to_reject_ap(self):
+        """
+        Returns the AP JSON for this objects' rejection.
+        """
+        return {
+            "type": "Reject",
+            "id": self.uri + "#reject",
             "actor": self.target.actor_uri,
             "object": self.to_ap(),
         }
@@ -268,14 +324,14 @@ class Follow(StatorModel):
             source = Identity.by_actor_uri(data["actor"], create=create)
             target = Identity.by_actor_uri(get_str_or_id(data["object"]))
             follow = cls.maybe_get(source=source, target=target)
-            # If it doesn't exist, create one in the remote_requested state
+            # If it doesn't exist, create one in the unrequested state
             if follow is None:
                 if create:
                     return cls.objects.create(
                         source=source,
                         target=target,
                         uri=data["id"],
-                        state=FollowStates.remote_requested,
+                        state=FollowStates.unrequested,
                     )
                 else:
                     raise cls.DoesNotExist(
@@ -289,7 +345,6 @@ class Follow(StatorModel):
         """
         Handles an incoming follow request
         """
-        from activities.models import TimelineEvent
 
         with transaction.atomic():
             try:
@@ -299,11 +354,9 @@ class Follow(StatorModel):
                     "Identity not found for incoming Follow", extras={"data": data}
                 )
                 return
-
-            # Force it into remote_requested so we send an accept
-            follow.transition_perform(FollowStates.remote_requested)
-            # Add a timeline event
-            TimelineEvent.add_follow(follow.target, follow.source)
+            if follow.state == FollowStates.accepted:
+                # Likely the source server missed the Accept, send it back again
+                follow.transition_perform(FollowStates.accepting)
 
     @classmethod
     def handle_accept_ap(cls, data):
@@ -324,11 +377,8 @@ class Follow(StatorModel):
         if data["actor"] != follow.target.actor_uri:
             raise ValueError("Accept actor does not match its Follow object", data)
         # If the follow was waiting to be accepted, transition it
-        if follow and follow.state in [
-            FollowStates.unrequested,
-            FollowStates.local_requested,
-        ]:
-            follow.transition_perform(FollowStates.accepted)
+        if follow and follow.state == FollowStates.pending_approval:
+            follow.transition_perform(FollowStates.accepting)
 
     @classmethod
     def handle_reject_ap(cls, data):
@@ -348,8 +398,17 @@ class Follow(StatorModel):
         # Ensure the Accept actor is the Follow's target
         if data["actor"] != follow.target.actor_uri:
             raise ValueError("Reject actor does not match its Follow object", data)
+        # Clear timeline if remote target remove local source from their previously accepted follows
+        if follow.accepted:
+            InboxMessage.create_internal(
+                {
+                    "type": "ClearTimeline",
+                    "object": follow.target.pk,
+                    "actor": follow.source.pk,
+                }
+            )
         # Mark the follow rejected
-        follow.transition_perform(FollowStates.rejected)
+        follow.transition_perform(FollowStates.rejecting)
 
     @classmethod
     def handle_undo_ap(cls, data):
@@ -369,4 +428,4 @@ class Follow(StatorModel):
         if data["actor"] != follow.source.actor_uri:
             raise ValueError("Accept actor does not match its Follow object", data)
         # Delete the follow
-        follow.delete()
+        follow.transition_perform(FollowStates.pending_removal)

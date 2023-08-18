@@ -324,6 +324,7 @@ class Migration(migrations.Migration):
                             ("mentioned", "Mentioned"),
                             ("liked", "Liked"),
                             ("followed", "Followed"),
+                            ("follow_requested", "Follow Requested"),
                             ("boosted", "Boosted"),
                             ("announcement", "Announcement"),
                             ("identity_created", "Identity Created"),

@@ -251,7 +251,8 @@ def test_clear_timeline(
     else:
         service.unfollow(remote_identity)
 
-    # Run stator once to process the timeline clear message
+    # Run stator twice to process the timeline clear message
+    stator.run_single_cycle()
     stator.run_single_cycle()
 
     # Verify that the right things vanished

@@ -33,7 +33,7 @@ def test_follow(
     assert outbound_data["actor"] == identity.actor_uri
     assert outbound_data["object"] == remote_identity.actor_uri
     assert outbound_data["id"] == f"{identity.actor_uri}follow/{follow.pk}/"
-    assert Follow.objects.get(pk=follow.pk).state == FollowStates.local_requested
+    assert Follow.objects.get(pk=follow.pk).state == FollowStates.pending_approval
     # Come in with an inbox message of either a reference type or an embedded type
     if ref_only:
         message = {
@@ -52,5 +52,6 @@ def test_follow(
         }
     InboxMessage.objects.create(message=message)
     # Run stator and ensure that accepted our follow
+    stator.run_single_cycle()
     stator.run_single_cycle()
     assert Follow.objects.get(pk=follow.pk).state == FollowStates.accepted

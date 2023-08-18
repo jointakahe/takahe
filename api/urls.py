@@ -58,6 +58,8 @@ urlpatterns = [
     path("v1/filters", filters.list_filters),
     # Follow requests
     path("v1/follow_requests", follow_requests.follow_requests),
+    path("v1/follow_requests/<id>/authorize", follow_requests.accept_follow_request),
+    path("v1/follow_requests/<id>/reject", follow_requests.reject_follow_request),
     # Instance
     path("v1/instance", instance.instance_info_v1),
     path("v1/instance/activity", instance.activity),
