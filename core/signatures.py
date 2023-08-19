@@ -140,7 +140,7 @@ class HttpSignature:
         try:
             public_key_instance.verify(
                 signature,
-                cleartext.encode("ascii"),
+                cleartext.encode("utf8"),
                 padding.PKCS1v15(),
                 hashes.SHA256(),
             )
@@ -229,7 +229,7 @@ class HttpSignature:
             ),
         )
         signature = private_key_instance.sign(
-            signed_string.encode("ascii"),
+            signed_string.encode("utf8"),
             padding.PKCS1v15(),
             hashes.SHA256(),
         )
