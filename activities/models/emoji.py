@@ -281,7 +281,7 @@ class Emoji(StatorModel):
         # Name could be a direct property, or in a language'd value
         if "name" in data:
             name = data["name"]
-        elif "nameMap" in data:
+        elif "nameMap" in data and "und" in data["nameMap"]:
             name = data["nameMap"]["und"]
         else:
             raise ValueError("No name on emoji JSON")
