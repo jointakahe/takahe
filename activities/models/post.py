@@ -909,13 +909,11 @@ class Post(StatorModel):
                 elif tag_type in ["toot:emoji", "emoji"]:
                     emoji = Emoji.by_ap_tag(post.author.domain, tag, create=True)
                     post.emojis.add(emoji)
-                elif tag_type == "edition":
-                    # Bookwyrm Edition is similar to hashtags. There should be a link to
-                    # the book in the Note's content and a post attachment of the cover
-                    # image. No special processing should be needed for ingest.
-                    pass
                 else:
-                    raise ValueError(f"Unknown tag type {tag['type']}")
+                    # Various ActivityPub implementations and proposals introduced tag
+                    # types, e.g. Edition in Bookwyrm and Link in fep-e232 Object Links
+                    # it should be safe to ignore (and log) them before a full support
+                    pass
             # Visibility and to
             # (a post is public if it's to:public, otherwise it's unlisted if
             # it's cc:public, otherwise it's more limited)
