@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import httpx
 import urlman
 from django.conf import settings
-from django.db import IntegrityError, models
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.functional import lazy
 from lxml import etree
@@ -439,7 +439,13 @@ class Identity(StatorModel):
                     # to the DB until the fetch succeeds
                     return cls(actor_uri=uri, local=False)
                 else:
-                    return cls.objects.create(actor_uri=uri, local=False)
+                    # parallelism may cause another simultaneous worker thread
+                    # to try to create the same identity - so use database level
+                    # constructs to avoid an integrity error
+                    identity, created = cls.objects.update_or_create(
+                        actor_uri=uri, local=False
+                    )
+                    return identity
             else:
                 raise cls.DoesNotExist(f"No identity found with actor_uri {uri}")
 
@@ -860,8 +866,19 @@ class Identity(StatorModel):
                     },
                 )
             return False
-
-        document = canonicalise(response.json(), include_security=True)
+        try:
+            document = canonicalise(response.json(), include_security=True)
+        except ValueError:
+            # servers with empty or invalid responses are inevitable
+            capture_message(
+                f"Invalid response fetching actor at {self.actor_uri}",
+                extras={
+                    "identity": self.pk,
+                    "domain": self.domain_id,
+                    "content": response.content,
+                },
+            )
+            return False
         if "type" not in document:
             return False
         self.name = document.get("name")
@@ -923,7 +940,10 @@ class Identity(StatorModel):
         # Mark as fetched
         self.fetched = timezone.now()
         try:
-            self.save()
+            with transaction.atomic():
+                # if we don't wrap this in its own transaction, the exception
+                # handler is guaranteed to fail
+                self.save()
         except IntegrityError as e:
             # See if we can fetch a PK and save there
             if self.pk is None:
@@ -934,7 +954,8 @@ class Identity(StatorModel):
                         f"Could not save Identity at end of actor fetch: {e}"
                     )
                 self.pk: int | None = other_row.pk
-                self.save()
+                with transaction.atomic():
+                    self.save()
 
         # Fetch pinned posts after identity has been fetched and saved
         if self.featured_collection_uri:
