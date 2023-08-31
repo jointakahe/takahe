@@ -74,7 +74,7 @@ class FollowStates(StateGraph):
                 instance.source.signed_request(
                     method="post",
                     uri=instance.target.inbox_uri,
-                    body=canonicalise(instance.to_ap()),
+                    body=canonicalise(instance.to_ap(), outbound_compat=True),
                 )
             except httpx.RequestError:
                 return
@@ -242,7 +242,11 @@ class Follow(StatorModel):
                     uri="",
                     state=FollowStates.unrequested,
                 )
-                follow.uri = source.actor_uri + f"follow/{follow.pk}/"
+                follow.uri = (
+                    source.actor_uri
+                    + ("/" if source.actor_uri[-1] != "/" else "")
+                    + f"follow/{follow.pk}/"
+                )
                 follow.save()
         return follow
 

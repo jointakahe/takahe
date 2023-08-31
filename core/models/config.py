@@ -230,7 +230,7 @@ class Config(models.Model):
         cache_timeout_page_post: int = 60 * 2
         cache_timeout_identity_feed: int = 60 * 5
 
-        restricted_usernames: str = "admin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
+        restricted_usernames: str = "__system__\n__relay__\nadmin\nadmins\nadministrator\nadministrators\nsystem\nroot\nannounce\nannouncement\nannouncements"
 
         custom_head: str | None
 

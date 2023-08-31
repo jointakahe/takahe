@@ -300,22 +300,38 @@ class IdentityService:
     @classmethod
     def handle_internal_add_follow(cls, payload):
         """
-        Handles an inbox message saying we need to follow a handle
+        Handles an inbox message saying we need to follow a handle or actor
 
         Message format:
         {
             "type": "AddFollow",
             "source": "90310938129083",
             "target_handle": "andrew@aeracode.org",
+            "target_actor": "https://aeracode.org/@andrew"
             "boosts": true,
         }
         """
         # Retrieve ourselves
         self = cls(Identity.objects.get(pk=payload["source"]))
         # Get the remote end (may need a fetch)
-        username, domain = payload["target_handle"].split("@")
-        target_identity = Identity.by_username_and_domain(username, domain, fetch=True)
-        if target_identity is None:
-            raise ValueError(f"Cannot find identity to follow: {target_identity}")
+        if payload.get("target_actor"):
+            target_identity = Identity.by_actor_uri(
+                payload["target_actor"], create=True, transient=True
+            )
+            if not target_identity.public_key:
+                target_identity.fetch_actor()
+            if not target_identity.public_key:
+                raise ValueError(
+                    f"Cannot fetch actor to follow: {payload['target_actor']}"
+                )
+        else:
+            username, domain = payload["target_handle"].split("@")
+            target_identity = Identity.by_username_and_domain(
+                username, domain, fetch=True
+            )
+            if target_identity is None:
+                raise ValueError(
+                    f"Cannot find identity to follow: {payload['target_handle']}"
+                )
         # Follow!
         self.follow(target_identity=target_identity, boosts=payload.get("boosts", True))

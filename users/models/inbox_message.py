@@ -3,6 +3,7 @@ from pyld.jsonld import JsonLdError
 
 from core.exceptions import ActivityPubError
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models.relay_actor import RelayActor
 
 
 class InboxMessageStates(StateGraph):
@@ -139,6 +140,10 @@ class InboxMessageStates(StateGraph):
                             )
                         case "addfollow":
                             IdentityService.handle_internal_add_follow(
+                                instance.message["object"]
+                            )
+                        case "unfollowrelay":
+                            RelayActor.handle_internal_unfollow(
                                 instance.message["object"]
                             )
                         case unknown:

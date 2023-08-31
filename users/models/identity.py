@@ -32,6 +32,7 @@ from core.uris import (
 )
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
+from users.models.relay_actor import RelayActor
 from users.models.system_actor import SystemActor
 
 
@@ -336,6 +337,10 @@ class Identity(StatorModel):
             }
             for data in self.metadata
         ]
+
+    @property
+    def is_local_relay(self):
+        return self.local and self.actor_uri == RelayActor.actor_uri
 
     def ensure_uris(self):
         """

@@ -12,9 +12,10 @@ class UsersConfig(AppConfig):
         boot (or post upgrade).
         """
         # Generate the server actor keypair if needed
-        from users.models import SystemActor
+        from users.models import RelayActor, SystemActor
 
         SystemActor.generate_keys_if_needed()
+        RelayActor.initialize_if_needed()
 
     def ready(self) -> None:
         post_migrate.connect(self.data_init, sender=self)

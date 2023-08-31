@@ -42,6 +42,7 @@ from users.models.follow import FollowStates
 from users.models.hashtag_follow import HashtagFollow
 from users.models.identity import Identity, IdentityStates
 from users.models.inbox_message import InboxMessage
+from users.models.relay_actor import RelayActor
 from users.models.system_actor import SystemActor
 
 
@@ -779,6 +780,12 @@ class Post(StatorModel):
                 targets.remove(block.target)
             except KeyError:
                 pass
+        # send local-created public posts to relays
+        if self.local and self.visibility in [
+            Post.Visibilities.public,
+            Post.Visibilities.unlisted,
+        ]:
+            targets.update(set(RelayActor.get_relays()))
         # Now dedupe the targets based on shared inboxes (we only keep one per
         # shared inbox)
         deduped_targets = set()

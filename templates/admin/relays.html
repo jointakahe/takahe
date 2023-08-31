@@ -1,0 +1,69 @@
+{% extends "admin/base_main.html" %}
+{% load activity_tags %}
+
+{% block subtitle %}Relay{% endblock %}
+
+{% block settings_content %}
+    <form action="?subscribe" method="post" class="search">
+        <input type="url" name="actor_uri" value="" placeholder="relay actor URI, e.g. https://relay.server/actor">
+        {% csrf_token %}
+        <button>Subscribe</button>
+    </form>
+    <table class="items">
+        {% for identity in page_obj %}
+            <tr>
+                <td class="icon">
+
+                </td>
+                <td class="name">
+                    {{ identity.actor_uri }}
+                    <small>{{ identity.domain.nodeinfo.metadata.nodeName }}</small>
+                    {% if identity.domain.nodeinfo.software %}
+                        <small>{{ identity.domain.nodeinfo.software.name }} / {{ identity.domain.nodeinfo.software.version }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if identity.restriction == 1 %}
+                        <span class="bad">Limited</span>
+                    {% elif identity.restriction == 2 %}
+                        <span class="bad">Blocked</span>
+                    {% endif %}
+                </td>
+                <td class="stat">
+                    {% if identity.follow_state == 'accepting' or identity.follow_state == 'accepted' %}
+                        ACTIVE
+                    {% elif identity.follow_state == 'unrequested' or identity.follow_state == 'pending_approval' %}
+                        ACTIVATING
+                    {% else %}
+                        DEACTIVATING
+                    {% endif %}
+                    <small>({{ identity.follow_state }})</small>
+                </td>
+                <td class="actions">
+                    <form action="?unsubscribe" method="post">
+                        <input type="hidden" name="actor_uri" value="{{ identity.actor_uri }}">
+                        {% csrf_token %}
+                        <button>Unsubscribe</button>
+                    </form>
+                </td>
+                <td class="actions">
+                    <form action="?remove" method="post">
+                        <input type="hidden" name="actor_uri" value="{{ identity.actor_uri }}">
+                        {% csrf_token %}
+                        <button onclick="return confirm('Sure to force remove?')" {%if identity.follow_state == 'accepting' or identity.follow_state == 'accepted'%}disabled{%endif%}>Remove</button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="empty">
+                <td>
+                    There are no relay yet.
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="view-options">
+        <small><i class="fa-regular fa-lightbulb"></i>&nbsp; invalid actor uri will not show in this list; (un)subscribing may take a while; use remove only when it's stuck in (DE)ACTIVATING state for a long time.</small>
+    </div>
+    {% include "admin/_pagination.html" with nouns="relay,relays" %}
+{% endblock %}

@@ -139,6 +139,11 @@ urlpatterns = [
         admin.DomainDelete.as_view(),
     ),
     path(
+        "admin/relays/",
+        admin.RelayRoot.as_view(),
+        name="admin_relays",
+    ),
+    path(
         "admin/federation/",
         admin.FederationRoot.as_view(),
         name="admin_federation",
@@ -342,6 +347,7 @@ urlpatterns = [
     path("actor/inbox/", activitypub.Inbox.as_view()),
     path("actor/outbox/", activitypub.EmptyOutbox.as_view()),
     path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
+    path("relay", activitypub.RelayActorView.as_view()),
     # API/Oauth
     path("api/", include("api.urls")),
     path("oauth/authorize", oauth.AuthorizationView.as_view()),

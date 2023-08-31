@@ -52,6 +52,7 @@
                         Remote
                         <small>{{ identity.followers_count }} local follower{{ identity.followers_count|pluralize }}</small>
                     {% endif %}
+                    {{ identity.actor_type }}
                 </td>
                 <td class="actions">
                     <a href="{{ identity.urls.admin_edit }}" title="View"><i class="fa-solid fa-eye"></i></a>

@@ -21,7 +21,7 @@ from core.signatures import (
 )
 from core.views import StaticContentView
 from takahe import __version__
-from users.models import Identity, InboxMessage, SystemActor
+from users.models import Identity, InboxMessage, RelayActor, SystemActor
 from users.shortcuts import by_handle_or_404
 
 
@@ -118,6 +118,9 @@ class Webfinger(View):
         if handle.startswith("__system__@"):
             # They are trying to webfinger the system actor
             actor = SystemActor()
+        elif handle.startswith("__relay__@"):
+            # They are trying to webfinger the system actor
+            actor = RelayActor()
         else:
             actor = by_handle_or_404(request, handle)
 
@@ -293,6 +296,19 @@ class SystemActorView(StaticContentView):
         return json.dumps(
             canonicalise(
                 SystemActor().to_ap(),
+                include_security=True,
+            )
+        )
+
+
+@method_decorator(cache_control(max_age=60 * 15), name="dispatch")
+class RelayActorView(StaticContentView):
+    content_type: str = "application/activity+json"
+
+    def get_static_content(self) -> str | bytes:
+        return json.dumps(
+            canonicalise(
+                RelayActor.to_ap(),
                 include_security=True,
             )
         )

@@ -87,7 +87,7 @@ schemas = {
                 "attachment": {"@id": "as:attachment", "@type": "@id"},
                 "bcc": {"@id": "as:bcc", "@type": "@id"},
                 "bto": {"@id": "as:bto", "@type": "@id"},
-                "cc": {"@id": "as:cc", "@type": "@id"},
+                "cc": {"@id": "as:cc", "@type": "@id", "@container": "@set"},
                 "context": {"@id": "as:context", "@type": "@id"},
                 "current": {"@id": "as:current", "@type": "@id"},
                 "first": {"@id": "as:first", "@type": "@id"},
@@ -119,7 +119,7 @@ schemas = {
                 "partOf": {"@id": "as:partOf", "@type": "@id"},
                 "tag": {"@id": "as:tag", "@type": "@id"},
                 "target": {"@id": "as:target", "@type": "@id"},
-                "to": {"@id": "as:to", "@type": "@id"},
+                "to": {"@id": "as:to", "@type": "@id", "@container": "@set"},
                 "url": {"@id": "as:url", "@type": "@id"},
                 "altitude": {"@id": "as:altitude", "@type": "xsd:float"},
                 "content": "as:content",
@@ -594,7 +594,9 @@ def builtin_document_loader(url: str, options={}):
             )
 
 
-def canonicalise(json_data: dict, include_security: bool = False) -> dict:
+def canonicalise(
+    json_data: dict, include_security: bool = False, outbound_compat: bool = False
+) -> dict:
     """
     Given an ActivityPub JSON-LD document, round-trips it through the LD
     systems to end up in a canonicalised, compacted format.
@@ -632,8 +634,18 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
         context.append("https://w3id.org/security/v1")
 
     json_data["@context"] = context
-
-    return jsonld.compact(jsonld.expand(json_data), context)
+    j = jsonld.compact(jsonld.expand(json_data), context)
+    if outbound_compat:
+        # patch outbound json to make it compatible with various implementations
+        for k in ["to", "cc"]:
+            if j.get(k):
+                j[k] = [
+                    x
+                    if x != "as:Public"
+                    else "https://www.w3.org/ns/activitystreams#Public"
+                    for x in j[k]
+                ]
+    return j
 
 
 def get_list(container, key) -> list:

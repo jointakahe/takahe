@@ -82,7 +82,7 @@ class FanOutStates(StateGraph):
                             instance.identity.shared_inbox_uri
                             or instance.identity.inbox_uri
                         ),
-                        body=canonicalise(post.to_create_ap()),
+                        body=canonicalise(post.to_create_ap(), outbound_compat=True),
                     )
                 except httpx.RequestError:
                     return
@@ -98,7 +98,7 @@ class FanOutStates(StateGraph):
                             instance.identity.shared_inbox_uri
                             or instance.identity.inbox_uri
                         ),
-                        body=canonicalise(post.to_update_ap()),
+                        body=canonicalise(post.to_update_ap(), outbound_compat=True),
                     )
                 except httpx.RequestError:
                     return
@@ -124,7 +124,7 @@ class FanOutStates(StateGraph):
                             instance.identity.shared_inbox_uri
                             or instance.identity.inbox_uri
                         ),
-                        body=canonicalise(post.to_delete_ap()),
+                        body=canonicalise(post.to_delete_ap(), outbound_compat=True),
                     )
                 except httpx.RequestError:
                     return
