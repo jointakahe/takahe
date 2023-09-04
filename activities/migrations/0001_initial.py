@@ -16,7 +16,6 @@ import stator.models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -264,6 +263,7 @@ class Migration(migrations.Migration):
                             ("identity_edited", "Identity Edited"),
                             ("identity_deleted", "Identity Deleted"),
                             ("identity_created", "Identity Created"),
+                            ("identity_moved", "Identity Moved"),
                         ],
                         max_length=100,
                     ),
