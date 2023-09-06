@@ -10,7 +10,6 @@ from core.ld import format_ld_date, get_str_or_id, parse_ld_date
 from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.identity import Identity
-from users.models.relay_actor import RelayActor
 
 
 class PostInteractionStates(StateGraph):
@@ -299,11 +298,6 @@ class PostInteraction(StatorModel):
                 "object": self.post.object_uri,
                 "to": "as:Public",
             }
-            if self.identity.is_local_relay:
-                # if boost to relay, set "to" to remote relays instead of Public
-                value["to"] = list(
-                    RelayActor.get_relays().values_list("actor_uri", flat=True)
-                )
         elif self.type == self.Types.like:
             value = {
                 "type": "Like",
@@ -321,7 +315,7 @@ class PostInteraction(StatorModel):
                 "inReplyTo": self.post.object_uri,
                 "attributedTo": self.identity.actor_uri,
             }
-        else:
+        elif self.type == self.Types.pin:
             raise ValueError("Cannot turn into AP")
         return value
 

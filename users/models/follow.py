@@ -242,11 +242,7 @@ class Follow(StatorModel):
                     uri="",
                     state=FollowStates.unrequested,
                 )
-                follow.uri = (
-                    source.actor_uri
-                    + ("/" if source.actor_uri[-1] != "/" else "")
-                    + f"follow/{follow.pk}/"
-                )
+                follow.uri = source.actor_uri + f"follow/{follow.pk}/"
                 follow.save()
         return follow
 
