@@ -180,7 +180,7 @@ def test_linkify_mentions_local(config_system, identity, identity2, remote_ident
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_local()
-        == '<p>Hello <span class="h-card"><a href="/@test@remote.test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
+        == '<p>Hello <span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span></p>'
     )
     # Test a full username (local)
     post = Post.objects.create(
@@ -204,7 +204,7 @@ def test_linkify_mentions_local(config_system, identity, identity2, remote_ident
     post.mentions.add(remote_identity)
     assert (
         post.safe_content_local()
-        == '<span class="h-card"><a href="/@test@remote.test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span> hello!'
+        == '<span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span> hello!'
     )
     # Test that they don't get touched without a mention
     post = Post.objects.create(

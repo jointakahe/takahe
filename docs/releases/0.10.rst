@@ -20,6 +20,9 @@ Minor changes also include:
 * Followers-only mode now works correctly inbound and outbound (though outbound
   may need the other server to refresh the profile first).
 
+* Profile pages are no longer shown for remote identities; instead, users are
+  linked or redirected directly to the remote profile page.
+
 If you'd like to help with code, design, or other areas, see
 :doc:`/contributing` to see how to get in touch.
 

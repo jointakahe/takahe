@@ -138,6 +138,6 @@ def test_parser_same_name_mentions(remote_identity, remote_identity2):
     )
     assert (
         parser.html
-        == '<span class="h-card"><a href="/@test@remote.test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span> <span class="h-card"><a href="/@test@remote2.test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span>'
+        == '<span class="h-card"><a href="https://remote.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span> <span class="h-card"><a href="https://remote2.test/@test/" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>test</span></a></span>'
     )
     assert parser.plain_text == "@test @test"
