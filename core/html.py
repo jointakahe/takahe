@@ -91,6 +91,8 @@ class FediverseHtmlParser(HTMLParser):
         for mention in mentions or []:
             if self.uri_domain:
                 url = mention.absolute_profile_uri()
+            elif not mention.local:
+                url = mention.profile_uri
             else:
                 url = str(mention.urls.view)
             if mention.username:

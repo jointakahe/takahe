@@ -17,7 +17,7 @@ from activities.services import SearchService, TimelineService
 from core.decorators import cache_page, cache_page_by_ap_json
 from core.ld import canonicalise
 from core.models import Config
-from users.models import Domain, FollowStates, Identity, IdentityStates
+from users.models import Domain, FollowStates, Identity
 from users.services import IdentityService
 from users.shortcuts import by_handle_or_404
 
@@ -35,18 +35,16 @@ class ViewIdentity(ListView):
     with_replies = False
 
     def get(self, request, handle):
-        # Make sure we understand this handle
+        # Grab the handle if we have it (no live fetching here)
         self.identity = by_handle_or_404(
             self.request,
             handle,
             local=False,
-            fetch=True,
+            fetch=False,
         )
-        if (
-            not self.identity.local
-            and self.identity.data_age > Config.system.identity_max_age
-        ):
-            self.identity.transition_perform(IdentityStates.outdated)
+        # If it's remote, redirect to its profile page
+        if not self.identity.local:
+            return redirect(self.identity.profile_uri)
         # If they're coming in looking for JSON, they want the actor
         if request.ap_json:
             # Return actor info
