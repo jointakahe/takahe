@@ -2,7 +2,9 @@ import datetime
 import os
 import urllib.parse as urllib_parse
 
+import httpx_cache
 from dateutil import parser
+from httpx import HTTPError
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
 
@@ -641,6 +643,33 @@ def builtin_document_loader(url: str, options={}):
                 "jsonld.LoadDocumentError",
                 code="loading document failed",
                 cause="KeyError",
+            )
+
+
+document_cache = httpx_cache.Client(
+    follow_redirects=True,
+    max_redirects=2,
+    timeout=3,
+    headers={"Accept": "application/ld+json"},
+)
+
+
+def caching_document_loader(url: str, options={}):
+    try:
+        return builtin_document_loader(url, options)
+    except (KeyError, JsonLdError):
+        try:
+            doc = document_cache.get(url)
+            if doc and doc.status_code == 200:
+                return doc.json()
+            else:
+                raise HTTPError(f"{url} {doc.status_code}")
+        except BaseException as exc:
+            raise JsonLdError(
+                f"Unable to fetch schema {url!r}",
+                "jsonld.LoadDocumentError",
+                code="loading document failed",
+                cause=exc,
             )
 
 
