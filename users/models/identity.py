@@ -394,39 +394,41 @@ class Identity(StatorModel):
             domain = domain.domain
         else:
             domain = domain.lower()
-        try:
-            if local:
-                return cls.objects.get(
-                    username__iexact=username,
-                    domain_id=domain,
-                    local=True,
-                )
-            else:
-                return cls.objects.get(
-                    username__iexact=username,
-                    domain_id=domain,
-                )
-        except cls.DoesNotExist:
-            if fetch and not local:
-                actor_uri, handle = cls.fetch_webfinger(f"{username}@{domain}")
-                if handle is None:
-                    return None
-                # See if this actually does match an existing actor
-                try:
-                    return cls.objects.get(actor_uri=actor_uri)
-                except cls.DoesNotExist:
-                    pass
-                # OK, make one
-                username, domain = handle.split("@")
-                if not domain_instance:
-                    domain_instance = Domain.get_remote_domain(domain)
-                return cls.objects.create(
-                    actor_uri=actor_uri,
-                    username=username,
-                    domain_id=domain_instance,
-                    local=False,
-                )
-            return None
+
+        with transaction.atomic():
+            try:
+                if local:
+                    return cls.objects.get(
+                        username__iexact=username,
+                        domain_id=domain,
+                        local=True,
+                    )
+                else:
+                    return cls.objects.get(
+                        username__iexact=username,
+                        domain_id=domain,
+                    )
+            except cls.DoesNotExist:
+                if fetch and not local:
+                    actor_uri, handle = cls.fetch_webfinger(f"{username}@{domain}")
+                    if handle is None:
+                        return None
+                    # See if this actually does match an existing actor
+                    try:
+                        return cls.objects.get(actor_uri=actor_uri)
+                    except cls.DoesNotExist:
+                        pass
+                    # OK, make one
+                    username, domain = handle.split("@")
+                    if not domain_instance:
+                        domain_instance = Domain.get_remote_domain(domain)
+                    return cls.objects.create(
+                        actor_uri=actor_uri,
+                        username=username,
+                        domain_id=domain_instance,
+                        local=False,
+                    )
+                return None
 
     @classmethod
     def by_actor_uri(cls, uri, create=False, transient=False) -> "Identity":
