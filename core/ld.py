@@ -458,6 +458,46 @@ schemas = {
             }
         },
     },
+    "w3id.org/security/multikey/v1": {
+        "contentType": "application/ld+json",
+        "documentUrl": "https://w3id.org/security/multikey/v1",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "id": "@id",
+                "type": "@type",
+                "@protected": True,
+                "Multikey": {
+                    "@id": "https://w3id.org/security#Multikey",
+                    "@context": {
+                        "@protected": True,
+                        "id": "@id",
+                        "type": "@type",
+                        "controller": {
+                            "@id": "https://w3id.org/security#controller",
+                            "@type": "@id",
+                        },
+                        "revoked": {
+                            "@id": "https://w3id.org/security#revoked",
+                            "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+                        },
+                        "expires": {
+                            "@id": "https://w3id.org/security#expiration",
+                            "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+                        },
+                        "publicKeyMultibase": {
+                            "@id": "https://w3id.org/security#publicKeyMultibase",
+                            "@type": "https://w3id.org/security#multibase",
+                        },
+                        "secretKeyMultibase": {
+                            "@id": "https://w3id.org/security#secretKeyMultibase",
+                            "@type": "https://w3id.org/security#multibase",
+                        },
+                    },
+                },
+            },
+        },
+    },
     "*/schemas/litepub-0.1.jsonld": {
         "contentType": "application/ld+json",
         "documentUrl": "http://w3id.org/security/v1",
@@ -558,6 +598,16 @@ schemas = {
                 "schema": "http://schema.org/",
                 "PropertyValue": {"@id": "schema:PropertyValue"},
                 "value": {"@id": "schema:value"},
+            },
+        },
+    },
+    "purl.org/wytchspace/ns/ap/1.0": {
+        "contentType": "application/ld+json",
+        "documentUrl": "https://purl.org/wytchspace/ns/ap/1.0",
+        "contextUrl": None,
+        "document": {
+            "@context": {
+                "wytch": "https://ns.wytch.space/ap/1.0.jsonld",
             },
         },
     },
