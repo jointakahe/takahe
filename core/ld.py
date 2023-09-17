@@ -8,7 +8,7 @@ from httpx import HTTPError
 from pyld import jsonld
 from pyld.jsonld import JsonLdError
 
-from core.exceptions import ActivityPubFormatError
+from core.exceptions import ActivityPubFormatError, capture_exception
 
 schemas = {
     "www.w3.org/ns/activitystreams": {
@@ -659,12 +659,17 @@ def caching_document_loader(url: str, options={}):
         return builtin_document_loader(url, options)
     except (KeyError, JsonLdError):
         try:
-            doc = document_cache.get(url)
+            doc = document_cache.get(
+                url, headers={"Accept": "application/ld+json, application/json"}
+            )
             if doc and doc.status_code == 200:
                 return doc.json()
             else:
                 raise HTTPError(f"{url} {doc.status_code}")
         except BaseException as exc:
+            # return an empty context instead of throwing an error
+            capture_exception(exc)
+            return {}
             raise JsonLdError(
                 f"Unable to fetch schema {url!r}",
                 "jsonld.LoadDocumentError",
