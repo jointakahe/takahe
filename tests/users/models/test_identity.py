@@ -168,6 +168,14 @@ def test_fetch_actor(httpx_mock, config_system):
             "url": "https://example.com/test-actor/view/",
         },
     )
+    httpx_mock.add_response(
+        url="https://example.com/test-actor/collections/featured/",
+        json={
+            "type": "Collection",
+            "totalItems": 0,
+            "items": [],
+        },
+    )
     identity.fetch_actor()
 
     # Verify the data arrived

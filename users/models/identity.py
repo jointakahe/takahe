@@ -742,7 +742,7 @@ class Identity(StatorModel):
             except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if isinstance(ex, httpx.TimeoutException) or (
-                    response and response.status_code == 408
+                    response and response.status_code in [408, 504]
                 ):
                     raise TryAgainLater() from ex
                 elif (
@@ -799,7 +799,7 @@ class Identity(StatorModel):
             except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if isinstance(ex, httpx.TimeoutException) or (
-                    response and response.status_code == 408
+                    response and response.status_code in [408, 504]
                 ):
                     raise TryAgainLater() from ex
                 elif (
@@ -855,6 +855,8 @@ class Identity(StatorModel):
                 method="get",
                 uri=self.actor_uri,
             )
+        except httpx.TimeoutException:
+            raise TryAgainLater()
         except (httpx.RequestError, ssl.SSLCertVerificationError):
             return False
         content_type = response.headers.get("content-type")
@@ -863,6 +865,8 @@ class Identity(StatorModel):
             return False
         status_code = response.status_code
         if status_code >= 400:
+            if status_code in [408, 504]:
+                raise TryAgainLater()
             if status_code == 410 and self.pk:
                 # Their account got deleted, so let's do the same.
                 Identity.objects.filter(pk=self.pk).delete()

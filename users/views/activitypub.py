@@ -150,7 +150,13 @@ class Inbox(View):
 
         if not identity.public_key:
             # See if we can fetch it right now
-            identity.fetch_actor()
+            try:
+                identity.fetch_actor()
+            except exceptions.TryAgainLater:
+                exceptions.capture_message(
+                    f"Inbox error: timed out fetching actor {document['actor']}"
+                )
+                return HttpResponse(status=504)
 
         if not identity.public_key:
             exceptions.capture_message(
