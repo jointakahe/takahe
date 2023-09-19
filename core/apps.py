@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 from pyld import jsonld
 
-from core.ld import caching_document_loader
+from core.ld import builtin_document_loader
 
 
 class CoreConfig(AppConfig):
@@ -9,4 +9,4 @@ class CoreConfig(AppConfig):
     name = "core"
 
     def ready(self) -> None:
-        jsonld.set_document_loader(caching_document_loader)
+        jsonld.set_document_loader(builtin_document_loader)
