@@ -172,8 +172,18 @@ def test_fetch_actor(httpx_mock, config_system):
         url="https://example.com/test-actor/collections/featured/",
         json={
             "type": "Collection",
-            "totalItems": 0,
-            "items": [],
+            "totalItems": 1,
+            "orderedItems": [
+                {
+                    "id": "https://example.com/test-actor/posts/123456789",
+                    "type": "Note",
+                    "attributedTo": "https://example.com/test-actor/",
+                    "content": "<p>Test post</p>",
+                    "published": "2022-11-02T00:00:00Z",
+                    "to": "as:Public",
+                    "url": "https://example.com/test-actor/posts/123456789",
+                }
+            ],
         },
     )
     identity.fetch_actor()
@@ -189,6 +199,8 @@ def test_fetch_actor(httpx_mock, config_system):
         identity.featured_collection_uri
         == "https://example.com/test-actor/collections/featured/"
     )
+    assert identity.featured.totalItems == 1
+    assert identity.featured.items[0].type == "Note"
     assert identity.icon_uri == "https://example.com/icon.jpg"
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"
