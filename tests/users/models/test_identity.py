@@ -199,8 +199,8 @@ def test_fetch_actor(httpx_mock, config_system):
         identity.featured_collection_uri
         == "https://example.com/test-actor/collections/featured/"
     )
-    assert identity.featured.totalItems == 1
-    assert identity.featured.items[0].type == "Note"
+    assert identity.pinned.totalItems == 1
+    assert identity.pinned.items[0].type == "Note"
     assert identity.icon_uri == "https://example.com/icon.jpg"
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"
