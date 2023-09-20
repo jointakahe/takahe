@@ -4,11 +4,18 @@ import urllib.parse as urllib_parse
 
 from dateutil import parser
 from pyld import jsonld
-from pyld.jsonld import JsonLdError
 
-from core.exceptions import ActivityPubFormatError
+from core.exceptions import ActivityPubFormatError, capture_message
 
 schemas = {
+    "unknown": {
+        "contentType": "application/ld+json",
+        "documentUrl": "unknown",
+        "contextUrl": None,
+        "document": {
+            "@context": {},
+        },
+    },
     "www.w3.org/ns/activitystreams": {
         "contentType": "application/ld+json",
         "documentUrl": "http://www.w3.org/ns/activitystreams",
@@ -622,12 +629,8 @@ def builtin_document_loader(url: str, options={}):
     # Get URL without scheme
     pieces = urllib_parse.urlparse(url)
     if pieces.hostname is None:
-        raise JsonLdError(
-            f"No schema built-in for {url!r}",
-            "jsonld.LoadDocumentError",
-            code="loading document failed",
-            cause="NoHostnameError",
-        )
+        capture_message(f"No host name for json-ld schema: {url!r}")
+        return schemas["unknown"]
     key = pieces.hostname + pieces.path.rstrip("/")
     try:
         return schemas[key]
@@ -636,12 +639,9 @@ def builtin_document_loader(url: str, options={}):
             key = "*" + pieces.path.rstrip("/")
             return schemas[key]
         except KeyError:
-            raise JsonLdError(
-                f"No schema built-in for {key!r}",
-                "jsonld.LoadDocumentError",
-                code="loading document failed",
-                cause="KeyError",
-            )
+            # return an empty context instead of throwing an error
+            capture_message(f"Ignoring unknown json-ld schema: {url!r}")
+            return schemas["unknown"]
 
 
 def canonicalise(json_data: dict, include_security: bool = False) -> dict:
