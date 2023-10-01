@@ -94,6 +94,9 @@ class PostStates(StateGraph):
         """
         For remote posts, sees if we can delete them every so often.
         """
+        # Skip all of this if the horizon is zero
+        if settings.SETUP.REMOTE_PRUNE_HORIZON <= 0:
+            return
         # To be a candidate for deletion, a post must be remote and old enough
         if instance.local:
             return

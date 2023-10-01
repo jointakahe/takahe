@@ -221,6 +221,17 @@ read-through cache that respects ``Cache-Control``, like Varnish, will
 also help if placed in front of Takahē.
 
 
+Remote Content Pruning
+----------------------
+
+By default, Takahē will prune (delete) any remote posts or identities that
+haven't been interacted with after 90 days. You can change this using the
+``TAKAHE_REMOTE_PRUNE_HORIZON`` environment variable, which accepts an integer
+number of days as its value.
+
+Setting this environment variable to ``0`` disables this feature entirely.
+
+
 Sentry.io integration
 ---------------------
 

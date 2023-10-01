@@ -13,7 +13,11 @@ This release's major changes:
   most situations (the context switching was costing more than the gains from
   talking to other servers asynchronously).
 
-* TBC
+* Old remote posts are now automatically pruned out of the database after a
+  configurable horizon time, defaulting to 90 days. Posts from local users and
+  posts that have been interacted with (liked, boosted, pinned) by local users
+  are never deleted. You can change the deletion horizon with the
+  ``TAKAHE_REMOTE_PRUNE_HORIZON`` setting.
 
 Minor changes also include:
 
@@ -33,17 +37,16 @@ or use the image name ``jointakahe/takahe:0.10``.
 Upgrade Notes
 -------------
 
-VAPID keys and Push notifications
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Remote Pruning
+~~~~~~~~~~~~~~
 
-Takahē now supports push notifications if you supply a valid VAPID keypair as
-the ``TAKAHE_VAPID_PUBLIC_KEY`` and ``TAKAHE_VAPID_PRIVATE_KEY`` environment
-variables. You can generate a keypair via `https://web-push-codelab.glitch.me/`_.
+Post pruning is now in and comes *enabled by default*, as it is not directly
+destructive (it will only delete content that has not been interacted with
+locally and which can be re-fetched).
 
-Note that users of apps may need to sign out and in again to their accounts for
-the app to notice that it can now do push notifications. Some apps, like Elk,
-may cache the fact your server didn't support it for a while.
-
+Nevertheless, if you want to avoid post deletion triggering on your server at
+all, you should set the ``TAKAHE_REMOTE_PRUNE_HORIZON`` environment variable to
+``0``.
 
 Migrations
 ~~~~~~~~~~
