@@ -143,6 +143,11 @@ class Settings(BaseSettings):
     #: Default cache backend
     CACHES_DEFAULT: CacheBackendUrl | None = None
 
+    # How long to wait, in days, until remote posts/profiles are pruned from
+    # our database if nobody local has interacted with them. Must be in rough
+    # multiples of two weeks.
+    REMOTE_PRUNE_HORIZON: int = 60
+
     # Stator tuning
     STATOR_CONCURRENCY: int = 50
     STATOR_CONCURRENCY_PER_MODEL: int = 15

@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 import httpx
 import urlman
+from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from django.db import models, transaction
@@ -47,14 +48,15 @@ from users.models.system_actor import SystemActor
 
 class PostStates(StateGraph):
     new = State(try_interval=300)
-    fanned_out = State(externally_progressed=True)
+    fanned_out = State(try_interval=86400 * 14)
     deleted = State(try_interval=300)
-    deleted_fanned_out = State(delete_after=24 * 60 * 60)
+    deleted_fanned_out = State(delete_after=86400)
 
     edited = State(try_interval=300)
     edited_fanned_out = State(externally_progressed=True)
 
     new.transitions_to(fanned_out)
+    fanned_out.transitions_to(deleted_fanned_out)
     fanned_out.transitions_to(deleted)
     fanned_out.transitions_to(edited)
 
@@ -86,6 +88,25 @@ class PostStates(StateGraph):
             cls.targets_fan_out(instance, FanOut.Types.post)
         instance.ensure_hashtags()
         return cls.fanned_out
+
+    @classmethod
+    def handle_fanned_out(cls, instance: "Post"):
+        """
+        For remote posts, sees if we can delete them every so often.
+        """
+        # To be a candidate for deletion, a post must be remote and old enough
+        if instance.local:
+            return
+        if instance.created > timezone.now() - datetime.timedelta(
+            days=settings.SETUP.REMOTE_PRUNE_HORIZON
+        ):
+            return
+        # It must have no local interactions
+        if instance.interactions.filter(identity__local=True).exists():
+            return
+        # OK, delete it!
+        instance.delete()
+        return cls.deleted_fanned_out
 
     @classmethod
     def handle_deleted(cls, instance: "Post"):
