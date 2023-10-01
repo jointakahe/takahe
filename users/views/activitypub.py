@@ -20,6 +20,7 @@ from core.signatures import (
     VerificationFormatError,
 )
 from core.views import StaticContentView
+from stator.exceptions import TryAgainLater
 from takahe import __version__
 from users.models import Identity, InboxMessage, SystemActor
 from users.shortcuts import by_handle_or_404
@@ -150,7 +151,13 @@ class Inbox(View):
 
         if not identity.public_key:
             # See if we can fetch it right now
-            identity.fetch_actor()
+            try:
+                identity.fetch_actor()
+            except TryAgainLater:
+                exceptions.capture_message(
+                    f"Inbox error: timed out fetching actor {document['actor']}"
+                )
+                return HttpResponse(status=504)
 
         if not identity.public_key:
             exceptions.capture_message(

@@ -30,6 +30,7 @@ from core.uris import (
     RelativeAbsoluteUrl,
     StaticAbsoluteUrl,
 )
+from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
 from users.models.system_actor import SystemActor
@@ -740,7 +741,11 @@ class Identity(StatorModel):
                 response.raise_for_status()
             except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
-                if (
+                if isinstance(ex, httpx.TimeoutException) or (
+                    response and response.status_code in [408, 504]
+                ):
+                    raise TryAgainLater() from ex
+                elif (
                     response
                     and response.status_code < 500
                     and response.status_code not in [400, 401, 403, 404, 406, 410]
@@ -793,7 +798,11 @@ class Identity(StatorModel):
                 response.raise_for_status()
             except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
-                if (
+                if isinstance(ex, httpx.TimeoutException) or (
+                    response and response.status_code in [408, 504]
+                ):
+                    raise TryAgainLater() from ex
+                elif (
                     response
                     and response.status_code < 500
                     and response.status_code not in [401, 403, 404, 406, 410]
@@ -846,6 +855,8 @@ class Identity(StatorModel):
                 method="get",
                 uri=self.actor_uri,
             )
+        except httpx.TimeoutException:
+            raise TryAgainLater()
         except (httpx.RequestError, ssl.SSLCertVerificationError):
             return False
         content_type = response.headers.get("content-type")
@@ -854,10 +865,11 @@ class Identity(StatorModel):
             return False
         status_code = response.status_code
         if status_code >= 400:
+            if status_code in [408, 504]:
+                raise TryAgainLater()
             if status_code == 410 and self.pk:
                 # Their account got deleted, so let's do the same.
                 Identity.objects.filter(pk=self.pk).delete()
-
             if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
                 capture_message(
                     f"Client error fetching actor at {self.actor_uri}: {status_code}",
@@ -923,18 +935,19 @@ class Identity(StatorModel):
                 )
         # Now go do webfinger with that info to see if we can get a canonical domain
         actor_url_parts = urlparse(self.actor_uri)
+        self.domain = Domain.get_remote_domain(actor_url_parts.hostname)
         if self.username:
-            webfinger_actor, webfinger_handle = self.fetch_webfinger(
-                f"{self.username}@{actor_url_parts.hostname}"
-            )
-            if webfinger_handle:
-                webfinger_username, webfinger_domain = webfinger_handle.split("@")
-                self.username = webfinger_username
-                self.domain = Domain.get_remote_domain(webfinger_domain)
-            else:
-                self.domain = Domain.get_remote_domain(actor_url_parts.hostname)
-        else:
-            self.domain = Domain.get_remote_domain(actor_url_parts.hostname)
+            try:
+                webfinger_actor, webfinger_handle = self.fetch_webfinger(
+                    f"{self.username}@{actor_url_parts.hostname}"
+                )
+                if webfinger_handle:
+                    webfinger_username, webfinger_domain = webfinger_handle.split("@")
+                    self.username = webfinger_username
+                    self.domain = Domain.get_remote_domain(webfinger_domain)
+            except TryAgainLater:
+                # continue with original domain when webfinger times out
+                pass
         # Emojis (we need the domain so we do them here)
         for tag in get_list(document, "tag"):
             if tag["type"].lower() in ["toot:emoji", "emoji"]:

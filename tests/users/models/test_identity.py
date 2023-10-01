@@ -168,6 +168,24 @@ def test_fetch_actor(httpx_mock, config_system):
             "url": "https://example.com/test-actor/view/",
         },
     )
+    httpx_mock.add_response(
+        url="https://example.com/test-actor/collections/featured/",
+        json={
+            "type": "Collection",
+            "totalItems": 1,
+            "orderedItems": [
+                {
+                    "id": "https://example.com/test-actor/posts/123456789",
+                    "type": "Note",
+                    "attributedTo": "https://example.com/test-actor/",
+                    "content": "<p>Test post</p>",
+                    "published": "2022-11-02T00:00:00Z",
+                    "to": "as:Public",
+                    "url": "https://example.com/test-actor/posts/123456789",
+                }
+            ],
+        },
+    )
     identity.fetch_actor()
 
     # Verify the data arrived
