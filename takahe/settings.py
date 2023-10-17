@@ -11,7 +11,6 @@ import httpx
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from pydantic import AnyUrl, BaseSettings, EmailStr, Field, validator
-from sentry_sdk.integrations.django import DjangoIntegration
 
 from takahe import __version__
 
@@ -368,7 +367,9 @@ if SETUP.USE_PROXY_HEADERS:
 
 
 if SETUP.SENTRY_DSN:
+    from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.httpx import HttpxIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
     sentry_experiments = {}
 
@@ -382,6 +383,7 @@ if SETUP.SENTRY_DSN:
         integrations=[
             DjangoIntegration(),
             HttpxIntegration(),
+            LoggingIntegration(),
         ],
         traces_sample_rate=SETUP.SENTRY_TRACES_SAMPLE_RATE,
         sample_rate=SETUP.SENTRY_SAMPLE_RATE,

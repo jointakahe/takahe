@@ -1,8 +1,8 @@
 import datetime
+import logging
 import os
 import signal
 import time
-import traceback
 import uuid
 from concurrent.futures import Future, ThreadPoolExecutor
 
@@ -10,7 +10,7 @@ from django.conf import settings
 from django.db import close_old_connections
 from django.utils import timezone
 
-from core import exceptions, sentry
+from core import sentry
 from core.models import Config
 from stator.models import StatorModel, Stats
 
@@ -84,7 +84,7 @@ class StatorRunner:
         self.scheduling_timer = LoopingTimer(self.schedule_interval)
         self.deletion_timer = LoopingTimer(self.delete_interval)
         # For the first time period, launch tasks
-        print("Running main task loop")
+        logging.info("Running main task loop")
         try:
             with sentry.configure_scope() as scope:
                 while True:
@@ -137,18 +137,18 @@ class StatorRunner:
             pass
 
         # Wait for tasks to finish
-        print("Waiting for tasks to complete")
+        logging.info("Waiting for tasks to complete")
         self.executor.shutdown()
 
         # We're done
-        print("Complete")
+        logging.info("Complete")
 
     def alarm_handler(self, signum, frame):
         """
         Called when SIGALRM fires, which means we missed a schedule loop.
         Just exit as we're likely deadlocked.
         """
-        print("Watchdog timeout exceeded")
+        logging.warning("Watchdog timeout exceeded")
         os._exit(2)
 
     def load_config(self):
@@ -165,7 +165,9 @@ class StatorRunner:
             for model in self.models:
                 num = self.handled.get(model._meta.label_lower, 0)
                 if num or settings.DEBUG:
-                    print(f"{model._meta.label_lower}: Scheduling ({num} handled)")
+                    logging.info(
+                        f"{model._meta.label_lower}: Scheduling ({num} handled)"
+                    )
                 self.submit_stats(model)
                 model.transition_clean_locks()
 
@@ -237,8 +239,7 @@ class StatorRunner:
                 try:
                     task.result()
                 except BaseException as e:
-                    exceptions.capture_exception(e)
-                    traceback.print_exc()
+                    logging.exception(e)
 
     def run_single_cycle(self):
         """
@@ -268,11 +269,11 @@ def task_transition(instance: StatorModel, in_thread: bool = True):
         result = instance.transition_attempt()
         duration = time.monotonic() - started
         if result:
-            print(
+            logging.info(
                 f"{instance._meta.label_lower}: {instance.pk}: {instance.state} -> {result} ({duration:.2f}s)"
             )
         else:
-            print(
+            logging.info(
                 f"{instance._meta.label_lower}: {instance.pk}: {instance.state} unchanged  ({duration:.2f}s)"
             )
     if in_thread:
@@ -288,7 +289,7 @@ def task_deletion(model: type[StatorModel], in_thread: bool = True):
         deleted = model.transition_delete_due()
         if not deleted:
             break
-        print(f"{model._meta.label_lower}: Deleted {deleted} stale items")
+        logging.info(f"{model._meta.label_lower}: Deleted {deleted} stale items")
         time.sleep(1)
     if in_thread:
         close_old_connections()

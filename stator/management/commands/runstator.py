@@ -1,3 +1,4 @@
+import logging
 from typing import cast
 
 from django.apps import apps
@@ -73,7 +74,9 @@ class Command(BaseCommand):
         if not models:
             models = StatorModel.subclasses
         models = [model for model in models if model not in excluded]
-        print("Running for models: " + " ".join(m._meta.label_lower for m in models))
+        logging.info(
+            "Running for models: " + " ".join(m._meta.label_lower for m in models)
+        )
         # Run a runner
         runner = StatorRunner(
             models,
@@ -85,4 +88,4 @@ class Command(BaseCommand):
         try:
             runner.run()
         except KeyboardInterrupt:
-            print("Ctrl-C received")
+            logging.critical("Ctrl-C received")
