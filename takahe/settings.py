@@ -145,8 +145,8 @@ class Settings(BaseSettings):
 
     # How long to wait, in days, until remote posts/profiles are pruned from
     # our database if nobody local has interacted with them. Must be in rough
-    # multiples of two weeks.
-    REMOTE_PRUNE_HORIZON: int = 60
+    # multiples of two weeks. Set to zero to disable.
+    REMOTE_PRUNE_HORIZON: int = 0
 
     # Stator tuning
     STATOR_CONCURRENCY: int = 50
