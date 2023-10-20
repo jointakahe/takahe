@@ -1,3 +1,6 @@
+import logging
+
+from django.core.exceptions import MultipleObjectsReturned
 from django.db import models, transaction
 from django.template.defaultfilters import linebreaks_filter
 
@@ -222,12 +225,19 @@ class IdentityService:
                         post=post,
                         state__in=PostInteractionStates.group_active(),
                     )
+                except MultipleObjectsReturned as exc:
+                    logging.exception(
+                        exc,
+                        extras={
+                            "post": post,
+                        },
+                    )
+                    pass
                 except Post.DoesNotExist:
                     # ignore 404s...
                     pass
                 except TryAgainLater:
-                    # when fetching a post -> author -> post we can
-                    # get into a state. Ignore this round.
+                    # don't wait for it now, it'll be synced on next refresh
                     pass
             for removed in PostInteraction.objects.filter(
                 type=PostInteraction.Types.pin,
@@ -319,3 +329,22 @@ class IdentityService:
             raise ValueError(f"Cannot find identity to follow: {target_identity}")
         # Follow!
         self.follow(target_identity=target_identity, boosts=payload.get("boosts", True))
+
+    @classmethod
+    def handle_internal_sync_pins(cls, payload):
+        """
+        Handles an inbox message saying we need to sync featured posts
+
+        Message format:
+        {
+            "type": "SyncPins",
+            "identity": "90310938129083",
+        }
+        """
+        # Retrieve ourselves
+        actor = Identity.objects.get(pk=payload["identity"])
+        self = cls(actor)
+        # Get the remote end (may need a fetch)
+        if actor.featured_collection_uri:
+            featured = actor.fetch_pinned_post_uris(actor.featured_collection_uri)
+            self.sync_pins(featured)

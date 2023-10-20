@@ -34,6 +34,7 @@ from core.uris import (
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.domain import Domain
+from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
 
 
@@ -743,7 +744,7 @@ class Identity(StatorModel):
             except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if isinstance(ex, httpx.TimeoutException) or (
-                    response and response.status_code in [408, 504]
+                    response and response.status_code in [408, 429, 504]
                 ):
                     raise TryAgainLater() from ex
                 elif (
@@ -800,7 +801,7 @@ class Identity(StatorModel):
             except (httpx.HTTPError, ssl.SSLCertVerificationError) as ex:
                 response = getattr(ex, "response", None)
                 if isinstance(ex, httpx.TimeoutException) or (
-                    response and response.status_code in [408, 504]
+                    response and response.status_code in [408, 429, 504]
                 ):
                     raise TryAgainLater() from ex
                 elif (
@@ -847,7 +848,6 @@ class Identity(StatorModel):
         webfinger if it's available.
         """
         from activities.models import Emoji
-        from users.services import IdentityService
 
         if self.local:
             raise ValueError("Cannot fetch local identities")
@@ -866,19 +866,14 @@ class Identity(StatorModel):
             return False
         status_code = response.status_code
         if status_code >= 400:
-            if status_code in [408, 504]:
+            if status_code in [408, 429, 504]:
                 raise TryAgainLater()
             if status_code == 410 and self.pk:
                 # Their account got deleted, so let's do the same.
                 Identity.objects.filter(pk=self.pk).delete()
             if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
                 logging.info(
-                    f"Client error fetching actor at {self.actor_uri}: {status_code}",
-                    extra={
-                        "identity": self.pk,
-                        "domain": self.domain_id,
-                        "content": response.content,
-                    },
+                    "Client error fetching actor: %d %s", status_code, self.actor_uri
                 )
             return False
         try:
@@ -886,10 +881,9 @@ class Identity(StatorModel):
         except ValueError:
             # servers with empty or invalid responses are inevitable
             logging.info(
-                f"Invalid response fetching actor at {self.actor_uri}",
+                "Invalid response fetching actor %s",
+                self.actor_uri,
                 extra={
-                    "identity": self.pk,
-                    "domain": self.domain_id,
                     "content": response.content,
                 },
             )
@@ -948,7 +942,16 @@ class Identity(StatorModel):
                     self.domain = Domain.get_remote_domain(webfinger_domain)
             except TryAgainLater:
                 # continue with original domain when webfinger times out
+                logging.info("WebFinger timed out: %s", self.actor_uri)
                 pass
+            except ValueError as exc:
+                logging.info(
+                    "Can't parse WebFinger: %s %s",
+                    exc.args[0],
+                    self.actor_uri,
+                    exc_info=exc,
+                )
+                return False
         # Emojis (we need the domain so we do them here)
         for tag in get_list(document, "tag"):
             if tag["type"].lower() in ["toot:emoji", "emoji"]:
@@ -973,11 +976,14 @@ class Identity(StatorModel):
                 with transaction.atomic():
                     self.save()
 
-        # Fetch pinned posts after identity has been fetched and saved
+        # Fetch pinned posts in a followup task
         if self.featured_collection_uri:
-            featured = self.fetch_pinned_post_uris(self.featured_collection_uri)
-            service = IdentityService(self)
-            service.sync_pins(featured)
+            InboxMessage.create_internal(
+                {
+                    "type": "SyncPins",
+                    "identity": self.pk,
+                }
+            )
 
         return True
 
