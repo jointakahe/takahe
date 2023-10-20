@@ -20,7 +20,7 @@ from pyld import jsonld
 from core.ld import format_ld_date
 
 
-class VerificationError(BaseException):
+class VerificationError(Exception):
     """
     There was an error with verifying the signature
     """
@@ -145,8 +145,8 @@ class HttpSignature:
                 padding.PKCS1v15(),
                 hashes.SHA256(),
             )
-        except InvalidSignature:
-            raise VerificationError("Signature mismatch")
+        except InvalidSignature as exc:
+            raise VerificationError("Signature mismatch") from exc
 
     @classmethod
     def verify_request(cls, request, public_key, skip_date=False):
@@ -321,8 +321,10 @@ class LDSignature:
                 padding.PKCS1v15(),
                 hashes.SHA256(),
             )
-        except InvalidSignature:
-            raise VerificationError("Signature mismatch")
+            # reinsert valid signature
+            document["signature"] = signature
+        except InvalidSignature as exc:
+            raise VerificationError("LDSignature mismatch") from exc
 
     @classmethod
     def create_signature(
