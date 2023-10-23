@@ -1,9 +1,9 @@
+import logging
 from typing import Optional
 
 import httpx
 from django.db import models, transaction
 
-from core.exceptions import capture_message
 from core.ld import canonicalise, get_str_or_id
 from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
@@ -350,8 +350,8 @@ class Follow(StatorModel):
             try:
                 follow = cls.by_ap(data, create=True)
             except Identity.DoesNotExist:
-                capture_message(
-                    "Identity not found for incoming Follow", extras={"data": data}
+                logging.info(
+                    "Identity not found for incoming Follow", extra={"data": data}
                 )
                 return
             if follow.state == FollowStates.accepted:
@@ -367,9 +367,9 @@ class Follow(StatorModel):
         try:
             follow = cls.by_ap(data["object"])
         except (cls.DoesNotExist, Identity.DoesNotExist):
-            capture_message(
+            logging.info(
                 "Follow or Identity not found for incoming Accept",
-                extras={"data": data},
+                extra={"data": data},
             )
             return
 
@@ -389,9 +389,9 @@ class Follow(StatorModel):
         try:
             follow = cls.by_ap(data["object"])
         except (cls.DoesNotExist, Identity.DoesNotExist):
-            capture_message(
+            logging.info(
                 "Follow or Identity not found for incoming Reject",
-                extras={"data": data},
+                extra={"data": data},
             )
             return
 
@@ -419,8 +419,8 @@ class Follow(StatorModel):
         try:
             follow = cls.by_ap(data["object"])
         except (cls.DoesNotExist, Identity.DoesNotExist):
-            capture_message(
-                "Follow or Identity not found for incoming Undo", extras={"data": data}
+            logging.info(
+                "Follow or Identity not found for incoming Undo", extra={"data": data}
             )
             return
 

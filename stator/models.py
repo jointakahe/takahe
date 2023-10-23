@@ -1,5 +1,5 @@
 import datetime
-import traceback
+import logging
 from typing import ClassVar
 
 from asgiref.sync import async_to_sync, iscoroutinefunction
@@ -8,7 +8,6 @@ from django.db.models.signals import class_prepared
 from django.utils import timezone
 from django.utils.functional import classproperty
 
-from core import exceptions
 from stator.exceptions import TryAgainLater
 from stator.graph import State, StateGraph
 
@@ -190,7 +189,7 @@ class StatorModel(models.Model):
         # If it's a manual progression state don't even try
         # We shouldn't really be here in this case, but it could be a race condition
         if current_state.externally_progressed:
-            print(
+            logging.warning(
                 f"Warning: trying to progress externally progressed state {self.state}!"
             )
             return None
@@ -204,8 +203,7 @@ class StatorModel(models.Model):
         except TryAgainLater:
             pass
         except BaseException as e:
-            exceptions.capture_exception(e)
-            traceback.print_exc()
+            logging.exception(e)
         else:
             if next_state:
                 # Ensure it's a State object

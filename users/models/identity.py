@@ -1,3 +1,4 @@
+import logging
 import ssl
 from functools import cached_property, partial
 from typing import Literal, Optional
@@ -11,7 +12,7 @@ from django.utils import timezone
 from django.utils.functional import lazy
 from lxml import etree
 
-from core.exceptions import ActorMismatchError, capture_message
+from core.exceptions import ActorMismatchError
 from core.html import ContentRenderer, FediverseHtmlParser
 from core.ld import (
     canonicalise,
@@ -871,9 +872,9 @@ class Identity(StatorModel):
                 # Their account got deleted, so let's do the same.
                 Identity.objects.filter(pk=self.pk).delete()
             if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
-                capture_message(
+                logging.info(
                     f"Client error fetching actor at {self.actor_uri}: {status_code}",
-                    extras={
+                    extra={
                         "identity": self.pk,
                         "domain": self.domain_id,
                         "content": response.content,
@@ -884,9 +885,9 @@ class Identity(StatorModel):
             document = canonicalise(response.json(), include_security=True)
         except ValueError:
             # servers with empty or invalid responses are inevitable
-            capture_message(
+            logging.info(
                 f"Invalid response fetching actor at {self.actor_uri}",
-                extras={
+                extra={
                     "identity": self.pk,
                     "domain": self.domain_id,
                     "content": response.content,

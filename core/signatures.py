@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 from ssl import SSLCertVerificationError, SSLError
 from typing import Literal, TypedDict, cast
 from urllib.parse import urlparse
@@ -258,7 +259,7 @@ class HttpSignature:
                 )
             except SSLError as invalid_cert:
                 # Not our problem if the other end doesn't have proper SSL
-                print(f"{uri} {invalid_cert}")
+                logging.info(f"{uri} {invalid_cert}")
                 raise SSLCertVerificationError(invalid_cert) from invalid_cert
             except InvalidCodepoint as ex:
                 # Convert to a more generic error we handle

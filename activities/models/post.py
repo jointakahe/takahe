@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import mimetypes
 import ssl
 from collections.abc import Iterable
@@ -27,7 +28,7 @@ from activities.models.post_types import (
     PostTypeDataEncoder,
     QuestionData,
 )
-from core.exceptions import ActivityPubFormatError, capture_message
+from core.exceptions import ActivityPubFormatError
 from core.html import ContentRenderer, FediverseHtmlParser
 from core.ld import (
     canonicalise,
@@ -896,7 +897,7 @@ class Post(StatorModel):
                 # don't have content, but this shouldn't be a total failure
                 post.content = get_value_or_map(data, "content", "contentMap")
             except ActivityPubFormatError as err:
-                capture_message(f"{err} on {post.url}")
+                logging.warning(f"{err} on {post.url}")
                 post.content = None
             # Document types have names, not summaries
             post.summary = data.get("summary") or data.get("name")
@@ -992,7 +993,7 @@ class Post(StatorModel):
                     try:
                         cls.ensure_object_uri(post.in_reply_to, reason=post.object_uri)
                     except ValueError:
-                        capture_message(
+                        logging.warning(
                             f"Cannot fetch ancestor of Post={post.pk}, ancestor_uri={post.in_reply_to}"
                         )
                 else:

@@ -1,4 +1,5 @@
 import json
+import logging
 import ssl
 from functools import cached_property
 from typing import Optional
@@ -9,7 +10,6 @@ import urlman
 from django.conf import settings
 from django.db import models
 
-from core.exceptions import capture_message
 from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.schemas import NodeInfo
@@ -209,9 +209,9 @@ class Domain(StatorModel):
                     and response.status_code < 500
                     and response.status_code not in [401, 403, 404, 406, 410]
                 ):
-                    capture_message(
+                    logging.warning(
                         f"Client error fetching nodeinfo: {str(ex)}",
-                        extras={
+                        extra={
                             "code": response.status_code,
                             "content": response.content,
                             "domain": self.domain,
@@ -223,9 +223,9 @@ class Domain(StatorModel):
             try:
                 info = NodeInfo(**response.json())
             except (json.JSONDecodeError, pydantic.ValidationError) as ex:
-                capture_message(
+                logging.warning(
                     f"Client error decoding nodeinfo: {str(ex)}",
-                    extras={
+                    extra={
                         "domain": self.domain,
                         "nodeinfo20_url": nodeinfo20_url,
                     },

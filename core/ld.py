@@ -1,11 +1,12 @@
 import datetime
+import logging
 import os
 import urllib.parse as urllib_parse
 
 from dateutil import parser
 from pyld import jsonld
 
-from core.exceptions import ActivityPubFormatError, capture_message
+from core.exceptions import ActivityPubFormatError
 
 schemas = {
     "unknown": {
@@ -629,7 +630,7 @@ def builtin_document_loader(url: str, options={}):
     # Get URL without scheme
     pieces = urllib_parse.urlparse(url)
     if pieces.hostname is None:
-        capture_message(f"No host name for json-ld schema: {url!r}")
+        logging.info(f"No host name for json-ld schema: {url!r}")
         return schemas["unknown"]
     key = pieces.hostname + pieces.path.rstrip("/")
     try:
@@ -640,7 +641,7 @@ def builtin_document_loader(url: str, options={}):
             return schemas[key]
         except KeyError:
             # return an empty context instead of throwing an error
-            capture_message(f"Ignoring unknown json-ld schema: {url!r}")
+            logging.info(f"Ignoring unknown json-ld schema: {url!r}")
             return schemas["unknown"]
 
 

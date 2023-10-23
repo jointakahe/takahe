@@ -1,3 +1,5 @@
+import logging
+
 from activities.models import (
     Post,
     PostInteraction,
@@ -5,7 +7,6 @@ from activities.models import (
     PostStates,
     TimelineEvent,
 )
-from core.exceptions import capture_message
 from users.models import Identity
 
 
@@ -98,7 +99,7 @@ class PostService:
                 try:
                     Post.ensure_object_uri(object_uri, reason=reason)
                 except ValueError:
-                    capture_message(
+                    logging.error(
                         f"Cannot fetch ancestor Post={self.post.pk}, ancestor_uri={object_uri}"
                     )
                 break
