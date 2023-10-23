@@ -1072,7 +1072,7 @@ class Post(StatorModel):
             if data["actor"] != data["object"]["attributedTo"]:
                 raise ValueError("Create actor does not match its Post object", data)
             # Create it, stator will fan it out locally
-            cls.by_ap(data["object"], create=True, update=True)
+            cls.by_ap(data["object"], create=True, update=True, fetch_author=True)
 
     @classmethod
     def handle_update_ap(cls, data):

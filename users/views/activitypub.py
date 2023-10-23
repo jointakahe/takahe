@@ -1,6 +1,6 @@
 import json
 import logging
-from urllib.parse import urldefrag
+from urllib.parse import urldefrag, urlparse
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
@@ -21,9 +21,9 @@ from core.signatures import (
     VerificationFormatError,
 )
 from core.views import StaticContentView
-from stator.exceptions import TryAgainLater
 from takahe import __version__
 from users.models import Identity, InboxMessage, SystemActor
+from users.models.domain import Domain
 from users.shortcuts import by_handle_or_404
 
 
@@ -154,22 +154,13 @@ class Inbox(View):
             # We don't have an Identity record for the user. No-op
             return HttpResponse(status=202)
 
-        if not identity.public_key:
-            # See if we can fetch it right now
-            try:
-                identity.fetch_actor()
-            except TryAgainLater:
-                logging.warning(
-                    "Inbox error: timed out fetching actor %s", document["actor"]
-                )
-                return HttpResponse(status=504)
-
-        if not identity.public_key:
-            logging.warning("Inbox error: cannot fetch actor %s", document["actor"])
-            return HttpResponseBadRequest("Cannot retrieve actor")
-
-        # See if it's from a blocked user or domain
-        if identity.blocked or identity.domain.recursively_blocked():
+        # See if it's from a blocked user or domain - without calling
+        # fetch_actor, which would fetch data from potentially bad actor
+        domain = identity.domain
+        if not domain:
+            actor_url_parts = urlparse(document["actor"])
+            domain = Domain.get_remote_domain(actor_url_parts.hostname)
+        if identity.blocked or domain.recursively_blocked():
             # I love to lie! Throw it away!
             logging.info(
                 "Inbox: Discarded message from blocked %s %s",
@@ -178,19 +169,27 @@ class Inbox(View):
             )
             return HttpResponse(status=202)
 
-        # authenticate HTTP signature first, if one is present. Invalid
-        # signature is an error and message should be rejected.
+        # authenticate HTTP signature first, if one is present and the actor
+        # is already known to us. An invalid signature is an error and message
+        # should be discarded. NOTE: for previously unknown actors, we
+        # don't have their public key yet!
         if "signature" in request:
             try:
-                HttpSignature.verify_request(
-                    request,
-                    identity.public_key,
-                )
-                logging.debug(
-                    "Inbox: %s from %s has good HTTP signature",
-                    document["type"],
-                    identity,
-                )
+                if identity.public_key:
+                    HttpSignature.verify_request(
+                        request,
+                        identity.public_key,
+                    )
+                    logging.debug(
+                        "Inbox: %s from %s has good HTTP signature",
+                        document["type"],
+                        identity,
+                    )
+                else:
+                    logging.warning(
+                        "Inbox: unknown actor, this message won't be verified: %s",
+                        document["actor"],
+                    )
             except VerificationFormatError as e:
                 logging.warning("Inbox error: Bad HTTP signature format: %s", e.args[0])
                 return HttpResponseBadRequest(e.args[0])
@@ -206,7 +205,7 @@ class Inbox(View):
                 # signatures are identified by the signature block
                 creator = urldefrag(document["signature"]["creator"]).url
                 creator_identity = Identity.by_actor_uri(
-                    creator, create=False, transient=True
+                    creator, create=True, transient=True
                 )
                 if not creator_identity.public_key:
                     logging.warning("Inbox: missing signing key for %s", creator)
