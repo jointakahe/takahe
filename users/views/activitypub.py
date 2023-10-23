@@ -186,8 +186,8 @@ class Inbox(View):
                         identity,
                     )
                 else:
-                    logging.warning(
-                        "Inbox: unknown actor, this message won't be verified: %s",
+                    logging.info(
+                        "Inbox: New actor, no key available: %s",
                         document["actor"],
                     )
             except VerificationFormatError as e:
@@ -208,7 +208,7 @@ class Inbox(View):
                     creator, create=True, transient=True
                 )
                 if not creator_identity.public_key:
-                    logging.warning("Inbox: missing signing key for %s", creator)
+                    logging.info("Inbox: New actor, no key available: %s", creator)
                     # if we can't verify it, we don't keep it
                     document.pop("signature")
                 else:
