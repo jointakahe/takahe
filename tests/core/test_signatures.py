@@ -52,6 +52,8 @@ def test_verifying_ld(keypair):
     }
     # Ensure it verifies with correct data
     LDSignature.verify_signature(document, keypair["public_key"])
+    # signature should remain in document if it was valid
+    assert "signature" in document
     # Mutate it slightly and ensure it does not verify
     with pytest.raises(VerificationError):
         document["actor"] = "https://example.com/evil-actor"
