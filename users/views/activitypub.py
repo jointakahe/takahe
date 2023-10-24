@@ -164,7 +164,7 @@ class Inbox(View):
             # I love to lie! Throw it away!
             logging.info(
                 "Inbox: Discarded message from blocked %s %s",
-                "domain" if identity.domain.recursively_blocked() else "user",
+                "domain" if domain.recursively_blocked() else "user",
                 identity.actor_uri,
             )
             return HttpResponse(status=202)
