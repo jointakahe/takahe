@@ -187,6 +187,7 @@ def test_fetch_actor(httpx_mock, config_system):
         },
     )
     identity.fetch_actor()
+    identity.fetch_pinned_post_uris()
 
     # Verify the data arrived
     identity = Identity.objects.get(pk=identity.pk)
