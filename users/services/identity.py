@@ -226,12 +226,7 @@ class IdentityService:
                         state__in=PostInteractionStates.group_active(),
                     )
                 except MultipleObjectsReturned as exc:
-                    logging.exception(
-                        exc,
-                        extras={
-                            "post": post,
-                        },
-                    )
+                    logging.exception("%s on %s", exc, object_uri)
                     pass
                 except Post.DoesNotExist:
                     # ignore 404s...
