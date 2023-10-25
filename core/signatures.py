@@ -295,6 +295,8 @@ class LDSignature:
         Verifies a document
         """
         try:
+            # causing side effects to the original document is bad form
+            document = document.copy()
             # Strip out the signature from the incoming document
             signature = document.pop("signature")
             # Create the options document
@@ -321,8 +323,6 @@ class LDSignature:
                 padding.PKCS1v15(),
                 hashes.SHA256(),
             )
-            # reinsert valid signature
-            document["signature"] = signature
         except InvalidSignature:
             raise VerificationError("LDSignature mismatch")
 

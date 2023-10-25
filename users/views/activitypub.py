@@ -224,8 +224,7 @@ class Inbox(View):
             except VerificationError:
                 # An invalid LD Signature might also indicate nothing but
                 # a syntactical difference between implementations.
-                # LDSignature already stripped the sig, this is a redundant
-                # operation.
+                # Strip it out if we can't verify it.
                 if "signature" in document:
                     document.pop("signature")
                 logging.info(
