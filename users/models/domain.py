@@ -210,12 +210,13 @@ class Domain(StatorModel):
                     and response.status_code not in [401, 403, 404, 406, 410]
                 ):
                     logging.warning(
-                        f"Client error fetching nodeinfo: {str(ex)}",
+                        "Client error fetching nodeinfo: %d %d %s",
+                        response.status_code,
+                        nodeinfo20_url,
+                        ex,
                         extra={
-                            "code": response.status_code,
                             "content": response.content,
                             "domain": self.domain,
-                            "nodeinfo20_url": nodeinfo20_url,
                         },
                     )
                 return None
@@ -224,10 +225,11 @@ class Domain(StatorModel):
                 info = NodeInfo(**response.json())
             except (json.JSONDecodeError, pydantic.ValidationError) as ex:
                 logging.warning(
-                    f"Client error decoding nodeinfo: {str(ex)}",
+                    "Client error decoding nodeinfo: %s %s",
+                    nodeinfo20_url,
+                    ex,
                     extra={
                         "domain": self.domain,
-                        "nodeinfo20_url": nodeinfo20_url,
                     },
                 )
                 return None
