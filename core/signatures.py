@@ -295,6 +295,8 @@ class LDSignature:
         Verifies a document
         """
         try:
+            # causing side effects to the original document is bad form
+            document = document.copy()
             # Strip out the signature from the incoming document
             signature = document.pop("signature")
             # Create the options document
@@ -322,7 +324,7 @@ class LDSignature:
                 hashes.SHA256(),
             )
         except InvalidSignature:
-            raise VerificationError("Signature mismatch")
+            raise VerificationError("LDSignature mismatch")
 
     @classmethod
     def create_signature(

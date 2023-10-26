@@ -44,7 +44,14 @@ class ViewIdentity(ListView):
         )
         # If it's remote, redirect to its profile page
         if not self.identity.local:
-            return redirect(self.identity.profile_uri)
+            if self.identity.profile_uri:
+                return redirect(self.identity.profile_uri)
+            elif self.identity.actor_uri:
+                # gup.pe topic actors don't have profile URLs
+                return redirect(self.identity.actor_uri)
+            else:
+                return Http404("Unknown actor")
+
         # If they're coming in looking for JSON, they want the actor
         if request.ap_json:
             # Return actor info

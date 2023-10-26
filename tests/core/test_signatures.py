@@ -12,6 +12,7 @@ def test_sign_ld(keypair):
     """
     # Create the signature
     document = {
+        "@context": ["https://www.w3.org/ns/activitystreams"],
         "id": "https://example.com/test-create",
         "type": "Create",
         "actor": "https://example.com/test-actor",
@@ -38,6 +39,7 @@ def test_verifying_ld(keypair):
     Tests verifying JSON-LD signatures from a known-good document
     """
     document = {
+        "@context": ["https://www.w3.org/ns/activitystreams"],
         "id": "https://example.com/test-create",
         "type": "Create",
         "actor": "https://example.com/test-actor",
@@ -45,13 +47,15 @@ def test_verifying_ld(keypair):
         "signature": {
             "@context": "https://w3id.org/identity/v1",
             "creator": "https://example.com/test-actor#test-key",
-            "created": "2022-11-12T21:41:47Z",
-            "signatureValue": "nTHfkHqG4hegfnjpHucXtXDLDaIKi2Duk+NeCzqTtkjf4NneXsofbZY2tGew4uAooEe1UeM23PIyjWYnR16KwcD4YY8nMj8L3xY2czwQPScMM9n+KhSHzkWfX+iI4FWKbjpPI8M53EtTRJU+1qEjjmGUx03Ip0vfvT5821etIgvY4wLNhg3y7R8fevnNux+BeytcEV6gM4awJJ6RK0xrWGLyTgDNon5V5aNUjwcV/UVPy9UAQi1KYWtA74/F0Y4oPzL5CTudPpyiViyVHZQaal4r+ExzgSvGztqKxQeT1ya6gLXxbm1YQ+8UiGVSS8zoGhMFDEZWVsRPv7e0jm5wfA==",
+            "created": "2023-10-25T08:08:47.702Z",
+            "signatureValue": "ajg4ukZzCtBWjflO1u6MlTc4tBVO6MsqzBr/L+kO5VI2ucutFaUdDa/Kx4W12ZCm9oYvTyMQMnoeELx5BifslRWEeMmo1wWMPXmg2/BMKgm8Spt+Zanq68uTlYGyKvuw1Q0FyNq84N2PbRZRXu2Yhlj2KnAVTRtKrsfEiCg3yNfVQ7lbUpDtlXvXLAq2yBN8H/BnZDoynjaDlafFW9Noq8025q1K/lz5jNzBEL22CSrKsD2qYWq1TK3s3h6SJ+j3J+5s0Ni3F/TH7W/5VeGBpzx4z6MSjmn7aHAS3JNCnAWDW9Rf6yKLg2y5htj6FpexiGcoEjO3VqjLoIP4f/115Q==",
             "type": "RsaSignature2017",
         },
     }
     # Ensure it verifies with correct data
     LDSignature.verify_signature(document, keypair["public_key"])
+    # signature should remain in document if it was valid
+    assert "signature" in document
     # Mutate it slightly and ensure it does not verify
     with pytest.raises(VerificationError):
         document["actor"] = "https://example.com/evil-actor"

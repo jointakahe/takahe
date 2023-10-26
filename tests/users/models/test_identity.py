@@ -199,6 +199,7 @@ def test_fetch_actor(httpx_mock, config_system):
         identity.featured_collection_uri
         == "https://example.com/test-actor/collections/featured/"
     )
+    identity.fetch_pinned_post_uris(identity.featured_collection_uri)
     assert identity.icon_uri == "https://example.com/icon.jpg"
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"

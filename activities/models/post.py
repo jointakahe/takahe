@@ -884,7 +884,7 @@ class Post(StatorModel):
                 except IntegrityError:
                     # despite previous checks, a parallel thread managed
                     # to create the same object already
-                    post = cls.by_object_uri(object_uri=data["id"])
+                    raise TryAgainLater()
             else:
                 raise cls.DoesNotExist(f"No post with ID {data['id']}", data)
         if update or created:
@@ -1014,7 +1014,7 @@ class Post(StatorModel):
                     response = SystemActor().signed_request(
                         method="get", uri=object_uri
                     )
-                except (httpx.HTTPError, ssl.SSLCertVerificationError):
+                except (httpx.HTTPError, ssl.SSLCertVerificationError, ValueError):
                     raise cls.DoesNotExist(f"Could not fetch {object_uri}")
                 if response.status_code in [404, 410]:
                     raise cls.DoesNotExist(f"No post at {object_uri}")
@@ -1072,7 +1072,7 @@ class Post(StatorModel):
             if data["actor"] != data["object"]["attributedTo"]:
                 raise ValueError("Create actor does not match its Post object", data)
             # Create it, stator will fan it out locally
-            cls.by_ap(data["object"], create=True, update=True)
+            cls.by_ap(data["object"], create=True, update=True, fetch_author=True)
 
     @classmethod
     def handle_update_ap(cls, data):
