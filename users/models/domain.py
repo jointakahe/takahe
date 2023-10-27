@@ -210,7 +210,7 @@ class Domain(StatorModel):
                     and response.status_code not in [401, 403, 404, 406, 410]
                 ):
                     logging.warning(
-                        "Client error fetching nodeinfo: %d %d %s",
+                        "Client error fetching nodeinfo: %d %s %s",
                         response.status_code,
                         nodeinfo20_url,
                         ex,
