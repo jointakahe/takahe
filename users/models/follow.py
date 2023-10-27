@@ -11,6 +11,8 @@ from users.models.block import Block
 from users.models.identity import Identity
 from users.models.inbox_message import InboxMessage
 
+logger = logging.getLogger(__name__)
+
 
 class FollowStates(StateGraph):
     unrequested = State(try_interval=600)
@@ -350,7 +352,7 @@ class Follow(StatorModel):
             try:
                 follow = cls.by_ap(data, create=True)
             except Identity.DoesNotExist:
-                logging.info(
+                logger.info(
                     "Identity not found for incoming Follow", extra={"data": data}
                 )
                 return
@@ -367,7 +369,7 @@ class Follow(StatorModel):
         try:
             follow = cls.by_ap(data["object"])
         except (cls.DoesNotExist, Identity.DoesNotExist):
-            logging.info(
+            logger.info(
                 "Follow or Identity not found for incoming Accept",
                 extra={"data": data},
             )
@@ -389,7 +391,7 @@ class Follow(StatorModel):
         try:
             follow = cls.by_ap(data["object"])
         except (cls.DoesNotExist, Identity.DoesNotExist):
-            logging.info(
+            logger.info(
                 "Follow or Identity not found for incoming Reject",
                 extra={"data": data},
             )
@@ -419,7 +421,7 @@ class Follow(StatorModel):
         try:
             follow = cls.by_ap(data["object"])
         except (cls.DoesNotExist, Identity.DoesNotExist):
-            logging.info(
+            logger.info(
                 "Follow or Identity not found for incoming Undo", extra={"data": data}
             )
             return

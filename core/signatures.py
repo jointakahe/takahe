@@ -19,6 +19,8 @@ from pyld import jsonld
 
 from core.ld import format_ld_date
 
+logger = logging.getLogger(__name__)
+
 
 class VerificationError(BaseException):
     """
@@ -259,7 +261,7 @@ class HttpSignature:
                 )
             except SSLError as invalid_cert:
                 # Not our problem if the other end doesn't have proper SSL
-                logging.info(f"{uri} {invalid_cert}")
+                logger.info("Invalid cert on %s %s", uri, invalid_cert)
                 raise SSLCertVerificationError(invalid_cert) from invalid_cert
             except InvalidCodepoint as ex:
                 # Convert to a more generic error we handle

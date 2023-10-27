@@ -11,6 +11,8 @@ from django.utils.functional import classproperty
 from stator.exceptions import TryAgainLater
 from stator.graph import State, StateGraph
 
+logger = logging.getLogger(__name__)
+
 
 class StateField(models.CharField):
     """
@@ -189,7 +191,7 @@ class StatorModel(models.Model):
         # If it's a manual progression state don't even try
         # We shouldn't really be here in this case, but it could be a race condition
         if current_state.externally_progressed:
-            logging.warning(
+            logger.warning(
                 f"Warning: trying to progress externally progressed state {self.state}!"
             )
             return None
@@ -203,7 +205,7 @@ class StatorModel(models.Model):
         except TryAgainLater:
             pass
         except BaseException as e:
-            logging.exception(e)
+            logger.exception(e)
         else:
             if next_state:
                 # Ensure it's a State object

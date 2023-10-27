@@ -37,6 +37,8 @@ from users.models.domain import Domain
 from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
 
+logger = logging.getLogger(__name__)
+
 
 class IdentityStates(StateGraph):
     """
@@ -872,7 +874,7 @@ class Identity(StatorModel):
                 # Their account got deleted, so let's do the same.
                 Identity.objects.filter(pk=self.pk).delete()
             if status_code < 500 and status_code not in [401, 403, 404, 406, 410]:
-                logging.info(
+                logger.info(
                     "Client error fetching actor: %d %s", status_code, self.actor_uri
                 )
             return False
@@ -880,7 +882,7 @@ class Identity(StatorModel):
             document = canonicalise(response.json(), include_security=True)
         except ValueError:
             # servers with empty or invalid responses are inevitable
-            logging.info(
+            logger.info(
                 "Invalid response fetching actor %s",
                 self.actor_uri,
                 extra={
@@ -942,10 +944,10 @@ class Identity(StatorModel):
                     self.domain = Domain.get_remote_domain(webfinger_domain)
             except TryAgainLater:
                 # continue with original domain when webfinger times out
-                logging.info("WebFinger timed out: %s", self.actor_uri)
+                logger.info("WebFinger timed out: %s", self.actor_uri)
                 pass
             except ValueError as exc:
-                logging.info(
+                logger.info(
                     "Can't parse WebFinger: %s %s",
                     exc.args[0],
                     self.actor_uri,

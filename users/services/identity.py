@@ -19,6 +19,8 @@ from users.models import (
     User,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class IdentityService:
     """
@@ -226,7 +228,7 @@ class IdentityService:
                         state__in=PostInteractionStates.group_active(),
                     )
                 except MultipleObjectsReturned as exc:
-                    logging.exception("%s on %s", exc, object_uri)
+                    logger.exception("%s on %s", exc, object_uri)
                     pass
                 except Post.DoesNotExist:
                     # ignore 404s...
