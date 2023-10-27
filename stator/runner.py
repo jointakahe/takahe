@@ -165,13 +165,14 @@ class StatorRunner:
         """
         with sentry.start_transaction(op="task", name="stator.run_scheduling"):
             for model in self.models:
-                num = self.handled.get(model._meta.label_lower, 0)
-                if num or settings.DEBUG:
-                    logger.info(
-                        f"{model._meta.label_lower}: Scheduling ({num} handled)"
-                    )
-                self.submit_stats(model)
-                model.transition_clean_locks()
+                with sentry.start_span(description=model._meta.label_lower):
+                    num = self.handled.get(model._meta.label_lower, 0)
+                    if num or settings.DEBUG:
+                        logger.info(
+                            f"{model._meta.label_lower}: Scheduling ({num} handled)"
+                        )
+                    self.submit_stats(model)
+                    model.transition_clean_locks()
 
     def submit_stats(self, model: type[StatorModel]):
         """
