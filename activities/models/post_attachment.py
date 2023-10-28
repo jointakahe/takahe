@@ -57,8 +57,8 @@ class PostAttachment(StatorModel):
 
     width = models.IntegerField(null=True, blank=True)
     height = models.IntegerField(null=True, blank=True)
-    focal_x = models.IntegerField(null=True, blank=True)
-    focal_y = models.IntegerField(null=True, blank=True)
+    focal_x = models.FloatField(null=True, blank=True)
+    focal_y = models.FloatField(null=True, blank=True)
     blurhash = models.TextField(null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
