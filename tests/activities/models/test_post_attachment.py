@@ -1,13 +1,12 @@
 import pytest
 from django.core.files.base import ContentFile
-from pytest_httpx import HTTPXMock
 
 from activities.models import Post, PostAttachment, PostAttachmentStates
 from core.files import resize_image
 
 
 @pytest.mark.django_db
-def test_remote_attachment(remote_identity):
+def test_remote_attachment(remote_identity, config_system):
     """
     Tests that remote post attachments and their metadata work
     """
@@ -45,7 +44,7 @@ def test_remote_attachment(remote_identity):
 
 
 @pytest.mark.django_db
-def test_local_attachment(httpx_mock: HTTPXMock, identity):
+def test_local_attachment(identity, config_system):
     """
     Tests that local post attachments and their metadata work
     """
