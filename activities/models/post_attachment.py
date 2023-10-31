@@ -113,7 +113,7 @@ class PostAttachment(StatorModel):
     ### ActivityPub ###
 
     def to_ap(self):
-        return {
+        ap = {
             "url": self.file.url,
             "name": self.name,
             "type": "Document",
@@ -122,6 +122,11 @@ class PostAttachment(StatorModel):
             "mediaType": self.mimetype,
             "blurhash": self.blurhash,
         }
+        if self.is_image() and self.focal_x and self.focal_y:
+            ap["type"] = "Image"
+            ap["mediaType"] = self.mimetype
+            ap["focalPoint"] = [self.focal_x, self.focal_y]
+        return ap
 
     ### Mastodon Client API ###
 
