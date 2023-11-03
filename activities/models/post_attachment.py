@@ -124,7 +124,6 @@ class PostAttachment(StatorModel):
         }
         if self.is_image() and self.focal_x and self.focal_y:
             ap["type"] = "Image"
-            ap["mediaType"] = self.mimetype
             ap["focalPoint"] = [self.focal_x, self.focal_y]
         return ap
 
