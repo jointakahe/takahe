@@ -57,8 +57,8 @@ class PostAttachment(StatorModel):
 
     width = models.IntegerField(null=True, blank=True)
     height = models.IntegerField(null=True, blank=True)
-    focal_x = models.IntegerField(null=True, blank=True)
-    focal_y = models.IntegerField(null=True, blank=True)
+    focal_x = models.FloatField(null=True, blank=True)
+    focal_y = models.FloatField(null=True, blank=True)
     blurhash = models.TextField(null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -113,7 +113,7 @@ class PostAttachment(StatorModel):
     ### ActivityPub ###
 
     def to_ap(self):
-        return {
+        ap = {
             "url": self.file.url,
             "name": self.name,
             "type": "Document",
@@ -122,6 +122,10 @@ class PostAttachment(StatorModel):
             "mediaType": self.mimetype,
             "blurhash": self.blurhash,
         }
+        if self.is_image() and self.focal_x and self.focal_y:
+            ap["type"] = "Image"
+            ap["focalPoint"] = [self.focal_x, self.focal_y]
+        return ap
 
     ### Mastodon Client API ###
 
