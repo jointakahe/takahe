@@ -15,14 +15,15 @@ Client Apps
 These apps are known to fully work as far as Takahē's
 :doc:`own featureset <features>` allows:
 
-* Tusky
-* Elk
-* Pinafore
-
+* `Tusky <https://tusky.app/>`_
+* `Elk <https://elk.zone/>`_
+* `Pinafore <https://pinafore.social/>`_
+* `Tuba <https://tuba.geopjr.dev/>`_
 
 These apps have had initial testing and work at a basic level:
 
-* Ivory
+* `Ivory <https://tapbots.com/ivory/>`_
+* `Phanpy <https://phanpy.social/>`_
 
 
 Fediverse Servers
