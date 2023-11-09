@@ -610,12 +610,24 @@ class Post(StatorModel):
             "likes": self.interactions.filter(
                 type=PostInteraction.Types.like,
                 state__in=PostInteractionStates.group_active(),
-            ).count(),
+            )
+            .values("identity")
+            .distinct()
+            .count(),  # This counts each user that's had any likes/reactions
             "boosts": self.interactions.filter(
                 type=PostInteraction.Types.boost,
                 state__in=PostInteractionStates.group_active(),
             ).count(),
             "replies": Post.objects.filter(in_reply_to=self.object_uri).count(),
+            "reactions": {
+                row["value"]: row["count"]
+                for row in self.interactions.filter(
+                    type=PostInteraction.Types.like,
+                    state__in=PostInteractionStates.group_active(),
+                )
+                .values("value")
+                .annotate(count=models.Count("identity"))
+            },
         }
         if save:
             self.save()
