@@ -1,6 +1,8 @@
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
@@ -38,6 +40,8 @@ class MigrateInPage(IdentityViewMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if not settings.SETUP.ALLOW_USER_MIGRATION:
+            raise Http404()
         # If they asked for an alias deletion, do it here
         if "remove_alias" in self.request.GET:
             self.identity.remove_alias(self.request.GET["remove_alias"])

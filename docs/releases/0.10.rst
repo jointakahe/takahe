@@ -27,6 +27,11 @@ Minor changes also include:
 * Profile pages are no longer shown for remote identities; instead, users are
   linked or redirected directly to the remote profile page.
 
+* Inbound migration has been implemented, but is disabled by default as outbound
+  migration is not yet complete, and we don't want to release a system that
+  captures users with no outward path. If you *really* want to enable it, set
+  ``TAKAHE_ALLOW_USER_MIGRATION=true`` in your environment.
+
 If you'd like to help with code, design, or other areas, see
 :doc:`/contributing` to see how to get in touch.
 
