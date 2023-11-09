@@ -32,6 +32,13 @@ Minor changes also include:
   captures users with no outward path. If you *really* want to enable it, set
   ``TAKAHE_ALLOW_USER_MIGRATION=true`` in your environment.
 
+* Federation compatibility has been improved with several other servers.
+
+* Blocked domains now receive absolutely zero fetches from Takahē; previously,
+  they were still pinged occasionally to see if they were online.
+
+* SMTP servers that don't require authentication are now supported.
+
 If you'd like to help with code, design, or other areas, see
 :doc:`/contributing` to see how to get in touch.
 
