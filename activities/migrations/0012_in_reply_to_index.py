@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("activities", "0011_postinteraction_value_alter_postinteraction_type"),
     ]

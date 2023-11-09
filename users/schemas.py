@@ -19,7 +19,6 @@ class NodeInfoUsage(BaseModel):
 
 
 class NodeInfo(BaseModel):
-
     version: Literal["2.0"]
     software: NodeInfoSoftware
     protocols: list[str] | None

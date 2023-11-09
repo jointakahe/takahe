@@ -35,7 +35,6 @@ class DomainValidator(RegexValidator):
 
 @method_decorator(admin_required, name="dispatch")
 class Domains(TemplateView):
-
     template_name = "admin/domains.html"
 
     def get_context_data(self):
@@ -47,7 +46,6 @@ class Domains(TemplateView):
 
 @method_decorator(admin_required, name="dispatch")
 class DomainCreate(FormView):
-
     template_name = "admin/domain_create.html"
     extra_context = {"section": "domains"}
 
@@ -156,7 +154,6 @@ class DomainCreate(FormView):
 
 @method_decorator(admin_required, name="dispatch")
 class DomainEdit(FormView):
-
     template_name = "admin/domain_edit.html"
     extra_context = {"section": "domains"}
 
@@ -250,7 +247,6 @@ class DomainEdit(FormView):
 
 @method_decorator(admin_required, name="dispatch")
 class DomainDelete(TemplateView):
-
     template_name = "admin/domain_delete.html"
 
     def dispatch(self, request, domain):

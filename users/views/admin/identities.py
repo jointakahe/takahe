@@ -10,7 +10,6 @@ from users.models import Identity, IdentityStates
 
 @method_decorator(moderator_required, name="dispatch")
 class IdentitiesRoot(ListView):
-
     template_name = "admin/identities.html"
     paginate_by = 30
 
@@ -51,7 +50,6 @@ class IdentitiesRoot(ListView):
 
 @method_decorator(moderator_required, name="dispatch")
 class IdentityEdit(FormView):
-
     template_name = "admin/identity_edit.html"
     extra_context = {
         "section": "identities",

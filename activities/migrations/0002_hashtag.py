@@ -8,7 +8,6 @@ import stator.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("activities", "0001_initial"),
     ]

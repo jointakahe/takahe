@@ -8,7 +8,6 @@ import users.models.block
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0011_announcement"),
     ]

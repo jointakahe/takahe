@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("activities", "0012_in_reply_to_index"),
         ("users", "0014_domain_notes"),

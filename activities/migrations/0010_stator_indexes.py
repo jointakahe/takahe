@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0013_stator_indexes"),
         ("activities", "0009_alter_timelineevent_index_together"),

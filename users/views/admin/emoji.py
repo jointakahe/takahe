@@ -13,7 +13,6 @@ from users.views.admin.generic import HTMXActionView
 
 @method_decorator(moderator_required, name="dispatch")
 class EmojiRoot(ListView):
-
     template_name = "admin/emoji.html"
     paginate_by = 50
 
@@ -41,7 +40,6 @@ class EmojiRoot(ListView):
 
 @method_decorator(moderator_required, name="dispatch")
 class EmojiCreate(FormView):
-
     template_name = "admin/emoji_create.html"
     extra_context = {"section": "emoji"}
 

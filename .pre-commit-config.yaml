@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-case-conflict
       - id: check-merge-conflict
@@ -15,21 +15,22 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: "v3.3.0"
+    rev: "v3.15.0"
     hooks:
       - id: pyupgrade
-        args: [--py310-plus]
+        args: [--py311-plus]
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: "1.13.0"
+    rev: "1.15.0"
     hooks:
       - id: django-upgrade
         args: [--target-version, "4.2"]
 
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 23.11.0
     hooks:
       - id: black
+        language_version: python3.11
 
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
@@ -38,12 +39,12 @@ repos:
         args: ["--profile=black"]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
+    rev: v1.6.1
     hooks:
       - id: mypy
         exclude: "^tests/"
@@ -51,8 +52,6 @@ repos:
           [types-pyopenssl, types-mock, types-cachetools, types-python-dateutil]
 
   - repo: https://github.com/rtts/djhtml
-    rev: v1.5.2
+    rev: 3.0.6
     hooks:
       - id: djhtml
-      - id: djcss
-      - id: djjs

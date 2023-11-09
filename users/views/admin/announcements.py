@@ -9,7 +9,6 @@ from users.views.admin.generic import HTMXActionView
 
 @method_decorator(admin_required, name="dispatch")
 class AnnouncementsRoot(ListView):
-
     template_name = "admin/announcements.html"
     paginate_by = 30
 
@@ -26,7 +25,6 @@ class AnnouncementsRoot(ListView):
 
 @method_decorator(admin_required, name="dispatch")
 class AnnouncementCreate(CreateView):
-
     model = Announcement
     template_name = "admin/announcement_create.html"
     extra_context = {"section": "announcements"}
@@ -45,7 +43,6 @@ class AnnouncementCreate(CreateView):
 
 @method_decorator(admin_required, name="dispatch")
 class AnnouncementEdit(UpdateView):
-
     model = Announcement
     template_name = "admin/announcement_edit.html"
     extra_context = {"section": "announcements"}
@@ -61,7 +58,6 @@ class AnnouncementEdit(UpdateView):
 
 @method_decorator(admin_required, name="dispatch")
 class AnnouncementDelete(DeleteView):
-
     model = Announcement
     template_name = "admin/announcement_delete.html"
     success_url = Announcement.urls.admin_root

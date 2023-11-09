@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0002_remove_token_code_token_revoked_alter_token_token_and_more"),
     ]

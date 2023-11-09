@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0015_bookmark"),
         ("activities", "0012_in_reply_to_index"),

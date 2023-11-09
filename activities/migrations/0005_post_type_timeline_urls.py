@@ -14,7 +14,6 @@ def timelineevent_populate_published(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("activities", "0004_emoji_post_emojis"),
     ]

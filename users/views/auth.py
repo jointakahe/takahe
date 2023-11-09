@@ -29,11 +29,9 @@ class Logout(LogoutView):
 
 
 class Signup(FormView):
-
     template_name = "auth/signup.html"
 
     class form_class(forms.Form):
-
         email = forms.EmailField(
             help_text="We will send a link to this email to create your account.",
         )
@@ -126,11 +124,9 @@ class Signup(FormView):
 
 
 class TriggerReset(FormView):
-
     template_name = "auth/trigger_reset.html"
 
     class form_class(forms.Form):
-
         email = forms.EmailField(
             help_text="We will send a reset link to this email",
         )
@@ -155,11 +151,9 @@ class TriggerReset(FormView):
 
 
 class PerformReset(FormView):
-
     template_name = "auth/perform_reset.html"
 
     class form_class(forms.Form):
-
         password = forms.CharField(
             widget=forms.PasswordInput,
             help_text="Must be at least 8 characters, and contain both letters and numbers.",

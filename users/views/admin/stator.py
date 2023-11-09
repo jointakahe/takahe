@@ -7,7 +7,6 @@ from users.decorators import admin_required
 
 @method_decorator(admin_required, name="dispatch")
 class Stator(TemplateView):
-
     template_name = "admin/stator.html"
 
     def get_context_data(self):

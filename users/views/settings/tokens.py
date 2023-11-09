@@ -61,7 +61,6 @@ class TokenCreate(IdentityViewMixin, FormView):
 
 
 class TokenEdit(IdentityViewMixin, DetailView):
-
     template_name = "settings/token_edit.html"
     extra_context = {"section": "tokens"}
 

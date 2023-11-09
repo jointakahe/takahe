@@ -9,7 +9,6 @@ import users.models.report
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("activities", "0004_emoji_post_emojis"),
         ("users", "0004_identity_admin_notes_identity_restriction_and_more"),

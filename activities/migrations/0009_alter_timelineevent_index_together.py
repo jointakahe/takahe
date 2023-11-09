@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0011_announcement"),
         ("activities", "0008_state_and_post_indexes"),

@@ -10,7 +10,6 @@ import core.uploads
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("activities", "0002_hashtag"),
     ]

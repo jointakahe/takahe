@@ -103,9 +103,9 @@ class CsvView(IdentityViewMixin, View):
                 else:
                     raise ValueError(f"Cannot export attribute {attrname}")
                 # Make it into CSV format
-                if type(value) == bool:
+                if isinstance(value, bool):
                     value = "true" if value else "false"
-                elif type(value) == int:
+                elif isinstance(value, int):
                     value = str(value)
                 row.append(value)
             writer.writerow(row)

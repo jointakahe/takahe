@@ -8,7 +8,6 @@ import users.models.domain
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0009_state_and_post_indexes"),
     ]

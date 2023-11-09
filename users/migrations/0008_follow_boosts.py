@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0007_remove_invite_email_invite_expires_invite_uses"),
     ]

@@ -23,8 +23,8 @@
             _="on click halt the event then call imageviewer.show(me)"
         >
             <img src="{{ identity.local_icon_url.relative }}" class="icon"
-                data-original-url="{{ identity.local_icon_url.relative }}"
-                alt="Profile image for {{ identity.name }}"
+                 data-original-url="{{ identity.local_icon_url.relative }}"
+                 alt="Profile image for {{ identity.name }}"
             >
         </span>
 
@@ -47,13 +47,13 @@
         <small>
             @{{ identity.handle }}
             <a title="Copy handle"
-                class="copy"
-                tabindex="0"
-                _="on click or keyup[key is 'Enter']
-                    writeText('@{{ identity.handle }}') into the navigator's clipboard
-                    then add .copied
-                    wait 2s
-                    then remove .copied">
+               class="copy"
+               tabindex="0"
+               _="on click or keyup[key is 'Enter']
+                  writeText('@{{ identity.handle }}') into the navigator's clipboard
+                  then add .copied
+                  wait 2s
+                  then remove .copied">
                 <i class="fa-solid fa-copy"></i>
             </a>
         </small>

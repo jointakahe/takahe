@@ -13,7 +13,6 @@ from users.models import Invite
 
 @method_decorator(moderator_required, name="dispatch")
 class InvitesRoot(ListView):
-
     template_name = "admin/invites.html"
     paginate_by = 30
 
@@ -29,7 +28,6 @@ class InvitesRoot(ListView):
 
 @method_decorator(moderator_required, name="dispatch")
 class InviteCreate(FormView):
-
     template_name = "admin/invite_create.html"
     extra_context = {
         "section": "invites",
@@ -65,7 +63,6 @@ class InviteCreate(FormView):
 
 @method_decorator(moderator_required, name="dispatch")
 class InviteView(FormView):
-
     template_name = "admin/invite_view.html"
     extra_context = {
         "section": "invites",

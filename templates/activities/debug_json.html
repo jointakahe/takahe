@@ -39,44 +39,44 @@
                 <div class="field payload">
                     <span class="name">Raw Response:
                         <a title="Copy Content"
-                            class="copy"
-                            _="on click
-                                writeText(#raw_response.innerText) into the navigator's clipboard
-                                then add .copied
-                                wait 2s
-                                then remove .copied">
+                           class="copy"
+                           _="on click
+                              writeText(#raw_response.innerText) into the navigator's clipboard
+                              then add .copied
+                              wait 2s
+                              then remove .copied">
                             <i class="fa-solid fa-copy"></i>
                         </a>
                     </span>
                     <span class="value">
                         <a _="on click
-                            toggle .hidden on #raw_response
-                            then
-                            if my.innerText is 'Hide' set my.innerText to 'Show'
-                            else set my.innerText to 'Hide'
-                        ">Show</a></span>
+                              toggle .hidden on #raw_response
+                              then
+                              if my.innerText is 'Hide' set my.innerText to 'Show'
+                              else set my.innerText to 'Hide'
+                             ">Show</a></span>
                 </div>
                 <pre id="raw_response" class="hidden">{{ raw_result }}</pre>
 
                 <div class="field payload">
                     <span class="name">Canonical:
                         <a title="Copy Content"
-                            class="copy"
-                            _="on click
-                                writeText(#canonical_response.innerText) into the navigator's clipboard
-                                then add .copied
-                                wait 2s
-                                then remove .copied">
+                           class="copy"
+                           _="on click
+                              writeText(#canonical_response.innerText) into the navigator's clipboard
+                              then add .copied
+                              wait 2s
+                              then remove .copied">
                             <i class="fa-solid fa-copy"></i>
                         </a>
                     </span>
                     <span class="value">
                         <a _="on click
-                            toggle .hidden on #canonical_response
-                            then
-                            if my.innerText is 'Hide' set my.innerText to 'Show'
-                            else set my.innerText to 'Hide'
-                        ">Show</a></span>
+                              toggle .hidden on #canonical_response
+                              then
+                              if my.innerText is 'Hide' set my.innerText to 'Show'
+                              else set my.innerText to 'Hide'
+                             ">Show</a></span>
                 </div>
                 <pre id="canonical_response" class="hidden">{{ result }}</pre>
             </div>

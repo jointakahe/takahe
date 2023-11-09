@@ -7,7 +7,6 @@ from users.views.base import IdentityViewMixin
 
 
 class DeleteIdentity(IdentityViewMixin, FormView):
-
     template_name = "settings/delete.html"
     extra_context = {"section": "delete"}
 

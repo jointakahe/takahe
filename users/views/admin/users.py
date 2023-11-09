@@ -10,7 +10,6 @@ from users.models import User
 
 @method_decorator(admin_required, name="dispatch")
 class UsersRoot(ListView):
-
     template_name = "admin/users.html"
     paginate_by = 30
 
@@ -33,7 +32,6 @@ class UsersRoot(ListView):
 
 @method_decorator(admin_required, name="dispatch")
 class UserEdit(FormView):
-
     template_name = "admin/user_edit.html"
     extra_context = {
         "section": "users",

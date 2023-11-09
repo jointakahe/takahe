@@ -24,7 +24,6 @@ class AdminSettingsPage(SettingsPage):
 
 
 class BasicSettings(AdminSettingsPage):
-
     section = "basic"
 
     options = {
@@ -155,7 +154,6 @@ cache_field_defaults = {
 
 
 class TuningSettings(AdminSettingsPage):
-
     section = "tuning"
 
     options = {
@@ -196,7 +194,6 @@ class TuningSettings(AdminSettingsPage):
 
 
 class PoliciesSettings(AdminSettingsPage):
-
     section = "policies"
 
     options = {

@@ -10,7 +10,6 @@ from users.models import Identity, Report
 
 @method_decorator(moderator_required, name="dispatch")
 class ReportsRoot(ListView):
-
     template_name = "admin/reports.html"
     paginate_by = 30
 
@@ -34,7 +33,6 @@ class ReportsRoot(ListView):
 
 @method_decorator(moderator_required, name="dispatch")
 class ReportView(FormView):
-
     template_name = "admin/report_view.html"
     extra_context = {
         "section": "reports",

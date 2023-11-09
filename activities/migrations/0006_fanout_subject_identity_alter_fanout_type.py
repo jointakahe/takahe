@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0005_report"),
         ("activities", "0005_post_type_timeline_urls"),

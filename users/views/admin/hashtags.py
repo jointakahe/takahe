@@ -10,7 +10,6 @@ from users.decorators import moderator_required
 
 @method_decorator(moderator_required, name="dispatch")
 class Hashtags(ListView):
-
     template_name = "admin/hashtags.html"
     paginate_by = 30
 
@@ -26,7 +25,6 @@ class Hashtags(ListView):
 
 @method_decorator(moderator_required, name="dispatch")
 class HashtagEdit(FormView):
-
     template_name = "admin/hashtag_edit.html"
     extra_context = {"section": "hashtags"}
 

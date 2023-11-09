@@ -16,7 +16,6 @@ import users.models.password_reset
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []
