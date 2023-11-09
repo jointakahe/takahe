@@ -39,6 +39,9 @@ Minor changes also include:
 
 * SMTP servers that don't require authentication are now supported.
 
+* Python 3.11 is now the minimum version required; this will not affect you at
+  all if you run Takahē via a docker image, as is recommended.
+
 If you'd like to help with code, design, or other areas, see
 :doc:`/contributing` to see how to get in touch.
 

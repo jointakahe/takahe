@@ -79,7 +79,7 @@ local installation, though.
 Direct Installation
 ~~~~~~~~~~~~~~~~~~~
 
-Takahē requires Python 3.10 or above, so you'll need that first. Clone the repo::
+Takahē requires Python 3.11 or above, so you'll need that first. Clone the repo::
 
     git clone https://github.com/jointakahe/takahe/
 
