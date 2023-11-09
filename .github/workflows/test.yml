@@ -4,6 +4,8 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
+    branches:
+      - main
   pull_request:
     paths-ignore:
       - 'docs/**'
@@ -44,6 +46,7 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: |
+          sudo apt-get install -y libmemcached-dev libwebp-dev libjpeg-dev
           python -m pip install -r requirements-dev.txt
       - name: Run pytest
         env:
