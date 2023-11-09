@@ -154,7 +154,7 @@ class PostInteraction(StatorModel):
     )
 
     # Used to store any interaction extra text value like the vote
-    # in the question/poll case
+    # in the question/poll case, or the reaction
     value = models.CharField(max_length=50, blank=True, null=True)
 
     # When the activity was originally created (as opposed to when we received it)
@@ -392,6 +392,7 @@ class PostInteraction(StatorModel):
                 # Get the right type
                 if data["type"].lower() == "like":
                     type = cls.Types.like
+                    value = data.get("content") or data.get("_misskey_reaction")
                 elif data["type"].lower() == "announce":
                     type = cls.Types.boost
                 elif (
