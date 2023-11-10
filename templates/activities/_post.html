@@ -78,10 +78,16 @@
             <i class="fa-solid fa-reply"></i>
             <span class="like-count">{{ post.stats_with_defaults.replies|default:"0" }}</span>
         </a>
-        <a title="Likes" class="no-action">
-            <i class="fa-solid fa-star"></i>
-            <span class="like-count">{{ post.stats_with_defaults.likes|default:"0" }}</span>
-        </a>
+        {% for reaction, count in post.stats_with_defaults.reactions.items %}
+            <a title="Reaction {{reaction}}" class="no-action">
+                {% if reaction %}
+                    <span>{{reaction}}</span>
+                {% else %}
+                    <i class="fa-solid fa-star"></i>
+                {% endif %}
+                <span class="like-count">{{count}}</span>
+            </a>
+        {% endfor %}
         <a title="Boosts" class="no-action">
             <i class="fa-solid fa-retweet"></i>
             <span class="like-count">{{ post.stats_with_defaults.boosts|default:"0" }}</span>

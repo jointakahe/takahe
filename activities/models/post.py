@@ -471,6 +471,7 @@ class Post(StatorModel):
             "likes": self.stats.get("likes", 0) if self.stats else 0,
             "boosts": self.stats.get("boosts", 0) if self.stats else 0,
             "replies": self.stats.get("replies", 0) if self.stats else 0,
+            "reactions": self.stats.get("reactions", {}) if self.stats else {},
         }
 
     ### Local creation/editing ###
@@ -620,7 +621,7 @@ class Post(StatorModel):
             ).count(),
             "replies": Post.objects.filter(in_reply_to=self.object_uri).count(),
             "reactions": {
-                row["value"]: row["count"]
+                row["value"] or "": row["count"]
                 for row in self.interactions.filter(
                     type=PostInteraction.Types.like,
                     state__in=PostInteractionStates.group_active(),
