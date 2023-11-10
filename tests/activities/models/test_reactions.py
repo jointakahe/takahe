@@ -307,6 +307,53 @@ def test_react_stats_multiple(
     assert post.stats["likes"] == 1
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("local", [True, False])
+def test_react_stats_mixed(
+    identity: Identity,
+    other_identity: Identity,
+    remote_identity: Identity,
+    stator,
+    local: bool,
+):
+    """
+    Ensures that mixed Likes and Reactions get aggregated
+    """
+    post = Post.create_local(author=identity, content="I love birds!")
+    for i, reaction in enumerate("abc"):
+        if local:
+            PostService(post).like_as(other_identity, reaction)
+        else:
+            message = {
+                "id": f"test{i}",
+                "type": "Like",
+                "actor": remote_identity.actor_uri,
+                "object": post.object_uri,
+                "content": reaction,
+            }
+            InboxMessage.objects.create(message=message)
+
+    if local:
+        PostService(post).like_as(other_identity)
+    else:
+        message = {
+            "id": "test",
+            "type": "Like",
+            "actor": remote_identity.actor_uri,
+            "object": post.object_uri,
+        }
+        InboxMessage.objects.create(message=message)
+
+    # Run stator thrice - to receive the post, make fanouts and then process them
+    for _ in range(4):
+        stator.run_single_cycle()
+
+    post.refresh_from_db()
+
+    assert post.stats["reactions"] == {"a": 1, "b": 1, "c": 1, "": 1}
+    assert post.stats["likes"] == 1
+
+
 # TODO: Test that multiple reactions can be added and deleted correctly
 
 # TODO: How should plain likes and reactions from the same source be handled?
