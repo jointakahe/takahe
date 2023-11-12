@@ -62,6 +62,12 @@ class Command(BaseCommand):
     ):
         # Cache system config
         Config.system = Config.load_system()
+        logging.basicConfig(
+            format="[%(asctime)s] %(levelname)8s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            level=logging.INFO,
+            force=True,
+        )
         # Resolve the models list into names
         models = cast(
             list[type[StatorModel]],
