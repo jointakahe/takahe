@@ -37,7 +37,7 @@ class Command(BaseCommand):
             in_reply_to__in=post_ids_and_uris.keys()
         ).values_list("in_reply_to", flat=True)
         for reply in replies:
-            if reply:
+            if reply and reply in post_ids_and_uris:
                 del post_ids_and_uris[reply]
 
         # Delete them
