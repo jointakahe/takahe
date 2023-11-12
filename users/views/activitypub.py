@@ -176,7 +176,13 @@ class Inbox(View):
 
         # See if it's a type of message we know we want to ignore right now
         # (e.g. Lemmy likes/dislikes, which we can't process anyway)
-        if document_type == "Announce" and document_subtype in ["Like", "Dislike"]:
+        if document_type == "Announce" and document_subtype in [
+            "Like",
+            "Dislike",
+            "Create",
+            "Undo",
+            "Update",
+        ]:
             return HttpResponse(status=202)
 
         # authenticate HTTP signature first, if one is present and the actor
