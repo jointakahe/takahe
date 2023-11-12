@@ -1,7 +1,7 @@
 0.10
 ====
 
-*Released: Not Yet Released*
+*Released: 2023/11/12*
 
 This release is a polish release that mostly focuses on performance, stability
 and federation compatibility.
