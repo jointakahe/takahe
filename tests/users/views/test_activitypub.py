@@ -1,5 +1,7 @@
 import pytest
 
+from users.models import InboxMessage
+
 
 @pytest.mark.django_db
 def test_webfinger_actor(client, identity):
@@ -59,5 +61,54 @@ def test_delete_unknown_actor(client, identity):
     resp = client.post(
         identity.inbox_uri, data=data, content_type="application/activity+json"
     )
-    print(resp.content)
+    assert resp.status_code == 202
+
+
+@pytest.mark.django_db
+def test_ignore_lemmy(client, identity):
+    """
+    Tests that message types we know we cannot handle are ignored immediately
+    """
+    data = {
+        "cc": "https://lemmy.ml/c/asklemmy/followers",
+        "id": "https://lemmy.ml/activities/announce/12345",
+        "to": "as:Public",
+        "type": "Announce",
+        "actor": "https://lemmy.ml/c/asklemmy",
+        "object": {
+            "id": "https://lemmy.world/activities/like/12345",
+            "type": "Like",
+            "actor": "https://lemmy.world/u/Nobody",
+            "object": "https://sopuli.xyz/comment/12345",
+            "audience": "https://lemmy.ml/c/asklemmy",
+        },
+        "@context": [
+            "https://www.w3.org/ns/activitystreams",
+            "https://w3id.org/security/v1",
+            {
+                "pt": "https://joinpeertube.org/ns#",
+                "sc": "http://schema.org/",
+                "lemmy": "https://join-lemmy.org/ns#",
+                "expires": "as:endTime",
+                "litepub": "http://litepub.social/ns#",
+                "language": "sc:inLanguage",
+                "stickied": "lemmy:stickied",
+                "sensitive": "as:sensitive",
+                "identifier": "sc:identifier",
+                "moderators": {"@id": "lemmy:moderators", "@type": "@id"},
+                "removeData": "lemmy:removeData",
+                "ChatMessage": "litepub:ChatMessage",
+                "matrixUserId": "lemmy:matrixUserId",
+                "distinguished": "lemmy:distinguished",
+                "commentsEnabled": "pt:commentsEnabled",
+                "postingRestrictedToMods": "lemmy:postingRestrictedToMods",
+            },
+            "https://w3id.org/security/v1",
+        ],
+    }
+    num_inbox_messages = InboxMessage.objects.count()
+    resp = client.post(
+        identity.inbox_uri, data=data, content_type="application/activity+json"
+    )
+    assert num_inbox_messages == InboxMessage.objects.count()
     assert resp.status_code == 202

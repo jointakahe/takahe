@@ -138,6 +138,11 @@ class Inbox(View):
             return HttpResponseBadRequest("Payload size too large")
         # Load the LD
         document = canonicalise(json.loads(request.body), include_security=True)
+        document_type = document["type"]
+        document_subtype = None
+        if isinstance(document.get("object"), dict):
+            document_subtype = document["object"].get("type")
+
         # Find the Identity by the actor on the incoming item
         # This ensures that the signature used for the headers matches the actor
         # described in the payload.
@@ -147,7 +152,7 @@ class Inbox(View):
 
         identity = Identity.by_actor_uri(document["actor"], create=True, transient=True)
         if (
-            document["type"] == "Delete"
+            document_type == "Delete"
             and document["actor"] == document["object"]
             and identity._state.adding
         ):
@@ -169,6 +174,11 @@ class Inbox(View):
             )
             return HttpResponse(status=202)
 
+        # See if it's a type of message we know we want to ignore right now
+        # (e.g. Lemmy likes/dislikes, which we can't process anyway)
+        if document_type == "Announce" and document_subtype in ["Like", "Dislike"]:
+            return HttpResponse(status=202)
+
         # authenticate HTTP signature first, if one is present and the actor
         # is already known to us. An invalid signature is an error and message
         # should be discarded. NOTE: for previously unknown actors, we
@@ -182,7 +192,7 @@ class Inbox(View):
                     )
                     logging.debug(
                         "Inbox: %s from %s has good HTTP signature",
-                        document["type"],
+                        document_type,
                         identity,
                     )
                 else:
