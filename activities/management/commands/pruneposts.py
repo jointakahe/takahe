@@ -32,9 +32,10 @@ class Command(BaseCommand):
         print(f"  found {len(post_ids_and_uris)}")
 
         # Fetch all of their replies and exclude any that have local replies
-        print("Excluding ones with replies...")
+        print("Excluding ones with local replies...")
         replies = Post.objects.filter(
-            in_reply_to__in=post_ids_and_uris.keys()
+            local=True,
+            in_reply_to__in=post_ids_and_uris.keys(),
         ).values_list("in_reply_to", flat=True)
         for reply in replies:
             if reply and reply in post_ids_and_uris:
