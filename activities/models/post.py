@@ -49,7 +49,7 @@ from users.models.system_actor import SystemActor
 
 class PostStates(StateGraph):
     new = State(try_interval=300)
-    fanned_out = State(try_interval=86400 * 14)
+    fanned_out = State(externally_progressed=True)
     deleted = State(try_interval=300)
     deleted_fanned_out = State(delete_after=86400)
 
