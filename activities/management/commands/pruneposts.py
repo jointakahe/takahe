@@ -46,6 +46,6 @@ class Command(BaseCommand):
         number_deleted, _ = Post.objects.filter(
             id__in=post_ids_and_uris.values()
         ).delete()
-        print(f"Deleted {number_deleted} posts")
+        print(f"Deleted {number_deleted} posts and dependencies")
         if number_deleted == 0:
             sys.exit(1)
