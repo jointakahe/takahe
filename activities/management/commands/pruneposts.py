@@ -3,6 +3,7 @@ import sys
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from activities.models import Post
@@ -21,13 +22,21 @@ class Command(BaseCommand):
         )
 
     def handle(self, number: int, *args, **options):
+        if not settings.SETUP.REMOTE_PRUNE_HORIZON:
+            print("Pruning has been disabled as REMOTE_PRUNE_HORIZON=0")
+            sys.exit(2)
         # Find a set of posts that match the initial criteria
         print(f"Running query to find up to {number} old posts...")
         posts = Post.objects.filter(
             local=False,
             created__lt=timezone.now()
             - datetime.timedelta(days=settings.SETUP.REMOTE_PRUNE_HORIZON),
-        ).exclude(interactions__identity__local=True)[:number]
+        ).exclude(
+            Q(interactions__identity__local=True)
+            | Q(visibility=Post.Visibilities.mentioned)
+        )[
+            :number
+        ]
         post_ids_and_uris = dict(posts.values_list("object_uri", "id"))
         print(f"  found {len(post_ids_and_uris)}")
 
@@ -43,9 +52,12 @@ class Command(BaseCommand):
 
         # Delete them
         print(f"  down to {len(post_ids_and_uris)} to delete")
-        number_deleted, _ = Post.objects.filter(
+        print("Deleting...")
+        number_deleted, deleted = Post.objects.filter(
             id__in=post_ids_and_uris.values()
         ).delete()
-        print(f"Deleted {number_deleted} posts and dependencies")
+        print("Deleted:")
+        for model, model_deleted in deleted.items():
+            print(f"  {model}: {model_deleted}")
         if number_deleted == 0:
             sys.exit(1)
