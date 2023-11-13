@@ -56,10 +56,13 @@ Stator (Task Processing)
 Takahē's background task processing system is called Stator, and it uses
 asynchronous Python to pack loads of tasks at once time into a single process.
 
-By default, it will try to run up to 100 tasks at once, with a maximum of 40
-from any single model (FanOut will usually be the one it's doing most of).
-You can tweak these with the ``TAKAHE_STATOR_CONCURRENCY`` and
-``TAKAHE_STATOR_CONCURRENCY_PER_MODEL`` environment variables.
+By default, it will try to run up to 20 tasks at once, with a maximum of 4 from
+any single model (FanOut will usually be the one it's doing most of). You can
+tweak these with the ``TAKAHE_STATOR_CONCURRENCY`` and
+``TAKAHE_STATOR_CONCURRENCY_PER_MODEL`` environment variables; for every extra
+element of concurrency you add, however, it will use an additional database
+connection in a new worker thread. Be wary of hitting your database's
+connection limits.
 
 The only real limits Stator can hit are CPU and memory usage; if you see your
 Stator (worker) containers not using anywhere near all of their CPU or memory,
