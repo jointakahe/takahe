@@ -32,6 +32,7 @@ class Command(BaseCommand):
         ).exclude(
             Q(interactions__post__local=True)
             | Q(posts__isnull=False)
+            | Q(posts_mentioning__isnull=False)
             | Q(outbound_follows__isnull=False)
             | Q(inbound_follows__isnull=False)
             | Q(outbound_blocks__isnull=False)
@@ -41,6 +42,8 @@ class Command(BaseCommand):
         ]
         identity_ids = identities.values_list("id", flat=True)
         print(f"  found {len(identity_ids)}")
+        if not identity_ids:
+            sys.exit(1)
 
         # Delete them
         print("Deleting...")
@@ -48,5 +51,3 @@ class Command(BaseCommand):
         print("Deleted:")
         for model, model_deleted in deleted.items():
             print(f"  {model}: {model_deleted}")
-        if number_deleted == 0:
-            sys.exit(1)

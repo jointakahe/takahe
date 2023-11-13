@@ -51,13 +51,12 @@ class Command(BaseCommand):
                 del post_ids_and_uris[reply]
 
         # Delete them
-        print(f"  down to {len(post_ids_and_uris)} to delete")
+        print(f"  narrowed down to {len(post_ids_and_uris)}")
+        if not post_ids_and_uris:
+            sys.exit(1)
+
         print("Deleting...")
-        number_deleted, deleted = Post.objects.filter(
-            id__in=post_ids_and_uris.values()
-        ).delete()
+        _, deleted = Post.objects.filter(id__in=post_ids_and_uris.values()).delete()
         print("Deleted:")
         for model, model_deleted in deleted.items():
             print(f"  {model}: {model_deleted}")
-        if number_deleted == 0:
-            sys.exit(1)
