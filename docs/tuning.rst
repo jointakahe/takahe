@@ -88,6 +88,50 @@ servers' timeouts make the connection fail) for more than about a week, some
 servers may consider it permanently unreachable and stop sending posts.
 
 
+Pruning
+-------
+
+Over time, the amount of Fediverse content your server consumes will grow -
+you'll see every reply to every post from every user you follow, and fetch
+every identity of every author of those replies.
+
+Obviously, you don't need all of this past a certain date, as it's unlikely
+you'll want to go back to view what the timeline would have looked like months
+ago. If you want to remove this data, you can run the two "pruning" commmands::
+
+  ./manage.py pruneposts
+  ./manage.py pruneidentities
+
+Each operates in batches, and takes an optional ``--number=1000`` argument
+to specify the batch size. The ``TAKAHE_REMOTE_PRUNE_HORIZON`` environment
+variable specifies the number of days of history you want to keep intact before
+the pruning happens - this defaults to 3 months.
+
+Post pruning removes any post that isn't:
+
+* Written by a local identity
+* Newer than ``TAKAHE_REMOTE_PRUNE_HORIZON`` days old
+* Favourited, bookmarked or boosted by a local identity
+* Replied to by a local identity
+* A reply to a local identity's post
+
+Identity pruning removes any identity that isn't:
+
+* A local identity
+* Newer than ``TAKAHE_REMOTE_PRUNE_HORIZON`` days old
+* Mentioned by a post by a local identity
+* Followed or blocked by a local identity
+* Following or blocking a local identity
+* A liker or booster of a local post
+
+We recommend you run the pruning commands on a scheduled basis (i.e. like
+a cronjob). They will return a ``0`` exit code if they deleted something and
+a ``1`` exit code if they found nothing to delete, if you want to put them in
+a loop that runs until deletion is complete::
+
+  while ./manage.py pruneposts; do sleep 1; done
+
+
 Caching
 -------
 

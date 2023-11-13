@@ -16,7 +16,7 @@ class Command(BaseCommand):
             "--number",
             "-n",
             type=int,
-            default=1000,
+            default=500,
             help="The maximum number of identities to prune at once",
         )
 

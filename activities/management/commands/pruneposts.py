@@ -17,7 +17,7 @@ class Command(BaseCommand):
             "--number",
             "-n",
             type=int,
-            default=5000,
+            default=500,
             help="The maximum number of posts to prune at once",
         )
 
@@ -49,14 +49,32 @@ class Command(BaseCommand):
         for reply in replies:
             if reply and reply in post_ids_and_uris:
                 del post_ids_and_uris[reply]
+        print(f"  narrowed down to {len(post_ids_and_uris)}")
+
+        # Fetch all the posts that they are replies to, and don't delete ones
+        # that are replies to local posts
+        print("Excluding ones that are replies to local posts...")
+        in_reply_tos = (
+            Post.objects.filter(id__in=post_ids_and_uris.values())
+            .values_list("in_reply_to", flat=True)
+            .distinct()
+        )
+        local_object_uris = Post.objects.filter(
+            local=True, object_uri__in=in_reply_tos
+        ).values_list("object_uri", flat=True)
+        final_post_ids = list(
+            Post.objects.filter(id__in=post_ids_and_uris.values())
+            .exclude(in_reply_to__in=local_object_uris)
+            .values_list("id", flat=True)
+        )
+        print(f"  narrowed down to {len(final_post_ids)}")
 
         # Delete them
-        print(f"  narrowed down to {len(post_ids_and_uris)}")
-        if not post_ids_and_uris:
+        if not final_post_ids:
             sys.exit(1)
 
         print("Deleting...")
-        _, deleted = Post.objects.filter(id__in=post_ids_and_uris.values()).delete()
+        _, deleted = Post.objects.filter(id__in=final_post_ids).delete()
         print("Deleted:")
         for model, model_deleted in deleted.items():
             print(f"  {model}: {model_deleted}")

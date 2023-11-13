@@ -49,6 +49,20 @@ You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/ta
 or use the image name ``jointakahe/takahe:0.10``.
 
 
+0.10.1
+------
+
+*Released: Not Yet Released*
+
+This is a bugfix and small feature addition release:
+
+* The ``runstator`` command now logs its output to the terminal again
+
+* Two new commands, ``pruneposts`` and ``pruneidentities`` are added, to enable
+  pruning (deletion of old content) of Posts and Identities respectively.
+  You can read more about them in :doc:`/tuning`.
+
+
 Upgrade Notes
 -------------
 

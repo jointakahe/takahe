@@ -9,17 +9,6 @@ Notes TBD.
 Upgrade Notes
 -------------
 
-Remote Pruning
-~~~~~~~~~~~~~~
-
-Post pruning is now in and comes *enabled by default*, as it is not directly
-destructive (it will only delete content that has not been interacted with
-locally and which can be re-fetched).
-
-Nevertheless, if you want to avoid post deletion triggering on your server at
-all, you should set the ``TAKAHE_REMOTE_PRUNE_HORIZON`` environment variable to
-``0``.
-
 VAPID keys and Push notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
