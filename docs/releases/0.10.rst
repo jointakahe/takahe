@@ -1,7 +1,8 @@
 0.10
 ====
 
-*Released: 2023/11/12*
+*0.10.0 Released: 2023/11/12*
+*0.10.1 Released: 2023/11/13*
 
 This release is a polish release that mostly focuses on performance, stability
 and federation compatibility.
@@ -52,7 +53,7 @@ or use the image name ``jointakahe/takahe:0.10``.
 0.10.1
 ------
 
-*Released: Not Yet Released*
+*Released: 2023/11/13*
 
 This is a bugfix and small feature addition release:
 
