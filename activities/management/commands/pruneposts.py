@@ -27,16 +27,18 @@ class Command(BaseCommand):
             sys.exit(2)
         # Find a set of posts that match the initial criteria
         print(f"Running query to find up to {number} old posts...")
-        posts = Post.objects.filter(
-            local=False,
-            created__lt=timezone.now()
-            - datetime.timedelta(days=settings.SETUP.REMOTE_PRUNE_HORIZON),
-        ).exclude(
-            Q(interactions__identity__local=True)
-            | Q(visibility=Post.Visibilities.mentioned)
-        )[
-            :number
-        ]
+        posts = (
+            Post.objects.filter(
+                local=False,
+                created__lt=timezone.now()
+                - datetime.timedelta(days=settings.SETUP.REMOTE_PRUNE_HORIZON),
+            )
+            .exclude(
+                Q(interactions__identity__local=True)
+                | Q(visibility=Post.Visibilities.mentioned)
+            )
+            .order_by("?")[:number]
+        )
         post_ids_and_uris = dict(posts.values_list("object_uri", "id"))
         print(f"  found {len(post_ids_and_uris)}")
 
