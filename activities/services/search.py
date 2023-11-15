@@ -81,6 +81,9 @@ class SearchService:
             return None
         if response.status_code >= 400:
             return None
+        content_type = response.headers.get("Content-Type", "").lower()
+        if content_type not in ["application/json", "application/ld+json"]:
+            return None
         document = canonicalise(response.json(), include_security=True)
         type = document.get("type", "unknown").lower()
 
