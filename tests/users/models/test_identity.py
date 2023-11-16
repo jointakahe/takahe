@@ -204,6 +204,8 @@ def test_fetch_actor(httpx_mock, config_system):
     assert identity.image_uri == "https://example.com/image.jpg"
     assert identity.summary == "<p>A test user</p>"
     assert "ts-a-faaaake" in identity.public_key
+    # convention is that indexability should be opt-in
+    assert not identity.indexable
 
 
 @pytest.mark.django_db

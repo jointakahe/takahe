@@ -195,6 +195,7 @@ class Identity(StatorModel):
     summary = models.TextField(blank=True, null=True)
     manually_approves_followers = models.BooleanField(blank=True, null=True)
     discoverable = models.BooleanField(default=True)
+    indexable = models.BooleanField(default=False)
 
     profile_uri = models.CharField(max_length=500, blank=True, null=True)
     inbox_uri = models.CharField(max_length=500, blank=True, null=True)
@@ -557,6 +558,7 @@ class Identity(StatorModel):
             "published": self.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "url": self.absolute_profile_uri(),
             "toot:discoverable": self.discoverable,
+            "toot:indexable": self.indexable,
         }
         if self.name:
             response["name"] = self.name
@@ -914,6 +916,7 @@ class Identity(StatorModel):
         self.icon_uri = get_first_image_url(document.get("icon", None))
         self.image_uri = get_first_image_url(document.get("image", None))
         self.discoverable = document.get("toot:discoverable", True)
+        self.indexable = document.get("toot:indexable", False)
         # Profile links/metadata
         self.metadata = []
         for attachment in get_list(document, "attachment"):
@@ -1051,6 +1054,7 @@ class Identity(StatorModel):
             "bot": self.actor_type.lower() in ["service", "application"],
             "group": self.actor_type.lower() == "group",
             "discoverable": self.discoverable,
+            "indexable": self.indexable,
             "suspended": False,
             "limited": False,
             "created_at": format_ld_date(

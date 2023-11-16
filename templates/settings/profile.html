@@ -24,6 +24,7 @@
         <fieldset>
             <legend>Privacy</legend>
             {% include "forms/_field.html" with field=form.discoverable %}
+            {% include "forms/_field.html" with field=form.indexable %}
             {% include "forms/_field.html" with field=form.visible_follows %}
             {% include "forms/_field.html" with field=form.search_enabled %}
         </fieldset>

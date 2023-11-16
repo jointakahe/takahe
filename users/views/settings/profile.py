@@ -43,6 +43,13 @@ class ProfilePage(FormView):
             ),
             required=False,
         )
+        indexable = forms.BooleanField(
+            help_text="Opt-in to be indexed for search on other servers.\n(Disabling this does not guarantee third-party servers won't index your posts without permission)",
+            widget=forms.Select(
+                choices=[(True, "Indexable"), (False, "Not Indexable")]
+            ),
+            required=False,
+        )
         visible_follows = forms.BooleanField(
             help_text="Whether or not to show your following and follower counts in your profile",
             widget=forms.Select(choices=[(True, "Visible"), (False, "Hidden")]),
@@ -93,6 +100,7 @@ class ProfilePage(FormView):
             "icon": self.identity.icon and self.identity.icon.url,
             "image": self.identity.image and self.identity.image.url,
             "discoverable": self.identity.discoverable,
+            "indexable": self.identity.indexable,
             "visible_follows": self.identity.config_identity.visible_follows,
             "metadata": self.identity.metadata or [],
             "search_enabled": self.identity.config_identity.search_enabled,
@@ -104,6 +112,7 @@ class ProfilePage(FormView):
         service = IdentityService(self.identity)
         self.identity.name = form.cleaned_data["name"]
         self.identity.discoverable = form.cleaned_data["discoverable"]
+        self.identity.indexable = form.cleaned_data["indexable"]
         service.set_summary(form.cleaned_data["summary"])
         # Resize images
         icon = form.cleaned_data.get("icon")

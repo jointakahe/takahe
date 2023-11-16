@@ -36,6 +36,7 @@ class IdentityService:
         domain: Domain,
         name: str,
         discoverable: bool = True,
+        indexable: bool = False,
     ) -> Identity:
         identity = Identity.objects.create(
             actor_uri=f"https://{domain.uri_domain}/@{username}@{domain.domain}/",
@@ -44,6 +45,7 @@ class IdentityService:
             name=name,
             local=True,
             discoverable=discoverable,
+            indexable=indexable,
         )
         identity.users.add(user)
         identity.generate_keypair()
