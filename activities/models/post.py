@@ -46,6 +46,8 @@ from users.models.identity import Identity, IdentityStates
 from users.models.inbox_message import InboxMessage
 from users.models.system_actor import SystemActor
 
+logger = logging.getLogger(__name__)
+
 
 class PostStates(StateGraph):
     new = State(try_interval=300)
@@ -897,7 +899,7 @@ class Post(StatorModel):
                 # don't have content, but this shouldn't be a total failure
                 post.content = get_value_or_map(data, "content", "contentMap")
             except ActivityPubFormatError as err:
-                logging.warning(f"{err} on {post.url}")
+                logger.warning("%s on %s", err, post.url)
                 post.content = None
             # Document types have names, not summaries
             post.summary = data.get("summary") or data.get("name")
@@ -993,8 +995,10 @@ class Post(StatorModel):
                     try:
                         cls.ensure_object_uri(post.in_reply_to, reason=post.object_uri)
                     except ValueError:
-                        logging.warning(
-                            f"Cannot fetch ancestor of Post={post.pk}, ancestor_uri={post.in_reply_to}"
+                        logger.warning(
+                            "Cannot fetch ancestor of Post=%s, ancestor_uri=%s",
+                            post.pk,
+                            post.in_reply_to,
                         )
                 else:
                     parent.calculate_stats()

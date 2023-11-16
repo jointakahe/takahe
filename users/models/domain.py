@@ -14,6 +14,8 @@ from core.models import Config
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.schemas import NodeInfo
 
+logger = logging.getLogger(__name__)
+
 
 class DomainStates(StateGraph):
     outdated = State(try_interval=60 * 30, force_initial=True)
@@ -209,13 +211,14 @@ class Domain(StatorModel):
                     and response.status_code < 500
                     and response.status_code not in [401, 403, 404, 406, 410]
                 ):
-                    logging.warning(
-                        f"Client error fetching nodeinfo: {str(ex)}",
+                    logger.warning(
+                        "Client error fetching nodeinfo: %d %s %s",
+                        response.status_code,
+                        nodeinfo20_url,
+                        ex,
                         extra={
-                            "code": response.status_code,
                             "content": response.content,
                             "domain": self.domain,
-                            "nodeinfo20_url": nodeinfo20_url,
                         },
                     )
                 return None
@@ -223,11 +226,12 @@ class Domain(StatorModel):
             try:
                 info = NodeInfo(**response.json())
             except (json.JSONDecodeError, pydantic.ValidationError) as ex:
-                logging.warning(
-                    f"Client error decoding nodeinfo: {str(ex)}",
+                logger.warning(
+                    "Client error decoding nodeinfo: %s %s",
+                    nodeinfo20_url,
+                    ex,
                     extra={
                         "domain": self.domain,
-                        "nodeinfo20_url": nodeinfo20_url,
                     },
                 )
                 return None

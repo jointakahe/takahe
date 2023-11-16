@@ -26,6 +26,8 @@ from users.models import Identity, InboxMessage, SystemActor
 from users.models.domain import Domain
 from users.shortcuts import by_handle_or_404
 
+logger = logging.getLogger(__name__)
+
 
 class HttpResponseUnauthorized(HttpResponse):
     status_code = 401
@@ -147,7 +149,7 @@ class Inbox(View):
         # This ensures that the signature used for the headers matches the actor
         # described in the payload.
         if "actor" not in document:
-            logging.warning("Inbox error: unspecified actor")
+            logger.warning("Inbox error: unspecified actor")
             return HttpResponseBadRequest("Unspecified actor")
 
         identity = Identity.by_actor_uri(document["actor"], create=True, transient=True)
@@ -167,7 +169,7 @@ class Inbox(View):
             domain = Domain.get_remote_domain(actor_url_parts.hostname)
         if identity.blocked or domain.recursively_blocked():
             # I love to lie! Throw it away!
-            logging.info(
+            logger.info(
                 "Inbox: Discarded message from blocked %s %s",
                 "domain" if domain.recursively_blocked() else "user",
                 identity.actor_uri,
@@ -196,21 +198,21 @@ class Inbox(View):
                         request,
                         identity.public_key,
                     )
-                    logging.debug(
+                    logger.debug(
                         "Inbox: %s from %s has good HTTP signature",
                         document_type,
                         identity,
                     )
                 else:
-                    logging.info(
+                    logger.info(
                         "Inbox: New actor, no key available: %s",
                         document["actor"],
                     )
             except VerificationFormatError as e:
-                logging.warning("Inbox error: Bad HTTP signature format: %s", e.args[0])
+                logger.warning("Inbox error: Bad HTTP signature format: %s", e.args[0])
                 return HttpResponseBadRequest(e.args[0])
             except VerificationError:
-                logging.warning("Inbox error: Bad HTTP signature from %s", identity)
+                logger.warning("Inbox error: Bad HTTP signature from %s", identity)
                 return HttpResponseUnauthorized("Bad signature")
 
         # Mastodon advices not implementing LD Signatures, but
@@ -224,18 +226,18 @@ class Inbox(View):
                     creator, create=True, transient=True
                 )
                 if not creator_identity.public_key:
-                    logging.info("Inbox: New actor, no key available: %s", creator)
+                    logger.info("Inbox: New actor, no key available: %s", creator)
                     # if we can't verify it, we don't keep it
                     document.pop("signature")
                 else:
                     LDSignature.verify_signature(document, creator_identity.public_key)
-                    logging.debug(
+                    logger.debug(
                         "Inbox: %s from %s has good LD signature",
                         document["type"],
                         creator_identity,
                     )
             except VerificationFormatError as e:
-                logging.warning("Inbox error: Bad LD signature format: %s", e.args[0])
+                logger.warning("Inbox error: Bad LD signature format: %s", e.args[0])
                 return HttpResponseBadRequest(e.args[0])
             except VerificationError:
                 # An invalid LD Signature might also indicate nothing but
@@ -243,14 +245,14 @@ class Inbox(View):
                 # Strip it out if we can't verify it.
                 if "signature" in document:
                     document.pop("signature")
-                logging.info(
+                logger.info(
                     "Inbox: Stripping invalid LD signature from %s %s",
                     creator_identity,
                     document["id"],
                 )
 
         if not ("signature" in request or "signature" in document):
-            logging.debug(
+            logger.debug(
                 "Inbox: %s from %s is unauthenticated. That's OK.",
                 document["type"],
                 identity,

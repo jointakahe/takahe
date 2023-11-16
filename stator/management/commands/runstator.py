@@ -8,6 +8,8 @@ from core.models import Config
 from stator.models import StatorModel
 from stator.runner import StatorRunner
 
+logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
     help = "Runs a Stator runner"
@@ -80,7 +82,7 @@ class Command(BaseCommand):
         if not models:
             models = StatorModel.subclasses
         models = [model for model in models if model not in excluded]
-        logging.info(
+        logger.info(
             "Running for models: " + " ".join(m._meta.label_lower for m in models)
         )
         # Run a runner
@@ -94,4 +96,4 @@ class Command(BaseCommand):
         try:
             runner.run()
         except KeyboardInterrupt:
-            logging.critical("Ctrl-C received")
+            logger.critical("Ctrl-C received")

@@ -9,6 +9,8 @@ from activities.models import (
 )
 from users.models import Identity
 
+logger = logging.getLogger(__name__)
+
 
 class PostService:
     """
@@ -99,7 +101,7 @@ class PostService:
                 try:
                     Post.ensure_object_uri(object_uri, reason=reason)
                 except ValueError:
-                    logging.error(
+                    logger.error(
                         f"Cannot fetch ancestor Post={self.post.pk}, ancestor_uri={object_uri}"
                     )
                 break
