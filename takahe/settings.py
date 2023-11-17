@@ -432,7 +432,7 @@ if SETUP.MEDIA_BACKEND:
         if parsed.hostname is not None:
             port = parsed.port or 443
             GS_CUSTOM_ENDPOINT = f"https://{parsed.hostname}:{port}"
-    elif parsed.scheme == "s3":
+    elif (parsed.scheme == "s3") or (parsed.scheme == "s3-insecure"):
         STORAGES["default"]["BACKEND"] = "core.uploads.TakaheS3Storage"
         AWS_STORAGE_BUCKET_NAME = parsed.path.lstrip("/")
         AWS_QUERYSTRING_AUTH = False
@@ -441,8 +441,14 @@ if SETUP.MEDIA_BACKEND:
             AWS_ACCESS_KEY_ID = parsed.username
             AWS_SECRET_ACCESS_KEY = urllib.parse.unquote(parsed.password)
         if parsed.hostname is not None:
-            port = parsed.port or 443
-            AWS_S3_ENDPOINT_URL = f"https://{parsed.hostname}:{port}"
+            if parsed.scheme == "s3-insecure":
+                s3_default_port = 80
+                s3_scheme = "http"
+            else:
+                s3_default_port = 443
+                s3_scheme = "https"
+            port = parsed.port or s3_default_port
+            AWS_S3_ENDPOINT_URL = f"{s3_scheme}://{parsed.hostname}:{port}"
         if SETUP.MEDIA_URL is not None:
             media_url_parsed = urllib.parse.urlparse(SETUP.MEDIA_URL)
             AWS_S3_CUSTOM_DOMAIN = media_url_parsed.hostname
