@@ -38,7 +38,7 @@ class FediverseHtmlParser(HTMLParser):
         r"(^|[^\w\d\-_/])@([\w\d\-_]+(?:@[\w\d\-_\.]+[\w\d\-_]+)?)"
     )
 
-    HASHTAG_REGEX = re.compile(r"\B#([a-zA-Z0-9(_)]+\b)(?!;)")
+    HASHTAG_REGEX = re.compile(r"\B#([\w()]+\b)(?!;)")
 
     EMOJI_REGEX = re.compile(r"\B:([a-zA-Z0-9(_)-]+):\B")
 

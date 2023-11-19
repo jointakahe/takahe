@@ -1,4 +1,5 @@
 import pytest
+from django.template.defaultfilters import linebreaks_filter
 
 from core.html import FediverseHtmlParser
 
@@ -100,6 +101,16 @@ def test_parser(identity):
     )
     assert parser.plain_text == "@TeSt@ExamPle.com"
     assert parser.mentions == {"test@example.com"}
+
+    # Ensure hashtags are parsed and linkified in local posts
+    parser = FediverseHtmlParser(
+        linebreaks_filter("#tag1-x,#tag2 #标签。"), find_hashtags=True
+    )
+    assert (
+        parser.html
+        == '<p><a href="/tags/tag1/" rel="tag">#tag1</a>-x,<a href="/tags/tag2/" rel="tag">#tag2</a> <a href="/tags/标签/" rel="tag">#标签</a>。</p>'
+    )
+    assert parser.hashtags == {"tag1", "tag2", "标签"}
 
     # Ensure hashtags are linked, even through spans, but not within hrefs
     parser = FediverseHtmlParser(
