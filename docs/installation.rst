@@ -167,6 +167,11 @@ If you omit the keys or the endpoint URL, then Takahē will try to use implicit
 authentication for them. The keys, if included, should be urlencoded, as AWS
 secret keys commonly contain eg + characters.
 
+With the above examples, Takahē connects to an S3 bucket using **HTTPS**. If
+you wish to connect to an S3 bucket using **HTTP** (for example, to connect to
+an S3 API endpoint on a private network), replace `s3` in the examples above
+with `s3-insecure`.
+
 Your S3 bucket *must* be set to allow publically-readable files, as Takahē will
 set all files it uploads to be ``public-read``. We randomise uploaded file
 names to prevent enumeration attacks.
