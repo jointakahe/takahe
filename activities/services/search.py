@@ -1,3 +1,5 @@
+import json
+
 import httpx
 
 from activities.models import Hashtag, Post
@@ -14,6 +16,32 @@ class SearchService:
     def __init__(self, query: str, identity: Identity | None):
         self.query = query.strip()
         self.identity = identity
+
+    def _json(self, response: httpx.Response) -> dict | None:
+        content_type, *parameters = (
+            response.headers.get("Content-Type", "invalid").lower().split(";")
+        )
+
+        if content_type not in [
+            "application/json",
+            "application/ld+json",
+            "application/activity+json",
+        ]:
+            return None
+
+        charset = None
+
+        for parameter in parameters:
+            key, value = parameter.split("=")
+            if key.strip() == "charset":
+                charset = value.strip()
+
+        if charset:
+            return json.loads(response.content.decode(charset))
+        else:
+            # if no charset informed, default to
+            # httpx json encoding inference
+            return response.json()
 
     def search_identities_handle(self) -> set[Identity]:
         """
@@ -81,14 +109,12 @@ class SearchService:
             return None
         if response.status_code >= 400:
             return None
-        content_type = response.headers.get("Content-Type", "").lower()
-        if content_type not in [
-            "application/json",
-            "application/ld+json",
-            "application/activity+json",
-        ]:
+
+        json_data = self._json(response)
+        if not json_data:
             return None
-        document = canonicalise(response.json(), include_security=True)
+
+        document = canonicalise(json_data, include_security=True)
         type = document.get("type", "unknown").lower()
 
         # Is it an identity?
