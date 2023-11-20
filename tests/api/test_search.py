@@ -44,7 +44,7 @@ test_account_json = r"""
    "featuredTags":"https://search.example.com/users/searchtest/collections/tags",
    "preferredUsername":"searchtest",
    "name":"searchtest",
-   "summary":"<p>The official searchtest account for the instance.</p>",
+   "summary":"<p>Just a test (àáâãäåæ)</p>",
    "url":"https://search.example.com/@searchtest",
    "manuallyApprovesFollowers":false,
    "discoverable":true,
@@ -113,3 +113,4 @@ def test_search(
     assert len(response["accounts"]) == 1
     assert response["accounts"][0]["acct"] == "searchtest@search.example.com"
     assert response["accounts"][0]["username"] == "searchtest"
+    assert response["accounts"][0]["note"] == "<p>Just a test (àáâãäåæ)</p>"
