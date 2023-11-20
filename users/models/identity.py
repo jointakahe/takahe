@@ -14,6 +14,7 @@ from lxml import etree
 
 from core.exceptions import ActorMismatchError
 from core.html import ContentRenderer, FediverseHtmlParser
+from core.json import json_from_response
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -878,8 +879,11 @@ class Identity(StatorModel):
                     "Client error fetching actor: %d %s", status_code, self.actor_uri
                 )
             return False
+        json_data = json_from_response(response)
+        if not json_data:
+            return False
         try:
-            document = canonicalise(response.json(), include_security=True)
+            document = canonicalise(json_data, include_security=True)
         except ValueError:
             # servers with empty or invalid responses are inevitable
             logger.info(
