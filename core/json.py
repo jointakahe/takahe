@@ -13,7 +13,7 @@ def json_from_response(response: Response) -> dict | None:
     content_type, *parameters = (
         response.headers.get("Content-Type", "invalid").lower().split(";")
     )
-    print(content_type, parameters)
+
     if content_type not in JSON_CONTENT_TYPES:
         return None
 
