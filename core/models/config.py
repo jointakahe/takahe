@@ -214,6 +214,7 @@ class Config(models.Model):
         content_warning_text: str = "Content Warning"
 
         post_length: int = 500
+        max_media_attachments: int = 4
         post_minimum_interval: int = 3  # seconds
         identity_min_length: int = 2
         identity_max_per_user: int = 5
