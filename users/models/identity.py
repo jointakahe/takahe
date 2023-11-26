@@ -139,7 +139,7 @@ class IdentityStates(StateGraph):
 
     @classmethod
     def handle_updated(cls, instance: "Identity"):
-        if instance.state_age > Config.system.identity_max_age:
+        if not instance.local and instance.state_age > Config.system.identity_max_age:
             return cls.outdated
 
 
