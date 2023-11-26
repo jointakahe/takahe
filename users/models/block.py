@@ -195,8 +195,7 @@ class Block(StatorModel):
             raise ValueError("You cannot mute from a remote Identity")
         block = cls.maybe_get(source=source, target=target, mute=True)
         if block is not None:
-            if not block.active:
-                block.state = BlockStates.new  # type:ignore
+            block.state = BlockStates.new  # type:ignore
             if duration:
                 block.expires = timezone.now() + datetime.timedelta(seconds=duration)
             block.include_notifications = include_notifications
