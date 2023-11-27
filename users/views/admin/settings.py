@@ -40,7 +40,7 @@ class BasicSettings(AdminSettingsPage):
         },
         "max_media_attachments": {
             "title": "Maximum Media Attachments",
-            "help_text": "The maximum number of media attachments allowed per post.\nA higher value may not be supported by some servers or clients.",
+            "help_text": "The maximum number of media attachments allowed per post.\nA value other than 4 may be unsupported by clients.",
         },
         "post_minimum_interval": {
             "title": "Minimum Posting Interval",
