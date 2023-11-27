@@ -400,6 +400,8 @@ class Identity(StatorModel):
             domain = domain.domain
         else:
             domain = domain.lower()
+            domain_instance = Domain.get_domain(domain)
+            local = domain_instance.local if domain_instance else local
 
         with transaction.atomic():
             try:
