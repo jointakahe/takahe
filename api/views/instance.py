@@ -41,7 +41,7 @@ def instance_info_v1(request):
             "accounts": {},
             "statuses": {
                 "max_characters": Config.system.post_length,
-                "max_media_attachments": 4,
+                "max_media_attachments": Config.system.max_media_attachments,
                 "characters_reserved_per_url": 23,
             },
             "media_attachments": {
@@ -102,7 +102,7 @@ def instance_info_v2(request) -> dict:
             "accounts": {"max_featured_tags": 0},
             "statuses": {
                 "max_characters": Config.system.post_length,
-                "max_media_attachments": 4,
+                "max_media_attachments": Config.system.max_media_attachments,
                 "characters_reserved_per_url": 23,
             },
             "media_attachments": {

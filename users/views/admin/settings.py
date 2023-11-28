@@ -38,6 +38,10 @@ class BasicSettings(AdminSettingsPage):
             "title": "Maximum Post Length",
             "help_text": "The maximum number of characters allowed per post",
         },
+        "max_media_attachments": {
+            "title": "Maximum Media Attachments",
+            "help_text": "The maximum number of media attachments allowed per post.\nA value other than 4 may be unsupported by clients.",
+        },
         "post_minimum_interval": {
             "title": "Minimum Posting Interval",
             "help_text": "The minimum number of seconds a user must wait between posts",
@@ -129,6 +133,7 @@ class BasicSettings(AdminSettingsPage):
         ],
         "Posts": [
             "post_length",
+            "max_media_attachments",
             "post_minimum_interval",
             "content_warning_text",
             "hashtag_unreviewed_are_public",
