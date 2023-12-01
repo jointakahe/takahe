@@ -128,11 +128,11 @@ Identity pruning removes any identity that isn't:
 * A liker or booster of a local post
 
 We recommend you run the pruning commands on a scheduled basis (i.e. like
-a cronjob). They will return a ``0`` exit code if they deleted something and
-a ``1`` exit code if they found nothing to delete, if you want to put them in
+a cronjob). They will return a ``1`` exit code if they deleted something and
+a ``0`` exit code if they found nothing to delete, if you want to put them in
 a loop that runs until deletion is complete::
 
-  while ./manage.py pruneposts; do sleep 1; done
+  until ./manage.py pruneposts; do sleep 1; done
 
 
 Caching

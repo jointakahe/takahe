@@ -43,7 +43,7 @@ class Command(BaseCommand):
         identity_ids = identities.values_list("id", flat=True)
         print(f"  found {len(identity_ids)}")
         if not identity_ids:
-            sys.exit(1)
+            sys.exit(0)
 
         # Delete them
         print("Deleting...")
@@ -51,3 +51,4 @@ class Command(BaseCommand):
         print("Deleted:")
         for model, model_deleted in deleted.items():
             print(f"  {model}: {model_deleted}")
+        sys.exit(1)

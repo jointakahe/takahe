@@ -73,10 +73,11 @@ class Command(BaseCommand):
 
         # Delete them
         if not final_post_ids:
-            sys.exit(1)
+            sys.exit(0)
 
         print("Deleting...")
         _, deleted = Post.objects.filter(id__in=final_post_ids).delete()
         print("Deleted:")
         for model, model_deleted in deleted.items():
             print(f"  {model}: {model_deleted}")
+        sys.exit(1)
