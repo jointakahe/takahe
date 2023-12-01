@@ -3,7 +3,7 @@
 A *beta* Fediverse server for microblogging. Not fully polished yet -
 we're still working towards a 1.0!
 
-**Current version: [0.9](https://docs.jointakahe.org/en/latest/releases/0.9/)**
+**Current version: [0.10.1](https://docs.jointakahe.org/en/latest/releases/0.10/)**
 
 Key features:
 
