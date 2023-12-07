@@ -39,7 +39,7 @@ class PostPollSchema(Schema):
 
 
 class PostStatusSchema(Schema):
-    status: str
+    status: str | None
     in_reply_to_id: str | None = None
     sensitive: bool = False
     spoiler_text: str | None = None
@@ -82,9 +82,9 @@ def post_for_id(request: HttpRequest, id: str) -> Post:
 @api_view.post
 def post_status(request, details: PostStatusSchema) -> schemas.Status:
     # Check text length
-    if len(details.status) > Config.system.post_length:
+    if details.status and len(details.status) > Config.system.post_length:
         raise ApiError(400, "Status is too long")
-    if len(details.status) == 0 and not details.media_ids:
+    if not details.status and not details.media_ids:
         raise ApiError(400, "Status is empty")
     # Grab attachments
     attachments = [get_object_or_404(PostAttachment, pk=id) for id in details.media_ids]
@@ -103,7 +103,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
             pass
     post = Post.create_local(
         author=request.identity,
-        content=details.status,
+        content=details.status or "",
         summary=details.spoiler_text,
         sensitive=details.sensitive,
         visibility=visibility_map[details.visibility],
