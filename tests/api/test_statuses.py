@@ -57,6 +57,32 @@ def test_post_status(api_client, identity):
 
 
 @pytest.mark.django_db
+def test_post_statusless(api_client, identity):
+    """
+    Tests we can post with media but no status
+    """
+    # Create media attachment
+    attachment = PostAttachment.objects.create(
+        mimetype="image/webp",
+        name=None,
+        state=PostAttachmentStates.fetched,
+        author=identity,
+    )
+    # Post new one
+    response = api_client.post(
+        "/api/v1/statuses",
+        content_type="application/json",
+        data={
+            "media_ids": [attachment.id],
+        },
+    )
+    assert 200 <= response.status_code < 300
+    body = response.json()
+    assert body["content"] == "<p></p>"
+    assert body["media_attachments"][0]["description"] is None
+
+
+@pytest.mark.django_db
 def test_mention_format(api_client, identity, remote_identity):
     """
     Ensures mentions work, and only have one link around them.
