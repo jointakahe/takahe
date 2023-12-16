@@ -583,7 +583,7 @@ class Post(StatorModel):
                 domain=domain,
                 fetch=True,
             )
-            if identity is not None:
+            if identity is not None and not identity.deleted:
                 mentions.add(identity)
         return mentions
 

@@ -120,12 +120,47 @@ class IdentityStates(StateGraph):
 
     @classmethod
     def handle_deleted(cls, instance: "Identity"):
-        from activities.models import FanOut
+        from activities.models import (
+            FanOut,
+            Post,
+            PostInteraction,
+            PostInteractionStates,
+            PostStates,
+            TimelineEvent,
+        )
+        from users.models import Bookmark, Follow, FollowStates, HashtagFollow, Report
 
         if not instance.local:
             return cls.updated
 
+        # Delete local data
+        TimelineEvent.objects.filter(identity=instance).delete()
+        Bookmark.objects.filter(identity=instance).delete()
+        HashtagFollow.objects.filter(identity=instance).delete()
+        Report.objects.filter(source_identity=instance).delete()
+        # Nullify all fields and fanout
+        instance.name = ""
+        instance.summary = ""
+        instance.metadata = []
+        instance.aliases = []
+        instance.icon_uri = ""
+        instance.discoverable = False
+        instance.image.delete(save=False)
+        instance.icon.delete(save=False)
+        instance.save()
+        cls.targets_fan_out(instance, FanOut.Types.identity_edited)
+        # Delete all posts and interactions
+        Post.transition_perform_queryset(instance.posts, PostStates.deleted)
+        PostInteraction.transition_perform_queryset(
+            instance.interactions, PostInteractionStates.undone
+        )
+        # Fanout the deletion and unfollow from both directions
         cls.targets_fan_out(instance, FanOut.Types.identity_deleted)
+        for follower in Follow.objects.filter(target=instance):
+            follower.transition_perform(FollowStates.rejecting)
+        for following in Follow.objects.filter(source=instance):
+            following.transition_perform(FollowStates.undone)
+
         return cls.deleted_fanned_out
 
     @classmethod
@@ -677,10 +712,11 @@ class Identity(StatorModel):
         """
         Marks the identity and all of its related content as deleted.
         """
-        # Move all posts to deleted
-        from activities.models.post import Post, PostStates
+        from api.models import Authorization, Token
 
-        Post.transition_perform_queryset(self.posts, PostStates.deleted)
+        # Remove all login tokens
+        Authorization.objects.filter(identity=self).delete()
+        Token.objects.filter(identity=self).delete()
         # Remove all users from ourselves and mark deletion date
         self.users.set([])
         self.deleted = timezone.now()
