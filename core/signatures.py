@@ -192,7 +192,7 @@ class HttpSignature:
         body: dict | None,
         private_key: str,
         key_id: str,
-        content_type: str = "application/json",
+        content_type: str = "application/activity+json",
         method: Literal["get", "post"] = "post",
         timeout: TimeoutTypes = settings.SETUP.REMOTE_TIMEOUT,
     ):
