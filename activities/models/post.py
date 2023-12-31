@@ -765,6 +765,9 @@ class Post(StatorModel):
         targets = set()
         for mention in self.mentions.all():
             targets.add(mention)
+        if self.visibility in [Post.Visibilities.public, Post.Visibilities.unlisted]:
+            for interaction in self.interactions.all():
+                targets.add(interaction.identity)
         # Then, if it's not mentions only, also deliver to followers and all hashtag followers
         if self.visibility != Post.Visibilities.mentioned:
             for follower in self.author.inbound_follows.filter(
