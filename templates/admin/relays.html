@@ -1,0 +1,53 @@
+{% extends "admin/base_main.html" %}
+{% load activity_tags %}
+{% block subtitle %}Relay{% endblock %}
+{% block settings_content %}
+    <form action="?subscribe" method="post" class="search">
+        <input type="url"
+               name="inbox_uri"
+               pattern="^https?://.+"
+               placeholder="Relay inbox URI, e.g. https://relay.server/inbox">
+        {% csrf_token %}
+        <button>Subscribe</button>
+    </form>
+    <table class="items">
+        {% for relay in page_obj %}
+            <tr>
+                <td class="icon">
+                    {% if relay.state == 'subscribed' %}
+                        <i class="fa-regular fa-circle-check"></i>
+                    {% elif relay.state == 'failed' or relay.state == 'rejected' or relay.state == 'unsubscribed' %}
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    {% else %}
+                        <i class="fa-solid fa-cog fa-spin"></i>
+                    {% endif %}
+                </td>
+                <td class="name">{{ relay.inbox_uri }}</td>
+                <td class="stat">{{ relay.state }}</td>
+                <td class="actions">
+                    <form action="?unsubscribe" method="post">
+                        <input type="hidden" name="id" value="{{ relay.id }}">
+                        {% csrf_token %}
+                        <button {% if relay.state == 'failed' or relay.state == 'rejected' %}disabled{% endif %}>Unsubscribe</button>
+                    </form>
+                </td>
+                <td class="actions">
+                    <form action="?remove" method="post">
+                        <input type="hidden" name="id" value="{{ relay.id }}">
+                        {% csrf_token %}
+                        <button onclick="return confirm('Sure to force remove?')"
+                                {% if relay.state == 'subscribed' %}disabled{% endif %}>Remove</button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="empty">
+                <td>There are no relay yet.</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="view-options">
+        <small><i class="fa-regular fa-lightbulb"></i>&nbsp; Use remove only when it's stuck in (un)subscribing state for more than 10 minutes.</small>
+    </div>
+    {% include "admin/_pagination.html" with nouns="relay,relays" %}
+{% endblock %}
