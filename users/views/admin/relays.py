@@ -1,10 +1,9 @@
-from django.db import models
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
 from users.decorators import admin_required
-from users.models import Identity, Relay
+from users.models import Relay
 
 
 @method_decorator(admin_required, name="dispatch")

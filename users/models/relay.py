@@ -1,12 +1,8 @@
 import logging
 import re
-from typing import Optional
 
-import httpx
-from django.db import models, transaction
+from django.db import models
 
-from core.ld import canonicalise, get_str_or_id
-from core.snowflake import Snowflake
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models.system_actor import SystemActor
 
