@@ -40,10 +40,12 @@ from core.ld import (
 from core.snowflake import Snowflake
 from stator.exceptions import TryAgainLater
 from stator.models import State, StateField, StateGraph, StatorModel
+from users.models import relay
 from users.models.follow import FollowStates
 from users.models.hashtag_follow import HashtagFollow
 from users.models.identity import Identity, IdentityStates
 from users.models.inbox_message import InboxMessage
+from users.models.relay import Relay
 from users.models.system_actor import SystemActor
 
 logger = logging.getLogger(__name__)
@@ -77,6 +79,30 @@ class PostStates(StateGraph):
                 type=type_,
                 subject_post=post,
             )
+        cls.fan_out_to_relay(post, type_)
+
+    @classmethod
+    def fan_out_to_relay(cls, post: "Post", type_: str) -> None:
+        if not post.local or post.visibility != Post.Visibilities.public:
+            return
+        relay_uris = Relay.active_inbox_uris()
+        if not relay_uris:
+            return
+        obj = None
+        match type_:
+            case FanOut.Types.post:
+                obj = canonicalise(post.to_create_ap())
+            case FanOut.Types.post_edited:
+                obj = canonicalise(post.to_update_ap())
+            case FanOut.Types.post_deleted:
+                obj = canonicalise(post.to_delete_ap())
+        if not obj:
+            return
+        for uri in relay_uris:
+            try:
+                post.author.signed_request(method="post", uri=uri, body=obj)
+            except Exception as e:
+                logger.warning(f"Error sending relay: {uri} {e}")
 
     @classmethod
     def handle_new(cls, instance: "Post"):
