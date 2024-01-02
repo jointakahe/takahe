@@ -44,8 +44,8 @@ class RelayStates(StateGraph):
                 uri=instance.inbox_uri,
                 body=instance.to_follow_ap(),
             )
-        except:
-            logger.warning(f"Error sending follow: {instance.inbox_uri}")
+        except Exception as e:
+            logger.error(f"Error sending follow request: {instance.inbox_uri} {e}")
             return cls.failed
         if response.status_code >= 200 and response.status_code < 300:
             return cls.subscribing
@@ -62,8 +62,8 @@ class RelayStates(StateGraph):
                 uri=instance.inbox_uri,
                 body=instance.to_unfollow_ap(),
             )
-        except:
-            logger.error(f"Error sending unfollow {instance.inbox_uri}")
+        except Exception as e:
+            logger.error(f"Error sending unfollow request: {instance.inbox_uri} {e}")
             return cls.failed
         if response.status_code >= 200 and response.status_code < 300:
             return cls.unsubscribed
