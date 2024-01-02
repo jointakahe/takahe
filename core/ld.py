@@ -647,7 +647,9 @@ def builtin_document_loader(url: str, options={}):
             return schemas["unknown"]
 
 
-def canonicalise(json_data: dict, include_security: bool = False) -> dict:
+def canonicalise(
+    json_data: dict, include_security: bool = False, outbound: bool = True
+) -> dict:
     """
     Given an ActivityPub JSON-LD document, round-trips it through the LD
     systems to end up in a canonicalised, compacted format.
@@ -686,7 +688,26 @@ def canonicalise(json_data: dict, include_security: bool = False) -> dict:
 
     json_data["@context"] = context
 
-    return jsonld.compact(jsonld.expand(json_data), context)
+    j = jsonld.compact(jsonld.expand(json_data), context)
+    if not outbound:
+        return j
+    # patch outbound json to make it compatible with various implementations
+    for k in ["to", "cc"]:
+        v = j.get(k)
+        if v:
+            j[k] = (
+                [
+                    x
+                    if x != "as:Public"
+                    else "https://www.w3.org/ns/activitystreams#Public"
+                    for x in v
+                ]
+                if isinstance(v, list)
+                else v
+                if v != "as:Public"
+                else "https://www.w3.org/ns/activitystreams#Public"
+            )
+    return j
 
 
 def get_list(container, key) -> list:

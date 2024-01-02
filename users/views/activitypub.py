@@ -139,7 +139,9 @@ class Inbox(View):
         if len(request.body) > settings.JSONLD_MAX_SIZE:
             return HttpResponseBadRequest("Payload size too large")
         # Load the LD
-        document = canonicalise(json.loads(request.body), include_security=True)
+        document = canonicalise(
+            json.loads(request.body), include_security=True, outbound=False
+        )
         document_type = document["type"]
         document_subtype = None
         if isinstance(document.get("object"), dict):
