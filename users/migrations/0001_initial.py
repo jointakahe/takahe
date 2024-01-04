@@ -9,6 +9,7 @@ from django.db import migrations, models
 import core.snowflake
 import core.uploads
 import stator.models
+import users.models.domain
 import users.models.follow
 import users.models.identity
 import users.models.inbox_message
@@ -58,7 +59,12 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "domain",
-                    models.CharField(max_length=250, primary_key=True, serialize=False),
+                    models.CharField(
+                        max_length=250,
+                        primary_key=True,
+                        serialize=False,
+                        validators=[users.models.domain._domain_validator],
+                    ),
                 ),
                 (
                     "service_domain",
