@@ -50,7 +50,7 @@ class PostAttachment(StatorModel):
         blank=True,
     )
 
-    remote_url = models.CharField(max_length=500, null=True, blank=True)
+    remote_url = models.CharField(max_length=2500, null=True, blank=True)
 
     # This is the description for images, at least
     name = models.TextField(null=True, blank=True)
