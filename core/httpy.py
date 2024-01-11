@@ -165,7 +165,7 @@ def _wrap_transport(
     return IpFilterWrapperTransport(blocked_ranges, transport)
 
 
-class BaseClient(httpx.BaseClient):
+class BaseClient(httpx._client.BaseClient):
     def __init__(
         self,
         *,
