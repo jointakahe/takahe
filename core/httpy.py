@@ -131,7 +131,7 @@ class IpFilterWrapperTransport(httpx.BaseTransport, httpx.AsyncBaseTransport):
         self._check_addrinfo(
             request, socket.getaddrinfo(*self._request_to_addrinfo(request))
         )
-        return super().handle_request(request)
+        return self.wrappee.handle_request(request)
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         self._check_addrinfo(
@@ -140,7 +140,7 @@ class IpFilterWrapperTransport(httpx.BaseTransport, httpx.AsyncBaseTransport):
                 *self._request_to_addrinfo(request)
             ),
         )
-        return await super().handle_await_request(request)
+        return await self.wrappee.handle_await_request(request)
 
 
 def _wrap_transport(
