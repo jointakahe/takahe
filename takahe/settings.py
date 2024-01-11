@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import secrets
 import sys
@@ -474,6 +475,20 @@ if SETUP.ERROR_EMAILS:
 TAKAHE_USER_AGENT = (
     f"python-httpx/{httpx.__version__} "
     f"(Takahe/{__version__}; +https://{SETUP.MAIN_DOMAIN}/)"
+)
+
+HTTP_BLOCKED_RANGES = map(
+    ipaddress.ip_network,
+    [
+        # All of these are RFC reserved ranges
+        # Pulled from Wikipedia
+        "0.0.0.0/8",  # Current network
+        "10.0.0.0/8",  # Private, local network
+        "100.64.0.0/10",  # Private, CGNAT
+        "127.0.0.0/8",  # Localhost
+        "169.254.0.0/16",  # Link-local address, zeroconf
+        "172.16.0.0/12",  # Private, local network
+    ],
 )
 
 if SETUP.LOCAL_SETTINGS:
