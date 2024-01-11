@@ -172,7 +172,7 @@ class Report(StatorModel):
             subject_post=subject_post,
             source_domain=Domain.get_remote_domain(domain_id),
             type="remote",
-            complaint=data.get("content"),
+            complaint=str(data.get("content", "")),
         )
 
     def to_ap(self):

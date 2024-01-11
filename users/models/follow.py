@@ -81,7 +81,9 @@ class FollowStates(StateGraph):
             except httpx.RequestError:
                 return
             return cls.pending_approval
-        # local/remote follow local, check manually_approve
+        # local/remote follow local, check deleted & manually_approve
+        if instance.target.deleted:
+            return cls.rejecting
         if instance.target.manually_approves_followers:
             from activities.models import TimelineEvent
 
@@ -280,7 +282,7 @@ class Follow(StatorModel):
         """
         return {
             "type": "Accept",
-            "id": self.uri + "#accept",
+            "id": f"{self.target.actor_uri}follow/{self.id}/#accept",
             "actor": self.target.actor_uri,
             "object": self.to_ap(),
         }
@@ -291,7 +293,7 @@ class Follow(StatorModel):
         """
         return {
             "type": "Reject",
-            "id": self.uri + "#reject",
+            "id": f"{self.target.actor_uri}follow/{self.id}/#reject",
             "actor": self.target.actor_uri,
             "object": self.to_ap(),
         }

@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import ssl
 from functools import cached_property
 from typing import Optional
@@ -8,6 +9,7 @@ import httpx
 import pydantic
 import urlman
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.models import Config
@@ -53,6 +55,14 @@ class DomainStates(StateGraph):
         return cls.outdated
 
 
+def _domain_validator(value: str):
+    if not Domain.is_valid_domain(value):
+        raise ValidationError(
+            "%(value)s is not a valid domain",
+            params={"value": value},
+        )
+
+
 class Domain(StatorModel):
     """
     Represents a domain that a user can have an account on.
@@ -71,7 +81,9 @@ class Domain(StatorModel):
     display domains for now, until we start doing better probing.
     """
 
-    domain = models.CharField(max_length=250, primary_key=True)
+    domain = models.CharField(
+        max_length=250, primary_key=True, validators=[_domain_validator]
+    )
     service_domain = models.CharField(
         max_length=250,
         null=True,
@@ -118,6 +130,19 @@ class Domain(StatorModel):
 
     class Meta:
         indexes: list = []
+
+    @classmethod
+    def is_valid_domain(cls, domain: str) -> bool:
+        """
+        Check if a domain is valid, domain must be lowercase
+        """
+        return (
+            re.match(
+                r"^(?:[a-z0-9](?:[a-z0-9-_]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-_]{0,61}[a-z]$",
+                domain,
+            )
+            is not None
+        )
 
     @classmethod
     def get_remote_domain(cls, domain: str) -> "Domain":
