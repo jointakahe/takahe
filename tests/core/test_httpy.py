@@ -3,7 +3,7 @@ import dataclasses
 
 import pytest
 
-from core.httpy import Client  # TODO: Test async client
+from core.httpy import BlockedIPError, Client  # TODO: Test async client
 
 
 @dataclasses.dataclass
@@ -28,9 +28,14 @@ def test_basics():
         assert resp.status_code == 200
 
 
-def test_signature(signing_actor):
+def test_signature_exists(signing_actor):
     with Client(actor=signing_actor) as client:
         resp = client.get("https://httpbin.org/headers")
         resp.raise_for_status()
         body = resp.json()
         assert "Signature" in body["headers"]
+
+
+def test_ip_block():
+    with pytest.raises(BlockedIPError), Client() as client:
+        client.get("http://localhost/")
