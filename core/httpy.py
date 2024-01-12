@@ -10,15 +10,28 @@ The API is identical to httpx, but some features has been added:
 """
 import asyncio
 import ipaddress
+import logging
 import socket
 import typing
+from ssl import SSLCertVerificationError, SSLError
 from types import EllipsisType
 
 import httpx
 from django.conf import settings
-from httpx._types import TimeoutTypes
+from httpx import RequestError
+from httpx._types import TimeoutTypes, URLTypes
+from idna.core import InvalidCodepoint
 
 from .signatures import HttpSignature
+
+__all__ = (
+    "SigningActor",
+    "Client",
+    "AsyncClient",
+    "RequestError",
+)
+
+logger = logging.getLogger(__name__)
 
 
 class SigningActor(typing.Protocol):
@@ -209,8 +222,65 @@ class BaseClient(httpx._client.BaseClient):
 
 
 class Client(BaseClient, httpx.Client):
-    pass
+    def request(self, url: URLTypes, method: str, **params) -> httpx.Response:
+        """
+        Wraps some errors up nicer
+        """
+        try:
+            response = super().request(
+                method, url, follow_redirects=method == "get", **params
+            )
+        except SSLError as invalid_cert:
+            # Not our problem if the other end doesn't have proper SSL
+            logger.info("Invalid cert on %s %s", url, invalid_cert)
+            raise SSLCertVerificationError(invalid_cert) from invalid_cert
+        except InvalidCodepoint as ex:
+            # Convert to a more generic error we handle
+            raise httpx.HTTPError(f"InvalidCodepoint: {str(ex)}") from None
+        else:
+            return response
+
+    # Deliberately not doing the above to stream() because those use cases don't
+    # want that handling
+
+    def get(
+        self, url: URLTypes, *, accept: str | None = "application/ld+json", **params
+    ):
+        """
+        Args:
+          accept: Accept header, set to None to get the open option
+        """
+        if accept:
+            params.setdefault("headers", {})["Accept"] = accept
+        return super().get(url, **params)
+
+    def post2(self, url: URLTypes, *, activity=None, **params):
+        """
+        Like .post() but:
+
+        * Adds activity which is like json but for activities
+        * Handles response errors a bit
+        """
+        if activity is not None:
+            params["json"] = activity
+            params.setdefault("headers", {}).setdefault(
+                "Content-Type", "application/activity+json"
+            )
+
+        response = self.post(url, **params)
+
+        if (
+            response.status_code >= 400
+            and response.status_code < 500
+            and response.status_code != 404
+        ):
+            raise ValueError(
+                f"POST error to {url}: {response.status_code} {response.content!r}"
+            )
+        return response
 
 
 class AsyncClient(BaseClient, httpx.AsyncClient):
+    # FIXME: Add the fancy methods the sync version has.
+    # (I'm being lazy because I don't think anyone's making async requests)
     pass

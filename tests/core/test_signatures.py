@@ -1,5 +1,3 @@
-import json
-
 import httpx
 import pytest
 from django.test.client import RequestFactory
@@ -116,15 +114,10 @@ def test_sign_request(keypair):
             "type": "Note",
         },
     }
-    # Normally, Client.post() handles all this encoding. But that doesn't apply
-    # to raw Request objects.
     request = httpx.Request(
         "POST",
         "https://example.com/test-actor",
-        headers={
-            "Content-Type": "application/json",
-        },
-        content=json.dumps(document).encode("utf-8"),
+        json=document,
     )
     # Send the signed request to the mock library
     HttpSignature.sign_request(
