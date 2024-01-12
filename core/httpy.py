@@ -222,14 +222,16 @@ class BaseClient(httpx._client.BaseClient):
 
 
 class Client(BaseClient, httpx.Client):
-    def request(self, url: URLTypes, method: str, **params) -> httpx.Response:
+    def request(self, method: str, url: URLTypes, **params) -> httpx.Response:
         """
         Wraps some errors up nicer
         """
+        if method.lower == "get":
+            if params["follow_redirects"] is httpx._client.USE_CLIENT_DEFAULT:
+                params["follow_redirects"] = True
+
         try:
-            response = super().request(
-                method, url, follow_redirects=method == "get", **params
-            )
+            response = super().request(method, url, **params)
         except SSLError as invalid_cert:
             # Not our problem if the other end doesn't have proper SSL
             logger.info("Invalid cert on %s %s", url, invalid_cert)
