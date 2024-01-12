@@ -1,7 +1,7 @@
-# FIXME: Better way than hitting live httpbin?
 import dataclasses
 
 import pytest
+from pytest_httpx import HTTPXMock
 
 from core.httpy import BlockedIPError, Client  # TODO: Test async client
 
@@ -22,20 +22,27 @@ def signing_actor(keypair):
     )
 
 
-def test_basics():
+def test_basics(httpx_mock: HTTPXMock):
+    httpx_mock.add_response()
+
     with Client() as client:
         resp = client.get("https://httpbin.org/status/200")
         assert resp.status_code == 200
 
 
-def test_signature_exists(signing_actor):
+def test_signature_exists(httpx_mock: HTTPXMock, signing_actor):
+    httpx_mock.add_response()
+
     with Client(actor=signing_actor) as client:
         resp = client.get("https://httpbin.org/headers")
         resp.raise_for_status()
-        body = resp.json()
-        assert "Signature" in body["headers"]
+
+    request = httpx_mock.get_request()
+    assert request is not None
+    assert "Signature" in request.headers
 
 
 def test_ip_block():
+    # httpx_mock actually really hates not being called, so don't use it.
     with pytest.raises(BlockedIPError), Client() as client:
         client.get("http://localhost/")
