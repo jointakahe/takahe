@@ -199,7 +199,9 @@ class HttpSignature:
             raise ValueError("URI does not contain a scheme")
         # Create the core header field set
         date_string = http_date()
-        request.headers["(request-target)"] = f"{request.method} {request.url.path}"
+        request.headers[
+            "(request-target)"
+        ] = f"{request.method.lower()} {request.url.path}"
         request.headers["Host"] = request.url.host
         request.headers["Date"] = date_string
         # If we have a body, add a digest and content type
@@ -208,9 +210,9 @@ class HttpSignature:
             request.headers["Digest"] = cls.calculate_digest(body_bytes)
 
         # Sign the headers
-        signing_headers = {
+        signing_headers = [
             key for key in request.headers.keys() if key.lower() != "user-agent"
-        }
+        ]
         signed_string = "\n".join(
             f"{name.lower()}: {value}"
             for name, value in request.headers.items()
