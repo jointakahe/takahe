@@ -69,6 +69,15 @@ class HttpSignature:
     Allows for calculation and verification of HTTP signatures
     """
 
+    #: Headers we should consider when producing signatures
+    HEADERS_FOR_SIGNING = {
+        "date",
+        "host",
+        "(request-target)",
+        "content-type",
+        "content-length",
+    }
+
     @classmethod
     def calculate_digest(cls, data, algorithm="sha-256") -> str:
         """
@@ -211,7 +220,9 @@ class HttpSignature:
 
         # Sign the headers
         signing_headers = [
-            key for key in request.headers.keys() if key.lower() != "user-agent"
+            key
+            for key in request.headers.keys()
+            if key.lower() in cls.HEADERS_FOR_SIGNING
         ]
         signed_string = "\n".join(
             f"{name.lower()}: {value}"
