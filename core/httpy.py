@@ -141,18 +141,28 @@ class IpFilterWrapperTransport(httpx.BaseTransport, httpx.AsyncBaseTransport):
     #   misconfigured or malicious
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
-        self._check_addrinfo(
-            request, socket.getaddrinfo(*self._request_to_addrinfo(request))
-        )
+        try:
+            self._check_addrinfo(
+                request, socket.getaddrinfo(*self._request_to_addrinfo(request))
+            )
+        except socket.gaierror:
+            # Some kind of look up error. Gonna assume safe and let farther
+            # down the stack handle it.
+            pass
         return self.wrappee.handle_request(request)
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        self._check_addrinfo(
-            request,
-            await asyncio.get_running_loop().getaddrinfo(
-                *self._request_to_addrinfo(request)
-            ),
-        )
+        try:
+            self._check_addrinfo(
+                request,
+                await asyncio.get_running_loop().getaddrinfo(
+                    *self._request_to_addrinfo(request)
+                ),
+            )
+        except socket.gaierror:
+            # Some kind of look up error. Gonna assume safe and let farther
+            # down the stack handle it.
+            pass
         return await self.wrappee.handle_await_request(request)
 
 

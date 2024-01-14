@@ -76,6 +76,7 @@ class HttpSignature:
         "(request-target)",
         "content-type",
         "content-length",
+        "digest",
     }
 
     @classmethod
