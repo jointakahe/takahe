@@ -64,10 +64,13 @@ class ViewIdentity(ListView):
         # If this not a local actor, redirect to their canonical URI
         if not identity.local:
             return redirect(identity.actor_uri)
-        return JsonResponse(
+        r = JsonResponse(
             canonicalise(identity.to_ap(), include_security=True),
             content_type="application/activity+json",
         )
+        if identity.deleted:
+            r.status_code = 410
+        return r
 
     def get_queryset(self):
         return TimelineService(None).identity_public(
