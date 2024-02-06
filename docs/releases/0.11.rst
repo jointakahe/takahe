@@ -1,14 +1,15 @@
 0.11
 ====
 
-*Released: Not Yet Released*
+*Released: 2024-02-05*
 
 This is largely a bugfix and catch up release.
 
 Some highlights:
+
 * Python 3.10 has been dropped. The new minimum Python version is 3.11
-* Jamie ([@astraluma@tacobelllabs.net](https://tacobelllabs.net/@astraluma)) has
-  officially joined the project
+* Jamie (`@astraluma@tacobelllabs.net <https://tacobelllabs.net/@astraluma>`_)
+  has officially joined the project
 * If your S3 does not use TLS, you must use ``s3-insecure`` in your
   configuration
 * Takahē now supports unicode hashtags
@@ -17,6 +18,7 @@ Some highlights:
 * Posts are no longer required to have text content
 
 And some interoperability bugs:
+
 * Fixed a bug with GoToSocial
 * Attempted to fix follows from Misskey family
 * Correctly handle when a federated report doesn't have content
