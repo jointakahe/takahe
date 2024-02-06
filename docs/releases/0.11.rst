@@ -35,3 +35,20 @@ In additions, there's many bugfixes and minor changes, including:
 * Perform some basic domain validity
 * Correctly reject more operations when the identity is deleted
 * Post edit fanouts for likers/boosters
+
+
+If you'd like to help with code, design, or other areas, see
+:doc:`/contributing` to see how to get in touch.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.11``.
+
+
+Upgrade Notes
+-------------
+
+Migrations
+~~~~~~~~~~
+
+There are new database migrations; they are backwards-compatible and should
+not present any major database load.

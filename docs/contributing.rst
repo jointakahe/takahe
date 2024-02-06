@@ -172,3 +172,37 @@ We use `HTMX <https://htmx.org/>`_ for dynamically loading content, and
 `Hyperscript <https://hyperscript.org/>`_ for most interactions rather than raw
 JavaScript. If you can accomplish what you need with these tools, please use them
 rather than adding JS.
+
+
+Cutting a release
+-----------------
+
+In order to make a release of Takahē, follow these steps:
+
+* Create or update the release document (in ``/docs/releases``) for the
+  release; major versions get their own document, minor releases get a
+  subheading in the document for their major release.
+
+  * Go through the git commit history since the last release in order to write
+    a reasonable summary of features.
+
+  * Be sure to include the little paragraphs at the end about contributing and
+    the docker tag, and an Upgrade Notes section that at minimum mentions
+    migrations and if they're normal or weird (even if there aren't any, it's
+    nice to call that out).
+
+  * If it's a new doc, make sure you include it in ``docs/releases/index.rst``!
+
+* Update the version number in ``/takahe/__init__.py``
+
+* Update the version number in ``README.md``
+
+* Make a commit containing these changes called ``Releasing 1.23.45``.
+
+* Tag that commit with a tag in the format ``1.23.45``.
+
+* Wait for the GitHub Actions to run and publish the docker images (around 20
+  minutes as the ARM build is a bit slow)
+
+* Post on the official account announcing the relase and linking to the
+  now-published release notes.
