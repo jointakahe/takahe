@@ -3,7 +3,36 @@
 
 *Released: Not Yet Released*
 
-Notes TBD.
+This is largely a bugfix and catch up release.
+
+Some highlights:
+* Python 3.10 has been dropped. The new minimum Python version is 3.11
+* Jamie ([@astraluma@tacobelllabs.net](https://tacobelllabs.net/@astraluma)) has
+  officially joined the project
+* If your S3 does not use TLS, you must use ``s3-insecure`` in your
+  configuration
+* Takahē now supports unicode hashtags
+* Add a Maximum Media Attachments setting
+* Inverted the pruning command exit codes
+* Posts are no longer required to have text content
+
+And some interoperability bugs:
+* Fixed a bug with GoToSocial
+* Attempted to fix follows from Misskey family
+* Correctly handle when a federated report doesn't have content
+
+In additions, there's many bugfixes and minor changes, including:
+
+* Several JSON handling improvements
+* Post pruning now has a random element to it
+* More specific loggers
+* Don't make local identities stale
+* Don't try to unmute when there's no expiration
+* Don't try to WebFinger local users
+* Synchronize follow accepting and profile fetching
+* Perform some basic domain validity
+* Correctly reject more operations when the identity is deleted
+* Post edit fanouts for likers/boosters
 
 
 Upgrade Notes
