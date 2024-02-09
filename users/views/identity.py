@@ -313,6 +313,14 @@ class CreateIdentity(FormView):
             ),
             required=False,
         )
+        indexable = forms.BooleanField(
+            help_text="Should this user's activities be indexable on other servers.",
+            initial=False,
+            widget=forms.Select(
+                choices=[(True, "Indexable"), (False, "Not Indexable")]
+            ),
+            required=False,
+        )
 
         def __init__(self, user, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -385,6 +393,7 @@ class CreateIdentity(FormView):
             domain=domain_instance,
             name=form.cleaned_data["name"],
             discoverable=form.cleaned_data["discoverable"],
+            indexable=form.cleaned_data["indexable"],
         )
         self.request.session["identity_id"] = identity.id
         return redirect(identity.urls.view)
