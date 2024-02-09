@@ -154,6 +154,11 @@ urlpatterns = [
         name="admin_federation_edit",
     ),
     path(
+        "admin/relays/",
+        admin.RelaysRoot.as_view(),
+        name="admin_relays",
+    ),
+    path(
         "admin/users/",
         admin.UsersRoot.as_view(),
         name="admin_users",

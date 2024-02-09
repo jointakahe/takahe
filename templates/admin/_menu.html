@@ -45,6 +45,10 @@
             <i class="fa-solid fa-diagram-project"></i>
             <span>Federation</span>
         </a>
+        <a href="{% url "admin_relays" %}" {% if section == "relays" %}class="selected"{% endif %} title="Relays">
+            <i class="fa-solid fa-tower-broadcast"></i>
+            <span>Relays</span>
+        </a>
         <a href="{% url "admin_users" %}" {% if section == "users" %}class="selected"{% endif %} title="Users">
             <i class="fa-solid fa-users"></i>
             <span>Users</span>
