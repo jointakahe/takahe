@@ -69,6 +69,16 @@ class HttpSignature:
     Allows for calculation and verification of HTTP signatures
     """
 
+    #: Headers we should consider when producing signatures
+    HEADERS_FOR_SIGNING = {
+        "date",
+        "host",
+        "(request-target)",
+        "content-type",
+        "content-length",
+        "digest",
+    }
+
     @classmethod
     def calculate_digest(cls, data, algorithm="sha-256") -> str:
         """
@@ -184,6 +194,64 @@ class HttpSignature:
             headers_string,
             public_key,
         )
+
+    @classmethod
+    def sign_request(
+        cls,
+        request: httpx.Request,
+        private_key: str,
+        key_id: str,
+    ):
+        """
+        Adds a signature to a Request.
+        """
+        if not request.url.scheme:
+            raise ValueError("URI does not contain a scheme")
+        # Create the core header field set
+        date_string = http_date()
+        request.headers[
+            "(request-target)"
+        ] = f"{request.method.lower()} {request.url.path}"
+        request.headers["Host"] = request.url.host
+        request.headers["Date"] = date_string
+        # If we have a body, add a digest and content type
+        body_bytes = request.content
+        if body_bytes:
+            request.headers["Digest"] = cls.calculate_digest(body_bytes)
+
+        # Sign the headers
+        signing_headers = [
+            key
+            for key in request.headers.keys()
+            if key.lower() in cls.HEADERS_FOR_SIGNING
+        ]
+        signed_string = "\n".join(
+            f"{name.lower()}: {value}"
+            for name, value in request.headers.items()
+            if name in signing_headers
+        )
+        private_key_instance: rsa.RSAPrivateKey = cast(
+            rsa.RSAPrivateKey,
+            serialization.load_pem_private_key(
+                private_key.encode("ascii"),
+                password=None,
+            ),
+        )
+        signature = private_key_instance.sign(
+            signed_string.encode("utf8"),
+            padding.PKCS1v15(),
+            hashes.SHA256(),
+        )
+        request.headers["Signature"] = cls.compile_signature(
+            {
+                "keyid": key_id,
+                "headers": list(signing_headers),
+                "signature": signature,
+                "algorithm": "rsa-sha256",
+            }
+        )
+
+        del request.headers["(request-target)"]
 
     @classmethod
     def signed_request(

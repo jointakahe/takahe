@@ -2,7 +2,6 @@ import mimetypes
 from functools import partial
 from typing import ClassVar
 
-import httpx
 import urlman
 from cachetools import TTLCache, cached
 from django.conf import settings
@@ -12,6 +11,7 @@ from django.db import models
 from django.utils.safestring import mark_safe
 from PIL import Image
 
+from core import httpy
 from core.files import get_remote_file
 from core.html import FediverseHtmlParser
 from core.ld import format_ld_date
@@ -45,7 +45,7 @@ class EmojiStates(StateGraph):
                     timeout=settings.SETUP.REMOTE_TIMEOUT,
                     max_size=settings.SETUP.EMOJI_MAX_IMAGE_FILESIZE_KB * 1024,
                 )
-            except httpx.RequestError:
+            except httpy.RequestError:
                 return
 
             if file:

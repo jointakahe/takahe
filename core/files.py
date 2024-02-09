@@ -1,11 +1,12 @@
 import io
 
 import blurhash
-import httpx
 from django.conf import settings
 from django.core.files import File
 from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
+
+from . import httpy
 
 
 class ImageFile(File):
@@ -70,7 +71,7 @@ def get_remote_file(
         "User-Agent": settings.TAKAHE_USER_AGENT,
     }
 
-    with httpx.Client(headers=headers) as client:
+    with httpy.Client(headers=headers) as client:
         with client.stream(
             "GET", url, timeout=timeout, follow_redirects=True
         ) as stream:

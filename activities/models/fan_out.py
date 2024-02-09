@@ -1,7 +1,7 @@
-import httpx
 from django.db import models
 
 from activities.models.timeline_event import TimelineEvent
+from core import httpy
 from core.ld import canonicalise
 from stator.models import State, StateField, StateGraph, StatorModel
 from users.models import Block, FollowStates
@@ -75,33 +75,33 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.post, False):
                 post = instance.subject_post
                 # Sign it and send it
-                try:
-                    post.author.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(post.to_create_ap()),
-                    )
-                except httpx.RequestError:
-                    return
+                with httpy.Client(actor=post.author) as client:
+                    try:
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(post.to_create_ap()),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle sending remote posts update
             case (FanOut.Types.post_edited, False):
                 post = instance.subject_post
                 # Sign it and send it
-                try:
-                    post.author.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(post.to_update_ap()),
-                    )
-                except httpx.RequestError:
-                    return
+                with httpy.Client(actor=post.author) as client:
+                    try:
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(post.to_update_ap()),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle deleting local posts
             case (FanOut.Types.post_deleted, True):
@@ -117,17 +117,17 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.post_deleted, False):
                 post = instance.subject_post
                 # Send it to the remote inbox
-                try:
-                    post.author.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(post.to_delete_ap()),
-                    )
-                except httpx.RequestError:
-                    return
+                with httpy.Client(actor=post.author) as client:
+                    try:
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(post.to_delete_ap()),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle local boosts/likes
             case (FanOut.Types.interaction, True):
@@ -164,23 +164,24 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.interaction, False):
                 interaction = instance.subject_post_interaction
                 # Send it to the remote inbox
-                try:
+
+                with httpy.Client(actor=interaction.identity) as client:
                     if interaction.type == interaction.Types.vote:
                         body = interaction.to_create_ap()
                     elif interaction.type == interaction.Types.pin:
                         body = interaction.to_add_ap()
                     else:
                         body = interaction.to_ap()
-                    interaction.identity.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(body),
-                    )
-                except httpx.RequestError:
-                    return
+                    try:
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(body),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle undoing local boosts/likes
             case (FanOut.Types.undo_interaction, True):  # noqa:F841
@@ -196,51 +197,55 @@ class FanOutStates(StateGraph):
             case (FanOut.Types.undo_interaction, False):  # noqa:F841
                 interaction = instance.subject_post_interaction
                 # Send an undo to the remote inbox
-                try:
-                    if interaction.type == interaction.Types.pin:
-                        body = interaction.to_remove_ap()
-                    else:
-                        body = interaction.to_undo_ap()
-                    interaction.identity.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(body),
-                    )
-                except httpx.RequestError:
-                    return
+                with httpy.Client(actor=interaction.identity) as client:
+                    try:
+                        if interaction.type == interaction.Types.pin:
+                            body = interaction.to_remove_ap()
+                        else:
+                            body = interaction.to_undo_ap()
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(body),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle sending identity edited to remote
             case (FanOut.Types.identity_edited, False):
                 identity = instance.subject_identity
-                try:
-                    identity.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(instance.subject_identity.to_update_ap()),
-                    )
-                except httpx.RequestError:
-                    return
+                with httpy.Client(actor=identity) as client:
+                    try:
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(
+                                instance.subject_identity.to_update_ap()
+                            ),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle sending identity deleted to remote
             case (FanOut.Types.identity_deleted, False):
                 identity = instance.subject_identity
-                try:
-                    identity.signed_request(
-                        method="post",
-                        uri=(
-                            instance.identity.shared_inbox_uri
-                            or instance.identity.inbox_uri
-                        ),
-                        body=canonicalise(instance.subject_identity.to_delete_ap()),
-                    )
-                except httpx.RequestError:
-                    return
+                with httpy.Client(actor=identity) as client:
+                    try:
+                        client.post2(
+                            (
+                                instance.identity.shared_inbox_uri
+                                or instance.identity.inbox_uri
+                            ),
+                            activity=canonicalise(
+                                instance.subject_identity.to_delete_ap()
+                            ),
+                        )
+                    except httpy.RequestError:
+                        return
 
             # Handle sending identity moved to remote
             case (FanOut.Types.identity_moved, False):
