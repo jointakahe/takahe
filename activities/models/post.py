@@ -30,6 +30,7 @@ from activities.models.post_types import (
 )
 from core.exceptions import ActivityPubFormatError
 from core.html import ContentRenderer, FediverseHtmlParser
+from core.json import json_from_response
 from core.ld import (
     canonicalise,
     format_ld_date,
@@ -1033,8 +1034,9 @@ class Post(StatorModel):
                         {response.content},
                     )
                 try:
+                    json_data = json_from_response(response)
                     post = cls.by_ap(
-                        canonicalise(response.json(), include_security=True),
+                        canonicalise(json_data, include_security=True),
                         create=True,
                         update=True,
                         fetch_author=True,
