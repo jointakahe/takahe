@@ -83,11 +83,11 @@ class SearchService:
         if response.status_code >= 400:
             return None
 
-        json_data = json_from_response(response)
-        if not json_data:
+        try:
+            json_data = json_from_response(response)
+            document = canonicalise(json_data, include_security=True)
+        except ValueError:
             return None
-
-        document = canonicalise(json_data, include_security=True)
         type = document.get("type", "unknown").lower()
 
         # Is it an identity?

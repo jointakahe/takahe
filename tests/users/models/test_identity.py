@@ -109,6 +109,7 @@ def test_fetch_actor(httpx_mock, config_system):
     # Trigger actor fetch
     httpx_mock.add_response(
         url="https://example.com/.well-known/webfinger?resource=acct:test@example.com",
+        headers={"Content-Type": "application/activity+json"},
         json={
             "subject": "acct:test@example.com",
             "aliases": [
@@ -130,6 +131,7 @@ def test_fetch_actor(httpx_mock, config_system):
     )
     httpx_mock.add_response(
         url="https://example.com/test-actor/",
+        headers={"Content-Type": "application/activity+json"},
         json={
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
@@ -170,6 +172,7 @@ def test_fetch_actor(httpx_mock, config_system):
     )
     httpx_mock.add_response(
         url="https://example.com/test-actor/collections/featured/",
+        headers={"Content-Type": "application/activity+json"},
         json={
             "type": "Collection",
             "totalItems": 1,

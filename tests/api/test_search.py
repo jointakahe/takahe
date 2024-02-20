@@ -86,8 +86,7 @@ def test_search_not_found(httpx_mock: HTTPXMock, api_client):
 @pytest.mark.parametrize(
     "content_type",
     [
-        "application/json",
-        "application/ld+json",
+        'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
         "application/activity+json",
     ],
 )

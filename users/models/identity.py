@@ -857,7 +857,8 @@ class Identity(StatorModel):
                 return []
 
         try:
-            data = canonicalise(response.json(), include_security=True)
+            json_data = json_from_response(response)
+            data = canonicalise(json_data, include_security=True)
             items: list[dict | str] = []
             if "orderedItems" in data:
                 items = list(reversed(data["orderedItems"]))
@@ -917,10 +918,8 @@ class Identity(StatorModel):
                     "Client error fetching actor: %d %s", status_code, self.actor_uri
                 )
             return False
-        json_data = json_from_response(response)
-        if not json_data:
-            return False
         try:
+            json_data = json_from_response(response)
             document = canonicalise(json_data, include_security=True)
         except ValueError:
             # servers with empty or invalid responses are inevitable
