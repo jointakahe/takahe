@@ -96,7 +96,7 @@ class QuestionData(BasePostDataType):
 
 class ArticleData(BasePostDataType):
     type: Literal["Article"]
-    attributed_to: str | None = Field(...)
+    attributed_to: str | None = Field(alias="attributedTo")
 
     class Config:
         extra = "ignore"
@@ -110,12 +110,12 @@ class PostTypeData(BaseModel):
 
 
 class PostTypeDataEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, BasePostDataType):
-            return obj.dict()
-        elif isinstance(obj, datetime):
-            return obj.isoformat()
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, BasePostDataType):
+            return o.dict()
+        elif isinstance(o, datetime):
+            return o.isoformat()
+        return json.JSONEncoder.default(self, o)
 
 
 class PostTypeDataDecoder(json.JSONDecoder):
