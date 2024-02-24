@@ -1,4 +1,5 @@
 import string
+from datetime import timezone
 
 from django import forms
 from django.contrib.auth.decorators import login_required
@@ -6,6 +7,7 @@ from django.contrib.syndication.views import Feed
 from django.core import validators
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
+from django.utils import timezone as tz
 from django.utils.decorators import method_decorator
 from django.utils.feedgenerator import Rss201rev2Feed
 from django.utils.xmlutils import SimplerXMLGenerator
@@ -68,7 +70,7 @@ class ViewIdentity(ListView):
             canonicalise(identity.to_ap(), include_security=True),
             content_type="application/activity+json",
         )
-        if identity.deleted:
+        if identity.deleted and tz.now() - identity.deleted > tz.timedelta(days=3):
             r.status_code = 410
         return r
 
