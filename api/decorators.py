@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import wraps
 
 from django.http import JsonResponse
-
+from core.models import Config
 
 def identity_required(function):
     """
@@ -35,6 +35,9 @@ def scope_required(scope: str, requires_identity=True):
                     # They're just logged in via cookie - give full access
                     pass
                 else:
+                    if Config.system.public_timeline and scope == "read:statuses":
+                        return function(request, *args, **kwargs)
+
                     return JsonResponse(
                         {"error": "identity_token_required"}, status=401
                     )
