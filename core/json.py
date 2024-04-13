@@ -20,6 +20,8 @@ def json_from_response(response: Response) -> dict | None:
     charset = None
 
     for parameter in parameters:
+        if "=" not in parameter:
+            continue
         key, value = parameter.split("=")
         if key.strip() == "charset":
             charset = value.strip()
