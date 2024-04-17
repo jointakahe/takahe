@@ -13,6 +13,7 @@ from users.models import (
     Identity,
     InboxMessage,
     Invite,
+    Marker,
     PasswordReset,
     Report,
     User,
@@ -210,6 +211,11 @@ class InboxMessageAdmin(admin.ModelAdmin):
 @admin.register(Invite)
 class InviteAdmin(admin.ModelAdmin):
     list_display = ["id", "created", "token", "note"]
+
+
+@admin.register(Marker)
+class MarkerAdmin(admin.ModelAdmin):
+    list_display = ["id", "identity", "timeline", "last_read_id", "updated_at"]
 
 
 @admin.register(Report)

@@ -233,6 +233,7 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "core.middleware.HeadersMiddleware",
     "core.middleware.ConfigLoadingMiddleware",
+    "core.middleware.ParamsMiddleware",
     "api.middleware.ApiTokenMiddleware",
     "users.middleware.DomainMiddleware",
 ]

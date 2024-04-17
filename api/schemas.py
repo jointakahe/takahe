@@ -503,3 +503,16 @@ class PushSubscription(Schema):
             return value
         else:
             return None
+
+
+class Marker(Schema):
+    last_read_id: str
+    version: int
+    updated_at: str
+
+    @classmethod
+    def from_marker(
+        cls,
+        marker: users_models.Marker,
+    ) -> "Marker":
+        return cls(**marker.to_mastodon_json())

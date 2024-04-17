@@ -11,6 +11,7 @@ from api.views import (
     follow_requests,
     instance,
     lists,
+    markers,
     media,
     notifications,
     polls,
@@ -67,6 +68,14 @@ urlpatterns = [
     path("v2/instance", instance.instance_info_v2),
     # Lists
     path("v1/lists", lists.get_lists),
+    # Markers
+    path(
+        "v1/markers",
+        methods(
+            get=markers.markers,
+            post=markers.set_markers,
+        ),
+    ),
     # Media
     path("v1/media", media.upload_media),
     path("v2/media", media.upload_media),
