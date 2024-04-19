@@ -45,6 +45,7 @@ class AnnouncementCreate(CreateView):
 class AnnouncementEdit(UpdateView):
     model = Announcement
     template_name = "admin/announcement_edit.html"
+    success_url = Announcement.urls.admin_root
     extra_context = {"section": "announcements"}
 
     def get_context_data(self, **kwargs):
