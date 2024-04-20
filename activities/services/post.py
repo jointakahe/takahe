@@ -1,5 +1,7 @@
 import logging
 
+from django.db.models import OuterRef
+
 from activities.models import (
     Post,
     PostInteraction,
@@ -18,11 +20,11 @@ class PostService:
     """
 
     @classmethod
-    def queryset(cls):
+    def queryset(cls, include_reply_to_author=False):
         """
         Returns the base queryset to use for fetching posts efficiently.
         """
-        return (
+        qs = (
             Post.objects.not_hidden()
             .prefetch_related(
                 "attachments",
@@ -34,6 +36,13 @@ class PostService:
                 "author__domain",
             )
         )
+        if include_reply_to_author:
+            qs = qs.annotate(
+                in_reply_to_author_id=Post.objects.filter(
+                    object_uri=OuterRef("in_reply_to")
+                ).values("author_id")[:1]
+            )
+        return qs
 
     def __init__(self, post: Post):
         self.post = post

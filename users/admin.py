@@ -13,6 +13,7 @@ from users.models import (
     Identity,
     InboxMessage,
     Invite,
+    List,
     Marker,
     PasswordReset,
     Report,
@@ -211,6 +212,12 @@ class InboxMessageAdmin(admin.ModelAdmin):
 @admin.register(Invite)
 class InviteAdmin(admin.ModelAdmin):
     list_display = ["id", "created", "token", "note"]
+
+
+@admin.register(List)
+class ListAdmin(admin.ModelAdmin):
+    list_display = ["id", "identity", "title", "replies_policy", "exclusive"]
+    autocomplete_fields = ["members"]
 
 
 @admin.register(Marker)

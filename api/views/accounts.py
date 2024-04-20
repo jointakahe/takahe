@@ -373,3 +373,15 @@ def account_followers(
 def account_featured_tags(request: HttpRequest, id: str) -> list[schemas.FeaturedTag]:
     # Not implemented yet
     return []
+
+
+@scope_required("read:lists")
+@api_view.get
+def account_lists(request: HttpRequest, id: str) -> list[schemas.List]:
+    identity = get_object_or_404(
+        Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
+    )
+    return [
+        schemas.List.from_list(lst)
+        for lst in request.identity.lists.filter(members=identity)
+    ]

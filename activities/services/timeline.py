@@ -8,7 +8,8 @@ from activities.models import (
     TimelineEvent,
 )
 from activities.services import PostService
-from users.models import Identity
+from users.models import Identity, List
+from users.services import IdentityService
 
 
 class TimelineService:
@@ -152,3 +153,30 @@ class TimelineService:
             .filter(bookmarks__identity=self.identity)
             .order_by("-id")
         )
+
+    def for_list(self, alist: List) -> models.QuerySet[Post]:
+        """
+        Return posts from members of `alist`, filtered by the lists replies policy.
+        """
+        assert self.identity  # Appease mypy
+        # We only need to include this if we need to filter on it.
+        include_author = alist.replies_policy == "followed"
+        members = alist.members.all()
+        queryset = PostService.queryset(include_reply_to_author=include_author)
+        match alist.replies_policy:
+            case "list":
+                # The default is to show posts (and replies) from list members.
+                criteria = models.Q(author__in=members)
+            case "none":
+                # Don't show any replies, just original posts from list members.
+                criteria = models.Q(author__in=members) & models.Q(
+                    in_reply_to__isnull=True
+                )
+            case "followed":
+                # Show posts from list members OR from accounts you follow replying to
+                # posts by list members.
+                criteria = models.Q(author__in=members) | (
+                    models.Q(author__in=IdentityService(self.identity).following())
+                    & models.Q(in_reply_to_author_id__in=members)
+                )
+        return queryset.filter(criteria).order_by("-id")

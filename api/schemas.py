@@ -407,11 +407,15 @@ class Announcement(Schema):
 class List(Schema):
     id: str
     title: str
-    replies_policy: Literal[
-        "followed",
-        "list",
-        "none",
-    ]
+    replies_policy: Literal["followed", "list", "none"]
+    exclusive: bool
+
+    @classmethod
+    def from_list(
+        cls,
+        list_instance: users_models.List,
+    ) -> "List":
+        return cls(**list_instance.to_mastodon_json())
 
 
 class Preferences(Schema):

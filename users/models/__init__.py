@@ -7,6 +7,7 @@ from .hashtag_follow import HashtagFollow  # noqa
 from .identity import Identity, IdentityStates  # noqa
 from .inbox_message import InboxMessage, InboxMessageStates  # noqa
 from .invite import Invite  # noqa
+from .lists import List  # noqa
 from .marker import Marker  # noqa
 from .password_reset import PasswordReset  # noqa
 from .report import Report  # noqa
