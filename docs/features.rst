@@ -30,7 +30,7 @@ Currently, it supports:
 * Signup flow, including auto-cap by user numbers and invite system
 * Password reset via email
 * Bookmarks
-# Markers
+* Markers
 
 Features planned for releases up to 1.0:
 

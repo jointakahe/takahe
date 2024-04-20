@@ -20,3 +20,10 @@ Marker Support
 
 Takahē now supports the `Markers API <https://docs.joinmastodon.org/methods/markers/>`_,
 used by clients to sync read positions within timelines.
+
+
+Lists Support
+~~~~~~~~~~~~~
+
+Takahē now supports the `Lists APIs <https://docs.joinmastodon.org/methods/lists/>`_,
+used by clients to maintain lists of accounts to show timelines for.
