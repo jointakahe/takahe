@@ -13,7 +13,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent / "extensions"))
 
 project = "Takahē"
 copyright = "2022, Andrew Godwin"
-author = "Andrew Godwin"
+author = "Andrew Godwin, Jamie Bliss"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

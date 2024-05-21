@@ -1,21 +1,54 @@
 0.11
 ====
 
-*Released: Not Yet Released*
+*Released: 2024-02-05*
 
-Notes TBD.
+This is largely a bugfix and catch up release.
+
+Some highlights:
+
+* Python 3.10 has been dropped. The new minimum Python version is 3.11
+* Jamie (`@astraluma@tacobelllabs.net <https://tacobelllabs.net/@astraluma>`_)
+  has officially joined the project
+* If your S3 does not use TLS, you must use ``s3-insecure`` in your
+  configuration
+* Takahē now supports unicode hashtags
+* Add a Maximum Media Attachments setting
+* Inverted the pruning command exit codes
+* Posts are no longer required to have text content
+
+And some interoperability bugs:
+
+* Fixed a bug with GoToSocial
+* Attempted to fix follows from Misskey family
+* Correctly handle when a federated report doesn't have content
+
+In additions, there's many bugfixes and minor changes, including:
+
+* Several JSON handling improvements
+* Post pruning now has a random element to it
+* More specific loggers
+* Don't make local identities stale
+* Don't try to unmute when there's no expiration
+* Don't try to WebFinger local users
+* Synchronize follow accepting and profile fetching
+* Perform some basic domain validity
+* Correctly reject more operations when the identity is deleted
+* Post edit fanouts for likers/boosters
+
+
+If you'd like to help with code, design, or other areas, see
+:doc:`/contributing` to see how to get in touch.
+
+You can download images from `Docker Hub <https://hub.docker.com/r/jointakahe/takahe>`_,
+or use the image name ``jointakahe/takahe:0.11``.
 
 
 Upgrade Notes
 -------------
 
-VAPID keys and Push notifications
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Migrations
+~~~~~~~~~~
 
-Takahē now supports push notifications if you supply a valid VAPID keypair as
-the ``TAKAHE_VAPID_PUBLIC_KEY`` and ``TAKAHE_VAPID_PRIVATE_KEY`` environment
-variables. You can generate a keypair via `https://web-push-codelab.glitch.me/`_.
-
-Note that users of apps may need to sign out and in again to their accounts for
-the app to notice that it can now do push notifications. Some apps, like Elk,
-may cache the fact your server didn't support it for a while.
+There are new database migrations; they are backwards-compatible and should
+not present any major database load.
