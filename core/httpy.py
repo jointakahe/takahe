@@ -163,7 +163,7 @@ class IpFilterWrapperTransport(httpx.BaseTransport, httpx.AsyncBaseTransport):
             # Some kind of look up error. Gonna assume safe and let farther
             # down the stack handle it.
             pass
-        return await self.wrappee.handle_await_request(request)
+        return await self.wrappee.handle_async_request(request)
 
 
 def _wrap_transport(
