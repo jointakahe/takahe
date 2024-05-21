@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from django.test.client import RequestFactory
 from pytest_httpx import HTTPXMock
@@ -94,6 +95,48 @@ def test_sign_http(httpx_mock: HTTPXMock, keypair):
         HTTP_DATE=outbound_request.headers["date"],
         HTTP_SIGNATURE=outbound_request.headers["signature"],
         HTTP_DIGEST=outbound_request.headers["digest"],
+    )
+    # Verify that
+    HttpSignature.verify_request(fake_request, keypair["public_key"])
+
+
+def test_sign_request(keypair):
+    """
+    Tests signing HTTP requests by round-tripping them through our verifier
+    """
+    # Create document
+    document = {
+        "id": "https://example.com/test-create",
+        "type": "Create",
+        "actor": "https://example.com/test-actor",
+        "object": {
+            "id": "https://example.com/test-object",
+            "type": "Note",
+        },
+    }
+    request = httpx.Request(
+        "POST",
+        "https://example.com/test-actor",
+        json=document,
+    )
+    # Send the signed request to the mock library
+    HttpSignature.sign_request(
+        request=request,
+        private_key=keypair["private_key"],
+        key_id=keypair["public_key_id"],
+    )
+    # Retrieve it and construct a fake request object
+    fake_request = RequestFactory().post(
+        path="/test-actor",
+        data=request.content,
+        **{
+            (
+                "content_type"
+                if name.lower() == "content-type"
+                else f"HTTP_{name.upper()}"
+            ): value
+            for name, value in request.headers.items()
+        },
     )
     # Verify that
     HttpSignature.verify_request(fake_request, keypair["public_key"])
