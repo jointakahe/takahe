@@ -55,7 +55,7 @@ class IdentityStates(StateGraph):
 
     edited = State(try_interval=300, attempt_immediately=True)
     deleted = State(try_interval=300, attempt_immediately=True)
-    deleted_fanned_out = State(delete_after=86400 * 7)
+    deleted_fanned_out = State(externally_progressed=True)
 
     moved = State(try_interval=300, attempt_immediately=True)
     moved_fanned_out = State(externally_progressed=True)
@@ -582,7 +582,7 @@ class Identity(StatorModel):
         self.ensure_uris()
         response = {
             "id": self.actor_uri,
-            "type": self.actor_type.title(),
+            "type": "Tombstone" if self.deleted else self.actor_type.title(),
             "inbox": self.inbox_uri,
             "outbox": self.outbox_uri,
             "featured": self.featured_collection_uri,
