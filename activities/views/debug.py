@@ -5,6 +5,7 @@ from django import forms
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 
+from core.json import json_from_response
 from core.ld import canonicalise
 from users.decorators import admin_required
 from users.models import SystemActor
@@ -50,8 +51,9 @@ class JsonViewer(FormView):
                 result = f"Error response: {response.status_code}\n{response.content}"
             else:
                 try:
-                    document = canonicalise(response.json(), include_security=True)
-                except json.JSONDecodeError as ex:
+                    json_data = json_from_response(response)
+                    document = canonicalise(json_data, include_security=True)
+                except ValueError as ex:
                     result = str(ex)
                 else:
                     context["raw_result"] = json.dumps(response.json(), indent=2)

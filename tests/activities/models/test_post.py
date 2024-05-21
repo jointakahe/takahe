@@ -13,6 +13,7 @@ def test_fetch_post(httpx_mock: HTTPXMock, config_system):
     """
     httpx_mock.add_response(
         url="https://example.com/test-actor",
+        headers={"Content-Type": "application/activity+json"},
         json={
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
@@ -23,6 +24,7 @@ def test_fetch_post(httpx_mock: HTTPXMock, config_system):
     )
     httpx_mock.add_response(
         url="https://example.com/test-post",
+        headers={"Content-Type": "application/activity+json"},
         json={
             "@context": [
                 "https://www.w3.org/ns/activitystreams",
