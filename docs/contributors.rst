@@ -9,7 +9,8 @@ page!
 Creator & Main Developer
 ------------------------
 
-* `Andrew Godwin <https://aeracode.org>`_
+* `Andrew Godwin <https://aeracode.org>`_ (Original creator)
+* `Jamie Bliss <https://tacobelllabs.net/@astraluma>`_ (Current maintainer)
 
 
 Core Contributors
