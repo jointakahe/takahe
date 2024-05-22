@@ -11,6 +11,7 @@ from api.views import (
     follow_requests,
     instance,
     lists,
+    markers,
     media,
     notifications,
     polls,
@@ -43,6 +44,7 @@ urlpatterns = [
     path("v1/accounts/<id>/following", accounts.account_following),
     path("v1/accounts/<id>/followers", accounts.account_followers),
     path("v1/accounts/<id>/featured_tags", accounts.account_featured_tags),
+    path("v1/accounts/<id>/lists", accounts.account_lists),
     # Announcements
     path("v1/announcements", announcements.announcement_list),
     path("v1/announcements/<pk>/dismiss", announcements.announcement_dismiss),
@@ -66,7 +68,37 @@ urlpatterns = [
     path("v1/instance/peers", instance.peers),
     path("v2/instance", instance.instance_info_v2),
     # Lists
-    path("v1/lists", lists.get_lists),
+    path(
+        "v1/lists",
+        methods(
+            get=lists.get_lists,
+            post=lists.create_list,
+        ),
+    ),
+    path(
+        "v1/lists/<id>",
+        methods(
+            get=lists.get_list,
+            put=lists.update_list,
+            delete=lists.delete_list,
+        ),
+    ),
+    path(
+        "v1/lists/<id>/accounts",
+        methods(
+            get=lists.get_accounts,
+            post=lists.add_accounts,
+            delete=lists.delete_accounts,
+        ),
+    ),
+    # Markers
+    path(
+        "v1/markers",
+        methods(
+            get=markers.markers,
+            post=markers.set_markers,
+        ),
+    ),
     # Media
     path("v1/media", media.upload_media),
     path("v2/media", media.upload_media),
@@ -125,6 +157,7 @@ urlpatterns = [
     path("v1/timelines/home", timelines.home),
     path("v1/timelines/public", timelines.public),
     path("v1/timelines/tag/<hashtag>", timelines.hashtag),
+    path("v1/timelines/list/<list_id>", timelines.list_timeline),
     path("v1/conversations", timelines.conversations),
     path("v1/favourites", timelines.favourites),
     # Trends

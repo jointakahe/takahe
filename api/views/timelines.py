@@ -1,4 +1,5 @@
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from hatchway import ApiError, ApiResponse, api_view
 
 from activities.models import Post, TimelineEvent
@@ -145,6 +146,34 @@ def favourites(
     limit: int = 20,
 ) -> ApiResponse[list[schemas.Status]]:
     queryset = TimelineService(request.identity).likes()
+
+    paginator = MastodonPaginator()
+    pager: PaginationResult[Post] = paginator.paginate(
+        queryset,
+        min_id=min_id,
+        max_id=max_id,
+        since_id=since_id,
+        limit=limit,
+    )
+    return PaginatingApiResponse(
+        schemas.Status.map_from_post(pager.results, request.identity),
+        request=request,
+        include_params=["limit"],
+    )
+
+
+@scope_required("read:lists")
+@api_view.get
+def list_timeline(
+    request: HttpRequest,
+    list_id: str,
+    max_id: str | None = None,
+    since_id: str | None = None,
+    min_id: str | None = None,
+    limit: int = 20,
+) -> ApiResponse[list[schemas.Status]]:
+    alist = get_object_or_404(request.identity.lists, pk=list_id)
+    queryset = TimelineService(request.identity).for_list(alist)
 
     paginator = MastodonPaginator()
     pager: PaginationResult[Post] = paginator.paginate(

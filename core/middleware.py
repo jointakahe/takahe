@@ -1,3 +1,4 @@
+import json
 from time import time
 
 from django.conf import settings
@@ -73,3 +74,25 @@ def show_toolbar(request):
     Determines whether to show the debug toolbar on a given page.
     """
     return settings.DEBUG and request.user.is_authenticated and request.user.admin
+
+
+class ParamsMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def make_params(self, request):
+        # See https://docs.joinmastodon.org/client/intro/#parameters
+        # If they sent JSON, use that.
+        if request.content_type == "application/json" and request.body.strip():
+            return json.loads(request.body)
+        # Otherwise, fall back to form data.
+        params = {}
+        for key, value in request.GET.items():
+            params[key] = value
+        for key, value in request.POST.items():
+            params[key] = value
+        return params
+
+    def __call__(self, request):
+        request.PARAMS = self.make_params(request)
+        return self.get_response(request)

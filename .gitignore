@@ -5,6 +5,7 @@
 *.sqlite3
 .DS_Store
 .idea/*
+.nova
 .venv
 .vscode
 /*.env*

@@ -407,11 +407,15 @@ class Announcement(Schema):
 class List(Schema):
     id: str
     title: str
-    replies_policy: Literal[
-        "followed",
-        "list",
-        "none",
-    ]
+    replies_policy: Literal["followed", "list", "none"]
+    exclusive: bool
+
+    @classmethod
+    def from_list(
+        cls,
+        list_instance: users_models.List,
+    ) -> "List":
+        return cls(**list_instance.to_mastodon_json())
 
 
 class Preferences(Schema):
@@ -503,3 +507,16 @@ class PushSubscription(Schema):
             return value
         else:
             return None
+
+
+class Marker(Schema):
+    last_read_id: str
+    version: int
+    updated_at: str
+
+    @classmethod
+    def from_marker(
+        cls,
+        marker: users_models.Marker,
+    ) -> "Marker":
+        return cls(**marker.to_mastodon_json())

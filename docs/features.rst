@@ -9,6 +9,7 @@ Currently, it supports:
 * A web UI (which can be installed as a PWA as well)
 * Mastodon-compatible client applications (beta support)
 * Posts with content warnings and visibilities including a local-only option
+* Creating polls on posts
 * Editing post content
 * Viewing images, videos and other post attachments
 * Uploading images and attaching image captions
@@ -28,6 +29,8 @@ Currently, it supports:
 * Server defederation (blocking)
 * Signup flow, including auto-cap by user numbers and invite system
 * Password reset via email
+* Bookmarks
+* Markers
 
 Features planned for releases up to 1.0:
 
@@ -41,9 +44,7 @@ Features planned for releases up to 1.0:
 
 Features that may make it into 1.0, or might be further out:
 
-* Creating polls on posts
 * Filters
-* Bookmarks
 * Lists
 * Scheduling posts
 * Mastodon-compatible account migration target/source

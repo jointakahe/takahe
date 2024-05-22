@@ -1,5 +1,4 @@
 import base64
-import json
 import secrets
 import time
 from urllib.parse import urlparse, urlunparse
@@ -39,19 +38,6 @@ class OauthRedirect(HttpResponseRedirect):
 
         url_parts[4] = query_string
         super().__init__(urlunparse(url_parts))
-
-
-def get_json_and_formdata(request):
-    # Did they submit JSON?
-    if request.content_type == "application/json" and request.body.strip():
-        return json.loads(request.body)
-    # Fall back to form data
-    value = {}
-    for key, item in request.POST.items():
-        value[key] = item
-    for key, item in request.GET.items():
-        value[key] = item
-    return value
 
 
 class AuthorizationView(LoginRequiredMixin, View):
@@ -106,7 +92,7 @@ class AuthorizationView(LoginRequiredMixin, View):
         return render(request, "api/oauth_authorize.html", context)
 
     def post(self, request):
-        post_data = get_json_and_formdata(request)
+        post_data = request.PARAMS
         # Grab the application and other details again
         redirect_uri = post_data["redirect_uri"]
         scope = post_data["scope"]
@@ -160,7 +146,7 @@ class TokenView(View):
         )
 
     def post(self, request):
-        post_data = get_json_and_formdata(request)
+        post_data = request.PARAMS.copy()
         auth_client_id, auth_client_secret = extract_client_info_from_basic_auth(
             request
         )
@@ -243,7 +229,7 @@ class TokenView(View):
 @method_decorator(csrf_exempt, name="dispatch")
 class RevokeTokenView(View):
     def post(self, request):
-        post_data = get_json_and_formdata(request)
+        post_data = request.PARAMS.copy()
         auth_client_id, auth_client_secret = extract_client_info_from_basic_auth(
             request
         )
