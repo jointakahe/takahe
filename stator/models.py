@@ -44,8 +44,11 @@ def add_stator_indexes(sender, **kwargs):
     Inject Indexes used by StatorModel in to any subclasses. This sidesteps the
     current Django inability to inherit indexes when the Model subclass defines
     its own indexes.
+
+    We should only add this for models that direct descendants of
+    StatorModel, otherwise we will see system check errors.
     """
-    if issubclass(sender, StatorModel):
+    if sender.__base__ is StatorModel:
         indexes = [
             models.Index(
                 fields=["state", "state_next_attempt", "state_locked_until"],
