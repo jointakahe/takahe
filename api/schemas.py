@@ -71,6 +71,7 @@ class Account(Schema):
     bot: bool
     group: bool
     discoverable: bool
+    indexable: bool
     moved: Union[None, bool, "Account"]
     suspended: bool = False
     limited: bool = False
