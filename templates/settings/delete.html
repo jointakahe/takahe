@@ -3,7 +3,9 @@
 {% block subtitle %}Token{% endblock %}
 
 {% block settings_content %}
+    <!--email_off-->
     <h1>Deleting {{ identity.handle }}</h1>
+    <!--/email_off-->
     <form action="." method="POST">
         {% csrf_token %}
         <fieldset>
@@ -25,7 +27,9 @@
 
         <div class="buttons">
             <a href="{% url "settings" handle=identity.handle %}" class="button secondary left">Cancel</a>
+            <!--email_off-->
             <button class="danger">Delete {{ identity.handle }}</button>
+            <!--/email_off-->
         </div>
     </form>
 {% endblock %}

@@ -12,7 +12,9 @@
                 <img src="{{ identity.local_icon_url.relative }}">
                 <span class="handle">
                     {{ identity.html_name_or_handle }}
+                    <!--email_off-->
                     <small>@{{ identity.handle }}</small>
+                    <!--/email_off-->
                 </span>
                 <button class="right secondary" _="on click go to url {{ identity.urls.view }} then halt">View</button>
                 <button class="right secondary" _="on click go to url {{ identity.urls.settings }} then halt">Settings</button>
