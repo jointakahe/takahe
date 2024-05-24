@@ -769,12 +769,12 @@ class Post(StatorModel):
             # deliver edit to all previously interacted to this post
             for interaction in self.interactions.all():
                 targets.add(interaction.identity)
-            # deliver to all hashtag followers
-            if self.hashtags:
-                for follow in HashtagFollow.objects.by_hashtags(
-                    self.hashtags
-                ).prefetch_related("identity"):
-                    targets.add(follow.identity)
+        if self.visibility == Post.Visibilities.public and self.hashtags:
+            # deliver public post with hashtag to all hashtag followers
+            for follow in HashtagFollow.objects.by_hashtags(
+                self.hashtags
+            ).prefetch_related("identity"):
+                targets.add(follow.identity)
         # Then, if it's not mentions only, also deliver to followers
         if self.visibility != Post.Visibilities.mentioned:
             for follower in self.author.inbound_follows.filter(
