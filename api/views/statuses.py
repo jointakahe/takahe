@@ -64,7 +64,7 @@ class EditStatusSchema(Schema):
     media_attributes: list[MediaAttributesSchema] = []
 
 
-def post_for_id(request: HttpRequest, id: str) -> Post:
+def post_for_id(request: HttpRequest, id: int) -> Post:
     """
     Common logic to get a Post object for an ID, taking visibility into
     account.
@@ -118,7 +118,7 @@ def post_status(request, details: PostStatusSchema) -> schemas.Status:
 
 @scope_required("read:statuses")
 @api_view.get
-def status(request, id: str) -> schemas.Status:
+def status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
     return schemas.Status.from_post(
@@ -128,7 +128,7 @@ def status(request, id: str) -> schemas.Status:
 
 @scope_required("write:statuses")
 @api_view.put
-def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
+def edit_status(request, id: int, details: EditStatusSchema) -> schemas.Status:
     post = post_for_id(request, id)
     if post.author != request.identity:
         raise ApiError(401, "Not the author of this status")
@@ -147,7 +147,7 @@ def edit_status(request, id: str, details: EditStatusSchema) -> schemas.Status:
 
 @scope_required("write:statuses")
 @api_view.delete
-def delete_status(request, id: str) -> schemas.Status:
+def delete_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     if post.author != request.identity:
         raise ApiError(401, "Not the author of this status")
@@ -157,14 +157,14 @@ def delete_status(request, id: str) -> schemas.Status:
 
 @scope_required("read:statuses")
 @api_view.get
-def status_source(request, id: str) -> schemas.StatusSource:
+def status_source(request, id: int) -> schemas.StatusSource:
     post = post_for_id(request, id)
     return schemas.StatusSource.from_post(post)
 
 
 @scope_required("read:statuses")
 @api_view.get
-def status_context(request, id: str) -> schemas.Context:
+def status_context(request, id: int) -> schemas.Context:
     post = post_for_id(request, id)
     service = PostService(post)
     ancestors, descendants = service.context(request.identity)
@@ -189,7 +189,7 @@ def status_context(request, id: str) -> schemas.Context:
 
 @scope_required("write:favourites")
 @api_view.post
-def favourite_status(request, id: str) -> schemas.Status:
+def favourite_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     service = PostService(post)
     service.like_as(request.identity)
@@ -201,7 +201,7 @@ def favourite_status(request, id: str) -> schemas.Status:
 
 @scope_required("write:favourites")
 @api_view.post
-def unfavourite_status(request, id: str) -> schemas.Status:
+def unfavourite_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     service = PostService(post)
     service.unlike_as(request.identity)
@@ -214,7 +214,7 @@ def unfavourite_status(request, id: str) -> schemas.Status:
 @api_view.get
 def favourited_by(
     request: HttpRequest,
-    id: str,
+    id: int,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
@@ -256,7 +256,7 @@ def favourited_by(
 @api_view.get
 def reblogged_by(
     request: HttpRequest,
-    id: str,
+    id: int,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
@@ -297,7 +297,7 @@ def reblogged_by(
 
 @scope_required("write:favourites")
 @api_view.post
-def reblog_status(request, id: str) -> schemas.Status:
+def reblog_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     service = PostService(post)
     service.boost_as(request.identity)
@@ -309,7 +309,7 @@ def reblog_status(request, id: str) -> schemas.Status:
 
 @scope_required("write:favourites")
 @api_view.post
-def unreblog_status(request, id: str) -> schemas.Status:
+def unreblog_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     service = PostService(post)
     service.unboost_as(request.identity)
@@ -321,7 +321,7 @@ def unreblog_status(request, id: str) -> schemas.Status:
 
 @scope_required("write:bookmarks")
 @api_view.post
-def bookmark_status(request, id: str) -> schemas.Status:
+def bookmark_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     request.identity.bookmarks.get_or_create(post=post)
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -332,7 +332,7 @@ def bookmark_status(request, id: str) -> schemas.Status:
 
 @scope_required("write:bookmarks")
 @api_view.post
-def unbookmark_status(request, id: str) -> schemas.Status:
+def unbookmark_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     request.identity.bookmarks.filter(post=post).delete()
     interactions = PostInteraction.get_post_interactions([post], request.identity)
@@ -343,7 +343,7 @@ def unbookmark_status(request, id: str) -> schemas.Status:
 
 @scope_required("write:accounts")
 @api_view.post
-def pin_status(request, id: str) -> schemas.Status:
+def pin_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     try:
         PostService(post).pin_as(request.identity)
@@ -357,7 +357,7 @@ def pin_status(request, id: str) -> schemas.Status:
 
 @scope_required("write:accounts")
 @api_view.post
-def unpin_status(request, id: str) -> schemas.Status:
+def unpin_status(request, id: int) -> schemas.Status:
     post = post_for_id(request, id)
     PostService(post).unpin_as(request.identity)
     interactions = PostInteraction.get_post_interactions([post], request.identity)

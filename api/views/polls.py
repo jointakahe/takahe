@@ -12,14 +12,14 @@ class PostVoteSchema(Schema):
 
 @scope_required("read:statuses")
 @api_view.get
-def get_poll(request, id: str) -> schemas.Poll:
+def get_poll(request, id: int) -> schemas.Poll:
     post = get_object_or_404(Post, pk=id, type=Post.Types.question)
     return schemas.Poll.from_post(post, identity=request.identity)
 
 
 @scope_required("write:statuses")
 @api_view.post
-def vote_poll(request, id: str, details: PostVoteSchema) -> schemas.Poll:
+def vote_poll(request, id: int, details: PostVoteSchema) -> schemas.Poll:
     post = get_object_or_404(Post, pk=id, type=Post.Types.question)
     PostInteraction.create_votes(post, request.identity, details.choices)
     post.refresh_from_db()
