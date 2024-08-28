@@ -19,3 +19,4 @@ __pycache__/
 api-test.*
 notes.md
 notes.py
+venv/
