@@ -460,7 +460,7 @@ class Post(StatorModel):
         """
         if not self.summary:
             return ""
-        return "summary-{self.id}"
+        return f"summary-{self.id}"
 
     @property
     def stats_with_defaults(self):
