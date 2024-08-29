@@ -38,7 +38,7 @@ def follow_requests(
 @api_view.post
 def accept_follow_request(
     request: HttpRequest,
-    id: str | None = None,
+    id: int | None = None,
 ) -> schemas.Relationship:
     source_identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
@@ -51,7 +51,7 @@ def accept_follow_request(
 @api_view.post
 def reject_follow_request(
     request: HttpRequest,
-    id: str | None = None,
+    id: int | None = None,
 ) -> schemas.Relationship:
     source_identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id

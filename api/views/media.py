@@ -52,7 +52,7 @@ def upload_media(
 @api_view.get
 def get_media(
     request,
-    id: str,
+    id: int,
 ) -> schemas.MediaAttachment:
     attachment = get_object_or_404(PostAttachment, pk=id)
     if attachment.post:
@@ -67,7 +67,7 @@ def get_media(
 @api_view.put
 def update_media(
     request,
-    id: str,
+    id: int,
     description: QueryOrBody[str] = "",
     focus: QueryOrBody[str] = "0,0",
 ) -> schemas.MediaAttachment:

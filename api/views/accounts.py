@@ -163,7 +163,7 @@ def lookup(request: HttpRequest, acct: str) -> schemas.Account:
 
 @scope_required("read:accounts")
 @api_view.get
-def account(request, id: str) -> schemas.Account:
+def account(request, id: int) -> schemas.Account:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked),
         pk=id,
@@ -175,7 +175,7 @@ def account(request, id: str) -> schemas.Account:
 @api_view.get
 def account_statuses(
     request: HttpRequest,
-    id: str,
+    id: int,
     exclude_reblogs: bool = False,
     exclude_replies: bool = False,
     only_media: bool = False,
@@ -238,7 +238,7 @@ def account_statuses(
 
 @scope_required("write:follows")
 @api_view.post
-def account_follow(request, id: str, reblogs: bool = True) -> schemas.Relationship:
+def account_follow(request, id: int, reblogs: bool = True) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
@@ -249,7 +249,7 @@ def account_follow(request, id: str, reblogs: bool = True) -> schemas.Relationsh
 
 @scope_required("write:follows")
 @api_view.post
-def account_unfollow(request, id: str) -> schemas.Relationship:
+def account_unfollow(request, id: int) -> schemas.Relationship:
     identity = get_object_or_404(
         Identity.objects.exclude(restriction=Identity.Restriction.blocked), pk=id
     )
@@ -260,7 +260,7 @@ def account_unfollow(request, id: str) -> schemas.Relationship:
 
 @scope_required("write:blocks")
 @api_view.post
-def account_block(request, id: str) -> schemas.Relationship:
+def account_block(request, id: int) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(request.identity)
     service.block(identity)
@@ -269,7 +269,7 @@ def account_block(request, id: str) -> schemas.Relationship:
 
 @scope_required("write:blocks")
 @api_view.post
-def account_unblock(request, id: str) -> schemas.Relationship:
+def account_unblock(request, id: int) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(request.identity)
     service.unblock(identity)
@@ -280,7 +280,7 @@ def account_unblock(request, id: str) -> schemas.Relationship:
 @api_view.post
 def account_mute(
     request,
-    id: str,
+    id: int,
     notifications: QueryOrBody[bool] = True,
     duration: QueryOrBody[int] = 0,
 ) -> schemas.Relationship:
@@ -296,7 +296,7 @@ def account_mute(
 
 @scope_required("write:blocks")
 @api_view.post
-def account_unmute(request, id: str) -> schemas.Relationship:
+def account_unmute(request, id: int) -> schemas.Relationship:
     identity = get_object_or_404(Identity, pk=id)
     service = IdentityService(request.identity)
     service.unmute(identity)
@@ -306,7 +306,7 @@ def account_unmute(request, id: str) -> schemas.Relationship:
 @api_view.get
 def account_following(
     request: HttpRequest,
-    id: str,
+    id: int,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
@@ -339,7 +339,7 @@ def account_following(
 @api_view.get
 def account_followers(
     request: HttpRequest,
-    id: str,
+    id: int,
     max_id: str | None = None,
     since_id: str | None = None,
     min_id: str | None = None,
@@ -370,6 +370,6 @@ def account_followers(
 
 
 @api_view.get
-def account_featured_tags(request: HttpRequest, id: str) -> list[schemas.FeaturedTag]:
+def account_featured_tags(request: HttpRequest, id: int) -> list[schemas.FeaturedTag]:
     # Not implemented yet
     return []

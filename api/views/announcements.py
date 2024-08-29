@@ -18,6 +18,6 @@ def announcement_list(request) -> list[schemas.Announcement]:
 
 @scope_required("write:notifications")
 @api_view.post
-def announcement_dismiss(request, pk: str):
+def announcement_dismiss(request, pk: int):
     announcement = get_object_or_404(Announcement, pk=pk)
     AnnouncementService(request.user).mark_seen(announcement)
