@@ -3,7 +3,12 @@
 {% block subtitle %}{{ identity.name_or_handle }}{% endblock %}
 
 {% block settings_content %}
-    <h1>{{ identity.html_name_or_handle }} <small>{{ identity.handle }}</small></h1>
+    <h1>
+        {{ identity.html_name_or_handle }} 
+        <!--email_off-->
+        <small>@{{ identity.handle }}</small>
+        <!--/email_off-->
+    </h1>
     <form action="." method="POST">
         {% csrf_token %}
         <fieldset>

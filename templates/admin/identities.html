@@ -35,7 +35,9 @@
                 <td class="name">
                     <a href="{{ identity.urls.admin_edit }}?page={{ page_obj.number }}" class="overlay"></a>
                     {{ identity.html_name_or_handle }}
+                    <!--email_off-->
                     <small>@{{ identity.handle }}</small>
+                    <!--/email_off-->
                 </td>
                 <td>
                     {% if identity.restriction == 1 %}

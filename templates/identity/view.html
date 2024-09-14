@@ -44,6 +44,7 @@
         </div>
 
         <h1>{{ identity.html_name_or_handle }}</h1>
+        <!--email_off-->
         <small>
             @{{ identity.handle }}
             <a title="Copy handle"
@@ -57,6 +58,7 @@
                 <i class="fa-solid fa-copy"></i>
             </a>
         </small>
+        <!--/email_off-->
         {% if identity.summary %}
             <div class="bio">
                 {{ identity.safe_summary }}
