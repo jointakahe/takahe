@@ -1,4 +1,5 @@
 import logging
+import logging.config
 from typing import cast
 
 from django.apps import apps
@@ -49,6 +50,12 @@ class Command(BaseCommand):
             action="append",
             help="Model labels that should not be processed",
         )
+        parser.add_argument(
+            "--log-config",
+            type=str,
+            default=None,
+            help="Configuration file for logging",
+        )
         parser.add_argument("model_labels", nargs="*", type=str)
 
     def handle(
@@ -59,6 +66,7 @@ class Command(BaseCommand):
         schedule_interval: int,
         run_for: int,
         exclude: list[str],
+        log_config: str,
         *args,
         **options
     ):
@@ -68,8 +76,9 @@ class Command(BaseCommand):
             format="[%(asctime)s] %(levelname)8s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
             level=logging.INFO,
-            force=True,
         )
+        if log_config:
+            logging.config.fileConfig(log_config)
         # Resolve the models list into names
         models = cast(
             list[type[StatorModel]],
