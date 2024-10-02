@@ -1,4 +1,5 @@
 import logging
+from types import EllipsisType
 
 from activities.models import (
     Post,
@@ -38,7 +39,7 @@ class PostService:
     def __init__(self, post: Post):
         self.post = post
 
-    def interact_as(self, identity: Identity, type: str):
+    def interact_as(self, identity: Identity, type: str, value: str | None = None):
         """
         Performs an interaction on this Post
         """
@@ -46,28 +47,39 @@ class PostService:
             type=type,
             identity=identity,
             post=self.post,
+            value=value,
         )[0]
         if interaction.state not in PostInteractionStates.group_active():
             interaction.transition_perform(PostInteractionStates.new)
         self.post.calculate_stats()
 
-    def uninteract_as(self, identity, type):
+    def uninteract_as(self, identity, type, value: str | None | EllipsisType = ...):
         """
         Undoes an interaction on this Post
         """
+        # Only search by value if it was actually given
+        additional_fields = {}
+        if value is not ...:
+            additional_fields["value"] = value
+
         for interaction in PostInteraction.objects.filter(
             type=type,
             identity=identity,
             post=self.post,
+            **additional_fields,
         ):
             interaction.transition_perform(PostInteractionStates.undone)
+
         self.post.calculate_stats()
 
-    def like_as(self, identity: Identity):
-        self.interact_as(identity, PostInteraction.Types.like)
+    def like_as(self, identity: Identity, reaction: str | None = None):
+        """
+        Add a Like to the post, including reactions.
+        """
+        self.interact_as(identity, PostInteraction.Types.like, value=reaction)
 
-    def unlike_as(self, identity: Identity):
-        self.uninteract_as(identity, PostInteraction.Types.like)
+    def unlike_as(self, identity: Identity, reaction: str | None = None):
+        self.uninteract_as(identity, PostInteraction.Types.like, value=reaction)
 
     def boost_as(self, identity: Identity):
         self.interact_as(identity, PostInteraction.Types.boost)
