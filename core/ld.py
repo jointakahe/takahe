@@ -559,6 +559,7 @@ schemas = {
             "@context": {
                 "toot": "http://joinmastodon.org/ns#",
                 "discoverable": "toot:discoverable",
+                "indexable": "toot:indexable",
                 "devices": "toot:devices",
                 "featured": "toot:featured",
                 "featuredTags": "toot:featuredTags",
